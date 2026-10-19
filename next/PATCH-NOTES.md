@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v122** Camp check: the walker at 1.3 m/s on every screen (was tied to the refresh rate: 3 m/s at 144 Hz), feet matched to the walk, fence at exactly 21 m where you are stopped, stones, bedrolls and lanterns grounded.
 - **v121** Back to the old grim menu at his word (v120 copied the Reactor's layout and felt like an office slide); the sky, the bigger Earth and the game fixes stay. BUILDING.md: how building will work.
 - **v120** THE SUIT menu, his pick: Earth dead center, the camp's odds for the next 100 nights from his own record above it, keys left, his best night and favorite site right (all real numbers from the save).
 - **v118** Bad luck paid back: two dry trips, then an extra wreck closer in (robots: city 22 to 16 trips, reservoir 33 to 19, depot 6).

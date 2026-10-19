@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=121';
-import { Ambience } from './ambience.js?v=121';
-import { Camp, BOARD } from './camp.js?v=121';
-import { Guide } from './guide.js?v=121';
-import { buildSites } from './earthsite.js?v=121';
-import { Truck } from './truck.js?v=121';
-import { ShipView } from './shipview.js?v=121';
-import { Wrist } from './wrist.js?v=121';
-import { FireCore } from './firecore.js?v=121';
+import * as C from '../core/game.js?v=122';
+import { Ambience } from './ambience.js?v=122';
+import { Camp, BOARD } from './camp.js?v=122';
+import { Guide } from './guide.js?v=122';
+import { buildSites } from './earthsite.js?v=122';
+import { Truck } from './truck.js?v=122';
+import { ShipView } from './shipview.js?v=122';
+import { Wrist } from './wrist.js?v=122';
+import { FireCore } from './firecore.js?v=122';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=121';
-import { FriendVoice } from './friendvoice.js?v=121';
-import { crewFrom } from '../core/habits.js?v=121';
-import { HudLook } from './hudlook.js?v=121';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=121';
-import { sound, GUNS } from '../../src/combat.js?v=121';
-import { FX } from '../../src/fx.js?v=121';
+import { think as friendThink } from './friend.js?v=122';
+import { FriendVoice } from './friendvoice.js?v=122';
+import { crewFrom } from '../core/habits.js?v=122';
+import { HudLook } from './hudlook.js?v=122';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=122';
+import { sound, GUNS } from '../../src/combat.js?v=122';
+import { FX } from '../../src/fx.js?v=122';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 121;   // (this copy's version; ./version.json says the newest)
+const BUILD = 122;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
