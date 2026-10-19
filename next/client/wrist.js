@@ -12,8 +12,8 @@ export class Wrist {
     this.text = ''; this.era = 0; this.t = 0; this.hold = 0; this.open = 0;
   }
   // The wrist screen grows with the era (his rule, 2026-10-19: tech scales from primitive to futuristic; look from his sheet next/ref/wrist-ui.png: a translucent
-  // deep blue hologram, thin grid lines, a small map, a schematic). Era 0 (nights 1 and 2): words only, a plain scrawl. Era 1 (nights 3 and 4): a map of where the fire is.
-  // Era 2 (night 5 on): the map plus a schematic and a scan line. Blue, never cyan.
+  // deep blue hologram, thin grid lines, a small map, a schematic). Era 0 (the real era 1, Scavenged): words only, a plain scrawl. Era 1 (Light): a map of where the fire is.
+  // Era 2 (the dark's own): the map plus a schematic and a scan line. Blue, never cyan.
   draw(text, head = 'INCOMING') {   /* (the box hugs its words and sits on the band; nothing is ever cut: long lines step the type down until every word fits) */
     const g = this.c.getContext('2d'), W = 1024, H = 384, era = this.era || 0, BLUE = '#3d63ff', TX = W - 72 - (era >= 1 ? 300 : 0); g.clearRect(0, 0, W, H);
     let size = 50, lines = [];
