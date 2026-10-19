@@ -1,37 +1,37 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=157';
-import { Ambience } from './ambience.js?v=157';
-import { Camp, BOARD } from './camp.js?v=157';
-import { Guide } from './guide.js?v=157';
-import { buildSites } from './earthsite.js?v=157';
-import { Truck } from './truck.js?v=157';
-import { ShipView } from './shipview.js?v=157';
-import { Crew } from './crew.js?v=157';
-import { Hands } from './hands.js?v=157';
-import { FpRig } from './fprig.js?v=157';
-import { farStep } from './farsound.js?v=157';
-import { Wrist } from './wrist.js?v=157';
-import { FireCore } from './firecore.js?v=157';
+import * as C from '../core/game.js?v=158';
+import { Ambience } from './ambience.js?v=158';
+import { Camp, BOARD } from './camp.js?v=158';
+import { Guide } from './guide.js?v=158';
+import { buildSites } from './earthsite.js?v=158';
+import { Truck } from './truck.js?v=158';
+import { ShipView } from './shipview.js?v=158';
+import { Crew } from './crew.js?v=158';
+import { Hands } from './hands.js?v=158';
+import { FpRig } from './fprig.js?v=158';
+import { farStep } from './farsound.js?v=158';
+import { Wrist } from './wrist.js?v=158';
+import { FireCore } from './firecore.js?v=158';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=157';
-import { FriendVoice } from './friendvoice.js?v=157';
-import { crewFrom } from '../core/habits.js?v=157';
-import { HudLook } from './hudlook.js?v=157';
-import { applyLook } from './looks.js?v=157';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=157';
-import { sound, GUNS } from '../../src/combat.js?v=157';
-import { FX } from '../../src/fx.js?v=157';
+import { think as friendThink } from './friend.js?v=158';
+import { FriendVoice } from './friendvoice.js?v=158';
+import { crewFrom } from '../core/habits.js?v=158';
+import { HudLook } from './hudlook.js?v=158';
+import { applyLook } from './looks.js?v=158';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=158';
+import { sound, GUNS } from '../../src/combat.js?v=158';
+import { FX } from '../../src/fx.js?v=158';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 157;   // (this copy's version; ./version.json says the newest)
+const BUILD = 158;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -248,7 +248,7 @@ function drawHollow(dt) {
       scene.add(v.o); seen.set(k.id, v);
     }
     { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
-      for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
+      for (const m of v.mats) { m.opacity = 0.88 + 0.12 * v.sol; m.depthWrite = true; }   /* (in the dark a solid black silhouette, in light fully there; at 16% only the rim showed, read as see-through glitter, and the edge of the light made it flash: his eyes 2026-10-19, taste rule 102. Shots still pass through it in the dark: the rule is unchanged) */
       if (v.tag > 0) v.tag -= dt; if (smart.id === k.id && smart.t >= SMART.lock) v.scan = Math.max(v.scan || 0, 0.45);   /* (a locked shape keeps its outline, in pink) */
       if (v.scan > 0 || v.scanned) { v.scan = Math.max(0, (v.scan || 0) - dt); const a = Math.min(1, v.scan / 0.4);   /* (the scan outline: a violet edge that fades out over its last 0.4 s) */
         for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); m.userData.i0 = m.emissiveIntensity; } if (v.scan > 0) { m.emissive.setHex(smart.id === k.id && smart.t >= SMART.lock ? SMART.color : SCAN.color); m.emissiveIntensity = 0.9 * a; m.opacity = Math.max(m.opacity, 0.35 + 0.5 * a); } else { m.emissive.setHex(m.userData.e0); m.emissiveIntensity = m.userData.i0; } }
@@ -257,7 +257,7 @@ function drawHollow(dt) {
     if (v.eyes.length) {   /* (the masks show intent, never in words, GAMEDEV-TRICKS.md 13: the pinpoint eyes flare as it closes to striking range, and the watcher's brighten while nobody looks at it, because that is when it moves) */
       const K = C.KINDS[k.kind], reach = (K && K.reach) || 1.2; let d = 1e9; for (const p of g.players) if (!p.ember) d = Math.min(d, Math.hypot(p.x - k.x, p.z - k.z));
       const tell = Math.max(0, Math.min(1, 1 - (d - reach) / (reach * 1.6))) + (k.kind === 'watcher' && !C.lookedAt(g, k) && d < 30 ? 0.5 : 0); v.tell = (v.tell || 0) + (tell - (v.tell || 0)) * Math.min(1, dt * 8);
-      for (const m of v.eyes) m.emissiveIntensity = 3 + 9 * v.tell; }
+      for (const m of v.eyes) m.emissiveIntensity = 3 + 4 * v.tell; }
     const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;
     { const want = k.rt > 0 ? [0, 0.18, 0.4, 1.35][k.r || 0] : 0; v.lean = (v.lean || 0) + (want - (v.lean || 0)) * Math.min(1, dt * (want > (v.lean || 0) ? 30 : 5)); v.o.rotation.order = 'YXZ'; v.o.rotation.x = -v.lean; if (k.r === 3 && k.rt > 0) v.o.position.y -= v.lean * 0.35; }   /* (the hit reaction you see: a snap back, a reel, or down on its back; it rises slowly) */   // (no bob: they hold their height; the animation does the moving)
     if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix && hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k))) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));   // (seen, it freezes mid-motion)
@@ -426,6 +426,8 @@ function padMenu(edge, ax) { const keys = [...document.querySelectorAll('button'
   const cur = keys.indexOf(document.activeElement);
   if (step) { const n = cur < 0 ? 0 : (cur + step + keys.length) % keys.length; keys[n].focus({ focusVisible: true }); }
   else if (edge(0)) { if (cur >= 0) keys[cur].click(); else keys[0].focus({ focusVisible: true }); } }
+addEventListener('wheel', e => { if (mode !== 'play' || panel || buildPick || !locked()) return; const t = performance.now(); if (t - (addEventListener.wt || 0) < 90) return; addEventListener.wt = t;   // (the wheel walks the guns, down = next, his ask 2026-10-19; a fast spin steps once per 90 ms)
+  const own = GUN_CYCLE.filter(k => held[k]), i = own.indexOf(gunKey); if (own.length) switchGun(own[(i + (e.deltaY > 0 ? 1 : -1) + own.length) % own.length]); }, { passive: true });
 addEventListener('mousemove', e => { if (padOn && (Math.abs(e.movementX) + Math.abs(e.movementY) > 6)) padOn = false; });   // (move the mouse and play is back on the mouse)
 $('leave').onclick = () => { saveNow(); location.href = location.pathname; };
 $('room').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
