@@ -24,6 +24,7 @@ import { FriendVoice } from './friendvoice.js?v=163';
 import { crewFrom } from '../core/habits.js?v=163';
 import { HudLook } from './hudlook.js?v=163';
 import { Rain } from './rain.js?v=163';
+import { Immersion } from './immersion.js?v=163';
 import { VisorRain } from './visor.js?v=163';
 import { applyLook } from './looks.js?v=163';
 import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=163';
@@ -443,7 +444,7 @@ $('room').addEventListener('click', e => { const b = e.target.closest('button');
   if (b.id === 'lockRoom') { net.lock(!net.locked); drawPause(); } });
 
 // ---------------------------------------------------------------- actions
-let lastFall = '', msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); }   // (messages come from the wrist screen, never as text on the glass: his UI rule)
+let lastFall = '', msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3, head) { wrist.say(t, s, head); }   // (messages come from the wrist screen, never as text on the glass: his UI rule)
 const look = () => new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw, 0, 'YXZ'));
 function switchGun(k) { if (k === gunKey || !held[k]) return; gunKey = k; reloadT = 0; aimOn = false; railC = 0; hands.attach(k === 'rail' ? null : held[k], k); }
 // practice (INNOVATION.md idea 8): each gun's reload gets faster the more you do it, on a curve that flattens (the power law of practice);
@@ -525,7 +526,7 @@ function build(p, kind, x, z) {   // (host only: the player must carry the light
 }
 function tryBuild() { if (buildPick === 'lamp' && SET.name && g.econ && !C.econ.lamps(g, SET.name)) return say(`You are ${C.econ.behind(g, SET.name).toFixed(1)} days behind on dues. The camp hands out no lamps until you catch up: bank light into the fire.`, 5); const K = C.NODE[buildPick]; if (me.carried < K.cost) return say(`A ${buildPick} costs ${K.cost} light. You carry ${Math.floor(me.carried)}.`); const s = buildSpot(); sound.buy();
   if (isHost()) { const n = build(me, buildPick, s.x, s.z); if (n) say(n.lit ? `The ${buildPick} takes the light.` : `Too far from the light: the ${buildPick} stays dark. Place it within reach of a lit relay.`, 3); } else net.send({ t: 'build', k: buildPick, x: +s.x.toFixed(2), z: +s.z.toFixed(2) }); }
-function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'carries light on, ' + K.reach + ' m' : 'shines wide, carries nothing'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: pulls the hunt and burns it, ${C.FLARE.life} s</small></button>`; }
+function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}" title="${k === 'relay' ? 'carries light on to the next one' : 'shines wide, carries nothing'}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light${k === 'relay' ? ' · ' + K.reach + ' m' : ''}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light · ${C.FLARE.life} s</small></button>`; }
 $('build').addEventListener('click', e => { const b = e.target.closest('.bk'); if (!b) return; if (b.dataset.k === 'flare') return throwFlare(); pickBuild(buildPick === b.dataset.k ? null : b.dataset.k); });
 function flareSpot() { const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), d = look(); for (let t = 1; t <= C.FLARE.reach; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z) + 0.1) return [x, z]; } return [o.x + d.x * 12, o.z + d.z * 12]; }   // (where you aim, on the ground, up to 16 m)
 function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const j = C.nextSeat(g, me); if (j >= 0) say(['You take the wheel.', 'You take the roof lamp. Look where it should shine.', 'You take the mounted gun.', 'You take the mounted gun.'][j], 2); } else net.send({ t: 'build', k: 'seat', x: 0, z: 0 }); }
@@ -660,6 +661,7 @@ function frame(now) {
     const causes = [...g.hollow.filter(k => !k.dead && !!k.earth === onE).map(k => ({ x: k.x, z: k.z, dark: true })), ...(onE ? [...((g.earth && g.earth.wrecks) || []), ...(g.parts || [])].map(w => ({ x: w.x, z: w.z })) : [])];
     const e = !me.ember && farStep(frame.far = frame.far || {}, dt, me, nt, causes); if (e) { amb.far(e.voice, e.x, g.land(e.x, e.z) + 1, e.z, frame.muf || 0); if (TEST) (window.__far = window.__far || []).push(e.voice); } }
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z, level: g.fire.level }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
+  if (immersion) immersion.update(dt, now / 1000);
   hud();
   composer.render();   // (the world through bloom: only the brightest light bleeds, the fire, lamps, tracers; the HUD is never touched)
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
@@ -886,11 +888,13 @@ function drawFriends(dt) {
 // ---------------------------------------------------------------- start
 $('name').value = SET.name || '';
 function myName() { SET.name = ($('name').value || 'Player').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Player'; save(); return SET.name; }
+let immersion = null;   // (lane C: the strange sky, the dark's edge, dusk fog, mirror signs, awareness moments, the morning after: client/immersion.js)
 async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
-  if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale + ':' + e.pool }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100), pool: Math.round(g.econ.pool || 0) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who), name: () => SET.name, camera: () => camera });
+  if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale + ':' + e.pool }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100), pool: Math.round(g.econ.pool || 0) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => { if (window.__lf) (window.__heard = window.__heard || []).push(who + ': ' + line); wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who); }, name: () => SET.name, camera: () => camera });
   if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); ship = new ShipView(scene, (x, z) => g.land(x, z)); }
+  if (!immersion) immersion = new Immersion(scene, { get g() { return g; }, get me() { return me; }, camera, say, fog: () => scene.fog, lit: () => C.lightAt(g, me.x, me.z) });
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, pad: () => C.PAD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, nearDusk: () => { if (isHost() && g.clock < C.DUSK_AT - 20 / C.DAY) g.clock = C.DUSK_AT - 20 / C.DAY; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); },
     stage: () => { if (!isHost()) return; const f = g.fire, a = Math.atan2(me.z - f.z, me.x - f.x) + 0.35, r = C.fireRadius(f) + 7, x = f.x + Math.cos(a) * r, z = f.z + Math.sin(a) * r, K = C.KINDS.walker;

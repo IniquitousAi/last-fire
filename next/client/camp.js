@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
+import { pickFresh } from '../core/lines.js?v=163';
 
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 };
 // the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
@@ -58,7 +59,7 @@ export class Camp {
     Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '55%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
     this.btn.onclick = () => this.check(); addEventListener('keydown', e => { if (e.code === 'KeyC' && this.near) this.check(); });
     // camp people: each speaks from what really happened, one line at a time, never repeating while a fresh one is left (IMMERSION.md)
-    this.people = []; this.heard = new Set();
+    this.people = []; this.heard = new Set(); this.said = {};
     // (the soldier's Idle_Gun and Idle hold a rifle he does not carry: Idle_Neutral has his arms at rest; Interact reaches out to check a thing)
     const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75, chain: [['Spine2', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Spine1', yawMax: 1.05 },
       { role: 'the Night worker', url: 'c/soldier.glb', x: 0, z: -17, anim: 'Idle_Neutral', walk: 'Walk', act: 'Interact', h: 1.8, chain: [['Chest', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Chest', yawMax: 1.2 },
@@ -123,7 +124,7 @@ export class Camp {
     }
     return out;
   }
-  check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; this.ctx.say('The real odds. Nobody else came to check.', 4); }
+  check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; { const lb = this.odds().label; this.ctx.say(`The real odds (${lb}). Nobody else came to check.`, 4, lb.toUpperCase()); } }
   draw() {
     const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, st = this.ctx.stakes ? this.ctx.stakes() : null, ec = this.ctx.econ ? this.ctx.econ() : null, key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote(), st && st.n, ec && ec.key].join('|'); if (key === this.drawn) return; this.drawn = key;
     const c = this.bc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 480); c.strokeStyle = real ? '#ff4fd8' : '#b9a8ff'; c.lineWidth = 8; c.strokeRect(8, 8, 752, 464);
@@ -169,7 +170,7 @@ export class Camp {
       P.mix.update(dt); const d = Math.hypot(me.x - P.o.position.x, me.z - P.o.position.z);
       if (P.walk) this.patrol(P, dt, d, me);   // (the night worker walks the wall with reasons to stop, and stops to talk when you come close)
       if (P.chain && P.chain.length) this.live(P, dt, d, cam);
-      if (d < 4.5 && (P.lineT -= dt) <= 0) { const all = this.lines(P.role), fresh = all.filter(l => !this.heard.has(l)); P.line = (fresh.length ? fresh : all)[0]; this.heard.add(P.line); P.lineT = 9; }
+      if (d < 4.5 && (P.lineT -= dt) <= 0) { const all = this.lines(P.role); P.line = pickFresh(this.said[P.role] = this.said[P.role] || {}, all); this.heard.add(P.line); P.lineT = 9;   /* (never the same line while a fresh one remains, per person) */ }
       if (d >= 6) P.lineT = 0;
       const facing = ((P.o.position.x - me.x) * fx + (P.o.position.z - me.z) * fz) / Math.max(d, 0.01);
       if (d < 4.5 && facing > 0.5 && P.line && d < best) { best = d; talk = P; }

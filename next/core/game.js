@@ -1,6 +1,7 @@
 import { newRecord, sample, noteBank, noteShot, summarize } from './habits.js';
 import { SHIP, makeShip, flyShip } from './ship.js';
 export { SHIP };
+import { labelFor } from './knowledge.js';
 import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHaveLantern, morale, CAMP } from './camp.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
 // so the browser, the robots and the daemon all run this one file. Every system draws from its own named random stream.
@@ -395,7 +396,7 @@ export function hurt(g, p, n, from) {
 export const SITES = { city: { name: 'THE CITY', parts: 3, cells: 10, dir: 0, est: [0.3, 2.1] }, depot: { name: 'THE DEPOT', parts: 6, cells: 5, dir: Math.PI * 0.5, est: [2.3, 1.0] }, reservoir: { name: 'THE RESERVOIR', parts: 1, cells: 16, dir: Math.PI, est: [0.1, 3.0] } };   // (est: parts and cells a trip for a careful player, from sim/drop.mjs --sites, 20 robot trips each)
 export function siteOdds(g, k) { const r = (g.sites || {})[k], S = SITES[k]; if (!r || r.trips < 3) return { parts: S.est[0], cells: S.est[1], label: 'guess: robots', trips: r ? r.trips : 0 };
   const n = r.trips, lc = (r.lostCells || 0) / n, lp = (r.lostParts || 0) / n;   // (the loss goes on the board, INNOVATION.md 13B: the odds drop by exactly what was lost, and the footnote names it)
-  return { parts: r.parts / n - lp, cells: r.cells / n - lc, label: n >= 10 ? 'checked' : 'reasoned', trips: n, lost: { cells: lc, parts: lp, falls: (r.falls || 0) / n, left: (r.left || 0) / n } }; }
+  return { parts: r.parts / n - lp, cells: r.cells / n - lc, label: labelFor(n), trips: n, lost: { cells: lc, parts: lp, falls: (r.falls || 0) / n, left: (r.left || 0) / n } }; }
 export function drop(g, p, site) {
   if (!p || p.ember || onEarth(p) || Math.hypot(p.x - PAD.x, p.z - PAD.z) > 4) return false;
   if (!g.earth) { const S = SITES[site] ? site : 'city'; g.earth = { t: EARTH.stay, n: (g.trips = (g.trips || 0) + 1), site: S, found: { parts: 0, cells: 0 } }; const r = stream(g.seed, 'earth-' + g.earth.n);
