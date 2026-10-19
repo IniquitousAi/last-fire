@@ -6,7 +6,7 @@
 Never stop working on the game; use REA and GitHub to learn from the best. Cyberpunk's yellow becomes hot pink and violet (his palette). In order:
 1. Kiroshi scan: middle mouse pings the dark; shapes within 30 m show as violet outlines for 2 s, 8 s cooldown (they stay smoke: you see, you do not hit).
 2. (FOV checked 2026-10-19: in his 1000x900 window our 78 vertical is 84 across, near Cyberpunk's 80; switching to Cyberpunk's 16:9 rule would zoom his window in, so kept.) DONE v146: the rail sniper (key 5): hold to charge 0.4 s, let go to fire; 75% charge or more goes through every shape in line, x4 head, deep scope, 4 rounds.
-3. Smart pistol: rounds curve onto a scanned shape.
+3. DONE v147: smart pistol: a shape you scanned stays tagged 8 s; hold the pistol on it 0.6 s (three beeps), its outline turns hot pink and rounds curve onto it.
 4. Eye HUD: the wrist hologram plus a Kiroshi frame (thin corner brackets, live readouts); learn from Venge.io's REA capture.
 5. Neon on wet ground: more puddles and the camp's signs reflected (the wet shader exists).
 6. DONE v143: slow time (T or the mouse's back button, world at 25% for 6 s, 30 s recharge, solo only); double jump and air dash were already the boost jump and air dodge.

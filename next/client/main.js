@@ -1,35 +1,35 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=146';
-import { Ambience } from './ambience.js?v=146';
-import { Camp, BOARD } from './camp.js?v=146';
-import { Guide } from './guide.js?v=146';
-import { buildSites } from './earthsite.js?v=146';
-import { Truck } from './truck.js?v=146';
-import { ShipView } from './shipview.js?v=146';
-import { Crew } from './crew.js?v=146';
-import { Hands } from './hands.js?v=146';
-import { FpRig } from './fprig.js?v=146';
-import { Wrist } from './wrist.js?v=146';
-import { FireCore } from './firecore.js?v=146';
+import * as C from '../core/game.js?v=147';
+import { Ambience } from './ambience.js?v=147';
+import { Camp, BOARD } from './camp.js?v=147';
+import { Guide } from './guide.js?v=147';
+import { buildSites } from './earthsite.js?v=147';
+import { Truck } from './truck.js?v=147';
+import { ShipView } from './shipview.js?v=147';
+import { Crew } from './crew.js?v=147';
+import { Hands } from './hands.js?v=147';
+import { FpRig } from './fprig.js?v=147';
+import { Wrist } from './wrist.js?v=147';
+import { FireCore } from './firecore.js?v=147';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=146';
-import { FriendVoice } from './friendvoice.js?v=146';
-import { crewFrom } from '../core/habits.js?v=146';
-import { HudLook } from './hudlook.js?v=146';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=146';
-import { sound, GUNS } from '../../src/combat.js?v=146';
-import { FX } from '../../src/fx.js?v=146';
+import { think as friendThink } from './friend.js?v=147';
+import { FriendVoice } from './friendvoice.js?v=147';
+import { crewFrom } from '../core/habits.js?v=147';
+import { HudLook } from './hudlook.js?v=147';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=147';
+import { sound, GUNS } from '../../src/combat.js?v=147';
+import { FX } from '../../src/fx.js?v=147';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 146;   // (this copy's version; ./version.json says the newest)
+const BUILD = 147;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -206,12 +206,20 @@ const seen = new Map();
 // the Kiroshi scan (Cyberpunk 2077, his north star, 2026-10-19): middle mouse or Z pings the dark; every shape within 30 m shows as a violet outline
 // for 2 s, 8 s between scans. Seeing is not hitting: out of the light they stay smoke
 const SCAN = { r: 30, t: 2, cd: 8, color: 0x8a5cff }; let scanCd = 0;
-function scan() { if (!g || !me || me.ember || scanCd > 0) return; scanCd = SCAN.cd; let n = 0; for (const k of g.hollow) { if (Math.hypot(k.x - me.x, k.z - me.z) > SCAN.r) continue; const v = seen.get(k.id); if (v) { v.scan = SCAN.t; n++; } }
+function scan() { if (!g || !me || me.ember || scanCd > 0) return; scanCd = SCAN.cd; let n = 0; for (const k of g.hollow) { if (Math.hypot(k.x - me.x, k.z - me.z) > SCAN.r) continue; const v = seen.get(k.id); if (v) { v.scan = SCAN.t; v.tag = SMART.tag; n++; } }
   say(n ? `Scan: ${n} shape${n > 1 ? 's' : ''} within ${SCAN.r} m.` : `Scan: nothing within ${SCAN.r} m. For now.`, 2); }
 addEventListener('keydown', e => { if (e.code === 'KeyZ' && !e.repeat && mode === 'play' && !panel) scan(); if (e.code === 'KeyT' && !e.repeat && mode === 'play' && !panel) sandy(); });
 // Slow time (Cyberpunk's Sandevistan, his north star): T or the mouse's back side button. The world runs at a quarter speed for 6 s while you move,
 // aim and fire at full speed; 30 s to recharge. Alone only: with friends, one person's slow time would be everyone's, so it stays off.
 const SANDY = { scale: 0.25, t: 6, cd: 30 }; let sandyT = 0, sandyCd = 0, tScale = 1;
+// The smart pistol (Cyberpunk's smart guns: a 0.6 s lock in three beeps inside a 9 degree cone, rounds that corkscrew onto the target). Ours locks
+// only onto what you scanned in the last 8 s: the scan is how the suit learns a shape. Locked, its outline turns hot pink and pistol rounds curve onto it.
+const SMART = { tag: 8, lock: 0.6, cone: Math.cos(9 * Math.PI / 180), r: 40, color: 0xff2a8d }; let smart = { id: 0, t: 0 };
+function smartStep(dt) { if (gunKey !== 'pistol' || !g || !me || me.ember) { smart.t = 0; smart.id = 0; return; } const d = look(), ey = me.y + eyeH; let best = null, bc = SMART.cone;
+  for (const k of g.hollow) { const v = seen.get(k.id); if (!v || !(v.tag > 0) || k.dead) continue; const hy = C.KINDS[k.kind].hits.find(h => h[3] === 1)[0], dx = k.x - me.x, dy = k.y + hy - ey, dz = k.z - me.z, L = Math.hypot(dx, dy, dz); if (L > SMART.r) continue; const c = (dx * d.x + dy * d.y + dz * d.z) / L; if (c > bc) { bc = c; best = k; } }
+  if (!best) { smart.t = 0; smart.id = 0; return; } if (best.id !== smart.id) { smart.id = best.id; smart.t = 0; } const t0 = smart.t; smart.t += dt;
+  for (const b of [0.2, 0.4, 0.6]) if (t0 < b && smart.t >= b) sound.click(); }   /* (three beeps, the third is the lock) */
+const smartTarget = () => smart.t >= SMART.lock ? g.hollow.find(k => k.id === smart.id && !k.dead) : null;
 addEventListener('mouseup', e => { if (e.button === 3 || e.button === 4) e.preventDefault(); });   // (the back side button must not take the browser back a page)
 function sandy() { if (!g || !me || me.ember) return; if (net) return say('Slow time works alone only: with friends the world is shared.', 3); if (sandyCd > 0) return say(`Slow time recharging: ${Math.ceil(sandyCd)} s.`, 2);
   sandyT = SANDY.t; sandyCd = SANDY.cd + SANDY.t; kick = Math.min(1, kick + 0.3); say('Slow time: 6 s.', 2); }
@@ -237,8 +245,9 @@ function drawHollow(dt) {
     }
     { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
       for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
+      if (v.tag > 0) v.tag -= dt; if (smart.id === k.id && smart.t >= SMART.lock) v.scan = Math.max(v.scan || 0, 0.45);   /* (a locked shape keeps its outline, in pink) */
       if (v.scan > 0 || v.scanned) { v.scan = Math.max(0, (v.scan || 0) - dt); const a = Math.min(1, v.scan / 0.4);   /* (the scan outline: a violet edge that fades out over its last 0.4 s) */
-        for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); m.userData.i0 = m.emissiveIntensity; } if (v.scan > 0) { m.emissive.setHex(SCAN.color); m.emissiveIntensity = 0.9 * a; m.opacity = Math.max(m.opacity, 0.35 + 0.5 * a); } else { m.emissive.setHex(m.userData.e0); m.emissiveIntensity = m.userData.i0; } }
+        for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); m.userData.i0 = m.emissiveIntensity; } if (v.scan > 0) { m.emissive.setHex(smart.id === k.id && smart.t >= SMART.lock ? SMART.color : SCAN.color); m.emissiveIntensity = 0.9 * a; m.opacity = Math.max(m.opacity, 0.35 + 0.5 * a); } else { m.emissive.setHex(m.userData.e0); m.emissiveIntensity = m.userData.i0; } }
         v.scanned = v.scan > 0; }
       const w = (1 - v.sol) * 0.035, t = performance.now() / 1000 + k.id, br = 1 + w * Math.sin(t * 1.3); v.o.scale.set(v.base * br, v.base * br, v.base * br); }   /* (smoke breathes slowly; it used to shake on three axes at once, which read as a glitch, his note 2026-10-19) */
     if (v.eyes.length) {   /* (the masks show intent, never in words, GAMEDEV-TRICKS.md 13: the pinpoint eyes flare as it closes to striking range, and the watcher's brighten while nobody looks at it, because that is when it moves) */
@@ -325,7 +334,7 @@ function coldHands(dt) { if (!g || !me || me.ember) return; const warm = C.light
 const DEMO_RUN = [[0, 'look'], [4, 'gun ar'], [5, 'ads spam'], [11, 'fire hip'], [14, 'ads fire'], [18, 'reload'], [22, 'gun pistol'], [23, 'ads spam'], [27, 'reload'], [30, 'gun shotgun'], [31, 'fire hip'], [33, 'reload'], [37, 'gun lmg'], [38, 'move ads'], [42, 'reload'], [44, 'gun rail'], [45, 'ads spam'], [48, 'rail fire'], [52, 'end']];
 // ?demo&night: a 45 s night run for recordings. It starts at the end of dusk, eases its aim onto the nearest shape (a camera operator, not a player
 // skill: test only), and uses every move: hip fire, aiming, boost jump and slam, dodges, sprint and slide, reloads, three guns
-const NIGHT_RUN = [[0, 'look'], [5, 'gun ar'], [6, 'ads fire'], [11, 'boost'], [11.3, 'boost2'], [12.1, 'slam'], [13, 'sandy'], [14, 'fire hip'], [18, 'reload'], [21, 'dodge L'], [22.2, 'dodge R'], [23.5, 'sprint'], [25.2, 'slide'], [26.5, 'ads fire'],
+const NIGHT_RUN = [[0, 'look'], [2, 'gun pistol'], [2.2, 'scan'], [3, 'ads fire'], [5, 'gun ar'], [6, 'ads fire'], [11, 'boost'], [11.3, 'boost2'], [12.1, 'slam'], [13, 'sandy'], [14, 'fire hip'], [18, 'reload'], [21, 'dodge L'], [22.2, 'dodge R'], [23.5, 'sprint'], [25.2, 'slide'], [26.5, 'ads fire'],
   [31, 'gun shotgun'], [32, 'fire hip'], [35, 'reload'], [37.5, 'gun lmg'], [38, 'boost'], [38.3, 'boost2'], [39.1, 'slam'], [40.5, 'ads fire'], [46, 'end']];
 const press = code => { dispatchEvent(new KeyboardEvent('keydown', { code })); dispatchEvent(new KeyboardEvent('keyup', { code })); };   // (down and up: a held key would keep jumping)
 function demoAim(dt) { let best = null, bd = 45; for (const k of g.hollow) { if (k.dead || C.onEarth(k)) continue; const d = Math.hypot(k.x - me.x, k.z - me.z); if (d < bd) { bd = d; best = k; } } if (!best) return false;
@@ -337,7 +346,7 @@ function demoNight(dt) { const d = demoNight; if (!d.t) g.clock = Math.max(g.clo
   if (what === 'ads fire') { aimOn = t - cur[0] > 0.4; mouse[0] = aimOn && on && t % 0.5 < 0.32; }
   if (what === 'fire hip') { aimOn = false; mouse[0] = on && t % 0.45 < 0.3; }
   if (what === 'reload' && fresh) { aimOn = false; ammo[gunKey].mag = Math.min(ammo[gunKey].mag, 2); reload(); }
-  if (what === 'boost' && fresh) { aimOn = false; jumpBuf = 0.15; } if (what === 'boost2' && fresh) press('Space'); if (what === 'slam' && fresh) press('KeyC'); if (what === 'sandy' && fresh) press('KeyT');
+  if (what === 'boost' && fresh) { aimOn = false; jumpBuf = 0.15; } if (what === 'boost2' && fresh) press('Space'); if (what === 'slam' && fresh) press('KeyC'); if (what === 'sandy' && fresh) press('KeyT'); if (what === 'scan' && fresh) { press('KeyZ'); if (DEMO) { window.__smart = smart; window.__dbg = { me, g, seen, look, switchGun }; window.__me = () => ({ ember: !!me.ember, hp: me.hp, n: g.hollow.length, near: g.hollow.filter(k => Math.hypot(k.x - me.x, k.z - me.z) < 30).length, tagged: [...seen.values()].filter(v => v.tag > 0).length }); } }
   if (what === 'dodge L' && fresh) { keys.KeyA = true; press('ShiftLeft'); keys.KeyA = false; } if (what === 'dodge R' && fresh) { keys.KeyD = true; press('ShiftLeft'); keys.KeyD = false; }
   if (what === 'sprint') { aimOn = false; keys.KeyW = true; keys.ShiftLeft = true; } if (what === 'slide') { keys.KeyW = true; if (fresh) { keys.ShiftLeft = true; press('KeyC'); } }
   if (what === 'end' && fresh) { aimOn = false; say('Night run over.', 3); } }
@@ -409,7 +418,7 @@ function shoot() {
   if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
   const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
   for (let n = 0; n < (G.pellets || 1); n++) {   // (a shotgun throws a handful of pellets: each is its own line through the air)
-    const d = look(); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize(); if (n === 0) { const q = C.aimPull(g, o.x, o.y, o.z, d.x, d.y, d.z); d.set(q[0], q[1], q[2]); } ds.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
+    const d = look(); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize(); if (n === 0) { const st = !mount && gunKey === 'pistol' && smartTarget(); if (st) { const hy = C.KINDS[st.kind].hits.find(h => h[3] === 1)[0], a = Math.random() * 6.28; d.set(st.x - o.x + Math.cos(a) * 0.12, st.y + hy - o.y + Math.sin(a) * 0.12, st.z - o.z).normalize(); } else { const q = C.aimPull(g, o.x, o.y, o.z, d.x, d.y, d.z); d.set(q[0], q[1], q[2]); } }   /* (smart lock: the round goes for the locked shape, in a small spiral) */ ds.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
     const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z, mount ? 'mount' : gunKey) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
     const rc = G.charge ? shoot.c || 0 : 1, all = G.charge && rc >= 0.75 ? C.hitAll(g, o.x, o.y, o.z, d.x, d.y, d.z, 120) : null, h = all ? all[0] : C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), e = o.clone().addScaledVector(d, all && all.length ? all[all.length - 1].t + 30 : h ? h.t : 60); if (!end) end = e;
     fx.tracer(muzzle, e); if (lit || G.charge) burn(muzzle, o.clone().addScaledVector(d, h && !all ? h.t : C.TRACER.len));
@@ -556,7 +565,7 @@ function frame(now) {
   if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (DEMO && !panel) (/night/.test(location.search) ? demoNight : demoStep)(dt); if (!panel) move(dt);
-  shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
+  smartStep(dt); shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (GUNS[gunKey].charge && !mounted()) { const can = locked() && !panel && !buildPick && reloadT <= 0 && ammo[gunKey].mag > 0 && shotCd <= 0 && !mvSprint;   /* (the rail: hold to charge, let go to fire) */
     if (mouse[0] && can) { if (railC === 0) { if (railRig) railRig.charge(); sound.click(); } railC = Math.min(1, railC + dt / GUNS[gunKey].charge); } else if (railC > 0) { shoot.c = railC; railC = 0; shoot(); } else if (mouse[0] && !can && ammo[gunKey].mag <= 0 && !shoot.held) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false; }
