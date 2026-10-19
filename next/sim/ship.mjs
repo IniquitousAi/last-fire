@@ -1,7 +1,7 @@
 // Robot test for the ship's feel (SHIP.md): does it settle like a real hover craft, and can a pilot land it on a pad?
 // 1. Drop test: let go at 8 m over flat ground; measure how far it overshoots its hover height and how long until it settles.
 // 2. Pad run: a robot pilot flies 300 m over rolling ground to a pad and stops on it; measure the time and how far off it lands.
-// Real hover craft feel: a visible bob (3 to 15 percent: the Moon's low gravity brings it down slow, so the bob is small), settled inside 3.5 s; a careful pilot lands within 3 m in under 25 s.
+// No bounce (his note 2026-10-19: the bob read as broken): overshoot 2 percent at most, settled inside 3.5 s; a careful pilot lands within 3 m in under 25 s.
 import { SHIP, makeShip, flyShip } from '../core/ship.js';
 const flat = () => 0, hills = (x, z) => Math.sin(x * 0.02) * 4 + Math.sin(z * 0.013 + 1) * 6;
 export function dropTest(land = flat) {
@@ -24,7 +24,7 @@ export function padRun(land = hills, pad = { x: 40, z: 300 }) {
 }
 if (import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop())) {
   const a = dropTest(), b = padRun(), c = dropTest(hills);
-  console.log(`drop test: overshoot ${(a.overshoot * 100).toFixed(0)}%, settled in ${a.settle.toFixed(2)} s  ${a.overshoot >= 0.03 && a.overshoot <= 0.15 && a.settle < 3.5 ? 'PASS' : 'FAIL'}`);
+  console.log(`drop test: overshoot ${(a.overshoot * 100).toFixed(0)}%, settled in ${a.settle.toFixed(2)} s  ${a.overshoot <= 0.02 && a.settle < 3.5 ? 'PASS' : 'FAIL'}`);
   console.log(`drop on hills: overshoot ${(c.overshoot * 100).toFixed(0)}%, settled in ${c.settle.toFixed(2)} s`);
   console.log(`pad run (300 m over hills): ${b.time.toFixed(1)} s, landed ${b.miss.toFixed(1)} m off  ${b.time < 25 && b.miss < 3 ? 'PASS' : 'FAIL'}`);
 }

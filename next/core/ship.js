@@ -4,7 +4,7 @@
 // nose when it pushes forward. Shared by the game and the robots, so the feel is measured before it is felt.
 export const SHIP = {
   mass: 1, hover: 3.2, reach: 9,           // (hover: the height it rests at; reach: how far down the thrusters still feel the ground)
-  k: 34, damp: 0.4,                        // (spring stiffness and damping ratio, picked from 18 tried by sim/ship.mjs: a visible bob, settled in about 3 s)
+  k: 34, damp: 1.0, climb: 9, ceil: 80,     // (damping 1.0 = critically damped: it settles with no bounce. Was 0.4, a deliberate bob; he found it bobbing and confusing, 2026-10-19. climb: m/s the held height moves; ceil: highest hold)
   thrust: 38, lift: 22, drag: 0.35, dragQ: 0.0016, grip: 1.6,   // (grip: how fast sideways drift dies; low enough to feel the slide)
   turn: 1.5, bank: 0.38, nose: 0.12, gravity: 1.62,             // (the Moon's gravity: it is where the camp is)
   half: { x: 2.4, z: 3.6 }, top: 340,                           // (the corner thrusters' spread, and its top speed in m/s)
@@ -18,11 +18,11 @@ export function flyShip(s, input, land, dt) {
   let ay = -C.gravity, tp = 0, tr = 0, touching = 0;
   for (const [sx, sz] of CORNERS) {   // (each thruster: a ray down from its corner, a spring and a damper)
     const cx = s.x + rx * sx * C.half.x + fx * sz * C.half.z, cz = s.z + rz * sx * C.half.x + fz * sz * C.half.z;
-    const gap = s.y - land(cx, cz); if (gap > C.reach) continue; touching++;
-    const comp = C.hover - gap, cornerV = s.vy;   // (the corners share the body's vertical speed: pitch and roll are drawn, not simulated)
+    const gap = s.y - land(cx, cz); if (gap > (s.ht ?? C.hover) + C.reach) continue; touching++;
+    const comp = (s.ht ?? C.hover) - gap, cornerV = s.vy;   // (the corners share the body's vertical speed: pitch and roll are drawn, not simulated)
     const f = Math.max(0, C.k * comp - cdamp * cornerV) / 4; ay += f / C.mass; tp += sz * f; tr += sx * f;
   }
-  ay += (input.up || 0) * C.lift;
+  s.ht = Math.max(C.hover, Math.min(C.ceil, (s.ht ?? C.hover) + (input.up || 0) * C.climb * dt));   // (altitude hold: up and down move the height it holds; let go and it stays there, like any flight game)
   // thrust along the nose and the side, then drag (linear and quadratic) and grip on the sideways slide
   const sp = Math.hypot(s.vx, s.vz), fwdV = s.vx * fx + s.vz * fz, sideV = s.vx * rx + s.vz * rz;
   let ax = fx * (input.fwd || 0) * C.thrust + rx * (input.side || 0) * C.thrust * 0.6, az = fz * (input.fwd || 0) * C.thrust + rz * (input.side || 0) * C.thrust * 0.6;

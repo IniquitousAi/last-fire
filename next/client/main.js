@@ -1,37 +1,37 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=151';
-import { Ambience } from './ambience.js?v=151';
-import { Camp, BOARD } from './camp.js?v=151';
-import { Guide } from './guide.js?v=151';
-import { buildSites } from './earthsite.js?v=151';
-import { Truck } from './truck.js?v=151';
-import { ShipView } from './shipview.js?v=151';
-import { Crew } from './crew.js?v=151';
-import { Hands } from './hands.js?v=151';
-import { FpRig } from './fprig.js?v=151';
-import { farStep } from './farsound.js?v=151';
-import { Wrist } from './wrist.js?v=151';
-import { FireCore } from './firecore.js?v=151';
+import * as C from '../core/game.js?v=152';
+import { Ambience } from './ambience.js?v=152';
+import { Camp, BOARD } from './camp.js?v=152';
+import { Guide } from './guide.js?v=152';
+import { buildSites } from './earthsite.js?v=152';
+import { Truck } from './truck.js?v=152';
+import { ShipView } from './shipview.js?v=152';
+import { Crew } from './crew.js?v=152';
+import { Hands } from './hands.js?v=152';
+import { FpRig } from './fprig.js?v=152';
+import { farStep } from './farsound.js?v=152';
+import { Wrist } from './wrist.js?v=152';
+import { FireCore } from './firecore.js?v=152';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=151';
-import { FriendVoice } from './friendvoice.js?v=151';
-import { crewFrom } from '../core/habits.js?v=151';
-import { HudLook } from './hudlook.js?v=151';
-import { applyLook } from './looks.js?v=151';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=151';
-import { sound, GUNS } from '../../src/combat.js?v=151';
-import { FX } from '../../src/fx.js?v=151';
+import { think as friendThink } from './friend.js?v=152';
+import { FriendVoice } from './friendvoice.js?v=152';
+import { crewFrom } from '../core/habits.js?v=152';
+import { HudLook } from './hudlook.js?v=152';
+import { applyLook } from './looks.js?v=152';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=152';
+import { sound, GUNS } from '../../src/combat.js?v=152';
+import { FX } from '../../src/fx.js?v=152';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 151;   // (this copy's version; ./version.json says the newest)
+const BUILD = 152;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -627,7 +627,7 @@ function frame(now) {
   if (models.fp_rifle && !fpRig) { fpRig = new FpRig(THREE, vcam, models.fp_rifle); if (DEMO) window.__fp = fpRig; } if (fpRig) { const on = !!(gm && gm.visible && gunKey === 'ar'); if (on) gm.visible = false; fpRig.update(dt, on, ads, kick); }
   if (models.fp_rail && !railRig) railRig = new FpRig(THREE, vcam, models.fp_rail); if (railRig) { const on = !!(gm && gm.visible && gunKey === 'rail'); if (on) gm.visible = false; railRig.update(dt, on, ads, kick, railC); }   /* (the rail sniper is only ever the Blender rig) */   /* (?fp: the Blender rifle stands in for the M4 and its arms) */
   hands.update(dt, { reloading: reloadT > 0 ? 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)) : -1, ads, kick, moving: onGround ? Math.min(1, vel.length() / 4.6) : 0, gun: gunKey });   /* (the arms: hands.js, the reload as a real hand motion; it hides itself when the gun is hidden) */
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) ship.update(dt, keys, me, g, isHost()); wrist.update(dt); { const k = Math.max(Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85, 0.75 * grade.uniforms.uS.value); if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) { if (ship.on && padOn) { const gp = [...navigator.getGamepads()].find(x => x && x.connected), tv = i => gp && gp.buttons[i] ? gp.buttons[i].value : 0; Object.assign(keys, { KeyW: padMove.f > 0.3, KeyS: padMove.f < -0.3, KeyA: padMove.s < -0.3, KeyD: padMove.s > 0.3, Space: tv(7) > 0.3, ShiftLeft: tv(6) > 0.3 }); frame.padShip = true; } else if (frame.padShip) { frame.padShip = false; for (const k of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft']) keys[k] = false; } ship.update(dt, keys, me, g, isHost()); }   /* (flying on the pad: left stick flies and turns, RT climbs, LT descends) */ wrist.update(dt); { const k = Math.max(Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85, 0.75 * grade.uniforms.uS.value); if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free; { const o = free ? 0.4 : Math.max(0, 1 - ads * 2.5); if (Math.abs(o - (frame.xo ?? -1)) > 0.02) { frame.xo = o; $('cross').style.opacity = o.toFixed(2); } }   /* (one reticle: dim on standby, gone by 40% into the sights, where the gun's own sight takes over) */
   { const ph = C.phase(g.clock), nt = ph === 'night' ? 1 : ph === 'dusk' || ph === 'dawn' ? 0.5 : 0, onE = C.onEarth(me);   // (far sounds: each from a real shape, wreck or part out there)
     const causes = [...g.hollow.filter(k => !k.dead && !!k.earth === onE).map(k => ({ x: k.x, z: k.z, dark: true })), ...(onE ? [...((g.earth && g.earth.wrecks) || []), ...(g.parts || [])].map(w => ({ x: w.x, z: w.z })) : [])];
