@@ -1,7 +1,7 @@
 // Parts lying out on Earth, and the truck at the bay in camp, drawn as it is really fitted (gray boxes first, PLAN-SPACE.md: real models
 // come once his hands say the building feels right). Each part has a shape you can read from far away, so you know what you found.
 import * as THREE from 'three';
-import { BAY, PARTS } from '../core/game.js?v=47';
+import { BAY, PARTS } from '../core/game.js?v=49';
 
 const steel = new THREE.MeshStandardMaterial({ color: 0x3a3f4b, roughness: 0.5, metalness: 0.6 }), rubber = new THREE.MeshStandardMaterial({ color: 0x15161b, roughness: 0.95 });
 const cell = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0x39e6ff, emissiveIntensity: 1.2 }), body = new THREE.MeshStandardMaterial({ color: 0x2b303a, roughness: 0.7, metalness: 0.35 });

@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=47';
-import { Ambience } from './ambience.js?v=47';
-import { Camp, BOARD } from './camp.js?v=47';
-import { Guide } from './guide.js?v=47';
-import { buildSites } from './earthsite.js?v=47';
-import { Truck } from './truck.js?v=47';
-import { Wrist } from './wrist.js?v=47';
-import { think as friendThink } from './friend.js?v=47';
-import { FriendVoice } from './friendvoice.js?v=47';
-import { crewFrom } from '../core/habits.js?v=47';
-import { HudLook } from './hudlook.js?v=47';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=47';
-import { sound, GUNS } from '../../src/combat.js?v=47';
-import { FX } from '../../src/fx.js?v=47';
+import * as C from '../core/game.js?v=49';
+import { Ambience } from './ambience.js?v=49';
+import { Camp, BOARD } from './camp.js?v=49';
+import { Guide } from './guide.js?v=49';
+import { buildSites } from './earthsite.js?v=49';
+import { Truck } from './truck.js?v=49';
+import { Wrist } from './wrist.js?v=49';
+import { think as friendThink } from './friend.js?v=49';
+import { FriendVoice } from './friendvoice.js?v=49';
+import { crewFrom } from '../core/habits.js?v=49';
+import { HudLook } from './hudlook.js?v=49';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=49';
+import { sound, GUNS } from '../../src/combat.js?v=49';
+import { FX } from '../../src/fx.js?v=49';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 47;   // (this copy's version; ./version.json says the newest)
+const BUILD = 49;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -113,7 +113,7 @@ function updateTiles() {   // (two tiles a frame at most, nearest first; tiles p
 // ---------------------------------------------------------------- models (every one CC0: assets/CREDITS.txt)
 const loader = new GLTFLoader(), models = {};
 const load = (k, url) => loader.loadAsync('../assets/' + url).then(r => { models[k] = r; }).catch(e => console.warn('model', k, e));
-const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
+const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 function darken(root, eyes) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
   root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; const m = o.material = o.material.clone(); if (/Eye_White|Secondary/.test(m.name)) { m.color.setHex(eyes); m.emissive = new THREE.Color(eyes); m.emissiveIntensity = 2.4; } else { m.color.setHex(0x0b0b14); m.emissive = new THREE.Color(0x10142a); m.emissiveIntensity = 0.35; m.roughness = 0.9; } /* (a faint cold rim so a shape reads against the dark) */ });
 }
@@ -200,16 +200,16 @@ function drawMotes() { let i = 0; for (const m of g.motes) { if (i >= MOTES) bre
 // ---------------------------------------------------------------- what you hold: the gun in its own pass (never through a wall)
 const vscene = new THREE.Scene(), vcam = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.01, 10), view = new THREE.Group(); vcam.add(view); vscene.add(vcam);
 const vhemi = new THREE.HemisphereLight(0xc8d4f0, 0x1a1c26, 1); vscene.add(vhemi); const vsun = new THREE.DirectionalLight(0xffffff, 0.8); vsun.position.set(0.6, 1, 0.8); vscene.add(vsun);
-const held = {}; let gunKey = 'pistol', ammo = { pistol: { mag: 8, res: 72 }, ar: { mag: 30, res: 210 } }, reloadT = 0, shotCd = 0, kick = 0, ads = 0;
+const held = {}; let gunKey = 'pistol', ammo = { pistol: { mag: 8, res: 72 }, ar: { mag: 30, res: 210 }, shotgun: { mag: 2, res: 40 }, lmg: { mag: 45, res: 270 } }, reloadT = 0, shotCd = 0, kick = 0, ads = 0;
 function prepGun(k) { const src = models[k]; if (!src) return; const inner = src.scene.clone(), holder = new THREE.Group(); inner.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); if (/Wood/.test(o.material.name)) o.material.color.setHex(0x1d1f25); if (/Metal/.test(o.material.name)) { o.material.metalness = 0.25; o.material.color.multiplyScalar(1.35); } } });
-  inner.rotation.y = Math.PI / 2; holder.add(inner); let b = new THREE.Box3().setFromObject(holder), s = b.getSize(new THREE.Vector3()); inner.scale.multiplyScalar(({ pistol: 0.24, ar: 0.82 })[k] / s.z); b = new THREE.Box3().setFromObject(holder); const c = b.getCenter(new THREE.Vector3()); inner.position.sub(c);
+  inner.rotation.y = Math.PI / 2; holder.add(inner); let b = new THREE.Box3().setFromObject(holder), s = b.getSize(new THREE.Vector3()); inner.scale.multiplyScalar(({ pistol: 0.24, ar: 0.82, shotgun: 0.86, lmg: 0.86 })[k] / s.z); b = new THREE.Box3().setFromObject(holder); const c = b.getCenter(new THREE.Vector3()); inner.position.sub(c);
   b = new THREE.Box3().setFromObject(holder); holder.userData = { len: b.max.z - b.min.z, top: b.max.y, muzzle: new THREE.Vector3(0, b.max.y * 0.35, b.min.z) }; holder.visible = false; view.add(holder); held[k] = holder; }
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
 addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
-  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
+  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
@@ -244,12 +244,17 @@ function shoot() {
   const G = GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || reloadT > 0 || me.ember) return;
   if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; }
   a.mag--; shotCd = 60 / G.rpm; sound.shot(gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6);
-  const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(), sp = G.spread * (ads > 0.5 ? 0.3 : 1); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize();
-  const lit = isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0);   // (every fourth round is a tracer: it lights its path)
-  const h = C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), end = o.clone().addScaledVector(d, h ? h.t : 60), gm = held[gunKey];
-  if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); const a = camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())); fx.tracer(a, end); if (lit) burn(a, o.clone().addScaledVector(d, h ? h.t : C.TRACER.len)); }
-  if (h) { if ((h.part ? h.k.sb : h.k.sh) > 0) fx.spark(end); else fx.ichor(end, h.mult > 1); }
-  if (isHost()) { if (h) showHit(C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, me.id), h.mult > 1); } else net.send({ t: 'shot', g: gunKey, o: [o.x, o.y, o.z], d: [d.x, d.y, d.z] });
+  const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), sp = G.spread * (ads > 0.5 ? 0.3 : 1), ds = [], gm = held[gunKey]; let end = null;
+  if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
+  const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
+  for (let n = 0; n < (G.pellets || 1); n++) {   // (a shotgun throws a handful of pellets: each is its own line through the air)
+    const d = look(); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize(); ds.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
+    const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
+    const h = C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), e = o.clone().addScaledVector(d, h ? h.t : 60); if (!end) end = e;
+    fx.tracer(muzzle, e); if (lit) burn(muzzle, o.clone().addScaledVector(d, h ? h.t : C.TRACER.len));
+    if (h) { if ((h.part ? h.k.sb : h.k.sh) > 0) fx.spark(e); else fx.ichor(e, h.mult > 1); if (isHost()) showHit(C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, me.id), h.mult > 1); }
+  }
+  if (!isHost()) net.send({ t: 'shot', g: gunKey, o: [o.x, o.y, o.z], d: ds[0], ds });
   if (net) net.send({ t: 'bang', g: gunKey, x: +me.x.toFixed(2), y: +(me.y + 1.5).toFixed(2), z: +me.z.toFixed(2), e: [+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)] });
   me.pitch = Math.min(1.55, me.pitch + G.recoil * 0.4); me.yaw += (Math.random() - 0.5) * G.recoil * 0.3;
 }
@@ -464,8 +469,9 @@ function onNet(m, from) {
     }
     if (m.t === 'shot') {   // (the host traces it in its own world with the gun's own damage, no faster than the gun fires)
       const G = GUNS[m.g]; if (!G || p.ember || !Array.isArray(m.o) || !Array.isArray(m.d) || ![...m.o, ...m.d].every(fin) || Math.hypot(m.o[0] - p.x, m.o[2] - p.z) > 3 || !bucket(p, 'shots', G.rpm / 60 + 1, 4)) return;
-      const L = Math.hypot(m.d[0], m.d[1], m.d[2]); if (L < 0.5) return; C.fired(g, p, m.o[0], m.o[2], m.d[0] / L, m.d[2] / L); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], m.d[0] / L, m.d[1] / L, m.d[2] / L, 80);
-      if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } return;
+      const dirs = (Array.isArray(m.ds) ? m.ds : [m.d]).slice(0, G.pellets || 1).filter(d => Array.isArray(d) && d.length === 3 && d.every(fin));
+      dirs.forEach((d, n) => { const L = Math.hypot(d[0], d[1], d[2]); if (L < 0.5) return; if (n === 0) C.fired(g, p, m.o[0], m.o[2], d[0] / L, d[2] / L); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 80);
+        if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } }); return;
     }
     if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; heardShot(m); net.relay(m, from); return; }
@@ -549,7 +555,7 @@ async function begin(seed, id, saved = null) {
       g.hollow.push({ id: g.nextId++, kind: 'walker', x, z, y: g.land(x, z), yaw: 0, hp: K.hp, max: K.hp, sh: 0, sb: 0, cd: 0, dead: false, speed: 1.1, staged: true }); } });
   setTimeout(() => guide.start(), 1200);
   mode = 'play'; $('menu').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
-  await ready; prepGun('pistol'); prepGun('ar');
+  await ready; prepGun('pistol'); prepGun('ar'); prepGun('shotgun'); prepGun('lmg');
 }
 // ---------------------------------------------------------------- your worlds: saved in this browser, every 20 seconds and when you leave
 const WKEY = 'lastfire2-worlds'; let worldId = null;
