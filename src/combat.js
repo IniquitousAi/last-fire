@@ -123,12 +123,12 @@ function signTexture(lines, color) {   // (drawn once on a canvas)
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 export function makeStation(kind, key, x, y, z, yaw) {
-  const isGun = kind === 'gun' || kind === 'kit', item = kind === 'kit' ? { name: 'Sentry', price: 2500 } : isGun ? GUNS[key] : PERKS[key], color = kind === 'kit' ? '#b9a8ff' : isGun ? '#39e6ff' : '#ff6fb1';
+  const isGun = kind === 'gun' || kind === 'kit' || kind === 'box', item = kind === 'box' ? { name: 'MYSTERY BOX', price: 950 } : kind === 'kit' ? { name: 'Sentry', price: 2500 } : isGun ? GUNS[key] : PERKS[key], color = kind === 'box' ? '#ff6fb1' : kind === 'kit' ? '#b9a8ff' : isGun ? '#39e6ff' : '#ff6fb1';
   const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = yaw;
   const post = new THREE.Mesh(new THREE.BoxGeometry(isGun ? 1.6 : 1.1, isGun ? 1.0 : 2.0, 0.3), new THREE.MeshStandardMaterial({ color: isGun ? 0x2a2b33 : 0x1d1424, roughness: 0.7, metalness: 0.3 }));
   post.position.y = isGun ? 1.4 : 1.0; post.castShadow = true; post.receiveShadow = true;
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(isGun ? 1.5 : 1.0, isGun ? 0.75 : 0.5), new THREE.MeshBasicMaterial({ map: signTexture([item.name, String(item.price)], color) }));
   sign.position.set(0, isGun ? 1.4 : 1.5, 0.16); g.add(post, sign);
-  g.userData = { kind, key, price: item.price, label: kind === 'kit' ? `a Sentry for ${item.price}: it shoots on its own (carry 2)` : isGun ? `${item.name} for ${item.price} (ammo ${Math.floor(item.price / 2)})` : `${item.name} for ${item.price}: ${item.says}` };
+  g.userData = { kind, key, price: item.price, label: kind === 'box' ? 'the Mystery Box for 950: a random gun (the Minigun is rare)' : kind === 'kit' ? `a Sentry for ${item.price}: it shoots on its own (carry 2)` : isGun ? `${item.name} for ${item.price} (ammo ${Math.floor(item.price / 2)})` : `${item.name} for ${item.price}: ${item.says}` };
   return g;
 }

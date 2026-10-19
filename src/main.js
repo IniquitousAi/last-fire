@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=6';
-import { Hollow, KINDS } from './hollow.js?v=6';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=6';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=6';
-import { FX } from './fx.js?v=6';
-import { modelsReady, model, gunModel } from './models.js?v=6';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=7';
+import { Hollow, KINDS } from './hollow.js?v=7';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=7';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=7';
+import { FX } from './fx.js?v=7';
+import { modelsReady, model, gunModel } from './models.js?v=7';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -234,14 +234,22 @@ function killFeed(pid, head, kind) {
   e.append(who, document.createTextNode(head ? '  headshot  ' : '  killed  '), Object.assign(document.createElement('i'), { textContent: { hollow: 'a Hollow', shade: 'a Runner', warden: 'a Giant', snuffer: 'a Shard' }[kind] || 'a Hollow' }));
   const f = $('feed'); f.prepend(e); while (f.children.length > 5) f.lastChild.remove(); setTimeout(() => e.remove(), 4500);
 }
+function giveGun(k) { const have = me.guns.indexOf(k); const at = have >= 0 ? have : me.guns[1] === null ? 1 : (SLOTS[slot] === 'gun2' ? 1 : 0); me.guns[at] = k; me.ammo[k] = { mag: GUNS[k].mag, res: GUNS[k].reserve }; slot = at; sound.buy(); }   // (a new gun takes the empty hand, or the one you hold)
+let boxT = 0;
 function interact() {   // F: buy what you look at
   if (!prompt || !prompt.station) return; const st = prompt.station.userData;
+  if (st.kind === 'box') {   // (the mystery box: 950 for a random gun after a short roll; the minigun is the rare one)
+    if (boxT > 0) return; if (me.points < 950) return say('Not enough points.'); me.points -= 950; boxT = 2.4; sound.buy();
+    const roll = Math.random(), pool = ['smg', 'shotgun', 'ar', 'rifle', 'lmg'], got = roll < 0.08 ? 'minigun' : pool[Math.floor(Math.random() * pool.length)];
+    const tick = setInterval(() => { if (boxT <= 0) return clearInterval(tick); sound.click(); say('The box: ' + GUNS[pool[Math.floor(Math.random() * pool.length)]].name + '...', 0.3); }, 160);
+    setTimeout(() => { clearInterval(tick); giveGun(got); say(got === 'minigun' ? 'THE BOX GAVE YOU THE MINIGUN.' : `The box gave you the ${GUNS[got].name}.`, 3); }, 2400); return;
+  }
   if (st.kind === 'kit') { if (inv.turret >= 2) return say('You can carry 2 sentries.'); if (me.points < st.price) return say('Not enough points.'); me.points -= st.price; inv.turret++; slot = SLOTS.indexOf('turret'); sound.buy(); return say('Bought a sentry. Right click to place it.'); }
   if (st.kind === 'gun') {
     const owned = me.guns.indexOf(st.key);
     if (owned >= 0) { const cost = Math.floor(st.price / 2); if (me.points < cost) return say('Not enough points.'); me.points -= cost; me.ammo[st.key].res = GUNS[st.key].reserve; sound.buy(); say(`Ammo for the ${GUNS[st.key].name}.`); return; }
     if (me.points < st.price) return say('Not enough points.');
-    me.points -= st.price; const at = me.guns[1] === null ? 1 : (SLOTS[slot] === 'gun2' ? 1 : 0); me.guns[at] = st.key; me.ammo[st.key] = { mag: GUNS[st.key].mag, res: GUNS[st.key].reserve }; slot = at; sound.buy(); say(`Bought the ${GUNS[st.key].name}.`);
+    me.points -= st.price; giveGun(st.key); say(`Bought the ${GUNS[st.key].name}.`);
   } else {
     if (me.perks.has(st.key)) return say('You already have it.'); if (me.perks.size >= 3) return say('Three perks at most.');
     if (me.points < st.price) return say('Not enough points.'); me.points -= st.price; me.perks.add(st.key); sound.buy(); say(`${PERKS[st.key].name}: ${PERKS[st.key].says}.`);
@@ -249,7 +257,7 @@ function interact() {   // F: buy what you look at
 }
 function placeStations(f) {   // the base: wall-buys and perk machines in a ring round the first fire (the same for every player: built from the fire)
   if (stations.length || !world) return;
-  const ring = [['gun', 'smg'], ['gun', 'shotgun'], ['gun', 'ar'], ['perk', 'iron'], ['gun', 'rifle'], ['kit', 'turret'], ['gun', 'lmg'], ['perk', 'quick'], ['gun', 'minigun'], ['perk', 'fleet']];
+  const ring = [['gun', 'smg'], ['gun', 'shotgun'], ['gun', 'ar'], ['perk', 'iron'], ['gun', 'rifle'], ['kit', 'turret'], ['gun', 'lmg'], ['perk', 'quick'], ['gun', 'minigun'], ['perk', 'fleet'], ['box', 'box']];
   ring.forEach(([kind, key], i) => { const a = i / ring.length * Math.PI * 2, x = f.x + Math.cos(a) * 6, z = f.z + Math.sin(a) * 6, y = world.height(Math.floor(x), Math.floor(z));
     const st = makeStation(kind, key, x, y, z, Math.atan2(f.x - x, f.z - z)); scene.add(st); stations.push(st); });
 }
@@ -479,7 +487,7 @@ function frame(now) {
   const downed = [...others.values()].find(p => p.down && !p.dead && Math.hypot(p.x - me.x, p.z - me.z) < 2.4);
   if (downed && !me.down) { prompt = { text: `Hold F to revive ${downed.name}` }; if (keys.KeyF) { reviveT += dt; prompt.text = `Reviving ${downed.name}: ${Math.min(100, Math.round(reviveT / 3 * 100))}%`; if (reviveT > 3) { reviveT = 0; net.send({ t: 'revive', to: downed.pid }); say(`Revived ${downed.name}.`); } } else reviveT = 0; }
   else { const d = lookDir(); for (const st of stations) { const dx = st.position.x - me.x, dz = st.position.z - me.z, dist = Math.hypot(dx, dz); if (dist < 2.6 && (dx * d.x + dz * d.z) / dist > 0.55) { const u = st.userData, own = u.kind === 'gun' && me.guns.includes(u.key); prompt = { station: st, text: own ? `Press F: ammo for the ${GUNS[u.key].name} (${Math.floor(u.price / 2)})` : `Press F: ${u.label}` }; } } }
-  shotCd = Math.max(0, shotCd - dt);
+  shotCd = Math.max(0, shotCd - dt); boxT = Math.max(0, boxT - dt);
   // the Hollow: the host spawns and moves them; everyone else draws what it is sent
   if (!net || net.host) {
     const night = clock > NIGHT_AT + 0.02, long = isLong(day), want = night ? Math.min(long ? 150 : 40 + day * 6, 200) * (1 + others.size * 0.35) : 0;   // (more players, more of them, as in Zombies)
