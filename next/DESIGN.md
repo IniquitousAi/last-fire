@@ -59,3 +59,11 @@ So the code is split from the first commit, like The Last Light's Core and Sim:
 | Never lost, the world shows you | No tutorials and no quest markers: the light itself shows what's known, and the frontier always has something glowing just past it. |
 | Infinite growth, nobody punished | Power, reach, options and impact all grow forever on curves of diminishing returns, tuned by the robots so grinders and casuals both progress. |
 | Dark with humor; either solo or crew | Serious world, funny crew. Solo and a crew are both full games, scaled by how many are on. |
+
+## Lessons from the Simulator Reactor (his "looks like a professional did it", 2026-10-19)
+Measured on Vigil's /reactor: the big readings are JetBrains Mono at weight 900, 45 px, each in one meaning color; body text is plain Inter;
+status sits in small bordered chips ("CPU DIE: 58.0 C", label quiet, value bright); cards are near-black with a hairline border whose color says
+what the card is, and the one that matters most gets the strongest border; a deep purple haze at the screen edges is the mystery behind it.
+His words: bold and confident first, intelligence and mysterious singularity vibes only as accents. For Last Fire: heavy numbers and chips for
+what the suit reads (light, ammo, odds, the ship's speed), the thin Barlow kept for the small notes. Note the Reactor's numbers glow; taste rule 3
+bans glow on UI, so the game takes its weight and color, not its glow.
