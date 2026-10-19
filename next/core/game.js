@@ -3,6 +3,8 @@ import { SHIP, makeShip, flyShip } from './ship.js';
 export { SHIP };
 import { labelFor } from './knowledge.js';
 import { riftStep, riftLight, inRift, RIFT } from './rift.js';
+import { beams } from './optics.js';
+export { OPTIC, placeOptic, turnOptic, beams as opticBeams } from './optics.js';
 export { RIFT, inRift, touchConsole, riftSize } from './rift.js';
 import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHaveLantern, morale, CAMP } from './camp.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
@@ -200,6 +202,7 @@ export function lightAt(g, x, z, noGlow, noShadow) {   // (noShadow: the light a
   for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r && 1 - d / r > L && !sh(n.x, n.z, x, z)) L = 1 - d / r; }
   if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8);
     if (p.torch && !p.ember && d < TORCH.r && d > 0.01) { const along = ((x - p.x) * -Math.sin(p.yaw) + (z - p.z) * -Math.cos(p.yaw)) / d; if (along > TORCH.cos && TORCH.s * (1 - d / TORCH.r) > L && !sh(p.x, p.z, x, z)) L = TORCH.s * (1 - d / TORCH.r); } }   /* (a flashlight beam is light: what it touches commits to a shape) */
+  if (!noGlow && g.optics && g.optics.length) for (const b of beams(g, TORCH)) { const d = Math.hypot(x - b.x, z - b.z); if (d < b.r && d > 0.01 && ((x - b.x) * b.dx + (z - b.z) * b.dz) / d > b.cos && b.s * (1 - d / b.r) > L && !sh(b.x, b.z, x, z)) L = b.s * (1 - d / b.r); }   // (mirrors, lenses and prisms bend the beams: optics.js)
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !sh(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
   if (z > 8500) L = Math.max(L, riftLight(g, x, z));
   if (g.flares) for (const f of g.flares) { const d = Math.hypot(f.x - x, f.z - z); if (d < FLARE.r) L = Math.max(L, (1 - d / FLARE.r) * Math.min(1, f.t / 2)); }
