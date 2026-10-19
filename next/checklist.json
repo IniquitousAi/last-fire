@@ -235,6 +235,21 @@
    "s": "later",
    "idea": "Plan: max the browser game with the crew until the feedback runs out, then Godot, then Steam",
    "where": "the rules (core/) are already separate, so the move is a port, not a rewrite"
+  },
+  {
+   "s": "talk",
+   "idea": "The odds are known by whoever cares enough to check (Arcane vibes)",
+   "where": "lore 8"
+  },
+  {
+   "s": "talk",
+   "idea": "Tech scales from primitive to futuristic (wrist screens)",
+   "where": "lore 8"
+  },
+  {
+   "s": "talk",
+   "idea": "The game grows in eras, each deeper into the lore, launched when sims plus real feedback (weighted more) say so",
+   "where": "lore 8"
   }
  ]
 }
