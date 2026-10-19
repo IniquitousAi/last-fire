@@ -50,7 +50,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-42. **Bank point is unmeasurable while the fire auto-banks** (found by the round trip: everyone 'banks at' about 2.5, because walking into the circle banks at once): record instead how far from the fire a player carries light before turning home; that is the real overload habit. (added when item 41 finished)
+
+43. **The friend says what you say** (his ask in item 7: 'says some of the same things that he says'): when a player types in Tab feedback or chat, keep their short lines (with their yes) as the learned friend's own words, used at the matching moments. (added when item 42 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -82,3 +83,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 39, the visor's motion sense on the compass (v87).
 - Item 40, hit stop and the crack of light (v88); pointer lock refusals caught (v89).
 - Item 41, the learned friend is faithful by a record-to-record round trip (v90, v91).
+- Item 42, the carried-load habit, used once measured (v92).
