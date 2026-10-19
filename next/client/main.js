@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=64';
-import { Ambience } from './ambience.js?v=64';
-import { Camp, BOARD } from './camp.js?v=64';
-import { Guide } from './guide.js?v=64';
-import { buildSites } from './earthsite.js?v=64';
-import { Truck } from './truck.js?v=64';
-import { Wrist } from './wrist.js?v=64';
-import { think as friendThink } from './friend.js?v=64';
-import { FriendVoice } from './friendvoice.js?v=64';
-import { crewFrom } from '../core/habits.js?v=64';
-import { HudLook } from './hudlook.js?v=64';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=64';
-import { sound, GUNS } from '../../src/combat.js?v=64';
-import { FX } from '../../src/fx.js?v=64';
+import * as C from '../core/game.js?v=65';
+import { Ambience } from './ambience.js?v=65';
+import { Camp, BOARD } from './camp.js?v=65';
+import { Guide } from './guide.js?v=65';
+import { buildSites } from './earthsite.js?v=65';
+import { Truck } from './truck.js?v=65';
+import { Wrist } from './wrist.js?v=65';
+import { think as friendThink } from './friend.js?v=65';
+import { FriendVoice } from './friendvoice.js?v=65';
+import { crewFrom } from '../core/habits.js?v=65';
+import { HudLook } from './hudlook.js?v=65';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=65';
+import { sound, GUNS } from '../../src/combat.js?v=65';
+import { FX } from '../../src/fx.js?v=65';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 64;   // (this copy's version; ./version.json says the newest)
+const BUILD = 65;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -137,7 +137,7 @@ function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near 
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
 const seen = new Map();
-const LOOK = { walker: ['wraith', 1.6, 0xb48cff], runner: ['clawed', 1.0, 0xff4fa0], giant: ['wraith', 3.4, 0xff2b40], watcher: ['wraith', 2.4, 0xffffff], face: ['clawed', 1.1, 0xff4fd8] };   // (eye color = the mask's own edge color)
+const LOOK = { walker: ['wraith', 1.6, 0xb48cff], runner: ['wraith', 1.1, 0xff4fa0], giant: ['wraith', 3.4, 0xff2b40], watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
 function drawHollow(dt) {
   const alive = new Set();
   for (const k of g.hollow) {
@@ -146,6 +146,8 @@ function drawHollow(dt) {
       if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0x9fb6ff); q.material.emissiveIntensity = 0.5; } }); v = { o }; }
       else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; if (!src.box) { src.scene.updateMatrixWorld(true); src.box = new THREE.Box3().setFromObject(src.scene); }   /* (measured on the original: a copy of an animated model measures wrong, the camp people's old bug) */
         const o = skClone(src.scene); darken(o, eyes, k.kind); const b = src.box, s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
+        if (k.kind === 'runner') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.35, sc * 0.75, sc * 1.6); }   // (the runner: low and long, built to close distance)
+        if (k.kind === 'face') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.5, sc * 1.2, sc * 0.45); }   // (the face: flat and wide, the way it came out of the wall)
         if (k.kind === 'watcher') { const sc = size * 1.6 / s.y; o.scale.set(sc * 0.6, sc, sc * 0.6);   // (the tall one: stretched thin, a wide-brimmed hat, nothing else you can name)
           const hatM = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 1 }), brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.03, 24), hatM), crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.42, 20), hatM);
           const hat = new THREE.Group(); crown.position.y = 0.22; hat.add(brim, crown); hat.scale.set(1 / (sc * 0.6), 1 / sc, 1 / (sc * 0.6)); hat.position.y = b.max.y - 0.05 * s.y; o.add(hat); }
