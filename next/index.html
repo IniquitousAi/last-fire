@@ -13,9 +13,9 @@
   * { box-sizing: border-box; } [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--ink); font: 400 17px/1.35 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; user-select: none; }
   canvas { display: block; }
-  .panel { position: relative; background: #05060bf2; border-radius: 12px; padding: 24px 26px 20px; }
-  .panel::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; background: linear-gradient(90deg, #29e6ff, #8f7bff, #ff5fd2);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  /* every panel is visor glass (his BOOT pick and UI rule): dark, faint scanlines, corner marks, cyan on the left, pink on the right, no rounded box */
+  .panel { position: relative; background: repeating-linear-gradient(0deg, rgba(57,230,255,.035) 0 1px, transparent 1px 4px), rgba(3,6,12,.9); border-radius: 0; padding: 24px 26px 20px; }
+  .panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#39e6ff, #39e6ff) left top / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) left top / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 1.5px 22px no-repeat, linear-gradient(#39e6ff, #39e6ff) left bottom / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) left bottom / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 1.5px 22px no-repeat; }
   .key { display: block; width: 100%; margin: 0 0 10px; padding: 11px 14px 9px; font: 500 19px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0e0f17; border: 1px solid #000; border-radius: 9px; cursor: pointer; text-align: left; box-shadow: 0 0 0 1px #2c2f4a inset; transition: transform .1s; }
   .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
   .key:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--cyan) inset; } .key:active { transform: translateY(1px); }
@@ -25,7 +25,7 @@
   h1 { margin: 0 0 2px; font: 500 56px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; } .tag { color: var(--meta); margin: 0 0 18px; font-size: 18px; }
   #name { width: 100%; margin-bottom: 10px; font: 500 22px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0b0c14; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; outline: none; }
   .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--cyan); font-weight: 500; }
-  #paused { background: #000000a0; } #paused .panel { width: min(420px, 100%); }
+  #paused { background: radial-gradient(circle at 50% 50%, #00000060, #000000c0); } #paused .panel { width: min(420px, 100%); }
   label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--cyan); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #39e6ff; }
   /* the HUD */
   #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #0009; pointer-events: none; }
@@ -119,6 +119,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--cyan)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=42"></script>
+<script type="module" src="./client/main.js?v=43"></script>
 </body>
 </html>
