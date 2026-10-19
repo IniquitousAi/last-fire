@@ -1,46 +1,47 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=178';
-import { Ambience } from './ambience.js?v=178';
-import { Camp, BOARD } from './camp.js?v=178';
-import { Guide } from './guide.js?v=178';
-import { buildSites } from './earthsite.js?v=178';
-import { RiftView, riftGround } from './rift.js?v=178';
-import { FogBank } from './fogbank.js?v=178';
-import { Truck } from './truck.js?v=178';
-import { ShipView } from './shipview.js?v=178';
-import { Crew } from './crew.js?v=178';
-import { Hands } from './hands.js?v=178';
-import { FpRig } from './fprig.js?v=178';
-import { farStep } from './farsound.js?v=178';
-import { OpticsView } from './optics.js?v=178';
-import { Wrist } from './wrist.js?v=178';
-import { FireCore } from './firecore.js?v=178';
+import * as C from '../core/game.js?v=179';
+import { Ambience } from './ambience.js?v=179';
+import { Camp, BOARD } from './camp.js?v=179';
+import { Guide } from './guide.js?v=179';
+import { buildSites } from './earthsite.js?v=179';
+import { RiftView, riftGround } from './rift.js?v=179';
+import { FogBank } from './fogbank.js?v=179';
+import { Truck } from './truck.js?v=179';
+import { ShipView } from './shipview.js?v=179';
+import { Crew } from './crew.js?v=179';
+import { Hands } from './hands.js?v=179';
+import { FpRig } from './fprig.js?v=179';
+import { farStep } from './farsound.js?v=179';
+import { OpticsView } from './optics.js?v=179';
+import { Wrist } from './wrist.js?v=179';
+import { FireCore } from './firecore.js?v=179';
+import { startEars } from './ears.js?v=179';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=178';
-import { FriendVoice } from './friendvoice.js?v=178';
-import { crewFrom } from '../core/habits.js?v=178';
-import { HudLook } from './hudlook.js?v=178';
-import { UI } from './uikit.js?v=178';
-import { Rain } from './rain.js?v=178';
-import { Immersion } from './immersion.js?v=178';
-import { codexHtml } from './codex.js?v=178';
-import { VisorRain } from './visor.js?v=178';
-import { applyLook } from './looks.js?v=178';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=178';
-import { sound, GUNS } from '../../src/combat.js?v=178';
-import { FX } from '../../src/fx.js?v=178';
+import { think as friendThink } from './friend.js?v=179';
+import { FriendVoice } from './friendvoice.js?v=179';
+import { crewFrom } from '../core/habits.js?v=179';
+import { HudLook } from './hudlook.js?v=179';
+import { UI } from './uikit.js?v=179';
+import { Rain } from './rain.js?v=179';
+import { Immersion } from './immersion.js?v=179';
+import { codexHtml } from './codex.js?v=179';
+import { VisorRain } from './visor.js?v=179';
+import { applyLook } from './looks.js?v=179';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=179';
+import { sound, GUNS } from '../../src/combat.js?v=179';
+import { FX } from '../../src/fx.js?v=179';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { Creatures } from './creatures.js?v=178';
-import { Impact, smokeHit } from './impact.js?v=178';
+import { Creatures } from './creatures.js?v=179';
+import { Impact, smokeHit } from './impact.js?v=179';
 
 const $ = id => document.getElementById(id);
-const BUILD = 178;   // (this copy's version; ./version.json says the newest)
+const BUILD = 179;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true, moveEras: false };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -1012,5 +1013,6 @@ $('join').onclick = () => { myName(); sound.wake(); const code = cleanCode($('co
 function drawJoinAgain() { const c = SET.lastJoin; if (c && c.length === CODE_LEN && !$('code').value) { $('code').value = c; $('menuNote').textContent = 'Your crew room is filled in: click JOIN.'; } }
 function readInvite() { const c = cleanCode((location.hash.match(/join=([A-Za-z]+)/) || [])[1]); if (c.length === CODE_LEN && mode === 'menu') { $('code').value = c; $('menuNote').textContent = `Your friend's room ${c} is filled in: type your name, then click JOIN.`; } }
 readInvite(); drawJoinAgain(); addEventListener('hashchange', readInvite);
+addEventListener('pointerdown', () => startEars(BUILD), { once: true });   // (his voice while he plays reaches Claude: only on his own PC, see ears.js)
 requestAnimationFrame(frame);
 window.lastfire2 = { get camp() { return camp; }, get wrist() { return wrist; }, get ship() { return ship; }, grade, get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)
