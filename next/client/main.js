@@ -1,37 +1,37 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=158';
-import { Ambience } from './ambience.js?v=158';
-import { Camp, BOARD } from './camp.js?v=158';
-import { Guide } from './guide.js?v=158';
-import { buildSites } from './earthsite.js?v=158';
-import { Truck } from './truck.js?v=158';
-import { ShipView } from './shipview.js?v=158';
-import { Crew } from './crew.js?v=158';
-import { Hands } from './hands.js?v=158';
-import { FpRig } from './fprig.js?v=158';
-import { farStep } from './farsound.js?v=158';
-import { Wrist } from './wrist.js?v=158';
-import { FireCore } from './firecore.js?v=158';
+import * as C from '../core/game.js?v=159';
+import { Ambience } from './ambience.js?v=159';
+import { Camp, BOARD } from './camp.js?v=159';
+import { Guide } from './guide.js?v=159';
+import { buildSites } from './earthsite.js?v=159';
+import { Truck } from './truck.js?v=159';
+import { ShipView } from './shipview.js?v=159';
+import { Crew } from './crew.js?v=159';
+import { Hands } from './hands.js?v=159';
+import { FpRig } from './fprig.js?v=159';
+import { farStep } from './farsound.js?v=159';
+import { Wrist } from './wrist.js?v=159';
+import { FireCore } from './firecore.js?v=159';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=158';
-import { FriendVoice } from './friendvoice.js?v=158';
-import { crewFrom } from '../core/habits.js?v=158';
-import { HudLook } from './hudlook.js?v=158';
-import { applyLook } from './looks.js?v=158';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=158';
-import { sound, GUNS } from '../../src/combat.js?v=158';
-import { FX } from '../../src/fx.js?v=158';
+import { think as friendThink } from './friend.js?v=159';
+import { FriendVoice } from './friendvoice.js?v=159';
+import { crewFrom } from '../core/habits.js?v=159';
+import { HudLook } from './hudlook.js?v=159';
+import { applyLook } from './looks.js?v=159';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=159';
+import { sound, GUNS } from '../../src/combat.js?v=159';
+import { FX } from '../../src/fx.js?v=159';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 158;   // (this copy's version; ./version.json says the newest)
+const BUILD = 159;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -380,9 +380,11 @@ addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
 addEventListener('mousemove', e => { if (!locked() || !me) return; const k = 0.0022 * SET.sens * (1 - ads * (1 - SET.adsSens)); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k * (SET.invertY ? -1 : 1))); });
-addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 1) scan(); if (e.button === 3) sandy(); if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
+addEventListener('mousedown', e => { if (padOn && mode === 'play') { padOn = false; mouse[0] = false; if (!document.pointerLockElement && !panel) renderer.domElement.requestPointerLock(); }   /* (any mouse press takes play back from the pad at once: before, an idle pad kept the fire button and holding left click did nothing; found by the basics gate) */
+  if (!locked()) return; mouse[e.button] = true; if (e.button === 1) scan(); if (e.button === 3) sandy(); if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
 addEventListener('mouseup', e => mouse[e.button] = false);
 addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('keydown', e => { if (e.code === 'Escape' && mode === 'play' && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); if (document.pointerLockElement) document.exitPointerLock(); } });   // (Esc pauses even when the mouse is free, as after playing on the pad)
 document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth, innerHeight); camera.aspect = vcam.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); vcam.updateProjectionMatrix(); });
 function drawPause() {
@@ -411,7 +413,7 @@ function padStep(dt) { const gp = [...(navigator.getGamepads ? navigator.getGame
     let lx = ax(2), ly = ax(3); const m = Math.hypot(lx, ly); if (m > 0) { const c = Math.pow(Math.min(1, m), PAD.curve) / m; lx *= c; ly *= c; }   /* (a curved stick: fine aim near the middle, fast turns at the edge) */
     let k = PAD.look * SET.sens * dt * (1 - ads * (1 - SET.adsSens)); { const d = look(), ey = me.y + eyeH; for (const h of g.hollow) { if (h.dead) continue; const dx = h.x - me.x, dy = h.y + 1.2 - ey, dz = h.z - me.z, L = Math.hypot(dx, dy, dz); if (L < 60 && (dx * d.x + dy * d.y + dz * d.z) / L > PAD.cone) { k *= 1 - PAD.assist; break; } } }   /* (aim assist: slower across a shape) */
     me.yaw -= lx * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - ly * k * (SET.invertY ? -1 : 1)));
-    mouse[0] = (gp.buttons[7] ? gp.buttons[7].value : 0) > 0.3; aimOn = (gp.buttons[6] ? gp.buttons[6].value : 0) > 0.3;
+    if (padOn) { mouse[0] = (gp.buttons[7] ? gp.buttons[7].value : 0) > 0.3; aimOn = (gp.buttons[6] ? gp.buttons[6].value : 0) > 0.3; }
     if (edge(10)) padSprint = !padSprint; const map = { 0: 'Space', 1: 'KeyC', 2: 'KeyR', 4: 'KeyZ', 5: 'KeyG', 11: 'KeyT', 12: 'KeyV', 13: 'KeyE', 14: 'KeyQ', 15: 'KeyF' };
     const dodge = Math.abs(padMove.s) > 0.5 || padMove.f < -0.5; for (const i in map) { if (+i === 1 && dodge && onGround) continue; if (edge(+i)) padKey(map[i], true); if (up(+i)) padKey(map[i], false); }
     if (edge(1) && dodge && onGround) { const k = padMove.s > 0.5 ? 'KeyD' : padMove.s < -0.5 ? 'KeyA' : 'KeyS', was = keys[k]; keys[k] = true; padKey('ShiftLeft', true); padKey('ShiftLeft', false); keys[k] = was; }   /* (B while moving sideways: the dodge, as Shift plus a direction does) */
