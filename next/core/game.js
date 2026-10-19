@@ -344,7 +344,7 @@ function tripClock(g, dt) {
     p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'stranded', p.id]); }
   g.embers = g.embers.filter(e => e.x < 1e8); endTrip(g);
 }
-export const EARTH_DARK = { base: 18, perPlayer: 3, perMinute: 14, every: 0.3 };   // (how hard Earth pushes: picked by sim/drop.mjs --tune from 45 settings, 20 trips each, robots slowed by what they carry: perfect solo back 100%, careful 95%, greedy 65%, tense 0.58 to 0.70)
+export const EARTH_DARK = { base: 18, perPlayer: 3, perMinute: 7, every: 0.3 };   // (how hard Earth pushes: sim/drop.mjs; per minute 14 to 7 on 2026-10-19 brought a perfect player's tension 0.71 to 0.68, back 95%)
 function wakeFaces(g) {   // (about a third of the towers hold one face each per trip; passing within 3 m of that wall wakes it)
   if (!g.earth.faces) { const r = stream(g.seed, 'faces-' + g.earth.n); g.earth.faces = TOWERS.map(() => r() < 0.33); }
   for (const p of g.players) { if (p.ember || !onEarth(p)) continue;
