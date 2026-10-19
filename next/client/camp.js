@@ -99,8 +99,13 @@ export class Camp {
     if (st) { c.fillStyle = '#b9a8ff'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`your trip guesses: ${st.n}, came back ${st.back}`, 728, 76); c.fillText(`how true: ${st.brier.toFixed(2)} (0 is perfect, 0.25 is a coin)`, 728, 108); c.textAlign = 'left'; }   // (the Brier score of your own stakes: checked math, your own record)
     this.btex.needsUpdate = true;
   }
+  bunkLight() {   // (your bunk shows your dues, INNOVATION.md: each bunk burns as bright as what its sleeper has fed the fire; no rule, only light)
+    const g = this.ctx.g(), d = g.dues || {}, names = Object.keys(d).slice(0, (this.bunks || []).length), top = Math.max(1, ...Object.values(d));
+    (this.bunks || []).forEach((b, i) => { const n = names[i], k = n ? 0.12 + 0.88 * Math.min(1, d[n] / top) : 0; b.lamp.material.emissiveIntensity = 3 * k; b.name = n; b.dues = n ? d[n] : 0; });
+  }
+  bunkNear(me) { for (const b of this.bunks || []) if (b.name && Math.hypot(me.x - b.x, me.z - b.z) < 2.6) return b; return null; }
   update() {
-    const me = this.ctx.me(); if (!me) return; this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
+    const me = this.ctx.me(); if (!me) return; if (!this.bunkT || (this.bunkT -= 1 / 60) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
     this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
     const cam = this.ctx.camera(), v = new THREE.Vector3();
     let talk = null, best = 1e9; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw);
@@ -138,7 +143,8 @@ export class Camp {
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
     [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {
       const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z)).then(cloth);
-      const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2); });
+      const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2);
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), new THREE.MeshStandardMaterial({ color: 0x07070c, emissive: 0xb9a8ff, emissiveIntensity: 0 })); lamp.position.set(bx, land(bx, bz) + 0.5, bz); this.scene.add(lamp); (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (no real light per bunk: 5 more lights would cost every surface; the lamp's own glow is the receipt)
     // the workshop: a bench, planks, barrels and a chest by the wall
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }

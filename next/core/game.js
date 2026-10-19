@@ -199,7 +199,7 @@ export function step(g, dt) {
     if (p.pack.length && Math.hypot(p.x - BAY.x, p.z - BAY.z) < 5) { for (const k of p.pack) g.stash[k] = (g.stash[k] || 0) + 1; g.log.push([+g.t.toFixed(2), 'stash', p.id, p.pack.length]); p.pack = []; } }
   if (g.parts.some(q => q.taken)) g.parts = g.parts.filter(q => !q.taken);
   for (const p of g.players) {
-    if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
+    if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); if (p.name && !p.bot) (g.dues = g.dues || {})[p.name] = Math.round((g.dues[p.name] || 0) + p.carried); g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
     p.hurtT = Math.max(0, p.hurtT - dt); p.calm = p.hurtT > 0 ? 0 : (p.calm || 0) + dt; if (!p.ember && p.calm > 4) p.hp = Math.min(100, p.hp + dt * 8);   // (four quiet seconds and you get your breath back)
     if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) { e.x = p.x; e.z = p.z; if (Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f) * 0.6 || (g.earth && Math.hypot(p.x - EARTH.x, p.z - EARTH.z) < 3.5)) { e.t += dt; if (e.t >= 3) revive(g, e); } else e.t = 0; } else p.carrying = null; }   // (the fire takes three seconds to rekindle someone: hold their Ember near it)
     else if (!p.ember) for (const e of g.embers) if (!e.held && Math.hypot(p.x - e.x, p.z - e.z) < 1.5) { e.held = p.id; p.carrying = e.id; }
@@ -212,7 +212,7 @@ export function mark(g, k, x, z) { g.marks.push({ k, x: Math.round(x * 10) / 10,
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, dues: g.dues || {}, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
@@ -223,6 +223,7 @@ export function loadWorld(d) {
   for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; g.stash = cnt(d.stash); g.truck = cnt(d.truck);
   for (const q of d.parts || []) if (Array.isArray(q) && PARTS[q[0]] && ok(q[1]) && ok(q[2])) g.parts.push({ id: g.nextId++, kind: q[0], x: q[1], z: q[2] });
+  g.dues = {}; if (d.dues && typeof d.dues === 'object') for (const [k, v] of Object.entries(d.dues).slice(0, 32)) if (typeof k === 'string' && k.length <= 24 && ok(v) && v >= 0) g.dues[k] = Math.round(v);
   g.lost = Array.isArray(d.lost) ? d.lost.filter(w => CAMP_OUT.includes(w)) : []; g.out = d.out && CAMP_OUT.includes(d.out.who) ? { who: d.out.who, night: d.out.night | 0 } : null;
   g.marks = Array.isArray(d.marks) ? d.marks.filter(m => m && ok(m.x) && ok(m.z)).slice(-600) : []; g.keep = d.keep && typeof d.keep === 'object' ? d.keep : {}; if (d.stats) Object.assign(g.stats, d.stats); g.history = Array.isArray(d.history) ? d.history.filter(h => h && typeof h === 'object').slice(-30) : [];
   g.startAt = Array.isArray(d.host) && d.host.every(ok) ? d.host : null; linkNetwork(g); return g;
