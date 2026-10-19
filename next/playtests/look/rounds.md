@@ -51,3 +51,16 @@ reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, 
 | outside-veins-6 | 0.17 | black +10 | 54.1 | 5.4 | 0.5 | 2.8 | 0.3 | 0.0 | 0.0 |
 
 fix next: black (+14 points, worst in mouth-day-6)
+
+## 2026-10-19 11:38
+reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, warm 0.0%
+
+| shot | gap | biggest | black | fog | red | violet | blue | green | warm |
+|---|---|---|---|---|---|---|---|---|---|
+| console-7 | 0.12 | violet +7 | 46.5 | 0.2 | 4.2 | 9.5 | 0.2 | 0.0 | 0.0 |
+| inside-7 | 0.18 | violet +11 | 38.1 | 0.3 | 1.5 | 13.6 | 0.6 | 0.0 | 0.0 |
+| mouth-day-7 | 0.20 | black +18 | 61.6 | 0.5 | 2.4 | 1.1 | 0.0 | 0.0 | 0.0 |
+| mouth-night-7 | 0.19 | black +17 | 60.6 | 0.8 | 2.3 | 1.6 | 0.2 | 0.0 | 0.0 |
+| outside-veins-7 | 0.05 | black -4 | 40.2 | 0.7 | 1.3 | 2.6 | 0.2 | 0.0 | 0.0 |
+
+fix next: black (+18 points, worst in mouth-day-7)

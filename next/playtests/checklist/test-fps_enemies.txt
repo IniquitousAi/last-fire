@@ -1,0 +1,1 @@
+FAIL  the dark on screen holds the frame rate  (30 fps with 8 alive, 37 fps without; bar 45 headless)

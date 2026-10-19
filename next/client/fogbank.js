@@ -11,7 +11,7 @@ export class FogBank {
     // fog that lies against the walls, inside and out (his picture: the wall rises out of a bank of fog)
     this.wall = anchors.map(([x, z], i) => { const s = new THREE.Sprite(this.mat), w = 26 + (i * 7) % 14; s.scale.set(w, w * 0.32, 1); s.userData = { x, z, h: 2 + (i * 0.37) % 1 * 4, ph: i * 1.7 }; scene.add(s); return s; }); }
   update(t, me, onEarth, inRift, night) {   // (night: 0 by day, 1 at full night)
-    const want = onEarth && !inRift ? 0.35 + 0.5 * night : 0; this.mat.opacity += (want - this.mat.opacity) * 0.03; const vis = this.mat.opacity > 0.01;
+    const want = onEarth && !inRift ? 0.16 + 0.22 * night : 0;   /* (thin: at 0.85 a card read as a flat white sheet, his north star check round 4) */ this.mat.opacity += (want - this.mat.opacity) * 0.03; const vis = this.mat.opacity > 0.01;
     for (const s of this.cards) { s.visible = vis; if (!vis) continue; const u = s.userData, a = u.a + t * 0.004 * u.sp, x = me.x + Math.cos(a) * u.r + Math.sin(t * 0.02 * u.sp + u.a) * 6, z = me.z + Math.sin(a) * u.r;
       s.position.set(x, this.land(x, z) + u.h, z); }
     for (const s of this.wall) { s.visible = vis; if (!vis) continue; const u = s.userData; s.position.set(u.x + Math.sin(t * 0.03 + u.ph) * 4, this.land(u.x, u.z) + u.h, u.z + Math.cos(t * 0.025 + u.ph) * 2); } }

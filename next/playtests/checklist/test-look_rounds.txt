@@ -1,0 +1,6 @@
+PASS  at least two rounds measured against his north star  (5 rounds)
+PASS  every round names the biggest gap to fix next  (black, black, black, black, black)
+PASS  the worst gap shrank since the first round  (0.39 to 0.20)
+PASS  no banned warm color in any shot of any round  (orange, gold, brown all under 0.5%)
+
+4 of 4 pass  (look rounds)

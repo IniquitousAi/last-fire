@@ -24,7 +24,9 @@
  "notes": {
   "4": "A learned friend joins every solo world; the menu says PLAY (no 'alone'); robot run on the pad through dusk: friend within 35 m 45 of 45 s, speaks, no 'alone' text.",
   "3": "Every checklist item names B, C or A; bump.py refuses to ship without --serves; SPINE-LOG.md keeps what each version served; the in-game checklist shows it.",
-  "5": "The Simulator page opens with WHY IS THIS NOT GOOD: 13 systems, one number each, its bar, GOOD or NOT GOOD with the reason; sim/why.mjs builds it from the robots' result files."
+  "5": "The Simulator page opens with WHY IS THIS NOT GOOD: 13 systems, one number each, its bar, GOOD or NOT GOOD with the reason; sim/why.mjs builds it from the robots' result files.",
+  "1": "The reference is his north star picture (his own mix of the games he named); four rounds, worst gap 0.39 to 0.20; still missing in content: the forest, the creatures.",
+  "56": "NORTHSTAR-CHECK.md: Arcane, Destiny, Maze Runner each with a measured look and a story rule."
  },
  "3": {
   "built": {
@@ -59,6 +61,42 @@
   },
   "played": {
    "proof": "playtests/checklist/test-whyshot.txt#PASS  the Simulator page shows a number for every system",
+   "at": "2026-10-19"
+  }
+ },
+ "1": {
+  "built": {
+   "proof": "sim/lookmatch.py#def side",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-look_rounds.txt#4 of 4 pass",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/look/side-outside-veins-6.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lookshots.cjs#mouth-night",
+   "at": "2026-10-19"
+  }
+ },
+ "56": {
+  "built": {
+   "proof": "NORTHSTAR-CHECK.md#Maze Runner",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-northstar.txt#4 of 4 pass",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/look/side-mouth-night-6.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lookshots.cjs#console",
    "at": "2026-10-19"
   }
  }

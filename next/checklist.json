@@ -34,14 +34,26 @@
    "task": "Side-by-side screenshots against each reference game; fix the biggest gap each round",
    "where": "ANSWERS.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "sim/lookmatch.py#def side",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-look_rounds.txt#4 of 4 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/look/side-outside-veins-6.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lookshots.cjs#mouth-night",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1328,14 +1340,26 @@
    "task": "Arcane + Destiny + Maze Runner: the look and story checked against all three",
    "where": "DESIGN.md, top",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "NORTHSTAR-CHECK.md#Maze Runner",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-northstar.txt#4 of 4 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/look/side-mouth-night-6.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lookshots.cjs#console",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
