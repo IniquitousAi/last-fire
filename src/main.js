@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=11';
-import { Hollow, KINDS } from './hollow.js?v=11';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=11';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=11';
-import { FX } from './fx.js?v=11';
-import { modelsReady, model, gunModel } from './models.js?v=11';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=12';
+import { Hollow, KINDS } from './hollow.js?v=12';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=12';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=12';
+import { FX } from './fx.js?v=12';
+import { modelsReady, model, gunModel } from './models.js?v=12';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -76,7 +76,7 @@ const flashMat = new THREE.SpriteMaterial({ map: flashTex, blending: THREE.Addit
 const HAND = { campfire: 0.3, turret: 0.28, lantern: 0.6, planks: 0.8, cobble: 0.8, berries: 0.95, pickaxe: 0.62, torch: 1.7, knife: 1 };   // (how big each item sits in the hand)
 modelsReady.then(() => { modelsOk = true;
   for (const k of [...Object.keys(GUNS), ...Object.keys(HAND)]) { if (held[k]) continue; const m = model(k === 'torch' ? 'flashlight' : k); if (!m) continue; m.visible = false;
-    if (GUNS[k] && !GUNS[k].melee) { const f = new THREE.Sprite(flashMat); f.scale.setScalar({ pistol: 0.045, smg: 0.055, ar: 0.06, minigun: 0.08, shotgun: 0.075 }[k] || 0.065);   // (a star at the barrel's end, not a screen of light: his v6 report) f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; }
+    if (GUNS[k] && !GUNS[k].melee) { const f = new THREE.Sprite(flashMat); f.scale.setScalar({ pistol: 0.045, smg: 0.055, ar: 0.06, minigun: 0.08, shotgun: 0.075 }[k] || 0.065); /* (a star at the barrel's end, not a screen of light: his v6 report) */ f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; }
     else m.scale.setScalar(HAND[k] || 1); view.add(m); held[k] = m; } });
 
 const coneGeo = new THREE.ConeGeometry(1.9, 9, 20, 1, true).translate(0, -4.5, 0).rotateX(-Math.PI / 2), coneMat = new THREE.MeshBasicMaterial({ color: 0xbcd0ff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: true });
