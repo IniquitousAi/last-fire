@@ -67,6 +67,13 @@ Claude picks the order by the bottleneck: what he will see first and most.
 57. **The cockpit HUD** (his ask): an almost seamless helmet HUD like Iron Man's, laid out by AR and VR research and Vigil's lessons. Three rough looks in mockups/cockpit.html; he picks, then it gets built.
 58. **Start as a kid, only with a real family** (his idea): two players who make a family can have a child; when a parent falls for good you can go on as the child, inheriting standing and one practiced habit. See SHIP.md.
 59. **Genre doses decided by simulators** (his rule): every genre (cozy, hardcore, romance, comedy, cinematic) gets a robot-readable measure and is added only if the core loop's numbers hold.
+60. **The Director** (GAMEDEV-TRICKS.md 11, 12): a stress score per player (damage, alone, time since the last fight); build up, peak, then a forced relax; it hunts whoever is safest. Robots: tension stays in the flow band.
+61. **Aim that feels great** (7, 8, 9): a small bullet pull near the crosshair, the dark's reach a little shorter than its claws look, the last round in the mag cracks harder.
+62. **Coyote time and input buffering** (22): jump 0.15 s after a ledge; F pressed a moment early still counts.
+63. **Bad luck paid back** (10, 19): a dry Earth run is followed by a better one; the first wreck is on the side you walk toward.
+64. **The masks show intent** (13): the face turns before it lunges, the watcher's eyes brighten when it decides. Never words.
+65. **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
+66. **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -113,3 +120,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 54, the fire grows visibly: a ring of light rolls to its new edge, and a low hum rises with each level (v106).
 - Item 55, the loss goes on the board: site odds drop by exactly what trips lost, with a pink footnote (v107).
 - Items 56 and 57, first pass: the ship flies (hover physics: drop test 4% bob, settled 3.15 s; robot pilot lands 300 m away in 8.1 s, 2.2 m off) with the HELMET HUD he picked (v109). Still open: the generated model (TRELLIS.2 retrying every 30 min: the free quota ran out), shared in co-op, flying the drop to Earth.
+- GAMEDEV-TRICKS.md: 26 tricks researched (14 searches, 2 articles); v111 shipped two (careful falls 0.13 to 0), 60 to 66 queued.
