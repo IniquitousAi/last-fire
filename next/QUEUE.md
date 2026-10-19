@@ -54,7 +54,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-47. **The camp economy, live** (core/camp.js was tuned 9 of 9 by sim/camp_sim.mjs but never wired into the client): dues on present days, prices, morale; start with the fire's daily burn shown on the board. (added when item 46 finished)
+
+48. **Solo hours feed the camp** (core/camp.js soloShare, not yet live): when you play past every friend's hours that day, most of what you gather goes to the camp's pool, which lifts everyone when they come back; show the pool on the board. (added when item 47 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -91,3 +92,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 44, lines that fit the moment (v94).
 - Item 45, wrecks to strip, and checked versus reasoned fit order (v96).
 - Item 46, wrecks retimed with robots that strip them (v97).
+- Item 47, the camp economy live: dues, standing, lamps refused and flares priced when behind, board lines (v99).
