@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=136';
-import { Ambience } from './ambience.js?v=136';
-import { Camp, BOARD } from './camp.js?v=136';
-import { Guide } from './guide.js?v=136';
-import { buildSites } from './earthsite.js?v=136';
-import { Truck } from './truck.js?v=136';
-import { ShipView } from './shipview.js?v=136';
-import { Crew } from './crew.js?v=136';
-import { Hands } from './hands.js?v=136';
-import { Wrist } from './wrist.js?v=136';
-import { FireCore } from './firecore.js?v=136';
+import * as C from '../core/game.js?v=137';
+import { Ambience } from './ambience.js?v=137';
+import { Camp, BOARD } from './camp.js?v=137';
+import { Guide } from './guide.js?v=137';
+import { buildSites } from './earthsite.js?v=137';
+import { Truck } from './truck.js?v=137';
+import { ShipView } from './shipview.js?v=137';
+import { Crew } from './crew.js?v=137';
+import { Hands } from './hands.js?v=137';
+import { Wrist } from './wrist.js?v=137';
+import { FireCore } from './firecore.js?v=137';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=136';
-import { FriendVoice } from './friendvoice.js?v=136';
-import { crewFrom } from '../core/habits.js?v=136';
-import { HudLook } from './hudlook.js?v=136';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=136';
-import { sound, GUNS } from '../../src/combat.js?v=136';
-import { FX } from '../../src/fx.js?v=136';
+import { think as friendThink } from './friend.js?v=137';
+import { FriendVoice } from './friendvoice.js?v=137';
+import { crewFrom } from '../core/habits.js?v=137';
+import { HudLook } from './hudlook.js?v=137';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=137';
+import { sound, GUNS } from '../../src/combat.js?v=137';
+import { FX } from '../../src/fx.js?v=137';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 136;   // (this copy's version; ./version.json says the newest)
+const BUILD = 137;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -369,7 +369,7 @@ function shoot() {
   const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
   for (let n = 0; n < (G.pellets || 1); n++) {   // (a shotgun throws a handful of pellets: each is its own line through the air)
     const d = look(); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize(); if (n === 0) { const q = C.aimPull(g, o.x, o.y, o.z, d.x, d.y, d.z); d.set(q[0], q[1], q[2]); } ds.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
-    const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
+    const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z, mount ? 'mount' : gunKey) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
     const h = C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), e = o.clone().addScaledVector(d, h ? h.t : 60); if (!end) end = e;
     fx.tracer(muzzle, e); if (lit) burn(muzzle, o.clone().addScaledVector(d, h ? h.t : C.TRACER.len));
     if (h) { if ((h.part ? h.k.sb : h.k.sh) > 0) fx.spark(e); else fx.ichor(e, h.mult > 1); if (isHost()) showHit(C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, me.id), h.mult > 1); }
@@ -507,7 +507,7 @@ function frame(now) {
   drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
-  coldHands(dt); updateShade();
+  coldHands(dt); updateShade(); me.crouch = crouch || slideT > 0;
   camera.position.set(me.x, me.y + eyeH, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - 22 * ads; camera.updateProjectionMatrix();
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
@@ -648,7 +648,7 @@ function onNet(m, from) {
     if (m.t === 'shot') {   // (the host traces it in its own world with the gun's own damage, no faster than the gun fires)
       const G = GUNS[m.g]; if (!G || p.ember || !Array.isArray(m.o) || !Array.isArray(m.d) || ![...m.o, ...m.d].every(fin) || Math.hypot(m.o[0] - p.x, m.o[2] - p.z) > 3 || !bucket(p, 'shots', G.rpm / 60 + 1, 4)) return;
       const dirs = (Array.isArray(m.ds) ? m.ds : [m.d]).slice(0, G.pellets || 1).filter(d => Array.isArray(d) && d.length === 3 && d.every(fin));
-      dirs.forEach((d, n) => { const L = Math.hypot(d[0], d[1], d[2]); if (L < 0.5) return; if (n === 0) C.fired(g, p, m.o[0], m.o[2], d[0] / L, d[2] / L); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 80);
+      dirs.forEach((d, n) => { const L = Math.hypot(d[0], d[1], d[2]); if (L < 0.5) return; if (n === 0) C.fired(g, p, m.o[0], m.o[2], d[0] / L, d[2] / L, m.g); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 80);
         if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } }); return;
     }
     if (m.t === 'lines') { if (!bucket(p, 'lines', 0.2, 2)) return; (g.voice = g.voice || {})[p.name] = cleanLines(m.l); return; }

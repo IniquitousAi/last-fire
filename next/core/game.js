@@ -201,7 +201,14 @@ export function lightAt(g, x, z, noGlow, noShadow) {   // (noShadow: the light a
 // ---------------------------------------------------------------- shots: the first Hollow a ray passes through, and what the hit does
 // tracers are light (INNOVATION.md, idea 1): every fourth round burns a line through the air for a third of a second, and what it passes turns solid
 export const TRACER = { every: 4, life: 0.35, width: 1.8, len: 40 };
-export function fired(g, p, ox, oz, dx, dz) { p.shots = (p.shots || 0) + 1; if (p.shots % TRACER.every) return false; const L = Math.hypot(dx, dz) || 1; (g.tracers = g.tracers || []).push({ ax: ox, az: oz, bx: ox + dx / L * TRACER.len, bz: oz + dz / L * TRACER.len, t: TRACER.life }); return true; }
+// the hunt by sight and sound (his pick, 2026-10-19), from 7 Days to Die's own zombie settings, read from his installed copy's Data/Config:
+// sight: they see you 30 m off in full light (SightRange 30) and only up close in the dark (SightLightThreshold: how lit you must be to be seen);
+// once they sense you they stay on you 6 s (their alert timer), then go where they last knew you were. Sound: each shot is as loud as 7 Days to
+// Die's gun of the same kind (sounds.xml: AK 108, pump shotgun 81, M60 54, Desert Vulture 52, heard 2 s), here as meters x 0.35 (ours);
+// crouching muffles it to 80% (muffled_when_crouched 0.8). Light, your own glow included, is what gives you away
+export const SENSE = { far: 30, near: 10 /* ours */, alert: 6, noise: { pistol: 52, ar: 108, shotgun: 81, lmg: 54, mount: 54 }, scale: 0.35 /* ours */, life: 2, crouch: 0.8, drift: 0.9 /* ours */ };
+export function sees(g, k, p) { const range = SENSE.near + (SENSE.far - SENSE.near) * Math.min(1, lightAt(g, p.x, p.z)); return Math.hypot(p.x - k.x, p.z - k.z) < range; }
+export function fired(g, p, ox, oz, dx, dz, gun) { (g.noises = g.noises || []).push({ x: ox, z: oz, earth: onEarth(p), r: (SENSE.noise[gun] || 60) * SENSE.scale * (p.crouch ? SENSE.crouch : 1), t: SENSE.life }); p.shots = (p.shots || 0) + 1; if (p.shots % TRACER.every) return false; const L = Math.hypot(dx, dz) || 1; (g.tracers = g.tracers || []).push({ ax: ox, az: oz, bx: ox + dx / L * TRACER.len, bz: oz + dz / L * TRACER.len, t: TRACER.life }); return true; }
 // the decoy flare (queue 31, from the shielded-box test): a burning light you throw; it lights where it lands and pulls the hunt to it
 export const FLARE = { cost: 10, life: 12, r: 6.5, reach: 16, pull: 18, burn: 45 };
 export function throwFlare(g, p, x, z) { const cost = flareCost(g, p); if (!p || p.ember || p.carried < cost || Math.hypot(x - p.x, z - p.z) > FLARE.reach) return false; p.carried -= cost; (g.flares = g.flares || []).push({ x, z, t: FLARE.life, earth: onEarth(p) }); g.log.push([+g.t.toFixed(2), 'flare', p.id]); return true; }
@@ -442,7 +449,7 @@ export function lookedAt(g, k) {   // (someone on its side of the sky faces it, 
   return false;
 }
 function moveHollow(g, dt, ph) {
-  const T = g.tactic, f = g.fire;
+  const T = g.tactic, f = g.fire; if (g.noises) { for (const n of g.noises) n.t -= dt; g.noises = g.noises.filter(n => n.t > 0); }
   for (const k of g.hollow) {
     const K = KINDS[k.kind];
     if (!k.earth && (ph === 'day' || ph === 'dawn')) { k.hp -= dt * 60; if (k.hp <= 0) k.dead = true; continue; }   // (light of day unmakes them: no motes, they were never yours)
@@ -456,13 +463,17 @@ function moveHollow(g, dt, ph) {
       k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue;
     }
     // walkers, runners and giants hunt players: the lone one counts more (isolate), a glowing carrier more again (greed)
-    let best = Infinity;
-    for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++;
+    let best = Infinity; k.alert = Math.max(0, (k.alert || 0) - dt);
+    for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; if (!(k.alert > 0 && k.on === p.id) && !sees(g, k, p)) continue; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++;
       const s = Math.hypot(p.x - k.x, p.z - k.z) / ((near === 0 ? T.isolate : 1) * (1 + Math.min(1, p.carried * 0.02) * (T.greed - 1))); if (s < best) { best = s; target = p; } }
     let node = null; if (g.nodes.length) { let nb = Infinity; for (const n of g.nodes) if (n.lit && n.hp > 0 && !!k.earth === onEarth(n)) { const s2 = Math.hypot(n.x - k.x, n.z - k.z) * (n.hp / NODE[n.kind].hp + 0.5) / T.fireBias; if (s2 < nb) { nb = s2; node = n; } } if (node && (!target || nb < best * 0.8)) target = null; }   // (a weak, lonely relay is a better prize than a person)
     if (g.flares && g.flares.length && k.kind !== 'giant') { const fl = g.flares.filter(f => !!f.earth === !!k.earth && f.t > 1).sort((a, b) => Math.hypot(a.x - k.x, a.z - k.z) - Math.hypot(b.x - k.x, b.z - k.z))[0];
       if (fl && Math.hypot(fl.x - k.x, fl.z - k.z) < FLARE.pull && (!target || Math.hypot(fl.x - k.x, fl.z - k.z) < best * 1.5)) { target = null; node = { x: fl.x, z: fl.z, hp: 1, kind: 'flare', flare: true };
         const df = Math.hypot(fl.x - k.x, fl.z - k.z); if (df < FLARE.r) { k.hp -= dt * FLARE.burn * (1 - df / FLARE.r); if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; } } } }   /* (it burns what it pulls in: a trap, not a gathering) */
+    if (target) { if (sees(g, k, target)) k.alert = SENSE.alert; k.on = target.id; k.lx = target.x; k.lz = target.z; }
+    if (!target && !node && g.noises) { let nb = Infinity; for (const n of g.noises) { const dn = Math.hypot(n.x - k.x, n.z - k.z); if (!!n.earth === !!k.earth && dn < n.r && dn < nb) { nb = dn; k.lx = n.x; k.lz = n.z; k.alert = SENSE.alert; k.on = -1; } } }   /* (a shot it heard: it goes to look) */
+    if (!target && !node && k.alert > 0 && k.lx !== undefined) { const dl = Math.hypot(k.lx - k.x, k.lz - k.z); if (dl > 1) { k.x += (k.lx - k.x) / dl * k.speed * dt; k.z += (k.lz - k.z) / dl * k.speed * dt; k.yaw = Math.atan2(k.lx - k.x, k.lz - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (it goes where it last sensed you, or where the noise was) */
+    if (!target && !node && !k.earth) { const df = Math.hypot(f.x - k.x, f.z - k.z); if (df > 6) { const sp = k.speed * SENSE.drift * dt; k.x += (f.x - k.x) / df * sp; k.z += (f.z - k.z) / df * sp; k.yaw = Math.atan2(f.x - k.x, f.z - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (sensing nothing, it drifts toward the camp's light, slower than a hunt: the light is what draws the dark) */
     if (!target && !node) continue;
     if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if (node.flare) continue; if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
     tx = target.x; tz = target.z;
