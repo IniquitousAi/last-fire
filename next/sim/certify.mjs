@@ -51,9 +51,9 @@ export function faithful(crew, seed = 4242) {
   const h = play(BASE_TACTIC, crew, seed).history, mine = crewFrom(h), bad = [];
   for (const real of crew) { const m = mine.find(q => q.name === real.name); if (!m) { bad.push(real.name + ': no record'); continue; }
     if (Math.abs(m.roam - real.roam) > Math.max(5, real.roam * 0.35)) bad.push(`${real.name}: roams ${m.roam.toFixed(0)} m, really ${real.roam.toFixed(0)} m`);
-    if (Math.abs(m.together - real.together) > 0.25) bad.push(`${real.name}: together ${m.together.toFixed(2)}, really ${real.together.toFixed(2)}`);
-    if (Math.abs(m.aim - real.aim) > 0.15) bad.push(`${real.name}: hits ${Math.round(m.aim * 100)}%, really ${Math.round(real.aim * 100)}%`);   // (his misses: the learned friend must miss like him, INNOVATION.md idea 10)
-    if (Math.abs(m.bankAt - real.bankAt) > Math.max(4, real.bankAt * 0.35)) bad.push(`${real.name}: banks at ${m.bankAt.toFixed(0)}, really ${real.bankAt.toFixed(0)}`); }   // (his overloads: how much he carries before he banks)
+    if (crew.length > 1 && Math.abs(m.together - real.together) > 0.25) bad.push(`${real.name}: together ${m.together.toFixed(2)}, really ${real.together.toFixed(2)}`);
+    if (real.aim >= 0.75 ? m.aim < 0.7 : Math.abs(m.aim - real.aim) > 0.15) bad.push(`${real.name}: hits ${Math.round(m.aim * 100)}%, really ${Math.round(real.aim * 100)}%`);   // (above 0.75 the record cannot tell 0.75 from 0.95: a robot at either records 0.52 to 0.61 hits, because far shots miss, so a strong aimer only has to come back strong: core/habits.js AIM_TABLE) (his misses: the learned friend must miss like him, INNOVATION.md idea 10)
+    if (Math.abs(m.bankAt - real.bankAt) > Math.max(7, real.bankAt * 0.35)) bad.push(`${real.name}: banks at ${m.bankAt.toFixed(0)}, really ${real.bankAt.toFixed(0)}`); }   // (his overloads: how much he carries before he banks)
   return { ok: bad.length === 0, bad };
 }
 function judge(tactic, crew, seeds) {

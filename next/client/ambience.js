@@ -15,9 +15,15 @@ export class Ambience {
     // the hum: a low tone and its fifth under the crackle, placed at the fire; each level it rises (the core is bigger, so it sings higher)
     this.hum = [ac.createOscillator(), ac.createOscillator()]; this.humG = ac.createGain(); this.humG.gain.value = 0; this.hum[0].type = 'sine'; this.hum[1].type = 'triangle';
     const hf = ac.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 400; for (const o of this.hum) { o.connect(hf); o.start(); } hf.connect(this.humG).connect(this.fireP);
+    // the camp's murmur: people talking a long way off inside the wall, with no words in it. Noise through two voice bands (about 500 and 1500 Hz) that swell
+    // and fall like syllables (4 Hz) and like breaths (0.3 Hz), placed at the fire, so it grows as you come back to the light. Quiet by design.
+    { const mn = ac.createBufferSource(); mn.buffer = noise(5, 'brown'); mn.loop = true; const b1 = ac.createBiquadFilter(), b2 = ac.createBiquadFilter(); b1.type = b2.type = 'bandpass'; b1.frequency.value = 500; b1.Q.value = 4; b2.frequency.value = 1500; b2.Q.value = 5;
+      this.murG = ac.createGain(); this.murG.gain.value = 0; const syl = ac.createOscillator(), sylG = ac.createGain(), breath = ac.createOscillator(), brG = ac.createGain(); syl.frequency.value = 3.7; sylG.gain.value = 0.5; breath.frequency.value = 0.31; brG.gain.value = 0.35; this.murM = ac.createGain(); this.murM.gain.value = 0.55;
+      syl.connect(sylG).connect(this.murM.gain); breath.connect(brG).connect(this.murM.gain); mn.connect(b1).connect(this.murM); mn.connect(b2).connect(this.murM); this.murM.connect(this.murG).connect(this.fireP); mn.start(); syl.start(); breath.start(); }
     this.crack = noise(0.05, 'white'); { const d = this.crack.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] *= Math.exp(-i / (d.length * 0.18)); }   // (each crackle dies away fast, like wood, not a click)
   }
   // a far sound (farsound.js picks what and where): placed in 3D with HRTF, highs gone with distance, a long echo; in the dark the world's muffle smears it
+  get state() { return this.ac && this.tgt ? { ...this.tgt } : null; }
   far(voice, x, y, z, muffle = 0) {
     if (!this.ac) return; const ac = this.ac, t = ac.currentTime, P = ac.createPanner(); Object.assign(P, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 8, rolloffFactor: 0.6, maxDistance: 200 });
     if (P.positionX) { P.positionX.value = x; P.positionY.value = y; P.positionZ.value = z; } else P.setPosition(x, y, z);
@@ -36,9 +42,10 @@ export class Ambience {
     this.master.gain.setTargetAtTime(this.vol(), ac.currentTime, 0.2);
     if (this.fireP.positionX) { this.fireP.positionX.value = fire.x; this.fireP.positionY.value = fire.y + 0.8; this.fireP.positionZ.value = fire.z; }
     this.roarG.gain.setTargetAtTime(alive ? 0.7 : 0.05, ac.currentTime, 0.4);
-    if (this.hum) { const lv = fire.level || 0, f0 = 49 * Math.pow(1.122, lv); this.hum[0].frequency.setTargetAtTime(f0, ac.currentTime, 1.5); this.hum[1].frequency.setTargetAtTime(f0 * 1.5, ac.currentTime, 1.5); this.humG.gain.setTargetAtTime(alive ? 0.05 + lv * 0.012 : 0, ac.currentTime, 0.8); }
+    if (this.hum) { const lv = Math.min(fire.level || 0, 12), f0 = 49 * Math.pow(1.122, lv); this.hum[0].frequency.setTargetAtTime(f0, ac.currentTime, 1.5); this.hum[1].frequency.setTargetAtTime(f0 * 1.5, ac.currentTime, 1.5); this.humG.gain.setTargetAtTime(alive ? 0.05 + lv * 0.012 : 0, ac.currentTime, 0.8); }
     this.t += dt; this.windF.frequency.setTargetAtTime(300 + 220 * (0.5 + 0.5 * Math.sin(this.t * 0.23) * Math.sin(this.t * 0.071)), ac.currentTime, 0.5);
-    this.windG.gain.setTargetAtTime(0.06 + 0.32 * (1 - lightHere), ac.currentTime, 0.8);   // (in the light the wind is far away; in the dark it is all around you)
+    this.windG.gain.setTargetAtTime(0.06 + 0.32 * (1 - lightHere), ac.currentTime, 0.8); (this.tgt = this.tgt || {}).wind = 0.06 + 0.32 * (1 - lightHere);   // (in the light the wind is far away; in the dark it is all around you)
+    { const dist = Math.hypot(cam.position.x - fire.x, cam.position.z - fire.z); const mt = alive ? 0.16 * Math.max(0, 1 - dist / 40) * (0.3 + 0.7 * lightHere) : 0; this.murG.gain.setTargetAtTime(mt, ac.currentTime, 1.2); (this.tgt = this.tgt || {}).murmur = mt; }   // (the murmur: only inside about 40 m of the camp, more in the light)
     if (alive && Math.random() < dt * 4) {   // (a crackle: a short bright snap, each one a little different)
       if (this.onCrackle) this.onCrackle();
       const s = ac.createBufferSource(); s.buffer = this.crack; s.playbackRate.value = 0.35 + Math.random() * 0.5; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500 + Math.random() * 900; bp.Q.value = 1.2;

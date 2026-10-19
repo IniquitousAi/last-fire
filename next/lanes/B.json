@@ -1,107 +1,318 @@
 {
  "12": {
-  "tested": { "proof": "sim/net_test.mjs#LOCKED", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/12-locked.png", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#LOCK THE ROOM locks it", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/net_test.mjs#LOCKED",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/12-locked.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#LOCK THE ROOM locks it",
+   "at": "2026-10-19"
+  }
  },
  "13": {
-  "tested": { "proof": "sim/lane_b_browser.cjs#NEW WORLD starts another", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/13-new-world-2.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#the pad reaches CONTINUE", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/lane_b_browser.cjs#NEW WORLD starts another",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/13-new-world-2.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#the pad reaches CONTINUE",
+   "at": "2026-10-19"
+  }
  },
  "14": {
-  "built": { "proof": "core/game.js#saveWorld", "at": "2026-10-19" },
-  "tested": { "proof": "sim/lane_b.mjs#saves", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/14-after-reload-in-world.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#the pad reaches CONTINUE", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#CONTINUE drops straight back", "at": "2026-10-19" }
+  "built": {
+   "proof": "core/game.js#saveWorld",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/lane_b.mjs#saves",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/14-after-reload-in-world.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#the pad reaches CONTINUE",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#CONTINUE drops straight back",
+   "at": "2026-10-19"
+  }
  },
  "15": {
-  "seen": { "proof": "playtests/lanes/B/15-night-lost-after.png", "at": "2026-10-19" }
+  "seen": {
+   "proof": "playtests/lanes/B/15-night-lost-after.png",
+   "at": "2026-10-19"
+  }
  },
  "17": {
-  "tested": { "proof": "sim/lane_b.mjs#grow", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/17-dark-answers.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#the pad use button", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#the dark answers: the new level wakes a runner", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/lane_b.mjs#grow",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/17-dark-answers.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#the pad use button",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#the dark answers: the new level wakes a runner",
+   "at": "2026-10-19"
+  }
  },
  "18": {
-  "tested": { "proof": "sim/lane_b_browser.cjs#every DEV item", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/18-dev-menu.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#the pad reaches DEV", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#every DEV item", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/lane_b_browser.cjs#every DEV item",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/18-dev-menu.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#the pad reaches DEV",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#every DEV item",
+   "at": "2026-10-19"
+  }
  },
  "19": {
-  "built": { "proof": "client/main.js#openList", "at": "2026-10-19" },
-  "tested": { "proof": "sim/lane_b_browser.cjs#the in-game CHECKLIST opens", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/19-checklist.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#the pad reaches CHECKLIST", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#the in-game CHECKLIST opens", "at": "2026-10-19" }
+  "built": {
+   "proof": "client/main.js#openList",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/lane_b_browser.cjs#the in-game CHECKLIST opens",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/19-checklist.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#the pad reaches CHECKLIST",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#the in-game CHECKLIST opens",
+   "at": "2026-10-19"
+  }
  },
  "20": {
-  "tested": { "proof": "sim/lane_b.mjs#friend", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#the learned friend plays on its own", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/lane_b.mjs#friend",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#the learned friend plays on its own",
+   "at": "2026-10-19"
+  }
  },
  "22": {
-  "built": { "proof": "tools/daemon.mjs", "at": "2026-10-19" },
-  "tested": { "proof": "sim/daemon_test.mjs", "at": "2026-10-19" }
+  "built": {
+   "proof": "tools/daemon.mjs",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/daemon_test.mjs",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/B/daemon-run.txt",
+   "at": "2026-10-19"
+  }
  },
  "24": {
-  "built": { "proof": "core/game.js#levelCost", "at": "2026-10-19" },
-  "tested": { "proof": "sim/growth.mjs", "at": "2026-10-19" }
+  "built": {
+   "proof": "core/game.js#wakesOf",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/lane_b.mjs#infinite",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/24-fire-level-8.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#the pad use button grows it to level 8",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#late night and a fire past level 5",
+   "at": "2026-10-19"
+  }
  },
  "25": {
-  "built": { "proof": "client/main.js#mvOk", "at": "2026-10-19" },
-  "tested": { "proof": "sim/lane_b.mjs#moves", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/25-locked-level-0.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#movement unlocks", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#fire level 4: slide, dodge, boost jump and slam all work", "at": "2026-10-19" }
+  "built": {
+   "proof": "client/main.js#mvOk",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/lane_b.mjs#moves",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/25-locked-level-0.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#movement unlocks",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#fire level 4: slide, dodge, boost jump and slam all work",
+   "at": "2026-10-19"
+  }
  },
  "47": {
-  "tested": { "proof": "sim/lane_b_browser.cjs#SEND TO CLAUDE posts the note with a picture", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/47-picture-sent.jpg", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#PAD: A on SEND TO CLAUDE", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#PAD: Back (View) opens the feedback panel", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/lane_b_browser.cjs#SEND TO CLAUDE posts the note with a picture",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/47-picture-sent.jpg",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#PAD: A on SEND TO CLAUDE",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#PAD: Back (View) opens the feedback panel",
+   "at": "2026-10-19"
+  }
  },
  "49": {
-  "tested": { "proof": "sim/lane_b_browser.cjs#UPDATE READY pops up when a newer version is out", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/49-update-ready.png", "at": "2026-10-19" },
-  "pad": { "proof": "sim/lane_b_browser.cjs#PAD: Start, then the D-pad reaches UPDATE NOW", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#PAD: A on UPDATE NOW reloads", "at": "2026-10-19" }
+  "tested": {
+   "proof": "sim/lane_b_browser.cjs#UPDATE READY pops up when a newer version is out",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/49-update-ready.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "sim/lane_b_browser.cjs#PAD: Start, then the D-pad reaches UPDATE NOW",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#PAD: A on UPDATE NOW reloads",
+   "at": "2026-10-19"
+  }
  },
  "51": {
-  "built": { "proof": "client/main.js#crewCode", "at": "2026-10-19" },
-  "tested": { "proof": "sim/lane_b_browser.cjs#a second visit, after a full reload, opens the SAME room code", "at": "2026-10-19" },
-  "seen": { "proof": "playtests/lanes/B/51-friend-menu-remembers.png", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b_browser.cjs#a friend's menu has the crew's code already filled in", "at": "2026-10-19" }
+  "built": {
+   "proof": "client/main.js#crewCode",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/lane_b_browser.cjs#a second visit, after a full reload, opens the SAME room code",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/51-friend-menu-remembers.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b_browser.cjs#a friend's menu has the crew's code already filled in",
+   "at": "2026-10-19"
+  }
  },
  "52": {
-  "built": { "proof": "core/game.js", "at": "2026-10-19" },
-  "tested": { "proof": "sim/lane_b.mjs#core", "at": "2026-10-19" },
-  "played": { "proof": "sim/lane_b.mjs#perfect", "at": "2026-10-19" }
+  "built": {
+   "proof": "core/game.js",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/lane_b.mjs#core",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/lane_b.mjs#perfect",
+   "at": "2026-10-19"
+  }
  },
  "64": {
-  "built": { "proof": "client/fresh.js#pickFresh", "at": "2026-10-19" },
-  "tested": { "proof": "sim/fresh_test.mjs", "at": "2026-10-19" }
+  "built": {
+   "proof": "client/fresh.js#pickFresh",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/fresh_test.mjs",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/audio-spectrogram.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/audio_run.cjs#no clip twice in a row",
+   "at": "2026-10-19"
+  }
  },
  "notes": {
   "12": "net.js was already built (6-letter codes, lock, host stamps who sent each message, size and kind checks, garbage strikes). Proved with sim/net_test.mjs against a fake PeerJS (14 checks, incl. locked room turns a stranger away, full room at 4, kick, a throwing handler never crashes the host) and in the real client (lane_b_browser.cjs room stage: HOST, LOCK THE ROOM, UNLOCK). Not run with two real browsers over the real PeerJS broker (the run uses a fake Peer, no network). Found while testing and fixed: the host's 'joined' call in net.js wire() had no try/catch (a throw there would escape; data messages were already protected); it is wrapped now and net_test.mjs covers a game handler that throws on join too.",
   "13": "Existing PLAYED mark kept (autoplay run). New: CONTINUE drops back into a saved world, NEW WORLD (dev menu) starts another while the first stays saved (2 saved worlds), reached on the pad. A friend 'dropping in anytime' over the network is not run (needs two browsers over PeerJS).",
   "14": "Core round trip (saveWorld -> JSON text -> loadWorld) for marks, light motes, builds, fire level/light, night, stash, carried-by-name, plus a hostile save is cleaned. Browser: LEAVE saves, reload, the menu lists CONTINUE (night 3, fire 2, 2 lights), the pad picks it, and the world has the same seed, night, fire and builds. SEEN screenshot shows FIRE 2, 321 light, night 3 and a built lamp.",
   "15": "SEEN added: screenshot of the wrist line 'Everyone fell. The fire took you back; the light you carried is out there where you dropped it.' Browser stage 'lost' also proves: lost night counted, clock jumps to dawn, 7 motes spilled for 35 light, fire level/banked light/builds/stash/night number unchanged. Core test sim/lane_b.mjs#lostnight too. Core fix made while here: core/game.js hurt() used Math.random for where dropped parts land (broke the no-Math.random rule); now uses the seeded g.rMote().",
-  "16": "NOT marked. 'A perfect crew never falls (12 of 12 nights)' is NOT fully true. The existing TESTED mark (test-director.txt) only covers 3 nights. I made the perfect robot (sim/certify.mjs, blind<0 crews only) play like a real strong crew: M4 then M14 by night 5 then the rail by night 8, one watcher-duty player keeps eyes on the Tall One, falls back to the light when 3+ of the dark are close, and steps away from all giants at once. Result over 32 seeds x 12 nights before merging main: 5 falls in 3 of 382 nights, 29 of 32 seeds fall-free; after merging v170 (core changed): 7 falls, 26 of 32 seeds fall-free (seeds 25, 26, 29 fall, all late nights 8 to 12, players kited 36 to 49 m out into the dark). sim/lane_b.mjs#perfect gates at 24 of 32 seeds and 97% of nights and prints the strict zero-falls check as a GAP. Tuning more is whack-a-mole (each fix moved falls to other seeds); the likely real fix is the dark's late-night scaling (hp +25% a night, shell +12 to 40 a night, 30+ hollow at night 12), not the robot.",
+  "16": "FIXED in core. Why: with the old scaling (dark +25% hp and +12 to 40 shell a night, 2 more shapes a night) a perfect crew fell on 6 of 32 seeds, always nights 8 to 12, by walkers and giants (sim/why_falls12.mjs: falls by night and by kind). Fix: darkScale(n) climbs to night 4 then nearly flat (+0.1 a night), darkCount flattens after night 6 (core/game.js). Swept the cap on training seeds and checked on holdouts: cap 8: 6 falls; cap 6 slope .3: 2; cap 5: 1; cap 4 slope .1: 0 on seeds 1-32, 0 on holdout 101-132, 2 falls on 201-232 (not gated). sim/lane_b.mjs#perfect now FAILS if any of seeds 1-32 falls and allows at most 3 on 101-132. Director (sim/director.mjs): tense careful .505, greedy .298, split .374, perfect .421, all in 0.25 to 0.70. breach.mjs: 100% warned 2 s ahead. Trade: the dark stops getting stronger per night after night 4, so a strong crew meets nearly the same dark at night 12 as at night 5; if he wants a harder late game the lever is the director and tactic, not this curve. Tried and dropped robot-side tuning (leashes, flee rules): each fix moved the falls to other seeds. SEEN: night 12 with fire 8 from the player's spot. PLAYED not marked: the client's own friend.js robot is a separate, simpler robot than the perfect one.",
   "17": "tryGrow/GROW prompt/grow() were built. Core test: no light = cannot, too far = cannot, at the fire = grows and spends light, circle gets bigger, dusk wakes WAKES[level] (runner at 1, giant at 3), cannot pass the top level. Browser on the pad: prompt 'F GROW THE FIRE to level 1. Tonight the dark answers', D-pad right grows it, at dusk the wrist says 'It stirs. The fire's growth woke something.' (screenshot).",
   "18": "Dev menu has 11 items now: added EVERY ITEM (every gun full, every truck part in the stash, +500 light, every move open). Pad run: Start, D-pad to DEV, A, then each item pressed with the pad and its effect checked (friend joins, skip to dusk, restart returns to dusk, skip to dawn, every item, +100 light, giant wakes, god mode, clear the dark); each puts you straight back in the game. NEW WORLD tested in the saves stage; THE SIMULATOR opens another tab and was not pressed. Fixed: RESTART THE NIGHT used to drop the learned friend (reloadWorld now keeps bots).",
   "19": "Checklist panel (Esc, CHECKLIST) reads next/checklist.json and shows five marks per idea. Opened with the pad, screenshot read. It shows 0 of 69 done at the time (the lead applies marks).",
-  "20": "Replaced the weak evidence with a real record-to-record test (sim/lane_b.mjs#friend): two very different players, 3 seeds; roam within 35% (worst 26%), aim within 0.15 (worst 0.12), and the friend keeps the two apart. Honest gaps: together drifts (0.53 -> 0.28) and the daemon's learn() still refuses ('the robots do not play like this crew yet') on sim/learn_test2.mjs, which is the old behaviour, not something I changed. PLAYED: in the browser the dev-menu learned friend joins and moves and fights on its own. SEEN not done (no screenshot of the friend itself).",
-  "22": "Built tools/daemon.mjs: reads every saved-world JSON dropped in next/daemon/worlds (core saveWorld format), learns from each world's recorded nights with the certified learner, writes next/daemon/learned.json, pools every world's crew into one 'mind', skips worlds that did not change, never touches a world file, refuses with a reason when it cannot prove (fewer than 2 nights, robots do not match the crew, not better than the current dark). Tested with sim/daemon_test.mjs (9 checks, 31 s). Left: nothing yet puts the browser's saved worlds into that folder (the browser keeps them in localStorage); a pause-menu EXPORT or Vigil pickup is the missing link. SEEN and PLAYED not marked (a command-line tool; never run on a real recorded world).",
-  "24": "Built core levelCost() and FIRE_TAIL (past the table each level costs ratio x the last and the ratio itself falls toward 1: flattens, never stops). sim/growth.mjs measures what a casual crew and a grinder crew really bank a night (180 and 183 light) and tunes the tail (--tune searched 200 pairs, picked ratio 1.3 decay 0.95): casual reaches level 5 in 15 days, grinder in 4; at day 100 casual level 10, grinder 16 (1.6x); both keep growing. Left: the game still stops at level 5 (the fire's look, WAKES and fireRadius scale linearly past it), so the infinite part is in the curve, not yet playable. Note the robots bank about the same per night, so the grinder gap is modeled as 4 nights a day vs 1.",
+  "20": "Why learn_test2 refused: faithful() failed on 'Dalton: hits 75%, really 95%'. The recorded hit share saturates (a robot at aim .75 to .95 records .52 to .61, since far shots miss), so one multiplier (CAL.aim 1.45) cannot invert it. Fixed: core/habits.js AIM_TABLE inverts it by table (measured by playing robots at 6 known aims), and faithful() only asks a strong aimer (0.75 or more) to come back strong (0.7 or more). learn_test2 now reaches certification and ends 'not better than the current dark by more than twice the noise' (gain -0.005, noise 0.292): a real refusal, a comfortable crew has little to gain from a changed dark. Record-to-record test sim/lane_b.mjs#friend: roam worst 25% off, aim worst 0.09 off over 2 players x 3 seeds.",
+  "22": "Daemon now has its input: sim/export_worlds.cjs plays a real client in a real browser (PLAY ALONE, two learned friends, the player driven by a robot hand, the real core stepped through 5 nights), takes the page's own saved world from localStorage, writes it into next/daemon/worlds/, and runs tools/daemon.mjs on it. Result (playtests/lanes/B/daemon-run.txt): 5 recorded nights read, crew rebuilt, the faithful check passes, 53 s of breeding and certification, REFUSED with 'not fair in every run' (gain -0.126 against noise 0.279). An honest refusal, not a better dark. Fixes found on the way: a lost night was never written to history (core now records it); a lone player's roam used the pair-crew calibration 1.8 (CAL.roamSolo = 1.0, fitted from one crew, weak); faithful() no longer asks a lone robot for together; its bank tolerance is 7 now (a robot that stays at the fire banks small loads: 2 against 8). The daemon hash includes the calibration so a changed learner re-runs. Not done: the browser does not export on its own (the script reads localStorage from the page); a real EXPORT NIGHTS button is still missing. SEEN not marked.",
+  "24": "Playable now. Core: MAX_LEVEL 40 (a wall for hostile saves only), canGrow/grow use levelCost, wakesOf(level) adds one more of the dark per level past the table (runner, watcher, giant, shard; up to 8 extra), fireRadius flattens past 5. Client: HUD price from levelCost, prompt wakes from wakesOf, fire look and lamp height and hum clamped so a level-30 fire is not a mile tall. sim/lane_b.mjs#infinite: 14 levels in a row, the price total matches the curve, the circle grows with shrinking steps, wake counts 2/5/9/10, a level-14 save round trip, a hostile level clamped, robots reach level 6 in 16 nights. Browser on the pad: at level 7 the prompt says GROW to level 8, D-pad right does it, the HUD reads FIRE 8 (screenshot).",
   "25": "Built: core MOVES/moveOn/movesAt/nextMove (slide at fire 1, dodge 2, boost jump 3, slam 4; jump, sprint, crouch from the start) and the client gate mvOk in main.js. Default stays ALL ON (dev, his rule 104); the pause menu has MOVES: UNLOCK BY FIRE LEVEL / ALL ON. Pad run at fire 0: slide, dodge, boost jump and slam are each held back with a plain wrist line ('the slam unlocks when the fire reaches level 4.'); at fire 4 all four work. Core test: monotone, 3 moves at the start, 7 at level 4, growing the fire unlocks them.",
   "47": "Tab (keyboard) was built. New: Back/View on the pad opens the same panel (main.js padStep edge(8)), the D-pad reaches TALK and SEND TO CLAUDE, A sends. Browser: the POST body carries the text and a 36 KB jpeg of the moment (saved as the SEEN proof, it shows the desk and the Clerk). Not run: the real voice TALK (headless has no speech engine) and the real Vigil receiver on 8050 (the run intercepts the POST).",
   "49": "version.json check -> UPDATE READY pop-up (screenshot) -> UPDATE NOW saves, reloads and resumes in the same world with no menu (seed, fire level, light, builds all equal). Pad: Start, D-pad to UPDATE NOW, A. Not run: a friend's browser rejoining the host's room after an update (needs two browsers over PeerJS).",
   "51": "crewCode() makes the code once and keeps it in this browser (localStorage 'lastfire2' crew): HOST twice across a full reload gives the same 6 letters; a friend's menu has the code filled in with 'click JOIN'. PAD stays n/a (existing). Not run: two real browsers joining.",
   "52": "sim/lane_b.mjs#core: the 4 files in core/ import only each other and use no document, window, localStorage, navigator, THREE, Date.now, performance.now, AudioContext or Math.random. (It caught the one Math.random in game.js hurt(), now fixed.) PLAYED: the rules run whole games in plain Node (lane_b.mjs, robots). SEEN not marked (nothing to look at).",
-  "64": "Built client/fresh.js (pickFresh: never the clip just played, never one of the last two while others exist, long-unheard slightly favored; beat(): asks for something new after 4 stale beats) and wired it into src/combat.js for hit ticks, kill ticks and footsteps (4 variants per surface). sim/fresh_test.mjs: 20000 plays at 2, 3, 4, 6 variants never repeat, any window of 4 holds 3+ different clips, plus the far-sound scheduler (seeds 1 to 3, 900 s, every window of 4 voices all different). Not marked: SEEN and PLAYED (sound; no audio was listened to).",
-  "66": "No new marks. farsound was already built and tested; the murmur, wind and crunchy hits were not touched or listened to by me. Footstep, hit and kill variants now come through pickFresh (see 64)."
+  "64": "Now SEEN and PLAYED: sim/audio_run.cjs taps the real client's WebAudio (an AnalyserNode fanned off every connection to the destination) through a camp phase and a 42 s night phase, saves playtests/lanes/B/audio-spectrogram.png, and checks far sounds (8 sounds, 6 voices, none repeating within 4) and that footsteps (two surfaces), hit ticks, headshot ticks and kill ticks never repeat a variant twice in a row (0 repeats over about 140 plays). The hit and kill ticks were fired by calling sound.hit and sound.kill 24 times in the page, not by shooting a shape (the dark is hidden in the client).",
+  "66": "The murmur did not exist; only the item's name did. Built it (client/ambience.js murG): two voice bands (about 500 and 1500 Hz) of noise swelling like syllables (3.7 Hz) and breaths (0.3 Hz), placed at the fire, audible inside 40 m of the camp, louder in the light. Found and fixed a real bug: main.js asked lightAt for the wind with the player's own glow included, so the player was always in the light and the wind never rose in the dark; it uses noGlow now. sim/audio_run.cjs: murmur gain 0.12 at the camp and 0 out at 70 m; the voice band carries energy at the camp; wind gain 0.17 at the camp against 0.38 in the dark; 74 to 93 bright fire snaps in the run; far sounds as above. The spectrogram is the SEEN proof. Crunchy hits not separately proven: the hit tick is a 4-variant square blip with no crunch layer. No ear has listened to any of it."
+ },
+ "16": {
+  "tested": {
+   "proof": "sim/lane_b.mjs#perfect",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/16-night-12.png",
+   "at": "2026-10-19"
+  }
+ },
+ "66": {
+  "built": {
+   "proof": "client/ambience.js#murG",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/audio_run.cjs#the camp murmur is there",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/B/audio-spectrogram.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/audio_run.cjs#the wind is far in the light",
+   "at": "2026-10-19"
+  }
  }
 }
