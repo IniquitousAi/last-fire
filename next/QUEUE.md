@@ -12,8 +12,6 @@ Checked bookmarks (2026-10-19), each with the moment it gets used. Before any wo
 - **yuka** (github.com/Mugen87/yuka, MIT, 1,403 stars, updated 2026-10): game AI for JavaScript (steering, pathfinding, goals, fuzzy
   logic). Use it the next time the Hollow or camp people need smarter movement, before writing steering by hand (taste 96: people must
   read as people).
-- **TripoSR** (github.com/VAST-AI-Research/TripoSR, MIT, 7,120 stars): one picture to a 3D model. Use it the next time a prop or
-  creature model is needed and no free model fits; its raw output is a starting point, never the final (taste 12).
 
 ## JOB ONE (his words, 2026-10-19 about 09:00): an AI plays the whole game, tutorial to end game
 "If you can progress through the game as an AI, then we're building a decent game. So I just need you to progress to the end game.
