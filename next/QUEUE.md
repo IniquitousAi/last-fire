@@ -44,7 +44,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 34. **Robot crews for the truck** (INNOVATION.md robot test for seats): crews of 1 to 4 run the same Earth route with the truck; pass line: solo is slower but finishes about as often. (added when item 33 finished)
 
-35. **Robots that look for parts** (from the site test: robots never pick up parts, so the depot's worth is untested): give the drop robots a parts habit and measure parts a trip per district. (added when item 29 finished)
+
+36. **A full truck build, timed by robots** (the building pillar, measured): how many trips does a careful player need to collect all ten parts, by district choice? Pass line (reasoned): the depot route finishes the truck in about 5 to 8 trips, never in 1 or 2. (added when item 35 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -69,3 +70,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 32, the back seats' mounted gun with heat (v79).
 - Item 33, climb between seats while the truck coasts (v80).
 - Item 29, pick the site by its odds (v81 to v83); tags clamped clear of the corners.
+- Item 35, robots pick up parts; the depot fixed to keep parts close; a wipe on Earth is now recorded (v84).
