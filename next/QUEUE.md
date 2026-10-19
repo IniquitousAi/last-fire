@@ -17,6 +17,22 @@ guidance of the lore and tutorial".
 - **Found, still open:** the menu has no controller focus (SOLO needs a mouse); after the guide nothing says where the drop to Earth is.
 - **Looks:** his pick is look 3, the cinematic night (default from v153; `?look=0` is the old look). Performance floor: 120+ fps at 1000x900.
 
+## HIS PLAYTEST OF v154 (2026-10-19 about 09:40, his words in taste rules 102 to 104): fix in this order, each with proof on the checklist
+"There's no way you actually played this game and was like, yep, that looks nice." Claude is the main dev: he only plays and judges by eye.
+1. **Enemies:** see-through sparkly wireframe, flashing, ugly, can't tell what they are. Make them solid, readable shapes in every light (the
+   rule "smoke in the dark" must read as a dark solid silhouette, not glitter). DONE v155: they no longer stand inside you or each other;
+   still open: clipping through walls and props (camp solids and Earth towers are not in core/ yet).
+2. **A big bright light on the floor at spawn** (the desk lamp pool or the guide ring): find it from the spawn spot and tame it.
+3. **UI boxes:** no bordered cards or boxes on the build bar, prompts, wrist; seamless and readable like Cyberpunk 2077 (rule 103).
+4. **The Cyberpunk loop:** get a Cyberpunk 2077 dialogue-scene screenshot (web reference), put ours beside it at the same moment, list every
+   difference, fix the biggest, repeat; a critic pass that never grades its own work (OPUS-GAMEDEV.md, the Gauntlet Loop).
+5. **Smooth animations, aiming, movement wired:** DONE v155: the Blender rifle rig is the default gun. Open: the pistol, shotgun and LMG are
+   still the blocky kit models (build them in Blender like the rifle, rule 100).
+6. **Dev loadout = every item:** guns 1 to 5 are all held; open: relay, lamp and flare need light, so dev mode needs free building.
+7. **The checklist** (his rule): every idea has a task and five proven marks (BUILT, TESTED, SEEN, PAD, PLAYED); `node sim/checklist_verify.mjs`
+   erases unproven marks. v156 start: 0 of 69 done, 81 of 345 marks. Knock out the most marks per minute: a SEEN screenshot sweep, a PAD test
+   per interactive item, and a full robot run for PLAYED.
+
 ## The eras and unlocks (his words, 2026-10-19; dev mode today has everything unlocked, "messy af lol")
 - Start on the **Moon: era 3**. Pistol and shotgun only, no vehicle.
 - Then **Earth: era 4**, a taste of the real game.
