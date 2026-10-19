@@ -1,35 +1,35 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=147';
-import { Ambience } from './ambience.js?v=147';
-import { Camp, BOARD } from './camp.js?v=147';
-import { Guide } from './guide.js?v=147';
-import { buildSites } from './earthsite.js?v=147';
-import { Truck } from './truck.js?v=147';
-import { ShipView } from './shipview.js?v=147';
-import { Crew } from './crew.js?v=147';
-import { Hands } from './hands.js?v=147';
-import { FpRig } from './fprig.js?v=147';
-import { Wrist } from './wrist.js?v=147';
-import { FireCore } from './firecore.js?v=147';
+import * as C from '../core/game.js?v=148';
+import { Ambience } from './ambience.js?v=148';
+import { Camp, BOARD } from './camp.js?v=148';
+import { Guide } from './guide.js?v=148';
+import { buildSites } from './earthsite.js?v=148';
+import { Truck } from './truck.js?v=148';
+import { ShipView } from './shipview.js?v=148';
+import { Crew } from './crew.js?v=148';
+import { Hands } from './hands.js?v=148';
+import { FpRig } from './fprig.js?v=148';
+import { Wrist } from './wrist.js?v=148';
+import { FireCore } from './firecore.js?v=148';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=147';
-import { FriendVoice } from './friendvoice.js?v=147';
-import { crewFrom } from '../core/habits.js?v=147';
-import { HudLook } from './hudlook.js?v=147';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=147';
-import { sound, GUNS } from '../../src/combat.js?v=147';
-import { FX } from '../../src/fx.js?v=147';
+import { think as friendThink } from './friend.js?v=148';
+import { FriendVoice } from './friendvoice.js?v=148';
+import { crewFrom } from '../core/habits.js?v=148';
+import { HudLook } from './hudlook.js?v=148';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=148';
+import { sound, GUNS } from '../../src/combat.js?v=148';
+import { FX } from '../../src/fx.js?v=148';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 147;   // (this copy's version; ./version.json says the newest)
+const BUILD = 148;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -124,7 +124,7 @@ Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', tra
 document.body.append(clickPlay);
 let truck = null, ship = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
-const keys = {}, mouse = [false, false, false];
+const keys = {}, mouse = [false, false, false]; let padOn = false, padMove = { f: 0, s: 0 }, padSprint = false;   // (padOn: a controller is in use, so play runs without the mouse lock)
 const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once: the fire, your glow, the nearest nodes)
 const uLights = { value: Array.from({ length: NODE_MAX }, () => new THREE.Vector4(0, 0, 0, 0)) };
 // lamp shadows (his pick, 2026-10-19; INNOVATION.md idea 2): the rule decides where light is blocked (core shadowed: camp pieces taller than a
@@ -321,7 +321,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
   b = new THREE.Box3().setFromObject(holder); holder.userData = { len: b.max.z - b.min.z, top: b.max.y, muzzle: new THREE.Vector3(0, b.max.y * 0.35, b.min.z) }; holder.visible = false; view.add(holder); held[k] = holder; }
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
-const DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
+const DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
 // a relay or the truck's cab warm them back in about 3 s. The drift moves your real aim, so where the sight sits is where the round goes.
@@ -384,7 +384,29 @@ function drawOpts() { $('opts').innerHTML = OPTS.map(([k, n, on, off]) => `<butt
 $('opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.o === 'reset') { Object.assign(SET, DEFAULTS); sound.setVolume(SET.vol); $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); } else SET[b.dataset.o] = !SET[b.dataset.o]; aimOn = sprintOn = false; save(); drawOpts(); });
 drawOpts();
 $('sVol').oninput = e => { SET.vol = +e.target.value; sound.setVolume(SET.vol); $('vVol').textContent = Math.round(SET.vol * 100); save(); };
-$('resume').onclick = () => { panel = null; $('paused').hidden = true; lockMouse(); };
+$('resume').onclick = () => { panel = null; $('paused').hidden = true; if (!padOn) lockMouse(); };
+// The controller (he plays on one, to relax). Standard layout, Call of Duty style: left stick moves, right stick looks, LT aims (hold), RT fires,
+// A jump (again in the air: boost), B crouch and slide (in the air: slam), X reload, Y next gun, LB scan, RB flare, L3 sprint, R3 slow time,
+// D-pad up flashlight, right use, left relay, down lamp, Start pause. Aim assist as on console: the look slows near a shape (friction).
+const PAD = { dead: 0.14, look: 3.4, curve: 2, assist: 0.45, cone: Math.cos(5 * Math.PI / 180) }, padPrev = []; const GUN_CYCLE = ['pistol', 'ar', 'shotgun', 'lmg', 'rail'];
+const padKey = (code, down) => dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code }));
+function padStep(dt) { const gp = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(x => x && x.connected); if (!gp) { padMove.f = padMove.s = 0; return; }
+  const ax = i => { const v = gp.axes[i] || 0, a = Math.abs(v); return a < PAD.dead ? 0 : Math.sign(v) * ((a - PAD.dead) / (1 - PAD.dead)); }, bt = i => !!(gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5));
+  const now = gp.buttons.map((_, i) => bt(i)), edge = i => now[i] && !padPrev[i], up = i => !now[i] && padPrev[i];
+  if (!padOn && (now.some(Boolean) || Math.abs(ax(0)) + Math.abs(ax(1)) + Math.abs(ax(2)) + Math.abs(ax(3)) > 0)) { padOn = true; if (document.pointerLockElement) document.exitPointerLock(); }
+  if (edge(9) && mode === 'play') { if (panel === 'pause') $('resume').click(); else if (!panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } }
+  if (mode === 'play' && !panel && me) { padMove.f = -ax(1); padMove.s = ax(0);
+    let lx = ax(2), ly = ax(3); const m = Math.hypot(lx, ly); if (m > 0) { const c = Math.pow(Math.min(1, m), PAD.curve) / m; lx *= c; ly *= c; }   /* (a curved stick: fine aim near the middle, fast turns at the edge) */
+    let k = PAD.look * SET.sens * dt * (1 - ads * (1 - SET.adsSens)); { const d = look(), ey = me.y + eyeH; for (const h of g.hollow) { if (h.dead) continue; const dx = h.x - me.x, dy = h.y + 1.2 - ey, dz = h.z - me.z, L = Math.hypot(dx, dy, dz); if (L < 60 && (dx * d.x + dy * d.y + dz * d.z) / L > PAD.cone) { k *= 1 - PAD.assist; break; } } }   /* (aim assist: slower across a shape) */
+    me.yaw -= lx * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - ly * k * (SET.invertY ? -1 : 1)));
+    mouse[0] = (gp.buttons[7] ? gp.buttons[7].value : 0) > 0.3; aimOn = (gp.buttons[6] ? gp.buttons[6].value : 0) > 0.3;
+    if (edge(10)) padSprint = !padSprint; const map = { 0: 'Space', 1: 'KeyC', 2: 'KeyR', 4: 'KeyZ', 5: 'KeyG', 11: 'KeyT', 12: 'KeyV', 13: 'KeyE', 14: 'KeyQ', 15: 'KeyF' };
+    const dodge = Math.abs(padMove.s) > 0.5 || padMove.f < -0.5; for (const i in map) { if (+i === 1 && dodge && onGround) continue; if (edge(+i)) padKey(map[i], true); if (up(+i)) padKey(map[i], false); }
+    if (edge(1) && dodge && onGround) { const k = padMove.s > 0.5 ? 'KeyD' : padMove.s < -0.5 ? 'KeyA' : 'KeyS', was = keys[k]; keys[k] = true; padKey('ShiftLeft', true); padKey('ShiftLeft', false); keys[k] = was; }   /* (B while moving sideways: the dodge, as Shift plus a direction does) */
+    if (edge(3)) { const i = GUN_CYCLE.indexOf(gunKey); switchGun(GUN_CYCLE[(i + 1) % GUN_CYCLE.length]); } }
+  else { padMove.f = padMove.s = 0; if (padOn) mouse[0] = false; }
+  now.forEach((v, i) => padPrev[i] = v); }
+addEventListener('mousemove', e => { if (padOn && (Math.abs(e.movementX) + Math.abs(e.movementY) > 6)) padOn = false; });   // (move the mouse and play is back on the mouse)
 $('leave').onclick = () => { saveNow(); location.href = location.pathname; };
 $('room').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'copyInvite') { const url = `${location.origin}${location.pathname}#join=${net.code}`; navigator.clipboard?.writeText(url).then(() => { b.firstChild.textContent = 'COPIED'; setTimeout(() => b.firstChild.textContent = 'COPY INVITE', 1500); }, () => { b.querySelector('small').textContent = url; }); }
@@ -515,8 +537,8 @@ function move(dt) {
   const seat = C.seatOf(g, me.id); if (seat >= 0 && g.car) {   // (in the truck: you ride; the driver's W/S and A/D are throttle and steering)
     me.drive = seat === 0 ? { th: (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), st: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) } : null;
     [me.x, me.z] = C.seatPos(g.car, seat); me.y = g.land(me.x, me.z) + 0.9; vel.x = vel.y = 0; vy = 0; onGround = true; return; }
-  const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), wantAds = (SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0, sprintKey = (SET.sprintToggle ? sprintOn : (keys.ShiftLeft || keys.ShiftRight)) && f > 0, sprint = sprintKey && !wantAds && !mouse[0] && slideT <= 0;   /* (aiming or firing ends a sprint, as in Modern Warfare) */
-  if (sprint && crouch) crouch = false; mvSprint = sprint; if (!sprint) tac = 0; else if (tac > 0) tac -= dt; readyT = sprint ? (tac > 0 ? MW.tacToFire : MW.toFire) : Math.max(0, readyT - dt); if (f <= 0) sprintOn = false;
+  const f = Math.max(-1, Math.min(1, (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0) + padMove.f)), s = Math.max(-1, Math.min(1, (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + padMove.s)), wantAds = (SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0, sprintKey = ((SET.sprintToggle ? sprintOn : (keys.ShiftLeft || keys.ShiftRight)) || padSprint) && f > 0, sprint = sprintKey && !wantAds && !mouse[0] && slideT <= 0;   /* (aiming or firing ends a sprint, as in Modern Warfare) */
+  if (sprint && crouch) crouch = false; mvSprint = sprint; if (!sprint) tac = 0; else if (tac > 0) tac -= dt; readyT = sprint ? (tac > 0 ? MW.tacToFire : MW.toFire) : Math.max(0, readyT - dt); if (f <= 0) sprintOn = padSprint = false;
   const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * f + cosY * s, wz = -cosY * f - sinY * s; const len = Math.hypot(wx, wz) || 1; wx /= len; wz /= len;
   const top = (sprint ? 7.4 * (tac > 0 ? MW.tacMul : 1) : 4.6) * C.speedOf(me) * (1 - ads * 0.35) * (f || s ? 1 : 0) * (crouch && !sprint ? MW.crouchMul : 1), acc = onGround ? 14 : 3;   // (about a third of a second to full speed, less to stop)
   if (slideT > 0 && onGround) { slideT -= dt; const k = Math.max(0, slideT / MW.slideT), v = MW.slideV * k + 4.6 * MW.crouchMul * (1 - k); vel.x = slideDir[0] * v; vel.y = slideDir[1] * v; }   /* (the slide: a burst along where you were running, easing down to a crouch) */
@@ -565,7 +587,7 @@ function frame(now) {
   if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (DEMO && !panel) (/night/.test(location.search) ? demoNight : demoStep)(dt); if (!panel) move(dt);
-  smartStep(dt); shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
+  padStep(dt); smartStep(dt); shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (GUNS[gunKey].charge && !mounted()) { const can = locked() && !panel && !buildPick && reloadT <= 0 && ammo[gunKey].mag > 0 && shotCd <= 0 && !mvSprint;   /* (the rail: hold to charge, let go to fire) */
     if (mouse[0] && can) { if (railC === 0) { if (railRig) railRig.charge(); sound.click(); } railC = Math.min(1, railC + dt / GUNS[gunKey].charge); } else if (railC > 0) { shoot.c = railC; railC = 0; shoot(); } else if (mouse[0] && !can && ammo[gunKey].mag <= 0 && !shoot.held) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false; }
