@@ -30,9 +30,10 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 19. **Real mask models, not cute imps** (PLAN-SPACE.md section 3): the free Quaternius wraith and clawed bodies still have cartoon proportions. Make each mask from a concept image through the free TRELLIS.2 demo (MIT), then the Blender cleanup script. Downloading generated models needs his yes first (the safety rule outranks the temp rule). (added when item 18 finished)
 
-20. **Your bunk shows your dues** (INNOVATION.md, economy): the fire's light reaches each person's bunk by what they put in; a free rider sleeps in a dim corner and everyone can see it; checked by sim/camp_sim.mjs. (added when item 17 finished)
 
 21. **Theories with odds** (INNOVATION.md, lore delivery): the camp's theories about what the dark is, each with live odds that move with what you discover. (added when item 10 finished)
+
+22. **Your Ember shows how you fell** (INNOVATION.md, death and loss): an Ember keeps the shape of what took you, so a friend reads the danger before reaching you. (added when item 20 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -44,3 +45,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 18, masks get the sky's treatment, and the enemies' wrong size fixed (v60).
 - Item 17, people go out and some do not come back (v61). Gear-giving to raise their odds is still open.
 - Item 10, tower shadows on Earth keep the dark smoke (v62).
+- Item 20, your bunk shows your dues (v63).
