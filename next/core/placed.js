@@ -25,8 +25,8 @@ export const PLACED = {
   'fp/sniper_fp.glb': { why: 'the rail: charged shots, for the thing the other guns do not stop', story: 'hold to charge, let go to fire' },
   // Poly Haven scans (CC0), keyed by their folder in assets/ph
   'ph:modular_chainlink_fence': { why: 'the camp\'s ring fence, 21 m out from the fire: the first line a person can see and trust', story: 'a gap at the gate where the posts end; the panels sag where people leaned' },
-  'ph:modular_urban_apartments_facade': { why: 'the old world's apartment blocks outside the walls: where people lived before the dark, now its ruins', story: 'windows still in rows, nobody behind any of them' },
-  'ph:street_lamp_02': { why: 'the posts under the camp's lamps, relays and board: light needs something to stand on', story: 'city street lamps, carried in from the ruins one at a time' },
+  'ph:modular_urban_apartments_facade': { why: "the old world's apartment blocks outside the walls: where people lived before the dark, now its ruins", story: 'windows still in rows, nobody behind any of them' },
+  'ph:street_lamp_02': { why: "the posts under the camp's lamps, relays and board: light needs something to stand on", story: 'city street lamps, carried in from the ruins one at a time' },
   'ph:Barrel_01': { why: 'barrels by the workshop: water and fuel, the two things the bench burns through', story: 'one is rusted through at the bottom and kept anyway' },
   'ph:old_military_crate': { why: 'the camp\'s stock, from before: crates by the workshop and the store', story: 'stenciled numbers for a unit that is not coming' },
   'ph:concrete_road_barrier': { why: 'barriers flank the gate outside: they slow a truck and a runner', story: 'dragged here from a road that used to go somewhere' },
