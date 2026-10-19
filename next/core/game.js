@@ -23,6 +23,18 @@ function valueNoise(r) {
 export const PAD = { x: 11, z: -13 };   // (the lander's pad inside the camp wall)
 export const EARTH = { x: 0, z: 6000, stay: 150, light: 9, reach: 16, cells: 10 };   // (the landing site: the lander waits 150 s, its lamp holds 9 m)
 export const onEarth = p => p.z > 3000;
+// the truck: built at the bay in camp from parts found on Earth, fitted in an order that makes sense (his example, 2026-10-19). Weight slows you.
+export const PARTS = { frame: { kg: 60, n: 1, after: [] }, axle: { kg: 25, n: 2, after: ['frame'] }, engine: { kg: 45, n: 1, after: ['frame'] }, wheel: { kg: 18, n: 4, after: ['axle'] }, battery: { kg: 15, n: 1, after: ['engine'] }, cab: { kg: 40, n: 1, after: ['frame', 'engine'] } };
+export const PART_ORDER = ['frame', 'axle', 'engine', 'wheel', 'battery', 'cab'], BAY = { x: 5, z: 12 }, MAX_LOAD = 140;   // (the bay sits by the workshop, between the gate and the bench)
+export const loadOf = p => (p.pack || []).reduce((s, k) => s + PARTS[k].kg, 0);
+export const speedOf = p => Math.max(0.45, 1 - loadOf(p) / 160);   // (60 kg on your back: about two thirds speed; a full pack: under half)
+export const fitted = (g, k) => (g.truck && g.truck[k]) || 0;
+export const canFit = (g, k) => (g.stash[k] || 0) > 0 && fitted(g, k) < PARTS[k].n && PARTS[k].after.every(a => fitted(g, a) >= PARTS[a].n);
+export const truckDone = g => PART_ORDER.every(k => fitted(g, k) >= PARTS[k].n);
+export function fit(g, p) {
+  if (!p || p.ember || Math.hypot(p.x - BAY.x, p.z - BAY.z) > 5) return null; const k = PART_ORDER.find(k => canFit(g, k)); if (!k) return null;
+  g.stash[k]--; g.truck[k] = fitted(g, k) + 1; g.log.push([+g.t.toFixed(2), 'fit', k]); return k;
+}
 export function makeLand(seed) {
   const r = stream(seed, 'land'), n1 = valueNoise(r), n2 = valueNoise(r), n3 = valueNoise(r), n4 = valueNoise(r);
   return (x, z) => {   // (rolling ground, long ridges, and the far land growing stranger the farther from the first fire)
@@ -61,7 +73,7 @@ export function clampTactic(t) {
 export function newGame(seed, tactic = BASE_TACTIC) {
   const C = 0;   // (the first fire stands at the world's middle; the world runs on forever from it)
   return { seed, land: makeLand(seed), t: 0, clock: 0.3, night: 1, tactic: clampTactic(tactic), rSpawn: stream(seed, 'spawn'), rAim: stream(seed, 'aim'), rMote: stream(seed, 'mote'),
-    fire: { x: C, z: C, level: 0, light: 0, fuel: 180, woke: [] }, nodes: [], marks: [], keep: {}, rec: newRecord(), history: [], players: [], hollow: [], motes: [], embers: [], nextId: 1, log: [], stats: { kills: 0, falls: 0, banked: 0, tense: 0, beats: 0, drained: 0 } };
+    fire: { x: C, z: C, level: 0, light: 0, fuel: 180, woke: [] }, nodes: [], marks: [], keep: {}, parts: [], stash: {}, truck: {}, rec: newRecord(), history: [], players: [], hollow: [], motes: [], embers: [], nextId: 1, log: [], stats: { kills: 0, falls: 0, banked: 0, tense: 0, beats: 0, drained: 0 } };
 }
 export function addPlayer(g, id, name = 'Player') {
   const p = { id, name, x: g.fire.x + 3 + g.players.length, z: g.fire.z, y: 0, yaw: 0, pitch: 0, hp: 100, carried: 0, ember: false, carrying: null, isPlayer: true, hurtT: 0 };
@@ -132,6 +144,10 @@ export function step(g, dt) {
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; } }
   g.motes = g.motes.filter(m => m.t > 0);
+  for (const p of g.players) { if (p.ember) continue; p.pack = p.pack || [];
+    for (const q of g.parts) if (!q.taken && Math.hypot(p.x - q.x, p.z - q.z) < 1.6 && loadOf(p) + PARTS[q.kind].kg <= MAX_LOAD) { q.taken = true; p.pack.push(q.kind); g.log.push([+g.t.toFixed(2), 'part', p.id, q.kind]); }
+    if (p.pack.length && Math.hypot(p.x - BAY.x, p.z - BAY.z) < 5) { for (const k of p.pack) g.stash[k] = (g.stash[k] || 0) + 1; g.log.push([+g.t.toFixed(2), 'stash', p.id, p.pack.length]); p.pack = []; } }
+  if (g.parts.some(q => q.taken)) g.parts = g.parts.filter(q => !q.taken);
   for (const p of g.players) {
     if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
     p.hurtT = Math.max(0, p.hurtT - dt); p.calm = p.hurtT > 0 ? 0 : (p.calm || 0) + dt; if (!p.ember && p.calm > 4) p.hp = Math.min(100, p.hp + dt * 8);   // (four quiet seconds and you get your breath back)
@@ -146,8 +162,8 @@ export function mark(g, k, x, z) { g.marks.push({ k, x: Math.round(x * 10) / 10,
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
-    host: g.players[0] ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : null };
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
   const ok = v => typeof v === 'number' && Number.isFinite(v); if (!d || d.v !== 1 || !ok(d.seed)) return null;
@@ -155,6 +171,8 @@ export function loadWorld(d) {
   if (d.fire) { g.fire.level = Math.max(0, Math.min(FIRE_COST.length - 1, d.fire.level | 0)); g.fire.light = ok(d.fire.light) ? d.fire.light : 0; g.fire.fuel = ok(d.fire.fuel) ? d.fire.fuel : 180; }
   for (const n of d.nodes || []) if (Array.isArray(n) && NODE[n[1]] && [n[0], n[2], n[3], n[4]].every(ok)) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false });
   for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
+  const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; g.stash = cnt(d.stash); g.truck = cnt(d.truck);
+  for (const q of d.parts || []) if (Array.isArray(q) && PARTS[q[0]] && ok(q[1]) && ok(q[2])) g.parts.push({ id: g.nextId++, kind: q[0], x: q[1], z: q[2] });
   g.marks = Array.isArray(d.marks) ? d.marks.filter(m => m && ok(m.x) && ok(m.z)).slice(-600) : []; g.keep = d.keep && typeof d.keep === 'object' ? d.keep : {}; if (d.stats) Object.assign(g.stats, d.stats); g.history = Array.isArray(d.history) ? d.history.filter(h => h && typeof h === 'object').slice(-30) : [];
   g.startAt = Array.isArray(d.host) && d.host.every(ok) ? d.host : null; linkNetwork(g); return g;
 }
@@ -170,6 +188,7 @@ export function shotBy(g, p, hit) { if (p) noteShot(g.rec, p, hit); }   // (for 
 export function hurt(g, p, n, from) {
   if (p.ember) return; p.hp -= n; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
+    for (const k of p.pack || []) g.parts.push({ id: g.nextId++, kind: k, x: p.x + (Math.random() - 0.5) * 2, z: p.z + (Math.random() - 0.5) * 2 }); p.pack = [];
     p.ember = true; p.hp = 0; g.stats.falls++; g.rec.falls++; if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) e.held = null; p.carrying = null; }
     for (let i = 0; i < Math.ceil(p.carried / 5); i++) g.motes.push({ id: g.nextId++, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2, v: 5, t: 60 });
     p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0 }); mark(g, 'fall', p.x, p.z); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
@@ -183,6 +202,8 @@ export function drop(g, p) {
   if (!p || p.ember || onEarth(p) || Math.hypot(p.x - PAD.x, p.z - PAD.z) > 4) return false;
   if (!g.earth) { g.earth = { t: EARTH.stay, n: (g.trips = (g.trips || 0) + 1) }; const r = stream(g.seed, 'earth-' + g.earth.n);
     for (let i = 0; i < EARTH.cells; i++) { const a = r() * Math.PI * 2, d = 14 + r() * 50; g.motes.push({ id: g.nextId++, x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d, v: 8, t: 1e9, cell: true }); } }
+  if (g.earth && !g.earth.parts) { g.earth.parts = true; const r = stream(g.seed, 'parts-' + g.earth.n), lack = PART_ORDER.flatMap(k => Array(Math.max(0, PARTS[k].n - fitted(g, k) - (g.stash[k] || 0))).fill(k)), pool = lack.length ? lack : PART_ORDER;
+    for (let i = 0; i < 3; i++) { const a = r() * Math.PI * 2, d = 22 + r() * 48; g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
   p.x = EARTH.x + 1.5; p.z = EARTH.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'drop', p.id]); return true;
 }
 export function rise(g, p) {
@@ -190,15 +211,15 @@ export function rise(g, p) {
   p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'rise', p.id]);
   if (!g.players.some(onEarth)) endTrip(g); return true;
 }
-function endTrip(g) { g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
+function endTrip(g) { g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
 function tripClock(g, dt) {
   if (!g.earth) return; g.earth.t -= dt; if (g.earth.t > 0) return;
   for (const p of g.players) if (onEarth(p)) {   // (left behind: the lander is gone; whatever brings you back up, the light you carried stays down there)
-    if (p.ember) { const e = g.embers.find(q => q.of === p.id); if (e) e.x = 1e9; } p.ember = false; p.carrying = null; p.carried = 0; p.hp = 25;
+    if (p.ember) { const e = g.embers.find(q => q.of === p.id); if (e) e.x = 1e9; } p.ember = false; p.carrying = null; p.carried = 0; p.pack = []; p.hp = 25;
     p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'stranded', p.id]); }
   g.embers = g.embers.filter(e => e.x < 1e8); endTrip(g);
 }
-export const EARTH_DARK = { base: 24, perPlayer: 3, perMinute: 4, every: 0.3 };   // (how hard Earth pushes: picked by sim/drop.mjs --tune from 45 settings, 20 trips each: a perfect player comes back 95%, a greedy one 65%, tense 0.61 to 0.69 of the trip)
+export const EARTH_DARK = { base: 18, perPlayer: 3, perMinute: 14, every: 0.3 };   // (how hard Earth pushes: picked by sim/drop.mjs --tune from 45 settings, 20 trips each, robots slowed by what they carry: perfect solo back 100%, careful 95%, greedy 65%, tense 0.58 to 0.70)
 function spawnEarth(g, dt) {
   if (!g.earth) return; const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
   const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
