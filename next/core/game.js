@@ -135,13 +135,15 @@ export function fit(g, p) {
 }
 export function makeLand(seed) {
   const r = stream(seed, 'land'), n1 = valueNoise(r), n2 = valueNoise(r), n3 = valueNoise(r), n4 = valueNoise(r);
+  const YARD = n1(0, 0) * 22 + n2(0, 0) * 5, SITE = n1(EARTH.x / 90, EARTH.z / 90) * 22;   // (the same two sums every call: worked out once, added in the same order, so every height is bit for bit what it was)
   return (x, z) => { if (z > 8500) return n1(x / 60, z / 60) * 3 + n3(x / 7, z / 7) * 0.4;   /* (the Rift's floor: a low, slow swell, nothing to hide behind) */   // (rolling ground, long ridges, and the far land growing stranger the farther from the first fire)
-    const d = Math.hypot(x, z), far = Math.min(1, d / 1500), k = Math.min(1, Math.max(0, (d - 18) / 30)), home = 1 - k * k * (3 - 2 * k);
-    const h = n1(x / 90, z / 90) * 22 + n2(x / 28, z / 28) * 5 + n3(x / 9, z / 9) * 0.8, ridge = Math.abs(n4(x / 160, z / 160) - 0.5) * 2;
-    const yard = n1(0, 0) * 22 + n2(0, 0) * 5 + n3(x / 9, z / 9) * 0.2;   /* (the camp's yard: level, at the height the hills around it already have, so no bowl) */
+    const d = Math.hypot(x, z), k = Math.min(1, Math.max(0, (d - 18) / 30)), home = 1 - k * k * (3 - 2 * k);
+    const yard = home === 0 ? 0 : YARD + n3(x / 9, z / 9) * 0.2;   /* (the camp's yard: level, at the height the hills around it already have, so no bowl) */
+    let wild;   // (home is exactly 0 past 48 m and exactly 1 inside 18 m: there the other half is x * 0 and adds nothing, so it is not worked out (every term is finite and not negative))
+    if (home === 1) wild = yard; else { const far = Math.min(1, d / 1500), h = n1(x / 90, z / 90) * 22 + n2(x / 28, z / 28) * 5 + n3(x / 9, z / 9) * 0.8, ridge = Math.abs(n4(x / 160, z / 160) - 0.5) * 2;
+      wild = home === 0 ? h + (1 - ridge) ** 3 * 30 * far : (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + yard * home; }
     const e = Math.hypot(x - EARTH.x, z - EARTH.z), ke = Math.min(1, Math.max(0, (e - 62) / 45)), site = 1 - ke * ke * (3 - 2 * ke);   /* (Earth's landing site: a flat dead city floor, rough hills past it) */
-    const wild = (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + yard * home;
-    return site > 0 ? wild * (1 - site) + (n1(EARTH.x / 90, EARTH.z / 90) * 22 + n3(x / 4, z / 4) * 0.35) * site : wild;
+    return site > 0 ? wild * (1 - site) + (SITE + n3(x / 4, z / 4) * 0.35) * site : wild;
   };
 }
 export function heightAt(land, x, z) { return land(x, z); }
@@ -199,7 +201,11 @@ export function tideRadius(g) {   // (how far out the dark holds back: far by da
   if (c < DAWN_AT) return inner; return inner + (rim - inner) * ((c - DAWN_AT) / (1 - DAWN_AT));
 }
 // each player's own light: a small glow, brighter for every friend within 6 m (shared glow), brighter again while carrying light
-export function glowOf(g, p) { if (p.ember) return 0; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 6) near++; return (3 + near * 2 + Math.min(4, p.carried * 0.08)) * (0.45 + 0.55 * Math.max(0, p.hp) / 100); }   // (one light is your health, INNOVATION.md: hurt, you shine less, and the dark gets closer before it turns solid)
+export function glowOf(g, p) { if (LC && LC.g === g) { let v = LC.glow.get(p); if (v === undefined) { v = glowRaw(g, p); LC.glow.set(p, v); } return v; } return glowRaw(g, p); }
+// (LC: moveHollow's light cache for one tick. Every input of a player's glow and of the light where a player stands is fixed inside its loop
+// except through hurt, a shard draining carried light, the fuel running out and a node breaking; each of those drops the cache. core_replay.mjs proves it bit for bit)
+let LC = null; const lcDrop = () => { LC.glow.clear(); LC.at.clear(); LC.near.clear(); LC.beams = null; };
+function glowRaw(g, p) { if (p.ember) return 0; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 6) near++; return (3 + near * 2 + Math.min(4, p.carried * 0.08)) * (0.45 + 0.55 * Math.max(0, p.hp) / 100); }   // (one light is your health, INNOVATION.md: hurt, you shine less, and the dark gets closer before it turns solid)
 export const NODE = { relay: { r: 7, reach: 22, hp: 120, cost: 15 }, lamp: { r: 11, reach: 0, hp: 80, cost: 25 } };   // (a relay carries light on; a lamp only shines)
 export function linkNetwork(g) {   // (which nodes are lit: walk outward from the fire through relays in reach of each other)
   const f = g.fire, lit = new Set(), open = [{ x: f.x, z: f.z, reach: 24 }, ...(g.earth ? [{ x: EARTH.x, z: EARTH.z, reach: EARTH.reach }] : [])];
@@ -216,7 +222,7 @@ export function lightAt(g, x, z, noGlow, noShadow) {   // (noShadow: the light a
   for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r && 1 - d / r > L && !sh(n.x, n.z, x, z)) L = 1 - d / r; }
   if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8);
     if (p.torch && !p.ember && d < TORCH.r && d > 0.01) { const along = ((x - p.x) * -Math.sin(p.yaw) + (z - p.z) * -Math.cos(p.yaw)) / d; if (along > TORCH.cos && TORCH.s * (1 - d / TORCH.r) > L && !sh(p.x, p.z, x, z)) L = TORCH.s * (1 - d / TORCH.r); } }   /* (a flashlight beam is light: what it touches commits to a shape) */
-  if (!noGlow && g.optics && g.optics.length) for (const b of beams(g, TORCH)) { const d = Math.hypot(x - b.x, z - b.z); if (d < b.r && d > 0.01 && ((x - b.x) * b.dx + (z - b.z) * b.dz) / d > b.cos && b.s * (1 - d / b.r) > L && !sh(b.x, b.z, x, z)) L = b.s * (1 - d / b.r); }   // (mirrors, lenses and prisms bend the beams: optics.js)
+  if (!noGlow && g.optics && g.optics.length) for (const b of (LC && LC.g === g ? LC.beams || (LC.beams = beams(g, TORCH)) : beams(g, TORCH))) { const d = Math.hypot(x - b.x, z - b.z); if (d < b.r && d > 0.01 && ((x - b.x) * b.dx + (z - b.z) * b.dz) / d > b.cos && b.s * (1 - d / b.r) > L && !sh(b.x, b.z, x, z)) L = b.s * (1 - d / b.r); }   // (mirrors, lenses and prisms bend the beams: optics.js)
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !sh(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
   if (z > 8500) L = Math.max(L, riftLight(g, x, z));
   if (g.flares) for (const f of g.flares) { const d = Math.hypot(f.x - x, f.z - z); if (d < FLARE.r) L = Math.max(L, (1 - d / FLARE.r) * Math.min(1, f.t / 2)); }
@@ -313,7 +319,7 @@ export function step(g, dt) {
   if (g.earth && Math.floor(g.t) !== Math.floor(g.t - dt)) for (const p of g.players) if (!p.ember && inHazard(EARTH, p.x, p.z)) { hurt(g, p, WILDS.hazard.dps, 'the spores'); g.stats.hazard = (g.stats.hazard || 0) + 1; }   // (the Wilds' hazard zone: a second of spores costs a few points of light)
   spawn(g, dt, ph); spawnEarth(g, dt); riftStep(g, dt, { KINDS, MAX_HOLLOW, DARK, heightAt, stream }); driveCar(g, dt); flyShips(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
-  for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; if (m.cell && g.earth && g.earth.found) g.earth.found.cells++; } }
+  for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.abs(p.x - m.x) < 1.4 && Math.abs(p.z - m.z) < 1.4 && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; if (m.cell && g.earth && g.earth.found) g.earth.found.cells++; } }
   g.motes = g.motes.filter(m => m.t > 0);
   for (const p of g.players) { if (p.ember) continue; p.pack = p.pack || [];
     for (const q of g.parts) if (!q.taken && Math.hypot(p.x - q.x, p.z - q.z) < 1.6 && loadOf(p) + PARTS[q.kind].kg <= MAX_LOAD) { q.taken = true; p.pack.push(q.kind); if (g.earth && g.earth.found && onEarth(q)) g.earth.found.parts++; g.log.push([+g.t.toFixed(2), 'part', p.id, q.kind]); }
@@ -543,7 +549,11 @@ function bodyStep(g, k, dt) {   // (the wish k made this frame, as one physical 
   [k.x, k.z] = pushBody(k.x + Math.sin(k.hd) * k.sp * dt, k.z + Math.cos(k.hd) * k.sp * dt, M.rad);
   k.yaw = k.hd;
 }
-function moveHollow(g, dt, ph) {
+function moveHollow(g, dt, ph) { LC = { g, glow: new Map(), at: new Map(), near: new Map(), beams: null }; try { hollowLoop(g, dt, ph); } finally { LC = null; } }
+// (sees, with the light where each player stands worked out once a tick: it is the same answer for all 32 of the dark until the cache drops)
+function seesC(g, k, p) { let range = LC.at.get(p); if (range === undefined) { range = p.torch ? SENSE.far : SENSE.near + (SENSE.far - SENSE.near) * Math.min(1, lightAt(g, p.x, p.z)); LC.at.set(p, range); } return Math.hypot(p.x - k.x, p.z - k.z) < range; }
+function nearOf(g, p) { let near = LC.near.get(p); if (near === undefined) { near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++; LC.near.set(p, near); } return near; }
+function hollowLoop(g, dt, ph) {
   const T = g.tactic, f = g.fire; if (g.noises) { for (const n of g.noises) n.t -= dt; g.noises = g.noises.filter(n => n.t > 0); }
   for (const k of g.hollow) {
     const K = KINDS[k.kind]; k.x0 = k.x; k.z0 = k.z; k.yaw0 = k.yaw; k.gx = undefined;
@@ -555,41 +565,40 @@ function moveHollow(g, dt, ph) {
       for (const p of g.players) if (!p.ember && p.carried > 0 && !!k.earth === onEarth(p)) { const s = Math.hypot(p.x - k.x, p.z - k.z) / (1 + p.carried * 0.05 * T.greed); if (s < best) { best = s; tx = p.x; tz = p.z; target = p; } }
       const d = Math.hypot(tx - k.x, tz - k.z);
       if (d > K.reach) { k.x += (tx - k.x) / d * k.speed * dt; k.z += (tz - k.z) / d * k.speed * dt; }
-      else if (target) { const take = Math.min(target.carried, dt * 8); target.carried -= take; } else { const take = Math.min(f.fuel, dt * 6); f.fuel -= take; g.stats.drained += take; }
-      k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue;
+      else if (target) { const take = Math.min(target.carried, dt * 8); target.carried -= take; if (take > 0) lcDrop(); } else { const take = Math.min(f.fuel, dt * 6); f.fuel -= take; g.stats.drained += take; if (take > 0 && !(f.fuel > 0)) lcDrop(); }
+      k.yaw = Math.atan2(tx - k.x, tz - k.z); continue;   // (its height is set with the rest of the living below)
     }
     // walkers, runners and giants hunt players: the lone one counts more (isolate), a glowing carrier more again (greed)
     let best = Infinity; k.alert = Math.max(0, (k.alert || 0) - dt);
-    for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; if (!(k.alert > 0 && k.on === p.id) && !sees(g, k, p)) continue; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++;
+    for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; if (!(k.alert > 0 && k.on === p.id) && !seesC(g, k, p)) continue; const near = nearOf(g, p);
       const s = Math.hypot(p.x - k.x, p.z - k.z) / ((near === 0 ? T.isolate : 1) * (1 + Math.min(1, p.carried * 0.02) * (T.greed - 1))); if (s < best) { best = s; target = p; } }
     let node = null; if (g.nodes.length) { let nb = Infinity; for (const n of g.nodes) if (n.lit && n.hp > 0 && !!k.earth === onEarth(n)) { const s2 = Math.hypot(n.x - k.x, n.z - k.z) * (n.hp / NODE[n.kind].hp + 0.5) / T.fireBias; if (s2 < nb) { nb = s2; node = n; } } if (node && (!target || nb < best * 0.8)) target = null; }   // (a weak, lonely relay is a better prize than a person)
     if (g.flares && g.flares.length && k.kind !== 'giant') { const fl = g.flares.filter(f => !!f.earth === !!k.earth && f.t > 1).sort((a, b) => Math.hypot(a.x - k.x, a.z - k.z) - Math.hypot(b.x - k.x, b.z - k.z))[0];
       if (fl && Math.hypot(fl.x - k.x, fl.z - k.z) < FLARE.pull && (!target || Math.hypot(fl.x - k.x, fl.z - k.z) < best * 1.5)) { target = null; node = { x: fl.x, z: fl.z, hp: 1, kind: 'flare', flare: true };
         const df = Math.hypot(fl.x - k.x, fl.z - k.z); if (df < FLARE.r) { k.hp -= dt * FLARE.burn * (1 - df / FLARE.r); if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; } } } }   /* (it burns what it pulls in: a trap, not a gathering) */
-    if (target) { if (sees(g, k, target)) k.alert = SENSE.alert; k.on = target.id; k.lx = target.x; k.lz = target.z; }
-    if (!target && !node && g.noises) { let nb = Infinity; for (const n of g.noises) { const dn = Math.hypot(n.x - k.x, n.z - k.z); if (!!n.earth === !!k.earth && dn < n.r && dn < nb) { nb = dn; k.lx = n.x; k.lz = n.z; k.alert = SENSE.alert; k.on = -1; } } }   /* (a shot it heard: it goes to look) */
-    if (!target && !node && k.alert > 0 && k.lx !== undefined) { const dl = Math.hypot(k.lx - k.x, k.lz - k.z); if (dl > 1) { k.gx = k.lx; k.gz = k.lz; k.x += (k.lx - k.x) / dl * k.speed * dt; k.z += (k.lz - k.z) / dl * k.speed * dt; k.yaw = Math.atan2(k.lx - k.x, k.lz - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (it goes where it last sensed you, or where the noise was) */
-    if (!target && !node && !k.earth) { const df = Math.hypot(f.x - k.x, f.z - k.z); if (df > 6) { const sp = k.speed * SENSE.drift * dt; k.x += (f.x - k.x) / df * sp; k.z += (f.z - k.z) / df * sp; k.yaw = Math.atan2(f.x - k.x, f.z - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (sensing nothing, it drifts toward the camp's light, slower than a hunt: the light is what draws the dark) */
+    if (target) { if (seesC(g, k, target)) k.alert = SENSE.alert; k.on = target.id; k.lx = target.x; k.lz = target.z; }
+    if (!target && !node && g.noises) { let nb = Infinity; for (const n of g.noises) { const ex = n.x - k.x, ez = n.z - k.z; if (!!n.earth !== !!k.earth || Math.abs(ex) >= n.r || Math.abs(ez) >= n.r) continue; const dn = Math.hypot(ex, ez); if (dn < n.r && dn < nb) { nb = dn; k.lx = n.x; k.lz = n.z; k.alert = SENSE.alert; k.on = -1; } } }   /* (a shot it heard: it goes to look) */
+    if (!target && !node && k.alert > 0 && k.lx !== undefined) { const dl = Math.hypot(k.lx - k.x, k.lz - k.z); if (dl > 1) { k.gx = k.lx; k.gz = k.lz; k.x += (k.lx - k.x) / dl * k.speed * dt; k.z += (k.lz - k.z) / dl * k.speed * dt; k.yaw = Math.atan2(k.lx - k.x, k.lz - k.z); } if (K.watched) k.y = heightAt(g.land, k.x, k.z); continue; }   /* (it goes where it last sensed you, or where the noise was) */
+    if (!target && !node && !k.earth) { const df = Math.hypot(f.x - k.x, f.z - k.z); if (df > 6) { const sp = k.speed * SENSE.drift * dt; k.x += (f.x - k.x) / df * sp; k.z += (f.z - k.z) / df * sp; k.yaw = Math.atan2(f.x - k.x, f.z - k.z); } if (K.watched) k.y = heightAt(g.land, k.x, k.z); continue; }   /* (sensing nothing, it drifts toward the camp's light, slower than a hunt: the light is what draws the dark) */
     if (!target && !node) continue;
-    if (!target) { tx = node.x; tz = node.z; k.gx = tx; k.gz = tz; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if (node.flare) continue; if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
+    if (!target) { tx = node.x; tz = node.z; k.gx = tx; k.gz = tz; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if (node.flare) continue; if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); lcDrop(); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); if (K.watched) k.y = heightAt(g.land, k.x, k.z); continue; }
     tx = target.x; tz = target.z; k.gx = tx; k.gz = tz;
     let dx = tx - k.x, dz = tz - k.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
-    const ahead = lightAt(g, k.x + dx * 1.5, k.z + dz * 1.5), here = lightAt(g, k.x, k.z);
-    if (k.kind !== 'giant' && !k.staged) { if (here > 0.15) k.hp -= dt * 50 * here; if (ahead > 0.25 && d > K.reach) { const side = k.id % 2 ? 1 : -1; [dx, dz] = [dx * 0.25 + dz * side, dz * 0.25 - dx * side]; } }   // (light burns them, so they circle its edge; the giant walks in)
+    if (k.kind !== 'giant' && !k.staged) { const here = lightAt(g, k.x, k.z); if (here > 0.15) k.hp -= dt * 50 * here; if (d > K.reach && lightAt(g, k.x + dx * 1.5, k.z + dz * 1.5) > 0.25) {   /* (lightAt only reads: asked only where its answer is used) */ const side = k.id % 2 ? 1 : -1; [dx, dz] = [dx * 0.25 + dz * side, dz * 0.25 - dx * side]; } }   // (light burns them, so they circle its edge; the giant walks in)
     if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; }
     if (K.watched && (k.still = lookedAt(g, k))) { k.y = heightAt(g.land, k.x, k.z); continue; }   // (seen: it holds perfectly still, wherever it was caught)
     k.yaw = Math.atan2(dx, dz);
     const back = target.yaw !== undefined && d > K.reach * 0.45 && (-Math.sin(target.yaw) * (k.x - target.x) - Math.cos(target.yaw) * (k.z - target.z)) / Math.max(d, 0.01) < -0.17;   /* (behind you it moves, in front it strikes, GAMEDEV-TRICKS.md 5: more than about 100 degrees off your facing it closes in but holds its blow until you turn or it is right on you) */
-    if (d < K.reach * 0.88 && !back) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind);   /* (its claws look longer than they reach: a near miss you can see, GAMEDEV-TRICKS.md 8) */ k.cd = K.wait; } }
+    if (d < K.reach * 0.88 && !back) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind); lcDrop();   /* (its claws look longer than they reach: a near miss you can see, GAMEDEV-TRICKS.md 8) */ k.cd = K.wait; } }
     else { k.x += dx * k.speed * dt; k.z += dz * k.speed * dt; }
-    k.y = heightAt(g.land, k.x, k.z);
+    if (K.watched) k.y = heightAt(g.land, k.x, k.z);   // (everyone not held still gets its height below, after its body moved: computing it here too was thrown away)
   }
   for (const k of g.hollow) if (!k.dead) bodyStep(g, k, dt);
   // bodies keep their room (his eyes, 2026-10-19: they clipped through him and stuck to him, and through each other): a shape never stands
   // inside a person or inside another shape; it is pushed out to touching, the giant's body wider. Positions only: who it hunts is unchanged.
   const R = k => k.kind === 'giant' ? 1.15 : 0.55, live = g.hollow.filter(k => !k.dead && !(K_WATCH(k) && k.still));
-  for (const k of live) { for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz), min = R(k) + 0.4; if (d < min) { const u = d > 1e-4 ? 1 / d : 0; k.x = p.x + (u ? dx * u : 1) * min; k.z = p.z + (u ? dz * u : 0) * min; } } }
-  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) { const a = live[i], b = live[j], dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), min = R(a) + R(b); if (d < min && d > 1e-4) { const push = (min - d) / 2 / d; a.x -= dx * push; a.z -= dz * push; b.x += dx * push; b.z += dz * push; } }
+  for (const k of live) { for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, min = R(k) + 0.4; if (Math.abs(dx) >= min || Math.abs(dz) >= min) continue; const d = Math.hypot(dx, dz); if (d < min) { const u = d > 1e-4 ? 1 / d : 0; k.x = p.x + (u ? dx * u : 1) * min; k.z = p.z + (u ? dz * u : 0) * min; } } }
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) { const a = live[i], b = live[j], dx = b.x - a.x, dz = b.z - a.z, min = R(a) + R(b); if (Math.abs(dx) >= min || Math.abs(dz) >= min) continue; const d = Math.hypot(dx, dz); if (d < min && d > 1e-4) { const push = (min - d) / 2 / d; a.x -= dx * push; a.z -= dz * push; b.x += dx * push; b.z += dz * push; } }
   for (const k of live) { if (k.kind !== 'shard') [k.x, k.z] = pushBody(k.x, k.z, MOVE[k.kind].rad); k.y = heightAt(g.land, k.x, k.z); }
   g.hollow = g.hollow.filter(k => !k.dead); g.nodes = g.nodes.filter(n => n.hp > 0);
 }
