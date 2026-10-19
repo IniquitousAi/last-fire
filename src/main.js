@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=9';
-import { Hollow, KINDS } from './hollow.js?v=9';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=9';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=9';
-import { FX } from './fx.js?v=9';
-import { modelsReady, model, gunModel } from './models.js?v=9';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=10';
+import { Hollow, KINDS } from './hollow.js?v=10';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=10';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=10';
+import { FX } from './fx.js?v=10';
+import { modelsReady, model, gunModel } from './models.js?v=10';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -145,7 +145,7 @@ function placeFire(x, y, z, fuel, send, small = false) { const f = { x, y, z, fu
 function addFuel(i, s, send = true) { fires[i].fuel = Math.min(900, fires[i].fuel + s); if (send && net) net.send({ t: 'feed', i, s }); }
 function muzzleWorld() { const g = held[gunIn(SLOTS[slot])]; if (!g) return eye(); vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); return camera.localToWorld(g.localToWorld(g.userData.muzzle.clone())); }
 function shoot() {
-  const key = gunIn(SLOTS[slot]); if (!key || shotCd > 0 || reloadT > 0 || me.down || switchT > 0 || meleeT > 0) return;
+  const key = gunIn(SLOTS[slot]); if (!key || shotCd > 0 || reloadT > 0 || switchT > 0 || meleeT > 0 || (me.down && GUNS[key].spin)) return;   // (down, you can still fire anything but the minigun: CoD's last stand)
   const G = GUNS[key], am = me.ammo[key];
   if (G.spin && spin < G.spin) return;   // (the minigun's barrels have to come up to speed)
   if (!G.auto && !shotReady) return; shotReady = false;
@@ -355,7 +355,7 @@ function hurt(p, n, src) {
     if (me.dead || me.down) return; me.hp -= n / (me.perks.has('iron') ? 2.5 : 1); $('hurt').style.opacity = Math.min(0.6, n / 25); setTimeout(() => $('hurt').style.opacity = 0, 160);
     if (n >= 5) { sound.hurt(); flinch = Math.min(1, flinch + n / 30); }
     if (src && fin(src.x) && fin(src.z)) { const rel = Math.atan2(-(src.x - me.x), -(src.z - me.z)) - me.yaw; $('dmg').style.transform = `rotate(${-rel}rad)`; dmgT = 1; }
-    if (me.hp <= 0) { if (net && teammatesUp()) { me.down = true; me.hp = 0; me.bleed = 30; say('You are down. A friend can revive you (hold F next to you): 30 seconds.', 6); }
+    if (me.hp <= 0) { if (net && teammatesUp()) { me.down = true; me.hp = 0; me.bleed = 30; if (!gunIn(SLOTS[slot])) slot = 0; say('You are down: keep shooting. A friend can revive you (hold F next to you): 30 seconds.', 6); }
       else { me.dead = true; me.points = Math.floor(me.points * 0.9); say('You fell. Back up by the fire in 8 seconds (lost 10% of your points).', 8); setTimeout(respawn, 8000); } }
   } else if (p.pid !== undefined && net && net.host) net.sendTo(p.pid, { t: 'hurt', n, a: src ? [src.x, src.z] : null });
 }
@@ -492,7 +492,7 @@ function frame(now) {
   if (clock < 0.1 && roundShown === day - 1 && roundEndShown !== day - 1 && day > 1) { roundEndShown = day - 1; sound.roundEnd(); bigText('ROUND SURVIVED', 2.6); }
   prompt = null;
   const downed = [...others.values()].find(p => p.down && !p.dead && Math.hypot(p.x - me.x, p.z - me.z) < 2.4);
-  if (downed && !me.down) { prompt = { text: `Hold F to revive ${downed.name}` }; if (keys.KeyF) { reviveT += dt; prompt.text = `Reviving ${downed.name}: ${Math.min(100, Math.round(reviveT / 3 * 100))}%`; if (reviveT > 3) { reviveT = 0; net.send({ t: 'revive', to: downed.pid }); say(`Revived ${downed.name}.`); } } else reviveT = 0; }
+  if (downed && !me.down) { prompt = { text: `Hold F to revive ${downed.name}` }; if (keys.KeyF) { reviveT += dt; prompt.text = `Reviving ${downed.name}: ${Math.min(100, Math.round(reviveT / 3 * 100))}%`; if (reviveT > 3) { reviveT = 0; net.send({ t: 'revive', to: downed.pid }); me.points += 150; floatPoints('+150 revive'); say(`Revived ${downed.name}.`); } } else reviveT = 0; }
   else { const d = lookDir(); for (const st of stations) { const dx = st.position.x - me.x, dz = st.position.z - me.z, dist = Math.hypot(dx, dz); if (dist < 2.6 && (dx * d.x + dz * d.z) / dist > 0.55) { const u = st.userData, own = u.kind === 'gun' && me.guns.includes(u.key); prompt = { station: st, text: own ? `Press F: ammo for the ${GUNS[u.key].name} (${Math.floor(u.price / 2)})` : `Press F: ${u.label}` }; } } }
   shotCd = Math.max(0, shotCd - dt); boxT = Math.max(0, boxT - dt);
   // the Hollow: the host spawns and moves them; everyone else draws what it is sent
@@ -531,7 +531,7 @@ function frame(now) {
 function drawHeld(dt) {   // what you hold: low right at the hip; aiming brings the sight dead center, steady; reload dips it, sprint drops it, the mouse drags it a hair
   for (const o of Object.values(held)) o.visible = false;
   const it = SLOTS[slot], gk = gunIn(it), key = meleeT > 0 ? 'knife' : gk || (it.startsWith('gun') ? null : it), vm = key && held[key];
-  if (!vm || me.dead || me.down) return; vm.visible = true;
+  if (!vm || me.dead || (me.down && !gk)) return; vm.visible = true;
   swayX += -swayX * Math.min(1, dt * 9); swayY += -swayY * Math.min(1, dt * 9);
   const u = vm.userData, a = ads * ads * (3 - 2 * ads), still = 1 - a * 0.85;   // (eased, and almost no sway while aiming: a clear, steady sight picture)
   if (meleeT > 0) { const q = 1 - meleeT / MELEE, w = Math.sin(Math.min(1, q * 1.6) * Math.PI); vm.position.set(0.22 - w * 0.3, -0.16 + w * 0.06, -0.32 - w * 0.22); vm.rotation.set(-0.1 - w * 0.25, 0.5 - w * 1.2, -0.4 * w); return; }
