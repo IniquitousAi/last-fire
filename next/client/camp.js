@@ -89,13 +89,14 @@ export class Camp {
   }
   check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; this.ctx.say('The real odds. Nobody else came to check.', 4); }
   draw() {
-    const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote()].join('|'); if (key === this.drawn) return; this.drawn = key;
+    const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, st = this.ctx.stakes ? this.ctx.stakes() : null, key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote(), st && st.n].join('|'); if (key === this.drawn) return; this.drawn = key;
     const c = this.bc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 480); c.strokeStyle = real ? '#ff4fd8' : '#b9a8ff'; c.lineWidth = 8; c.strokeRect(8, 8, 752, 464);
     c.fillStyle = real ? '#ff4fd8' : '#b9a8ff'; c.font = '500 46px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `THE REAL ODDS, DAY ${g.night}` : `SURVIVAL TODAY, DAY ${g.night}`, 36, 76);
     c.fillStyle = '#fff'; c.font = '500 170px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${real ? o.surv : o.council}%`, 36, 250);
     c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillStyle = '#a3a6bb'; c.fillText(real ? `(${o.label}: from the last ${Math.min(3, g.history.length) || 'no'} nights)` : '(approved by the council)', 40, 300);
     c.fillStyle = '#ff6fb1'; c.font = '400 34px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(this.footnote().slice(0, 52), 40, 362);
     c.fillStyle = real ? '#3dff9a' : '#6f7188'; c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `past the dark: ${(o.past).toFixed(7)}%  (guess)` : 'have a nice day.', 40, 430);
+    if (st) { c.fillStyle = '#b9a8ff'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`your trip guesses: ${st.n}, came back ${st.back}`, 728, 76); c.fillText(`how true: ${st.brier.toFixed(2)} (0 is perfect, 0.25 is a coin)`, 728, 108); c.textAlign = 'left'; }   // (the Brier score of your own stakes: checked math, your own record)
     this.btex.needsUpdate = true;
   }
   update() {
