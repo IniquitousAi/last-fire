@@ -47,7 +47,7 @@ export class Camp {
       const mix = new THREE.AnimationMixer(o), clip = r.animations.find(a => a.name.endsWith('|' + P.anim) || a.name.endsWith(P.anim)); if (clip) mix.clipAction(clip).play();
       const walk = P.walk && r.animations.find(a => a.name.endsWith('|' + P.walk)), acts = { idle: clip ? mix.clipAction(clip) : null, walk: walk ? mix.clipAction(walk) : null };
       if (P.lamp === false) scene.remove(lamp); else if (P.walk) { scene.remove(lamp); }
-      scene.add(o); this.people.push({ ...P, o, mix, acts, moving: false, ang: Math.atan2(P.z, P.x), line: '', lineT: 0 }); }).catch(() => {});
+      scene.add(o); this.people.push({ ...P, lamp: P.walk ? null : lamp, o, mix, acts, moving: false, ang: Math.atan2(P.z, P.x), line: '', lineT: 0 }); }).catch(() => {});
     this.sub = Object.assign(document.createElement('div'), { id: 'sub' }); Object.assign(this.sub.style, { position: 'fixed', left: '50%', bottom: '172px', transform: 'translateX(-50%)', maxWidth: 'min(680px, 90vw)', textAlign: 'center', fontSize: '21px', lineHeight: '1.3', textShadow: '0 1px 3px #000, 0 0 2px #000', pointerEvents: 'none' }); this.sub.hidden = true; document.getElementById('hud').append(this.sub);
     this.yard(L, land);
   }
@@ -104,7 +104,9 @@ export class Camp {
     this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
     const cam = this.ctx.camera(), v = new THREE.Vector3();
     let talk = null, best = 1e9; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw);
+    const g0 = this.ctx.g(), gone = new Set([...(g0.lost || []), ...(g0.out ? [g0.out.who] : [])]);
     for (const P of this.people) {
+      P.o.visible = !gone.has(P.role); if (P.lamp) P.lamp.visible = P.o.visible; if (!P.o.visible) continue;   // (out on a trip, or lost: their place by the fire is empty)
       P.mix.update(1 / 60); const d = Math.hypot(me.x - P.o.position.x, me.z - P.o.position.z);
       if (P.walk) {   // (the night worker walks the wall, and stops to talk when you come close)
         const stop = d < 4.5; if (stop !== P.moving || !P.started) { P.started = true; const a = stop ? P.acts.idle : P.acts.walk, b = stop ? P.acts.walk : P.acts.idle; if (a) a.reset().fadeIn(0.4).play(); if (b) b.fadeOut(0.4); P.moving = stop; }

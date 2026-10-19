@@ -176,7 +176,7 @@ function die(g, k, by) {   // (a Hollow bursts into motes of light where it fell
 // ---------------------------------------------------------------- one step of the world (the host runs this; robots and the daemon run it headless)
 export function step(g, dt) {
   g.t += dt; const prev = g.clock; if (g.tracers && g.tracers.length) { for (const t of g.tracers) t.t -= dt; g.tracers = g.tracers.filter(t => t.t > 0); } g.clock += dt / DAY;
-  if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); }
+  if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); campTrips(g); }
   if (prev < 0.97 && g.clock >= 0.97) { g.history.push(summarize(g.rec, g.night)); if (g.history.length > 30) g.history.shift(); g.rec = newRecord(); g.log.push([+g.t.toFixed(2), 'learned-night', g.night]); }   // (at the ebb, the night is written down)
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
@@ -203,7 +203,7 @@ export function mark(g, k, x, z) { g.marks.push({ k, x: Math.round(x * 10) / 10,
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
@@ -214,6 +214,7 @@ export function loadWorld(d) {
   for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; g.stash = cnt(d.stash); g.truck = cnt(d.truck);
   for (const q of d.parts || []) if (Array.isArray(q) && PARTS[q[0]] && ok(q[1]) && ok(q[2])) g.parts.push({ id: g.nextId++, kind: q[0], x: q[1], z: q[2] });
+  g.lost = Array.isArray(d.lost) ? d.lost.filter(w => CAMP_OUT.includes(w)) : []; g.out = d.out && CAMP_OUT.includes(d.out.who) ? { who: d.out.who, night: d.out.night | 0 } : null;
   g.marks = Array.isArray(d.marks) ? d.marks.filter(m => m && ok(m.x) && ok(m.z)).slice(-600) : []; g.keep = d.keep && typeof d.keep === 'object' ? d.keep : {}; if (d.stats) Object.assign(g.stats, d.stats); g.history = Array.isArray(d.history) ? d.history.filter(h => h && typeof h === 'object').slice(-30) : [];
   g.startAt = Array.isArray(d.host) && d.host.every(ok) ? d.host : null; linkNetwork(g); return g;
 }
@@ -226,6 +227,15 @@ function revive(g, e) {
 export function canGrow(g) { const f = g.fire; return f.level < FIRE_COST.length - 1 && f.light >= FIRE_COST[f.level + 1]; }
 export function grow(g, p) { const f = g.fire; if (!canGrow(g) || !p || p.ember || Math.hypot(p.x - f.x, p.z - f.z) > fireRadius(f)) return false; f.light -= FIRE_COST[f.level + 1]; f.level++; g.log.push([+g.t.toFixed(2), 'level', f.level, p.id]); return true; }
 export function shotBy(g, p, hit) { if (p) noteShot(g.rec, p, hit); }   // (for the record: how well each player hits)
+// people go out, and some do not come back (INNOVATION.md, camp): at each dawn one of the camp (never the Clerk: the desk needs her) goes out
+// for a day; the next dawn they come back on the camp's true odds, from the last three nights' falls. A loss is permanent and saved.
+export const CAMP_OUT = ['the Night worker', 'a Council member'];
+export function tripOdds(g) { const h = g.history.slice(-3), n = Math.max(1, g.players.length); if (!h.length) return 0.85; const fallRate = h.reduce((s, x) => s + x.falls, 0) / (h.length * n); return Math.max(0.72, Math.min(0.95, 0.95 - fallRate * 0.4)); }
+function campTrips(g) {
+  g.lost = g.lost || []; const r = stream(g.seed, 'camp-' + g.night);
+  if (g.out) { const back = r() < tripOdds(g); if (!back) g.lost.push(g.out.who); g.log.push([+g.t.toFixed(2), back ? 'returned' : 'lost', g.out.who]); g.out = null; return; }
+  const free = CAMP_OUT.filter(w => !g.lost.includes(w)); if (free.length && r() < 0.3) { g.out = { who: free[Math.floor(r() * free.length)], night: g.night }; g.log.push([+g.t.toFixed(2), 'goes', g.out.who]); }
+}
 export function hurt(g, p, n, from) {
   if (p.ember) return; p.hp -= n; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
