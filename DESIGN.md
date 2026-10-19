@@ -1,38 +1,11 @@
-# Last Fire (working name): a co-op survival FPS in the browser
+# Last Fire: why the mechanics are what they are
 
-For Daniel and Dalton, two players, one link. Started 2026-10-18.
+Each rule below names the research it leans on. Order of priority (Daniel, 2026-10-18): performance and safety first, then quality of life, then looks.
 
-## The core (his words, 2026-10-18): Call of Duty Zombies, open world
-
-CoD Zombies' feel (guns with weight, aiming down sights, recoil, hit markers; points for every hit, 10 a hit, 60 a kill, 100 for a headshot kill; wall-buys and perks at the base; rounds that get harder; reviving your friend) inside an open-world survival game.
-
-## The loop (7 Days to Die's, the part that works)
-
-Prepare by day, survive the night, recover, and every 7th night a siege. Every day is a choice of what to spend daylight on:
-gather, build, craft, or explore for better loot. (Sources: fan guides on the blood moon cycle, xgamingserver.com and guildorder.com;
-the meaningful-choices rule from our own game research, game/RESEARCH.md. No developer talk on 7 Days to Die was found.)
-
-## The enemy: the dark itself
-
-Not zombies. **The Hollow**: shapes the night is made of. They exist only outside light.
-
-- **Light is the whole game.** A campfire or torch keeps them out of its circle and hurts them at its edge. Fire needs fuel (wood),
-  and wood is also what you build with: every log is a choice between a wall and another hour of light.
-- **Light also calls them.** A big fire is seen from far away. Bright and safe, or dark and hidden: your call each night.
-- **They unmake what is built in the dark.** An unlit wall loses blocks to them; a lit one holds.
-- **Daylight burns them away.** Morning is the reward, and it comes slowly.
-- **Every 7th night is the Long Night.** It runs longer, and three times as many come. You know it is coming; that is the tension.
-
-Why it makes sense: one rule (light) explains the enemy, the danger, the resources and the base, so every decision connects to one thing.
-It also suits the look: the graphics budget goes to darkness, fire and fog, where it shows most.
-
-## The foundation (performance from day one)
-
-- The world is blocks in 16 x 16 chunks, one merged mesh each, faces only where they touch air, soft corner shading baked in (no textures to load).
-- Every Hollow is drawn in one instanced draw. A few real point lights (the fires), everything else baked.
-- Multiplayer: browser to browser (WebRTC via PeerJS's free broker). The host runs the world and the Hollow; the other player sends
-  movement, shots and block changes. A room code joins you.
-
-## Checked daily (LAW.md law 17)
-
-Spam every key, play a night for real, judge looks, the 5-second test. The scores decide what gets worked on next.
+- **Armor plates (v4).** Nothing armored dies to one shot: the blow that breaks a plate is spent on the plate. *Goal-gradient effect* (Hull; Kivetz 2006): effort goes up as the goal visibly nears, so a plate cracking off (a ping, then a crack, then +20 points) is progress you see and hear on the way to the kill. Piercing differs by gun, so picking the M14 or the RPK over the pistol is a real choice (*Self-Determination Theory*, Deci and Ryan: autonomy and competence).
+- **Rounds that ramp each night.** *Flow* (Csikszentmihalyi): challenge has to climb with skill, or play becomes boredom or anxiety. Health follows CoD Zombies' curve (linear to round 10, then 10% a round). New kinds arrive one at a time (Runner on night 3, Shard on 4, Giant on 5), so each one is learned alone.
+- **Drops from the dead (1 in 40).** *Variable-ratio reward* (Skinner; Zeiler 1968): an unpredictable reward holds attention best. Kept rare and shared, so it is a moment for the team, not a slot machine.
+- **Points for every hit, a 10% loss on death.** *Loss aversion* (Kahneman and Tversky 1979): a small loss weighs about twice an equal gain, so dying matters without a reset. (Resets kill Daniel's motivation: no progress is ever wiped.)
+- **Revive within 30 seconds; more players, more Hollow.** *Relatedness* (SDT) and reciprocity: saving a friend is the best feeling in co-op, so being down is a request for help, not a game over.
+- **Light as the one rule.** One rule players can reason about (fire repels, the dark eats walls, big fires call them) beats many hidden ones: *legibility* and the *mental models* of Norman's *The Design of Everyday Things*. The Shard and the Giant are each a twist on that same rule, not a new system.
+- **The four kinds read by shape alone** (tall walker, low runner, floating shard, giant with red eyes): *pre-attentive processing* (Treisman): silhouette is read before detail, in the dark, at a glance.
