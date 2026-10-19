@@ -1,0 +1,1 @@
+PASS  the hit effects cost at most 10% of the frame rate with 32 alive and full auto fire  (31 fps on, 30 fps off, medians of 10 alternating 1.2 s runs, 1913 particles spawned)
