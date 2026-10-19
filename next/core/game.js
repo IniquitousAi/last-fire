@@ -278,15 +278,15 @@ export function hurt(g, p, n, from) {
     (g.traces = g.traces || []).push({ of: p.id, pts: (p.trail || []).slice(), x: p.x, z: p.z, cause: from || 'the dark', fx: killer ? killer.x : p.x, fz: killer ? killer.z : p.z, t: 120 }); if (g.traces.length > 6) g.traces.shift(); p.trail = [];
     p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0, cause: from || 'the dark' }); mark(g, 'fall', p.x, p.z, p.name); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
     if (g.players.every(q => q.ember)) {   // (everyone down: the dark took what it came for. The night is lost, what you carried lies where you fell, and it draws back to dawn; the fire keeps every level)
-      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; g.earth = null; if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97; g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
+      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; if (g.earth) endTrip(g); if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97;   /* (a trip that ends in everyone falling is still recorded and cleared) */ g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
   }
 }
 
 // the trip: down to Earth from the pad, back up from the landing site; the lander leaves when its time is up, with or without you
 // pick the site by its odds (INNOVATION.md, Earth trips): three districts around the landing; each holds different things, and your own
 // record turns the posted odds from a guess into reasoned (3 trips) into checked (10 trips)
-export const SITES = { city: { name: 'THE CITY', parts: 3, cells: 10, dir: 0 }, depot: { name: 'THE DEPOT', parts: 5, cells: 5, dir: Math.PI * 0.5 }, reservoir: { name: 'THE RESERVOIR', parts: 1, cells: 16, dir: Math.PI } };
-export function siteOdds(g, k) { const r = (g.sites || {})[k], S = SITES[k]; if (!r || r.trips < 3) return { parts: S.parts * 0.6, cells: S.cells * 0.6, label: 'guess', trips: r ? r.trips : 0 };
+export const SITES = { city: { name: 'THE CITY', parts: 3, cells: 10, dir: 0, est: [0.3, 2.1] }, depot: { name: 'THE DEPOT', parts: 5, cells: 5, dir: Math.PI * 0.5, est: [2.0, 1.0] }, reservoir: { name: 'THE RESERVOIR', parts: 1, cells: 16, dir: Math.PI, est: [0.1, 3.0] } };   // (est: parts and cells a trip for a careful player, from sim/drop.mjs --sites, 20 robot trips each)
+export function siteOdds(g, k) { const r = (g.sites || {})[k], S = SITES[k]; if (!r || r.trips < 3) return { parts: S.est[0], cells: S.est[1], label: 'guess: robots', trips: r ? r.trips : 0 };
   return { parts: r.parts / r.trips, cells: r.cells / r.trips, label: r.trips >= 10 ? 'checked' : 'reasoned', trips: r.trips }; }
 export function drop(g, p, site) {
   if (!p || p.ember || onEarth(p) || Math.hypot(p.x - PAD.x, p.z - PAD.z) > 4) return false;
@@ -294,7 +294,7 @@ export function drop(g, p, site) {
     for (let i = 0; i < SITES[S].cells; i++) { const a = SITES[S].dir + (r() - 0.5) * 2.2, d = 14 + r() * 50; g.motes.push({ id: g.nextId++, x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d, v: 8, t: 1e9, cell: true }); } }
   if (g.earth && !g.car && truckDone(g)) g.car = { x: EARTH.x + 7, z: EARTH.z - 3, yaw: 0, v: 0, seats: [null, null, null, null], store: [] };
   if (g.earth && !g.earth.parts) { g.earth.parts = true; const r = stream(g.seed, 'parts-' + g.earth.n), lack = PART_ORDER.flatMap(k => Array(Math.max(0, PARTS[k].n - fitted(g, k) - (g.stash[k] || 0))).fill(k)), pool = lack.length ? lack : PART_ORDER;
-    for (let i = 0; i < SITES[g.earth.site].parts; i++) { const a = SITES[g.earth.site].dir + (r() - 0.5) * 2.2, d = 22 + r() * 48; g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
+    for (let i = 0; i < SITES[g.earth.site].parts; i++) { const a = SITES[g.earth.site].dir + (r() - 0.5) * 2.2, d = g.earth.site === 'depot' ? 14 + r() * 30 : 22 + r() * 48;   /* (a depot keeps its stock close) */ g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
   for (const q of [...g.motes, ...g.parts]) if (onEarth(q)) [q.x, q.z] = pushOut(q.x, q.z, 1);   // (nothing lies inside a tower)
   p.x = EARTH.x + 1.5; p.z = EARTH.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'drop', p.id]); evidence(g, 'creatures', 1.04); return true;   // (every trip down sees more of whatever lives there)
 }
