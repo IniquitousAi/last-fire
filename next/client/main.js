@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=137';
-import { Ambience } from './ambience.js?v=137';
-import { Camp, BOARD } from './camp.js?v=137';
-import { Guide } from './guide.js?v=137';
-import { buildSites } from './earthsite.js?v=137';
-import { Truck } from './truck.js?v=137';
-import { ShipView } from './shipview.js?v=137';
-import { Crew } from './crew.js?v=137';
-import { Hands } from './hands.js?v=137';
-import { Wrist } from './wrist.js?v=137';
-import { FireCore } from './firecore.js?v=137';
+import * as C from '../core/game.js?v=138';
+import { Ambience } from './ambience.js?v=138';
+import { Camp, BOARD } from './camp.js?v=138';
+import { Guide } from './guide.js?v=138';
+import { buildSites } from './earthsite.js?v=138';
+import { Truck } from './truck.js?v=138';
+import { ShipView } from './shipview.js?v=138';
+import { Crew } from './crew.js?v=138';
+import { Hands } from './hands.js?v=138';
+import { Wrist } from './wrist.js?v=138';
+import { FireCore } from './firecore.js?v=138';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=137';
-import { FriendVoice } from './friendvoice.js?v=137';
-import { crewFrom } from '../core/habits.js?v=137';
-import { HudLook } from './hudlook.js?v=137';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=137';
-import { sound, GUNS } from '../../src/combat.js?v=137';
-import { FX } from '../../src/fx.js?v=137';
+import { think as friendThink } from './friend.js?v=138';
+import { FriendVoice } from './friendvoice.js?v=138';
+import { crewFrom } from '../core/habits.js?v=138';
+import { HudLook } from './hudlook.js?v=138';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=138';
+import { sound, GUNS } from '../../src/combat.js?v=138';
+import { FX } from '../../src/fx.js?v=138';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 137;   // (this copy's version; ./version.json says the newest)
+const BUILD = 138;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -438,9 +438,22 @@ let aimOn = false, sprintOn = false;
 // Warfare II on the same engine. Marked 'ours' where no number was published and it is our tuning.
 const MW = { adsT: { pistol: 0.15, ar: 0.25, shotgun: 0.3, lmg: 0.45 }, toFire: 0.21, tacToFire: 0.35 /* ours */, tacMul: 1.25 /* ours */, tacTime: 3 /* ours */,
   crouchMul: 0.55 /* ours */, slideV: 9 /* ours */, slideT: 0.8 /* ours */, jumpFade: 0.82 /* ours */, eye: [1.62, 1.1, 0.85] };
+// Advanced Warfare's exo moves on top (his ask: a for-fun throwaway, copy it). Numbers are AW's own settings, read from GitHub (InfinityLoader/IL-GSC,
+// AW's decompiled scripts; bradstv/exo-movement-mod, which ports them), inches to meters (x 0.0254): boost jump = jump again in the air, four
+// pushes of 150 in/s 0.05 s apart (high_jump_height); boost dodge = sprint key plus a direction that is not straight forward (or any, in the air),
+// 400 in/s with a 150 in/s hop (dodge_vel_multiplier, dodge_vel_z_offset), two per 2.5 s, 0.2 s apart, never while aiming; boost slam = crouch in
+// the air at 120 in (3 m) up or more: 150 in/s more downward each 0.05 s, then a ring of damage (core SLAM)
+const IN = 0.0254, EXO = { push: 150 * IN, pushes: 4, dodge: 400 * IN, hop: 150 * IN, steer: 250 * IN, dodges: 2, window: 2.5, gap: 0.2, slamH: 120 * IN, slamV: 150 * IN };
+let exo = { left: 0, pt: 0, used: false, n: 0, reset: 0, cd: 0, burst: 0, slam: false, st: 0 };
 let tac = 0, tacLeft = 1, lastShift = -9, crouch = false, slideT = 0, slideDir = [0, 0], readyT = 0, eyeH = 1.62, jumps = 0, groundT = 0, mvSprint = false;
 addEventListener('keydown', e => { if (e.repeat || mode !== 'play' || !me || panel || me.ember) return;
-  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { const t = performance.now() / 1000; if (t - lastShift < 0.3 && tacLeft > 0 && keys.KeyW && onGround) { tac = MW.tacTime; tacLeft--; crouch = false; } lastShift = t; }
+  if (e.code === 'Space' && !onGround && coyote <= 0 && !exo.used && !exo.slam) { exo.used = true; exo.left = EXO.pushes; exo.pt = 0; kick = Math.min(1, kick + 0.25); }   /* (the boost jump) */
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { const sd = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), fd = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+    if ((sd || fd < 0 || (!onGround && fd)) && ads < 0.5 && exo.cd <= 0 && exo.n < EXO.dodges) { const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * fd + cosY * sd, wz = -cosY * fd - sinY * sd; const L = Math.hypot(wx, wz) || 1;
+      let mx = vel.x + wx / L * EXO.steer, mz = vel.y + wz / L * EXO.steer; const M = Math.hypot(mx, mz) || 1; vel.x = mx / M * EXO.dodge; vel.y = mz / M * EXO.dodge; vy = (Math.max(0, vy) + EXO.hop) * 0.7; onGround = false;
+      exo.n++; exo.reset = EXO.window; exo.cd = EXO.gap; exo.burst = 0.35; kick = Math.min(1, kick + 0.2); return; }   /* (the boost dodge: a hard shove sideways or back, a small hop) */
+    const t = performance.now() / 1000; if (t - lastShift < 0.3 && tacLeft > 0 && keys.KeyW && onGround) { tac = MW.tacTime; tacLeft--; crouch = false; } lastShift = t; }
+  if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !onGround) { if (me.y - g.land(me.x, me.z) >= EXO.slamH && !exo.slam) { exo.slam = true; exo.st = 0; } return; }   /* (the boost slam, from 3 m up) */
   if (e.code === 'KeyC' || e.code === 'ControlLeft') { if (mvSprint && onGround) { const L = Math.hypot(vel.x, vel.y) || 1; slideT = MW.slideT; slideDir = [vel.x / L, vel.y / L]; crouch = true; tac = 0; } else crouch = !crouch; } });   /* (aim and sprint as toggles, when he picks that in the pause menu) */
 const vel = new THREE.Vector2(); let vy = 0, onGround = true, coyote = 0, jumpBuf = 0;   /* (GAMEDEV-TRICKS.md 22: a jump still works 0.15 s after a ledge, and a press 0.15 s before landing counts) */
 function move(dt) {
@@ -453,7 +466,10 @@ function move(dt) {
   const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * f + cosY * s, wz = -cosY * f - sinY * s; const len = Math.hypot(wx, wz) || 1; wx /= len; wz /= len;
   const top = (sprint ? 7.4 * (tac > 0 ? MW.tacMul : 1) : 4.6) * C.speedOf(me) * (1 - ads * 0.35) * (f || s ? 1 : 0) * (crouch && !sprint ? MW.crouchMul : 1), acc = onGround ? 14 : 3;   // (about a third of a second to full speed, less to stop)
   if (slideT > 0 && onGround) { slideT -= dt; const k = Math.max(0, slideT / MW.slideT), v = MW.slideV * k + 4.6 * MW.crouchMul * (1 - k); vel.x = slideDir[0] * v; vel.y = slideDir[1] * v; }   /* (the slide: a burst along where you were running, easing down to a crouch) */
-  else { vel.x += (wx * top - vel.x) * Math.min(1, acc * dt); vel.y += (wz * top - vel.y) * Math.min(1, acc * dt); }
+  else { const a2 = exo.burst > 0 ? 2 : acc; vel.x += (wx * top - vel.x) * Math.min(1, a2 * dt); vel.y += (wz * top - vel.y) * Math.min(1, a2 * dt); }   /* (a dodge carries before your feet take over again) */
+  exo.burst -= dt; exo.cd -= dt; if ((exo.reset -= dt) <= 0) exo.n = 0;
+  if (exo.left > 0 && (exo.pt -= dt) <= 0) { vy = exo.left === EXO.pushes ? EXO.push : vy + EXO.push; exo.left--; exo.pt = 0.05; }
+  if (exo.slam && (exo.st -= dt) <= 0) { exo.st = 0.05; vy -= EXO.slamV; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw); vel.x = vel.x * 0.5 + fx * EXO.slamV; vel.y = vel.y * 0.5 + fz * EXO.slamV; }
   const nx = me.x + vel.x * dt, nz = me.z + vel.y * dt, rise = g.land(nx, nz) - g.land(me.x, me.z);
   if (rise / Math.max(0.001, Math.hypot(vel.x, vel.y) * dt) < 1.4 || !onGround) { me.x = nx; me.z = nz; }   // (slopes steeper than about 55 degrees stop you)
   [me.x, me.z] = C.pushOut(me.x, me.z); if (camp) [me.x, me.z] = camp.pushOut(me.x, me.z);   /* (Earth's towers are solid) */
@@ -464,7 +480,7 @@ function move(dt) {
   if ((keys.Space || jumpBuf > 0) && (onGround || coyote > 0)) { jumps = groundT < 1 ? jumps + 1 : 0; vy = 6.2 * Math.pow(MW.jumpFade, Math.min(jumps, 4)); onGround = false; coyote = 0; jumpBuf = 0; slideT = 0; crouch = false; }   /* (jump again quickly and each jump is shorter) */
   eyeH += ((slideT > 0 ? MW.eye[2] : crouch ? MW.eye[1] : MW.eye[0]) - eyeH) * Math.min(1, dt * 12);
   vy -= 20 * dt; me.y += vy * dt; const ground = g.land(me.x, me.z);
-  if (me.y <= ground) { if (!onGround && vy < -7) sound.land(-vy); me.y = ground; vy = 0; onGround = true; } else if (me.y > ground + 0.05) onGround = false;
+  if (me.y <= ground) { if (!onGround && vy < -7) sound.land(-vy); if (exo.slam) { exo.slam = false; vel.x = vel.y = 0; kick = 1; fx.burst(new THREE.Vector3(me.x, ground + 0.2, me.z), 30, [0.7, 0.55, 1], 6, 0.5); if (isHost()) C.slam(g, me, me.x, me.z); else net.send({ t: 'build', k: 'slam', x: 0, z: 0 }); } exo.used = false; me.y = ground; vy = 0; onGround = true; } else if (me.y > ground + 0.05) onGround = false;
 }
 
 // ---------------------------------------------------------------- the HUD (rewritten only when what it shows changes)
@@ -652,7 +668,7 @@ function onNet(m, from) {
         if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } }); return;
     }
     if (m.t === 'lines') { if (!bucket(p, 'lines', 0.2, 2)) return; (g.voice = g.voice || {})[p.name] = cleanLines(m.l); return; }
-    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'ship') C.useShip(g, p); else if (m.k === 'drop') C.drop(g, p, C.SITES[m.s] ? m.s : 'city'); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else if (m.k === 'strip') C.strip(g, p); else if (m.k === 'seat') C.nextSeat(g, p); else if (m.k === 'flare' && fin(m.x) && fin(m.z)) C.throwFlare(g, p, m.x, m.z); else build(p, m.k, m.x, m.z); return; }
+    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'slam') C.slam(g, p, p.x, p.z); else if (m.k === 'grow') C.grow(g, p); else if (m.k === 'ship') C.useShip(g, p); else if (m.k === 'drop') C.drop(g, p, C.SITES[m.s] ? m.s : 'city'); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else if (m.k === 'strip') C.strip(g, p); else if (m.k === 'seat') C.nextSeat(g, p); else if (m.k === 'flare' && fin(m.x) && fin(m.z)) C.throwFlare(g, p, m.x, m.z); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; m.p = p.id; heardShot(m); net.relay(m, from); return; }
     return;
   }

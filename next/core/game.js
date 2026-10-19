@@ -207,6 +207,11 @@ export const TRACER = { every: 4, life: 0.35, width: 1.8, len: 40 };
 // Die's gun of the same kind (sounds.xml: AK 108, pump shotgun 81, M60 54, Desert Vulture 52, heard 2 s), here as meters x 0.35 (ours);
 // crouching muffles it to 80% (muffled_when_crouched 0.8). Light, your own glow included, is what gives you away
 export const SENSE = { far: 30, near: 10 /* ours */, alert: 6, noise: { pistol: 52, ar: 108, shotgun: 81, lmg: 54, mount: 54 }, scale: 0.35 /* ours */, life: 2, crouch: 0.8, drift: 0.9 /* ours */ };
+// Advanced Warfare's boost slam (its own settings, ground_slam_*: 110 damage at the middle down to 50 at the edge, 75 to 125 inches across):
+// a hit from above that hurts every solid one in the ring (shapes in the light only, like a bullet)
+export const SLAM = { max: 110, min: 50, r0: 1.9, r1: 3.2 };
+export function slam(g, p, x, z) { let n = 0; for (const k of g.hollow) { if (k.dead || !solid(g, k)) continue; const d = Math.hypot(k.x - x, k.z - z); if (d > SLAM.r1) continue;
+  damage(g, k, 1, d <= SLAM.r0 ? SLAM.max : SLAM.max + (SLAM.min - SLAM.max) * (d - SLAM.r0) / (SLAM.r1 - SLAM.r0), 0.5, p.id); n++; } return n; }
 export function sees(g, k, p) { const range = SENSE.near + (SENSE.far - SENSE.near) * Math.min(1, lightAt(g, p.x, p.z)); return Math.hypot(p.x - k.x, p.z - k.z) < range; }
 export function fired(g, p, ox, oz, dx, dz, gun) { (g.noises = g.noises || []).push({ x: ox, z: oz, earth: onEarth(p), r: (SENSE.noise[gun] || 60) * SENSE.scale * (p.crouch ? SENSE.crouch : 1), t: SENSE.life }); p.shots = (p.shots || 0) + 1; if (p.shots % TRACER.every) return false; const L = Math.hypot(dx, dz) || 1; (g.tracers = g.tracers || []).push({ ax: ox, az: oz, bx: ox + dx / L * TRACER.len, bz: oz + dz / L * TRACER.len, t: TRACER.life }); return true; }
 // the decoy flare (queue 31, from the shielded-box test): a burning light you throw; it lights where it lands and pulls the hunt to it
