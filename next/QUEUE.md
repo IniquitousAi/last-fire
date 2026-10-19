@@ -18,7 +18,6 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 7. **Simulated real people.** Use everything learned about him (the chat logs, the Twin's data, Rim, Jev) to simulate real people: after Dalton or he plays a lot, play with someone who plays exactly like Dalton and says some of the same things; or work out from how someone plays how they probably talk. Always ask how the simulators can be used in fun ways. (2026-10-19; it builds on the learned friend in ANSWERS.md and the habits recorder in core/habits.js)
 
-9. **Stake your own odds** (idea 4): before a trip, post your guess on the board; the camp scores how often your guesses come true.
 10. **Shadows are the dark too** (idea 2): inside a shadow the dark stays smoke, even in camp.
 11. **The dark wears what you looked at** (idea 3): its masks come from what your camera lingered on.
 12. **Take it apart to learn it** (idea 7): strip dead machines on Earth; the blueprint stays reasoned until your rebuilt one runs.
@@ -28,8 +27,11 @@ Claude picks the order by the bottleneck: what he will see first and most.
 15. **Seats are jobs** (INNOVATION.md, vehicles): driver drives, the roof seat aims the big lamp, the back seat fires, the last keeps the engine alive; solo, you climb between seats. (added when item 14 finished)
 16. **Light shows through your pack** (INNOVATION.md, storage): carried cells glow and draw the dark unless you build a heavy shielded box. (added when the cyan pass finished)
 
+17. **People go out, and some do not come back** (INNOVATION.md, camp): camp people take their own trips on the true odds; a loss is a form in triplicate and an empty bunk; gear you give them raises their odds. (added when item 9 finished)
+
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
 - v42 to v51: BOOT locked (v42), every menu is visor glass (v43), the staged first enemy (v44), the face in the wall (v45), the learned friend joins from DEV (v46) and talks in a manner worked out from how it plays (v47), shotgun and LMG (v48), the camp store resupplies ammo (v50), sound is sharp only in light (v51).
 - Item 8, practice makes reloads faster (v52).
 - Item 14, the horde floods through the thinnest light (v53). His cyan note: cyan removed everywhere, Tron neon instead (v54).
+- Item 9, stake your own odds with a Brier score on the board (v55).
