@@ -207,14 +207,24 @@
    "where": ""
   },
   {
-   "s": "later",
+   "s": "in",
    "idea": "A NOTE button to give feedback while playing (like Era 1)",
-   "where": ""
+   "where": "Tab, then TALK or type, then SEND TO CLAUDE (a picture of the moment goes with it)"
   },
   {
    "s": "talk",
    "idea": "Lore first, then merge it with the mechanics: each relies on the other",
    "where": "next talk"
+  },
+  {
+   "s": "in",
+   "idea": "Updates arrive while I play: a pop-up, yes or no, and it feels automatic (straight back where I was)",
+   "where": "UPDATE READY pop-up; the world, the room and friends come back by themselves"
+  },
+  {
+   "s": "in",
+   "idea": "A feel beats a number",
+   "where": "taste rule 80"
   }
  ]
 }
