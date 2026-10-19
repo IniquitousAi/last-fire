@@ -217,7 +217,7 @@ export function mark(g, k, x, z, who) { g.marks.push({ k, x: Math.round(x * 10) 
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, dues: g.dues || {}, gaze: g.gaze || {}, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
@@ -228,6 +228,7 @@ export function loadWorld(d) {
   for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; g.stash = cnt(d.stash); g.truck = cnt(d.truck);
   for (const q of d.parts || []) if (Array.isArray(q) && PARTS[q[0]] && ok(q[1]) && ok(q[2])) g.parts.push({ id: g.nextId++, kind: q[0], x: q[1], z: q[2] });
+  if (d.theories && typeof d.theories === 'object' && Object.keys(THEORIES).every(k => ok(d.theories[k]))) { g.theories = {}; for (const k of Object.keys(THEORIES)) g.theories[k] = Math.max(0.01, Math.min(0.85, d.theories[k])); }
   g.gaze = {}; if (d.gaze && typeof d.gaze === 'object') for (const k of Object.keys(KINDS)) if (ok(d.gaze[k]) && d.gaze[k] >= 0) g.gaze[k] = Math.round(d.gaze[k]);
   g.dues = {}; if (d.dues && typeof d.dues === 'object') for (const [k, v] of Object.entries(d.dues).slice(0, 32)) if (typeof k === 'string' && k.length <= 24 && ok(v) && v >= 0) g.dues[k] = Math.round(v);
   g.lost = Array.isArray(d.lost) ? d.lost.filter(w => CAMP_OUT.includes(w)) : []; g.out = d.out && CAMP_OUT.includes(d.out.who) ? { who: d.out.who, night: d.out.night | 0 } : null;
@@ -246,10 +247,16 @@ export function shotBy(g, p, hit) { if (p) noteShot(g.rec, p, hit); }   // (for 
 // people go out, and some do not come back (INNOVATION.md, camp): at each dawn one of the camp (never the Clerk: the desk needs her) goes out
 // for a day; the next dawn they come back on the camp's true odds, from the last three nights' falls. A loss is permanent and saved.
 export const CAMP_OUT = ['the Night worker', 'a Council member'];
+// the wall of theories (INNOVATION.md: every survivor has a theory, all could be wrong): live odds that what you find moves, never past 85%
+export const THEORIES = { mind: { who: 'the Night worker', says: 'one thing, wearing what we fear' }, creatures: { who: 'a Council member', says: 'many things, grown to look like fear' },
+  us: { who: 'nobody, out loud', says: 'they were people, once' }, heads: { who: 'the Clerk', says: 'the dark is dark; the faces are ours' } };
+export function evidence(g, toward, k = 1.12) {   // (one find nudges one theory up; the rest share the loss; nothing is ever checked)
+  const t = g.theories = g.theories || { mind: 0.25, creatures: 0.25, us: 0.25, heads: 0.25 }; t[toward] *= k; let sum = 0; for (const x in t) sum += t[x]; for (const x in t) t[x] = Math.min(0.85, t[x] / sum);
+}
 export function tripOdds(g) { const h = g.history.slice(-3), n = Math.max(1, g.players.length); if (!h.length) return 0.85; const fallRate = h.reduce((s, x) => s + x.falls, 0) / (h.length * n); return Math.max(0.72, Math.min(0.95, 0.95 - fallRate * 0.4)); }
 function campTrips(g) {
   g.lost = g.lost || []; const r = stream(g.seed, 'camp-' + g.night);
-  if (g.out) { const back = r() < tripOdds(g); if (!back) g.lost.push(g.out.who); g.log.push([+g.t.toFixed(2), back ? 'returned' : 'lost', g.out.who]); g.out = null; return; }
+  if (g.out) { const back = r() < tripOdds(g); if (!back) { g.lost.push(g.out.who); evidence(g, 'us', 1.15); } g.log.push([+g.t.toFixed(2), back ? 'returned' : 'lost', g.out.who]); g.out = null; return; }
   const free = CAMP_OUT.filter(w => !g.lost.includes(w)); if (free.length && r() < 0.3) { g.out = { who: free[Math.floor(r() * free.length)], night: g.night }; g.log.push([+g.t.toFixed(2), 'goes', g.out.who]); }
 }
 export function hurt(g, p, n, from) {
@@ -275,7 +282,7 @@ export function drop(g, p) {
   if (g.earth && !g.earth.parts) { g.earth.parts = true; const r = stream(g.seed, 'parts-' + g.earth.n), lack = PART_ORDER.flatMap(k => Array(Math.max(0, PARTS[k].n - fitted(g, k) - (g.stash[k] || 0))).fill(k)), pool = lack.length ? lack : PART_ORDER;
     for (let i = 0; i < 3; i++) { const a = r() * Math.PI * 2, d = 22 + r() * 48; g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
   for (const q of [...g.motes, ...g.parts]) if (onEarth(q)) [q.x, q.z] = pushOut(q.x, q.z, 1);   // (nothing lies inside a tower)
-  p.x = EARTH.x + 1.5; p.z = EARTH.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'drop', p.id]); return true;
+  p.x = EARTH.x + 1.5; p.z = EARTH.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'drop', p.id]); evidence(g, 'creatures', 1.04); return true;   // (every trip down sees more of whatever lives there)
 }
 export function rise(g, p) {
   if (!p || p.ember || !onEarth(p) || Math.hypot(p.x - EARTH.x, p.z - EARTH.z) > 4) return false;
@@ -297,7 +304,7 @@ function wakeFaces(g) {   // (about a third of the towers hold one face each per
     TOWERS.forEach((t, i) => { if (!g.earth.faces[i]) return; const dx = p.x - t.x, dz = p.z - t.z; if (dx * dx + dz * dz > 150) return; const c = Math.cos(t.ry), sn = Math.sin(t.ry), lx = dx * c - dz * sn, lz = dx * sn + dz * c;
       const ex = Math.max(0, Math.abs(lx) - t.w / 2), ez = Math.max(0, Math.abs(lz) - t.d / 2); if (Math.hypot(ex, ez) > 3) return;
       g.earth.faces[i] = false; const wx = Math.max(-t.w / 2, Math.min(t.w / 2, lx)), wz = Math.max(-t.d / 2, Math.min(t.d / 2, lz)), x = t.x + wx * c + wz * sn, z = t.z - wx * sn + wz * c, K = KINDS.face;
-      g.hollow.push({ id: g.nextId++, kind: 'face', earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0.4, dead: false, speed: K.speed }); g.log.push([+g.t.toFixed(2), 'face', i]); }); }
+      g.hollow.push({ id: g.nextId++, kind: 'face', earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0.4, dead: false, speed: K.speed }); g.log.push([+g.t.toFixed(2), 'face', i]); evidence(g, 'heads', 1.06);   /* (a face in a wall: is it there, or are we seeing faces?) */ }); }
 }
 function spawnEarth(g, dt) {
   if (!g.earth) return; wakeFaces(g); const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
@@ -319,7 +326,7 @@ function spawn(g, dt, ph) {
   g.spawnT = rush ? (g.flood !== false ? 0.35 : 0.5) : 1.6;   // (a flood pours faster than a scatter: tuned by sim/flood.mjs)
   const base = ['walker', 'walker', 'walker', ...g.fire.woke, ...(night >= 3 ? ['runner'] : []), ...(night >= 2 ? ['watcher'] : [])], gz = g.gaze || {}, tot = Object.values(gz).reduce((a, b) => a + b, 0);
   const pool = tot < 30 ? base : [...base, ...[...new Set(base)].flatMap(k => Array(Math.round(3 * (gz[k] || 0) / tot)).fill(k))];   // (the dark wears what you looked at, INNOVATION.md idea 3: it never says so)
-  if (rush && g.flood !== false && !((g.gapT = (g.gapT || 0) - dt) > 0)) { g.gapT = 5; const was = g.gap; g.gap = dimmestGap(g); if (was === undefined || Math.abs(Math.atan2(Math.sin(g.gap - was), Math.cos(g.gap - was))) > 0.6) g.log.push([+g.t.toFixed(2), 'flood', +g.gap.toFixed(2)]); }   // (late in the night the horde floods: it finds the weakest part of your light and pours in there)
+  if (rush && g.flood !== false && !((g.gapT = (g.gapT || 0) - dt) > 0)) { g.gapT = 5; const was = g.gap; g.gap = dimmestGap(g); if (was === undefined || Math.abs(Math.atan2(Math.sin(g.gap - was), Math.cos(g.gap - was))) > 0.6) { g.log.push([+g.t.toFixed(2), 'flood', +g.gap.toFixed(2)]); evidence(g, 'mind', 1.05); } }   // (late in the night the horde floods: it finds the weakest part of your light and pours in there)
   const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = rush && g.flood !== false && g.gap !== undefined ? g.gap + (g.rSpawn() - 0.5) * 0.5 : T.probe + (g.rSpawn() - 0.5) * (rush ? Math.PI * 2 : T.spread), r = tideRadius(g) + 4;
   const x = g.fire.x + Math.cos(a) * r, z = g.fire.z + Math.sin(a) * r, grow = night - 1;
   g.hollow.push({ id: g.nextId++, kind, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });

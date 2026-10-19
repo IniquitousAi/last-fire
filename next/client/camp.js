@@ -50,6 +50,10 @@ export class Camp {
       scene.add(o); this.people.push({ ...P, lamp: P.walk ? null : lamp, o, mix, acts, moving: false, ang: Math.atan2(P.z, P.x), line: '', lineT: 0 }); }).catch(() => {});
     this.sub = Object.assign(document.createElement('div'), { id: 'sub' }); Object.assign(this.sub.style, { position: 'fixed', left: '50%', bottom: '172px', transform: 'translateX(-50%)', maxWidth: 'min(680px, 90vw)', textAlign: 'center', fontSize: '21px', lineHeight: '1.3', textShadow: '0 1px 3px #000, 0 0 2px #000', pointerEvents: 'none' }); this.sub.hidden = true; document.getElementById('hud').append(this.sub);
     this.yard(L, land);
+    // the wall of theories by the hut: every survivor's guess at what the dark is, with odds that what you find moves; none ever reads 'checked'
+    this.tc = document.createElement('canvas'); this.tc.width = 768; this.tc.height = 512; this.ttex = new THREE.CanvasTexture(this.tc); this.ttex.colorSpace = THREE.SRGBColorSpace;
+    const tx = HUT.x - 3.4, tz = HUT.z - 2.6, ty = land(tx, tz), wall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.73), new THREE.MeshBasicMaterial({ map: this.ttex }));
+    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); const legs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x15171d })); legs.position.set(tx, ty + 1.1, tz); this.scene.add(wall, legs); this.tdrawn = '';
   }
   // the honest numbers, from what really happened (labels say how sure)
   odds() {
@@ -104,8 +108,18 @@ export class Camp {
     (this.bunks || []).forEach((b, i) => { const n = names[i], k = n ? 0.12 + 0.88 * Math.min(1, d[n] / top) : 0; b.lamp.material.emissiveIntensity = 3 * k; b.name = n; b.dues = n ? d[n] : 0; });
   }
   bunkNear(me) { for (const b of this.bunks || []) if (b.name && Math.hypot(me.x - b.x, me.z - b.z) < 2.6) return b; return null; }
+  drawTheories(T) {
+    const g = this.ctx.g(), th = g.theories || { mind: 0.25, creatures: 0.25, us: 0.25, heads: 0.25 }, key = Object.values(th).map(v => v.toFixed(3)).join('|'); if (key === this.tdrawn) return; this.tdrawn = key;
+    const c = this.tc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 512); c.fillStyle = '#b9a8ff'; c.font = '500 40px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('WHAT IS THE DARK?', 32, 62);
+    c.fillStyle = '#a3a6bb'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('nobody knows. these are guesses. what you find moves them.', 32, 98);
+    Object.entries(th).sort((a, b) => b[1] - a[1]).forEach(([k, v], i) => { const y = 160 + i * 86, who = T[k].who;
+      c.fillStyle = '#eef0f8'; c.font = '400 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${who[0].toUpperCase() + who.slice(1)}: ${T[k].says}`, 32, y);
+      c.fillStyle = '#ff4fd8'; c.fillRect(32, y + 16, Math.round(560 * v), 10); c.fillStyle = '#eef0f8'; c.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${Math.round(v * 100)}%`, 610, y + 28);
+      c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('(guess)', 680, y + 28); });
+    this.ttex.needsUpdate = true;
+  }
   update() {
-    const me = this.ctx.me(); if (!me) return; if (!this.bunkT || (this.bunkT -= 1 / 60) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
+    const me = this.ctx.me(); if (!me) return; if (this.ctx.theories) this.drawTheories(this.ctx.theories); if (!this.bunkT || (this.bunkT -= 1 / 60) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
     this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
     const cam = this.ctx.camera(), v = new THREE.Vector3();
     let talk = null, best = 1e9; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw);
