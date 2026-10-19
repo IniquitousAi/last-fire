@@ -29,6 +29,7 @@ import { HudLook } from './hudlook.js?v=172';
 import { UI } from './uikit.js?v=172';
 import { Rain } from './rain.js?v=172';
 import { Immersion } from './immersion.js?v=172';
+import { codexHtml } from './codex.js?v=172';
 import { VisorRain } from './visor.js?v=172';
 import { applyLook } from './looks.js?v=172';
 import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=172';
@@ -399,7 +400,8 @@ function padStep(dt) { const gp = [...(navigator.getGamepads ? navigator.getGame
   now.forEach((v, i) => padPrev[i] = v); }
 // menus on the pad (found by the robot player: SOLO needed a mouse): the D-pad or left stick walks the visible keys in reading order, A presses
 // the selected one. The selected key gets the same thin pink edge as a mouse hover; nothing glows.
-function padMenu(edge, ax) { const keys = [...document.querySelectorAll('button')].filter(b => b.offsetParent && !b.disabled && getComputedStyle(b).visibility !== 'hidden'); if (!keys.length) return;
+function padMenu(edge, ax) { if (panel === 'codex') { const el = $('codexPanel'), ry = ax(3); if (Math.abs(ry) > 0.2) el.scrollTop += ry * 20; if (edge(1)) { $('codexBack').click(); return; } }   // (the codex scrolls with the right stick; B goes back)
+  const keys = [...document.querySelectorAll('button')].filter(b => b.offsetParent && !b.disabled && getComputedStyle(b).visibility !== 'hidden'); if (!keys.length) return;
   const st = padMenu.st = padMenu.st || { t: 0 }, y = ax(1), x = ax(0), t = performance.now(); let step = edge(13) || edge(15) ? 1 : edge(12) || edge(14) ? -1 : 0;
   if (!step && Math.max(Math.abs(x), Math.abs(y)) > 0.6 && t - st.t > 220) step = (Math.abs(y) > Math.abs(x) ? y : x) > 0 ? 1 : -1; if (step) st.t = t;
   const cur = keys.indexOf(document.activeElement);
@@ -694,6 +696,8 @@ $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidde
     const n = it => K.filter(([k]) => it.checks[k]).length, done = d.items.filter(it => n(it) === 5).length;   // (five proven marks per item, his rule 2026-10-19; sim/checklist_verify.mjs erases any mark without its proof)
     $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${done} of ${d.items.length} done. Each idea has a task and five marks; a mark only counts with its proof.</p>` + d.items.slice().sort((a, b) => n(b) - n(a)).map(it => `<div class="ck"><b class="${n(it) === 5 ? 'done' : n(it) ? 'in' : 'later'}">${n(it)} / 5</b><span>${esc(it.task)}<small>${esc(it.idea)}</small><small>serves ${({ B: 'B, the curiosity machine', C: 'C, the hangout', A: 'A, the scale' })[it.spine] || 'nothing yet'}</small><small>${K.map(([k, w]) => `<i style="font-style:normal;margin-right:10px;color:${it.checks[k] ? '#ff4fd8' : '#5a5d72'}">${it.checks[k] ? '&#10003;' : '&#9675;'} ${w}</i>`).join('')}</small></span></div>`).join(''); }
   catch (e) { $('listBody').textContent = 'The checklist could not load.'; } };
+$('openCodex').onclick = () => { $('paused').hidden = true; $('codex').hidden = false; panel = 'codex'; $('codexBody').innerHTML = codexHtml(); $('codexPanel').scrollTop = 0; };   // (the codex: what play never says out loud, read from the game's own tables)
+$('codexBack').onclick = () => { $('codex').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 $('listBack').onclick = () => { $('list').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 function reloadWorld(d) {   // (the world as it was at dusk; everyone here now stays, back at the fire)
   const keepers = g.players.map(p => ({ id: p.id, name: p.name, gun: p.gun })), w = C.loadWorld(d); if (!w) return;

@@ -43,6 +43,14 @@
   "tested": {
    "proof": "sim/immersion_test.mjs#seven eras, seven different lessons",
    "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/codex-3.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/codex_run.json#A opens the CODEX",
+   "at": "2026-10-19"
   }
  },
  "39": {
@@ -52,6 +60,14 @@
   },
   "tested": {
    "proof": "sim/immersion_test.mjs#where feel overruled a number",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/codex-4.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
    "at": "2026-10-19"
   }
  },
@@ -81,6 +97,14 @@
   "tested": {
    "proof": "sim/immersion_test.mjs#lore reason",
    "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/codex-1-rules.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/codex_run.json#A opens the CODEX",
+   "at": "2026-10-19"
   }
  },
  "50": {
@@ -91,6 +115,14 @@
   "tested": {
    "proof": "sim/immersion_test.mjs#feel check that the live value sits inside",
    "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/codex-4.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
+   "at": "2026-10-19"
   }
  },
  "59": {
@@ -100,6 +132,14 @@
   },
   "tested": {
    "proof": "sim/immersion_test.mjs#labels: 0-2 trips guess",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/codex-labels.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
    "at": "2026-10-19"
   }
  },
@@ -183,26 +223,36 @@
   "tested": {
    "proof": "sim/immersion_test.mjs#placed models have a reason",
    "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/codex-2.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
+   "at": "2026-10-19"
   }
  },
  "notes": {
   "26": "ringed disc plus far spires by distance from home; PAD n/a already set.",
   "27": "lines go to the wrist, at most one per 90 s.",
-  "30": "Crew scaling: the dark's size grows with crew^1.5 (was linear); 4 robots were at tension 0.17, now 0.30 (flow band .25 to .70), 2 at 0.55, alone 0.48. director.mjs still in band. SEEN not claimed.",
-  "38": "BUILT+TESTED only: lessons are never on screen by design, so no honest SEEN; PLAYED not claimed.",
+  "30": "SEEN: hangout-friends.png (two learned friends joined by the pad at the lit fire) vs solo-dark.png (alone at the dark edge at night). PAD: friends joined through DEV by the pad. Crew scaling from the last round stays.",
+  "38": "BUILT+TESTED only: lessons are never on screen by design, so no honest SEEN; PLAYED not claimed. (SEEN/PLAYED via the CODEX page)",
   "39": "feel log verified against the code that holds the felt value; SEEN/PLAYED not claimed.",
   "40": "rough: four smiling signs outside Earth's gates plus an hour table; commute and school are table entries, not walkable scenes.",
   "48": "106 rule numbers in 21 tables and 16 lore lines cross-checked both ways.",
   "50": "27 numbers with bands; every other table names the robot test that stands for its feel.",
   "59": "labels shared by site odds, board and wrist header (camp check line); SEEN/PLAYED not claimed.",
-  "60": "Boot-print trails along 5 real paths, scorch ring that grows with fire level, tally scratches per night survived, each with a reason in core/details.js. Boot prints read as a faint trail and the tally is readable on the post (seen); the scorch ring was seen only in a debug shot.",
+  "60": "PAD: the left stick walked 16 m along the fire-to-gate boot-print path.",
   "61": "camp people use pickFresh per person.",
-  "62": "16 rules, 40 games x 400 random actions, 256000 checks, no rule broken; the fuzz reaches Earth, nodes, falls, kills, levels, hazard, nights.",
+  "62": "SEEN: fuzz-report.png, the robots' report page: 16 rules HELD over 96000 checks.",
   "63": "3.1% at 1000x900, 1.6% at 1920x908, 5.07% while carrying light. Build keys hide when you cannot afford one; their descriptions moved to hover.",
   "65": "up to 3 lines at dawn through the wrist; marks, relays, fire, board footnote, people.",
   "67": "fog 1.45x Moon, 1.9x Earth at night; Earth rain existed (v162); edge ring is subtle in screenshots.",
   "68": "36 models; the test fails on a model with no reason.",
-  "forest": "DONE with ez-tree (vendor/ez-tree): client/forest.js bakes 8 variants once (4 dead pines, 2 bare, 2 live with dark green needles; ~150-250 ms on first arrival on Earth), draws the core's 1170 solid trunks as InstancedMesh (near bark + needles within 90 m, a 104-triangle trunk-and-limbs version 90 to 240 m, nothing past). Near-black bark and needles; green patch needles 0x2b6a3c. Screenshots read: forest-outside-night, forest-green-patch, forest-hazard-bog, forest-outside-day (next/playtests/lanes/C/). lookmatch: gap 0.36 / 0.27 / 0.21, black +25 at the wall shot (the tower fills the frame), no banned warm color. fps: machine was heavily loaded by other helpers (main without the forest measured 30 to 53 fps at 1920x908, three runs); same-page forest on/off showed 24-28 vs 25-47 (within noise), so the forest costs little but 60+ could not be proven under that load. Ground veins on the green patch are the lead's corruption shader, not the forest."
+  "forest": "DONE with ez-tree (vendor/ez-tree): client/forest.js bakes 8 variants once (4 dead pines, 2 bare, 2 live with dark green needles; ~150-250 ms on first arrival on Earth), draws the core's 1170 solid trunks as InstancedMesh (near bark + needles within 90 m, a 104-triangle trunk-and-limbs version 90 to 240 m, nothing past). Near-black bark and needles; green patch needles 0x2b6a3c. Screenshots read: forest-outside-night, forest-green-patch, forest-hazard-bog, forest-outside-day (next/playtests/lanes/C/). lookmatch: gap 0.36 / 0.27 / 0.21, black +25 at the wall shot (the tower fills the frame), no banned warm color. fps: machine was heavily loaded by other helpers (main without the forest measured 30 to 53 fps at 1920x908, three runs); same-page forest on/off showed 24-28 vs 25-47 (within noise), so the forest costs little but 60+ could not be proven under that load. Ground veins on the green patch are the lead's corruption shader, not the forest.",
+  "codex": "CODEX key in the pause menu (client/codex.js): 106 rules each with its lore reason and number, 24+ placed objects with why and story, 7 eras with their lesson, 27 numbers with the feel check, the three knowledge labels. All read from core/reasons.js, lessons.js, feel.js, knowledge.js, placed.js. Pad run (sim/codex_run.cjs): Start, D-pad to CODEX, A, right stick scrolls, B backs out, all on the fake pad with no mouse or keys.",
+  "green patch": "client/rift.js multiplies the corruption by 1 - clean inside the patch (radius from core/wilds.js, 8 m soft edge); forest-green-patch-clean.png shows the ground inside it without cracks."
  },
  "30": {
   "built": {
@@ -215,6 +265,14 @@
   },
   "played": {
    "proof": "sim/modes.mjs#for (const n of [1, 2, 4])",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/hangout-friends.png",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "playtests/lanes/C/codex_run.json#friends joined by the pad",
    "at": "2026-10-19"
   }
  },
@@ -234,6 +292,10 @@
   "played": {
    "proof": "playtests/lanes/C/wilds_run.json#earth gate",
    "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "playtests/lanes/C/codex_run.json#walking the boot-print path",
+   "at": "2026-10-19"
   }
  },
  "62": {
@@ -247,6 +309,10 @@
   },
   "played": {
    "proof": "sim/fuzz.mjs#random actions",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/fuzz-report.png",
    "at": "2026-10-19"
   }
  }
