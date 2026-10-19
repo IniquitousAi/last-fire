@@ -48,7 +48,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-39. **Read the greedy route, not the pressure** (from item 38): greedy tension comes from roaming 60 m out; give a far roamer something to read the danger by (the flood warning reaches far, tower shadows show on the ground) instead of making Earth softer. (added when item 38 finished)
+
+40. **Hits you can feel** (INNOVATION.md, combat and gun feel): hit stop (a few milliseconds of freeze on a solid hit) and a crack of light where the smoke turns solid; research marks hit stop as checked. (added when item 39 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -77,3 +78,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 36, the whole truck takes a median 8 depot trips (v85).
 - Item 37, sims report only when run directly.
 - Item 38, tested and left as is: 45 Earth settings, 20 trips each; greedy solo tension stays 0.76 to 0.78 in every setting that keeps careful and perfect players in the band. It comes from roaming 60 m out, not from Earth's pressure.
+- Item 39, the visor's motion sense on the compass (v87).
