@@ -2,8 +2,8 @@
 // sign: a cheerful face and an official line that reads one way by day and another at night. Walk up to one and the wrist says what the
 // ordinary hour here has become. Unlit and a hair under the bloom threshold, like the board: no glow, no halo.
 import * as THREE from 'three';
-import { EARTH, WALLS } from '../core/game.js?v=170';
-import { SIGNS, signLine, mirrorDay } from '../core/mirror.js?v=170';
+import { EARTH, WALLS } from '../core/game.js?v=171';
+import { SIGNS, signLine, mirrorDay } from '../core/mirror.js?v=171';
 
 export class MirrorSigns {
   constructor(scene, land) {

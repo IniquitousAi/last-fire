@@ -4,8 +4,8 @@
 // per sub-mesh, rooted in the ground (land height minus the tree's sink), never floating, only drawn once you stand on Earth.
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { TREES, EARTH } from '../core/game.js?v=170';
-import { WILDS } from '../core/wilds.js?v=170';
+import { TREES, EARTH } from '../core/game.js?v=171';
+import { WILDS } from '../core/wilds.js?v=171';
 
 export class Forest {
   constructor(scene, land) {

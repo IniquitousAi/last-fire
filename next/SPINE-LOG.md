@@ -5,3 +5,4 @@
 - v168 serves A: Earth's night is cold slate with fog lying against the walls, the walls are slate with red glyphs, the Wilds have their rules (a green patch, a spore bog that costs light), the Simulator says why anything is not good
 - v169 serves A,C: New screens: a loading screen of black pines under stars, thin steel frames, a two-chevron crosshair, the visor cracks red when you are hurt, a day and night dial; optics that bend light; the wrist is a blue hologram
 - v170 serves A: Thinner fog lying against the walls; the creature from his sheet is in the game files but stays off until it is cheap enough; the look is measured against his picture
+- v171 serves A: The dark is back: creatures made from your sheet, with real walking, turning and steering (no more sliding holograms), smoke in the dark and solid in your light
