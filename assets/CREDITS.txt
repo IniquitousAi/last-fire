@@ -8,3 +8,5 @@ assets/food/*                                                 Kenney Food Kit (k
 
 assets/c/wraith.glb, clawed.glb, shard.glb, soldier.glb      Quaternius (quaternius.com), via poly.pizza, CC0 (models TX8r9WBXpe, Iip30bDHmu, 39uv7ux42v, Btfn3G5Xv4)
 assets/c/survivor.glb                                         Quaternius (quaternius.com), via poly.pizza, CC0 (model 9kF7eTDbhO)
+
+assets/ph/modular_urban_apartments_facade/*                    Poly Haven (polyhaven.com), "Modular Urban Apartments Facade" by James Ray Cock, CC0 (the dead city outside the Earth walls, next/client/ruins.js; also assets/ph/street_lamp_02 for posts and stands)
