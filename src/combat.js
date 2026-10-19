@@ -102,7 +102,8 @@ export const sound = {
   click() { const d = dest(null); play(buf.rattle, d, { rate: 3, gain: 0.25, type: 'bandpass', freq: 2600, q: 4 }); },
   magOut() { const d = dest(null); play(buf.rattle, d, { rate: 1.4, gain: 0.35, type: 'bandpass', freq: 1500, q: 2 }); },
   magIn() { const d = dest(null); play(buf.rattle, d, { rate: 1.8, gain: 0.45, type: 'bandpass', freq: 1900, q: 2 }); tone(d, 500, 380, 0.05, 0.05, 'square', 0.05); },
-  step(run) { const d = dest(null); play(buf.step, d, { rate: 0.7 + Math.random() * 0.25, gain: run ? 0.22 : 0.13, type: 'lowpass', freq: 700 }); },
+  step(run, surf = 0, load = 0) { const d = dest(null), S = [[0.62, 520], [1.05, 2200], [0.86, 1300]][surf] || [0.7, 700], r = S[0] * (0.9 + Math.random() * 0.2) * (1 - load * 0.12);   // (surf: 0 Moon dust, soft and low; 1 the camp's metal plates, bright; 2 Earth's concrete, hard. load: carrying light, heavier)
+    play(buf.step, d, { rate: r, gain: (run ? 0.22 : 0.13) * (1 + load * 0.3), type: 'lowpass', freq: S[1] }); if (surf === 1) tone(d, 900 + Math.random() * 300, 700, 0.05, 0.025); },
   land(n) { const d = dest(null); play(buf.step, d, { rate: 0.5, gain: Math.min(0.5, 0.15 + n * 0.03), type: 'lowpass', freq: 500 }); },
   hurt() { const d = dest(null); tone(d, 110, 50, 0.2, 0.3); },
   groan(pos, deep) { const d = dest(pos, 3), a = ctx(), o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter(), t = a.currentTime, base = deep ? 48 : 82 + Math.random() * 30;

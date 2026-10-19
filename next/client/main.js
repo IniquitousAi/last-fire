@@ -1,35 +1,35 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=148';
-import { Ambience } from './ambience.js?v=148';
-import { Camp, BOARD } from './camp.js?v=148';
-import { Guide } from './guide.js?v=148';
-import { buildSites } from './earthsite.js?v=148';
-import { Truck } from './truck.js?v=148';
-import { ShipView } from './shipview.js?v=148';
-import { Crew } from './crew.js?v=148';
-import { Hands } from './hands.js?v=148';
-import { FpRig } from './fprig.js?v=148';
-import { Wrist } from './wrist.js?v=148';
-import { FireCore } from './firecore.js?v=148';
+import * as C from '../core/game.js?v=149';
+import { Ambience } from './ambience.js?v=149';
+import { Camp, BOARD } from './camp.js?v=149';
+import { Guide } from './guide.js?v=149';
+import { buildSites } from './earthsite.js?v=149';
+import { Truck } from './truck.js?v=149';
+import { ShipView } from './shipview.js?v=149';
+import { Crew } from './crew.js?v=149';
+import { Hands } from './hands.js?v=149';
+import { FpRig } from './fprig.js?v=149';
+import { Wrist } from './wrist.js?v=149';
+import { FireCore } from './firecore.js?v=149';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=148';
-import { FriendVoice } from './friendvoice.js?v=148';
-import { crewFrom } from '../core/habits.js?v=148';
-import { HudLook } from './hudlook.js?v=148';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=148';
-import { sound, GUNS } from '../../src/combat.js?v=148';
-import { FX } from '../../src/fx.js?v=148';
+import { think as friendThink } from './friend.js?v=149';
+import { FriendVoice } from './friendvoice.js?v=149';
+import { crewFrom } from '../core/habits.js?v=149';
+import { HudLook } from './hudlook.js?v=149';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=149';
+import { sound, GUNS } from '../../src/combat.js?v=149';
+import { FX } from '../../src/fx.js?v=149';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 148;   // (this copy's version; ./version.json says the newest)
+const BUILD = 149;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -321,7 +321,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
   b = new THREE.Box3().setFromObject(holder); holder.userData = { len: b.max.z - b.min.z, top: b.max.y, muzzle: new THREE.Vector3(0, b.max.y * 0.35, b.min.z) }; holder.visible = false; view.add(holder); held[k] = holder; }
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
-const DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
+const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
 // a relay or the truck's cab warm them back in about 3 s. The drift moves your real aim, so where the sight sits is where the round goes.
@@ -602,7 +602,9 @@ function frame(now) {
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
-  camera.position.set(me.x, me.y + eyeH, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - (gunKey === 'rail' ? 56 : 22) * ads; camera.updateProjectionMatrix();
+  { const dx = me.x - (frame.px ?? me.x), dz = me.z - (frame.pz ?? me.z), d = Math.hypot(dx, dz); frame.px = me.x; frame.pz = me.z;   // (your own footsteps, IMMERSION.md item 1: one every 1.75 m walking, 2.5 m sprinting; the view dips with each)
+    if (onGround && !me.ember && !(ship && ship.on) && C.seatOf(g, me.id) < 0 && d < 1) { const L = mvSprint ? 2.5 : 1.75; frame.sd = (frame.sd || 0) + d; if (TEST) window.__dist = (window.__dist || 0) + d / L; if (frame.sd >= L) { frame.sd -= L; sound.step(mvSprint, C.onEarth(me) ? 2 : Math.hypot(me.x - g.fire.x, me.z - g.fire.z) < 22 ? 1 : 0, Math.min(1, (me.carried || 0) / 60)); frame.steps = (frame.steps || 0) + 1; if (TEST) window.__steps = frame.steps; } frame.bob = Math.sin(frame.sd / L * Math.PI) * (mvSprint ? 0.022 : 0.012) * (1 - ads); } else frame.bob = (frame.bob || 0) * 0.85; }
+  camera.position.set(me.x, me.y + eyeH - (frame.bob || 0), me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - (gunKey === 'rail' ? 56 : 22) * ads; camera.updateProjectionMatrix();
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
     camera.position.set(c.x + Math.sin(me.yaw) * back, cy + up, c.z + Math.cos(me.yaw) * back); camera.lookAt(c.x, cy + 1.6, c.z); }
