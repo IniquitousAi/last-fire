@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=115';
-import { Ambience } from './ambience.js?v=115';
-import { Camp, BOARD } from './camp.js?v=115';
-import { Guide } from './guide.js?v=115';
-import { buildSites } from './earthsite.js?v=115';
-import { Truck } from './truck.js?v=115';
-import { ShipView } from './shipview.js?v=115';
-import { Wrist } from './wrist.js?v=115';
-import { FireCore } from './firecore.js?v=115';
+import * as C from '../core/game.js?v=116';
+import { Ambience } from './ambience.js?v=116';
+import { Camp, BOARD } from './camp.js?v=116';
+import { Guide } from './guide.js?v=116';
+import { buildSites } from './earthsite.js?v=116';
+import { Truck } from './truck.js?v=116';
+import { ShipView } from './shipview.js?v=116';
+import { Wrist } from './wrist.js?v=116';
+import { FireCore } from './firecore.js?v=116';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=115';
-import { FriendVoice } from './friendvoice.js?v=115';
-import { crewFrom } from '../core/habits.js?v=115';
-import { HudLook } from './hudlook.js?v=115';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=115';
-import { sound, GUNS } from '../../src/combat.js?v=115';
-import { FX } from '../../src/fx.js?v=115';
+import { think as friendThink } from './friend.js?v=116';
+import { FriendVoice } from './friendvoice.js?v=116';
+import { crewFrom } from '../core/habits.js?v=116';
+import { HudLook } from './hudlook.js?v=116';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=116';
+import { sound, GUNS } from '../../src/combat.js?v=116';
+import { FX } from '../../src/fx.js?v=116';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 115;   // (this copy's version; ./version.json says the newest)
+const BUILD = 116;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -246,7 +246,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
 addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
-  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
+  if (e.code === 'Space' && !e.repeat) jumpBuf = 0.15; if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
@@ -356,7 +356,7 @@ function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const 
 function throwFlare() { if (me.ember) return; const cost = C.flareCost(g, me); if (me.carried < cost) return say(`A flare costs ${cost} light${cost > C.FLARE.cost ? ' (more, while you are behind on dues)' : ''}. You carry ${Math.floor(me.carried)}.`, 3); const [x, z] = flareSpot(); sound.buy(); if (isHost()) C.throwFlare(g, me, x, z); else net.send({ t: 'build', k: 'flare', x: +x.toFixed(2), z: +z.toFixed(2) }); }
 
 // ---------------------------------------------------------------- moving: grounded but sharp (fast to start and stop, real weight on slopes)
-const vel = new THREE.Vector2(); let vy = 0, onGround = true;
+const vel = new THREE.Vector2(); let vy = 0, onGround = true, coyote = 0, jumpBuf = 0;   /* (GAMEDEV-TRICKS.md 22: a jump still works 0.15 s after a ledge, and a press 0.15 s before landing counts) */
 function move(dt) {
   if (me.ember) return; if (ship && ship.on) { vel.x = vel.y = 0; vy = 0; onGround = true; return; }   /* (flying: the ship moves you) */
   const seat = C.seatOf(g, me.id); if (seat >= 0 && g.car) {   // (in the truck: you ride; the driver's W/S and A/D are throttle and steering)
@@ -371,7 +371,8 @@ function move(dt) {
   [me.x, me.z] = C.pushOut(me.x, me.z);   /* (Earth's towers are solid) */
   { const r = Math.hypot(me.x, me.z), a = Math.atan2(me.z, me.x), gate = Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2))) < 0.1;   /* (the camp wall at 21 m: solid except the gate) */
     if (!gate && Math.abs(r - 21) < 0.7) { const to = r < 21 ? 20.3 : 21.7; me.x *= to / r; me.z *= to / r; } }
-  if (keys.Space && onGround) { vy = 6.2; onGround = false; }
+  coyote = onGround ? 0.15 : coyote - dt; jumpBuf -= dt;
+  if ((keys.Space || jumpBuf > 0) && (onGround || coyote > 0)) { vy = 6.2; onGround = false; coyote = 0; jumpBuf = 0; }
   vy -= 20 * dt; me.y += vy * dt; const ground = g.land(me.x, me.z);
   if (me.y <= ground) { if (!onGround && vy < -7) sound.land(-vy); me.y = ground; vy = 0; onGround = true; } else if (me.y > ground + 0.05) onGround = false;
 }
