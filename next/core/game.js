@@ -51,7 +51,7 @@ export const fitted = (g, k) => (g.truck && g.truck[k]) || 0;
 export const canFit = (g, k) => (g.stash[k] || 0) > 0 && fitted(g, k) < PARTS[k].n && PARTS[k].after.every(a => fitted(g, a) >= PARTS[a].n);
 export const truckDone = g => PART_ORDER.every(k => fitted(g, k) >= PARTS[k].n);
 // the finished truck rides the lander down; on Earth it seats four, holds 400 kg, its headlights make the dark solid, and it runs things over
-export const CAR = { speed: 17, back: 6, turn: 1.7, seats: 4, store: 400, ram: 160, lamp: 14 };
+export const CAR = { speed: 17, back: 6, turn: 1.7, seats: 4, store: 400, ram: 160, lamp: 14, roof: 22 };   // (roof: the big lamp the front passenger aims, seats are jobs)
 const SEAT_AT = [[-0.45, -0.2], [0.45, -0.2], [-0.45, 1.2], [0.45, 1.2]];   // (driver, front passenger, two in the back; truck's own space, forward is -z)
 export const seatOf = (g, id) => g.car ? g.car.seats.indexOf(id) : -1;
 export function seatPos(c, i) { const [ox, oz] = SEAT_AT[i] || SEAT_AT[0], co = Math.cos(c.yaw), si = Math.sin(c.yaw); return [c.x + ox * co + oz * si, c.z - ox * si + oz * co]; }
@@ -149,7 +149,9 @@ export function lightAt(g, x, z, noGlow) {   // (noGlow: leave out the glow play
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !shadowed(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
   if (g.tracers) for (const t of g.tracers) { const vx = t.bx - t.ax, vz = t.bz - t.az, k = Math.max(0, Math.min(1, ((x - t.ax) * vx + (z - t.az) * vz) / (vx * vx + vz * vz))), d = Math.hypot(t.ax + vx * k - x, t.az + vz * k - z); if (d < TRACER.width) L = Math.max(L, 0.5 * t.t / TRACER.life); }
   if (g.car) { const c = g.car, dx = x - c.x, dz = z - c.z, ahead = -dx * Math.sin(c.yaw) - dz * Math.cos(c.yaw), side = Math.abs(dx * Math.cos(c.yaw) - dz * Math.sin(c.yaw));
-    if (ahead > 0 && ahead < CAR.lamp && side < 1.2 + ahead * 0.45 && 0.8 * (1 - ahead / CAR.lamp) > L && !shadowed(c.x, c.z, x, z)) L = 0.8 * (1 - ahead / CAR.lamp); else if (dx * dx + dz * dz < 9) L = Math.max(L, 0.3); }   // (the headlights: a wedge of light ahead, a little around the cab)
+    if (ahead > 0 && ahead < CAR.lamp && side < 1.2 + ahead * 0.45 && 0.8 * (1 - ahead / CAR.lamp) > L && !shadowed(c.x, c.z, x, z)) L = 0.8 * (1 - ahead / CAR.lamp);
+    const gun = c.seats[1] !== undefined && g.players.find(q => q.id === c.seats[1]); if (gun) { const fx = -Math.sin(gun.yaw || 0), fz = -Math.cos(gun.yaw || 0), a2 = dx * fx + dz * fz, s2 = Math.abs(dx * fz - dz * fx);   /* (the roof lamp: a narrow, long beam where the front passenger looks) */
+      if (a2 > 0 && a2 < CAR.roof && s2 < 0.8 + a2 * 0.22 && 0.9 * (1 - a2 / CAR.roof) > L && !shadowed(c.x, c.z, x, z)) L = 0.9 * (1 - a2 / CAR.roof); } else if (dx * dx + dz * dz < 9) L = Math.max(L, 0.3); }   // (the headlights: a wedge of light ahead, a little around the cab)
   return L;
 }
 

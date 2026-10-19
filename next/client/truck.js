@@ -1,7 +1,7 @@
 // Parts lying out on Earth, and the truck at the bay in camp, drawn as it is really fitted (gray boxes first, PLAN-SPACE.md: real models
 // come once his hands say the building feels right). Each part has a shape you can read from far away, so you know what you found.
 import * as THREE from 'three';
-import { BAY, PARTS } from '../core/game.js?v=71';
+import { BAY, PARTS } from '../core/game.js?v=72';
 
 const steel = new THREE.MeshStandardMaterial({ color: 0x3a3f4b, roughness: 0.5, metalness: 0.6 }), rubber = new THREE.MeshStandardMaterial({ color: 0x15161b, roughness: 0.95 });
 const cell = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xff4fd8, emissiveIntensity: 1.2 }), body = new THREE.MeshStandardMaterial({ color: 0x2b303a, roughness: 0.7, metalness: 0.35 });
@@ -29,7 +29,11 @@ export class Truck {
       for (const x of [-0.55, 0.55]) { const b = new THREE.Mesh(new THREE.ConeGeometry(2.6, 12, 16, 1, true).rotateX(-Math.PI / 2), beam); b.position.set(x, 1.0, 8.2); this.carRig.add(b);
         const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.04), new THREE.MeshBasicMaterial({ color: 0xeaf4ff })); lamp.position.set(x, 1.0, 2.12); this.carRig.add(lamp); }
       this.scene.add(this.carRig); }
-    this.carRig.visible = !!g.car; if (!g.car) return; const c = g.car;
+    if (!this.roof) { this.roof = new THREE.Group(); const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.4, 16).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x15171d, metalness: 0.7, roughness: 0.35 }));
+      const beam = new THREE.Mesh(new THREE.ConeGeometry(4.6, 22, 20, 1, true).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xe8d8ff, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending, depthWrite: false })); beam.position.z = -11;
+      this.roof.add(housing, beam); this.roof.userData.beam = beam; this.scene.add(this.roof); }   // (the roof lamp, aimed by whoever rides up front)
+    this.carRig.visible = !!g.car; this.roof.visible = false; if (!g.car) return; const c = g.car;
+    const gunner = c.seats[1] !== undefined && g.players.find(q => q.id === c.seats[1]); if (gunner) { this.roof.visible = true; this.roof.position.set(c.x, this.land(c.x, c.z) + 2.3, c.z); this.roof.rotation.set(0, gunner.yaw || 0, 0); }
     this.carRig.position.set(c.x, this.land(c.x, c.z), c.z); this.carRig.rotation.y = c.yaw + Math.PI;   // (the truck's front is +z in its own drawing, -z in the rules)
   }
   update(g) {

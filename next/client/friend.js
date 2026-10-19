@@ -1,7 +1,7 @@
 // The learned friend (his ask, 2026-10-19: play with someone who feels exactly like Dalton, or like you): the same faithful robot the
 // certifier uses (sim/certify.mjs), playing one person's recorded habits (core/habits.js crewFrom). It keeps the camp; it never takes the lander.
-import { hitRay, damage, heightAt, KINDS, shotBy, canGrow, grow, fired } from '../core/game.js?v=71';
-import { SECTORS } from '../core/habits.js?v=71';
+import { hitRay, damage, heightAt, KINDS, shotBy, canGrow, grow, fired } from '../core/game.js?v=72';
+import { SECTORS } from '../core/habits.js?v=72';
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
 export function think(g, p, r, dt) {   // (one robot plays one person's habits: where they roam, when they bank, how they aim, the way they never look)
   const S = p.style; if (p.ember) return; const f = g.fire;
