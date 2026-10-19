@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=8';
-import { Hollow, KINDS } from './hollow.js?v=8';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=8';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=8';
-import { FX } from './fx.js?v=8';
-import { modelsReady, model, gunModel } from './models.js?v=8';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=9';
+import { Hollow, KINDS } from './hollow.js?v=9';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=9';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=9';
+import { FX } from './fx.js?v=9';
+import { modelsReady, model, gunModel } from './models.js?v=9';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -79,13 +79,15 @@ modelsReady.then(() => { modelsOk = true;
     if (GUNS[k] && !GUNS[k].melee) { const f = new THREE.Sprite(flashMat); f.scale.setScalar(k === 'minigun' ? 0.3 : 0.18); f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; }
     else m.scale.setScalar(HAND[k] || 1); view.add(m); held[k] = m; } });
 
+const coneGeo = new THREE.ConeGeometry(1.9, 9, 20, 1, true).translate(0, -4.5, 0).rotateX(-Math.PI / 2), coneMat = new THREE.MeshBasicMaterial({ color: 0xbcd0ff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: true });
 function figure() {   // a friend: dark gear, a cyan visor line so you can tell them from the Hollow, and their gun in hand
   const g = new THREE.Group(), cloth = new THREE.MeshStandardMaterial({ color: 0x2a2e38, roughness: 0.85 }), gear = new THREE.MeshStandardMaterial({ color: 0x15171d, roughness: 0.6 });
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.95, 4, 8), cloth); body.position.y = 0.88; body.castShadow = true;
   const vest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.5, 0.38), gear); vest.position.y = 1.15;
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), gear); head.position.y = 1.62; head.castShadow = true;
   const visor = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0x39e6ff })); visor.position.set(0, 1.64, -0.2);
-  const hands = new THREE.Group(); hands.position.set(0.18, 1.3, -0.25); g.add(body, vest, head, visor, hands); g.userData.hands = hands; return g;
+  const hands = new THREE.Group(); hands.position.set(0.18, 1.3, -0.25); const cone = new THREE.Mesh(coneGeo, coneMat); cone.position.set(0, 0.2, -0.1); cone.visible = false; hands.add(cone);
+  g.add(body, vest, head, visor, hands); g.userData.hands = hands; g.userData.cone = cone; return g;
 }
 
 // ---------------------------------------------------------------- input (the game takes the mouse once you click in; Tab opens the bag, Esc the menu)
@@ -548,7 +550,7 @@ function drawFriends(dt) {
     if (p.ty > -40) { p.x += (p.tx - p.x) * f; p.y += (p.ty - p.y) * f; p.z += (p.tz - p.z) * f; }
     p.fig.visible = p.y > -40 && !p.dead; p.fig.position.set(p.x, p.y, p.z); p.fig.rotation.set(p.down ? -1.4 : 0, p.yaw, 0);
     if (p.heldKey !== p.gun) { if (p.held) p.fig.userData.hands.remove(p.held); p.held = p.gun ? gunModel(p.gun) : null; if (p.held) { p.held.rotation.set(0, 0, 0); p.fig.userData.hands.add(p.held); } p.heldKey = p.gun; }
-    p.fig.userData.hands.rotation.x = p.pitch;
+    p.fig.userData.hands.rotation.x = p.pitch; p.fig.userData.cone.visible = p.torch && !p.down;
     // the marker over their head: name and how far, seen through walls, red when they need a revive
     _v.set(p.x, p.y + 2.25, p.z).project(camera); const vis = p.fig.visible && _v.z < 1 && Math.abs(_v.x) < 1.1 && Math.abs(_v.y) < 1.1;
     p.mark.hidden = !vis; if (vis) { p.mark.style.transform = `translate(${(_v.x * 0.5 + 0.5) * innerWidth}px, ${(-_v.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -100%)`; const txt = `${p.name}  ${Math.round(Math.hypot(p.x - me.x, p.z - me.z))} m${p.down ? '  REVIVE' : ''}`; if (p.mark.textContent !== txt) p.mark.textContent = txt; p.mark.classList.toggle('down', p.down); }
@@ -591,7 +593,7 @@ function hud(L, dt) {
   if (last$.slots !== sig) { last$.slots = sig; $('slots').innerHTML = SLOTS.map((s, i) => { const g = s.startsWith('gun') ? gunIn(s) : null, n = s.startsWith('gun') || ['pickaxe', 'torch'].includes(s) ? '' : inv[s]; return `<div class="slot${i === slot ? ' on' : ''}${n === 0 ? ' none' : ''}" data-i="${i}"><b>${i + 1}</b><span>${s.startsWith('gun') ? (g ? GUNS[g].name : 'empty') : SLOT_NAME[s]}</span><i>${n}</i></div>`; }).join(''); }
   const gk = gunIn(SLOTS[slot]), am = gk && me.ammo[gk];
   html('ammo', gk ? `<b class="${am.mag <= Math.ceil(magOf(gk) * 0.25) ? 'low' : ''}">${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gk].name}${me.forged.has(gk) ? ' MARK II' : ''}</small>` : '');
-  txt('warn', gk === 'minigun' && spin < GUNS.minigun.spin && spin > 0 ? 'SPINNING UP' : gk && reloadT <= 0 ? (am.mag === 0 && am.res === 0 ? 'NO AMMO' : am.mag <= Math.ceil(GUNS[gk].mag * 0.25) && am.res > 0 ? 'RELOAD (R)' : '') : reloadT > 0 ? 'RELOADING' : '');
+  txt('warn', gk === 'minigun' && spin < GUNS.minigun.spin && spin > 0 ? 'SPINNING UP' : gk && reloadT <= 0 ? (am.mag === 0 && am.res === 0 ? 'NO AMMO' : am.mag <= Math.ceil(magOf(gk) * 0.25) && am.res > 0 ? 'RELOAD (R)' : '') : reloadT > 0 ? 'RELOADING' : '');
   txt('prompt', prompt ? prompt.text : (me.down ? `Down: ${Math.ceil(me.bleed)} s until you bleed out` : ''));
   txt('perks', [...me.perks].map(k => PERKS[k].name).join('   '));
   txt('round', String(day));
