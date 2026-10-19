@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=72';
-import { Ambience } from './ambience.js?v=72';
-import { Camp, BOARD } from './camp.js?v=72';
-import { Guide } from './guide.js?v=72';
-import { buildSites } from './earthsite.js?v=72';
-import { Truck } from './truck.js?v=72';
-import { Wrist } from './wrist.js?v=72';
-import { FireCore } from './firecore.js?v=72';
+import * as C from '../core/game.js?v=73';
+import { Ambience } from './ambience.js?v=73';
+import { Camp, BOARD } from './camp.js?v=73';
+import { Guide } from './guide.js?v=73';
+import { buildSites } from './earthsite.js?v=73';
+import { Truck } from './truck.js?v=73';
+import { Wrist } from './wrist.js?v=73';
+import { FireCore } from './firecore.js?v=73';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=72';
-import { FriendVoice } from './friendvoice.js?v=72';
-import { crewFrom } from '../core/habits.js?v=72';
-import { HudLook } from './hudlook.js?v=72';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=72';
-import { sound, GUNS } from '../../src/combat.js?v=72';
-import { FX } from '../../src/fx.js?v=72';
+import { think as friendThink } from './friend.js?v=73';
+import { FriendVoice } from './friendvoice.js?v=73';
+import { crewFrom } from '../core/habits.js?v=73';
+import { HudLook } from './hudlook.js?v=73';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=73';
+import { sound, GUNS } from '../../src/combat.js?v=73';
+import { FX } from '../../src/fx.js?v=73';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 72;   // (this copy's version; ./version.json says the newest)
+const BUILD = 73;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
