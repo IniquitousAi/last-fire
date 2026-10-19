@@ -23,7 +23,6 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 15. **Seats are jobs** (INNOVATION.md, vehicles): driver drives, the roof seat aims the big lamp, the back seat fires, the last keeps the engine alive; solo, you climb between seats. (added when item 14 finished)
-16. **Light shows through your pack** (INNOVATION.md, storage): carried cells glow and draw the dark unless you build a heavy shielded box. (added when the cyan pass finished)
 
 
 
@@ -41,7 +40,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 29. **Pick the site by its odds** (INNOVATION.md, Earth trips): the lander offers a few landing sites, each with posted odds and what it holds; choosing is a real bet. (added when item 28 finished; replaced a duplicate of item 21)
 
-30. **Light shows through your pack, part 2: the shielded box** (INNOVATION.md, storage): carried light glows and draws the dark (already true); a heavy shielded box at the workbench hides it. (added when item 21 finished)
+
+31. **Pick the dark's target, not your weight** (from the box test): since hiding light gains nothing solo, try the opposite: a decoy flare you throw that carries a fake glow and pulls the hunt toward it. Test with sim/drop.mjs before shipping. (added when item 30 was tested)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -61,3 +61,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 27, the dark wears what you looked at (v73; its patch note says only 'Small changes', on purpose: it never says so).
 - Item 28, one light is your health (v74).
 - Item 21, the wall of theories with live odds (v75 to v77).
+- Item 30, the shielded box, TESTED AND NOT SHIPPED: 20 trips per style, a 30 kg box that hid your glow cut a perfect player's returns 95% to 65%; a 15 kg box that only hid you from the hunt: careful and perfect unchanged, greedy 55% to 45%. Solo you are the only target, so hiding buys nothing.
