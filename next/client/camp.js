@@ -52,8 +52,8 @@ export class Camp {
     this.yard(L, land);
     // the wall of theories by the hut: every survivor's guess at what the dark is, with odds that what you find moves; none ever reads 'checked'
     this.tc = document.createElement('canvas'); this.tc.width = 768; this.tc.height = 512; this.ttex = new THREE.CanvasTexture(this.tc); this.ttex.colorSpace = THREE.SRGBColorSpace;
-    const tx = HUT.x - 3.4, tz = HUT.z - 2.6, ty = land(tx, tz), wall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.73), new THREE.MeshBasicMaterial({ map: this.ttex }));
-    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); const legs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x15171d })); legs.position.set(tx, ty + 1.1, tz); this.scene.add(wall, legs); this.tdrawn = '';
+    const tx = -7, tz = 13.5, ty = land(tx, tz), wall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.73), new THREE.MeshBasicMaterial({ map: this.ttex }));
+    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); const legs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x15171d })); legs.position.set(tx, ty + 0.6, tz); this.scene.add(wall, legs); this.tdrawn = '';
   }
   // the honest numbers, from what really happened (labels say how sure)
   odds() {
@@ -113,9 +113,10 @@ export class Camp {
     const c = this.tc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 512); c.fillStyle = '#b9a8ff'; c.font = '500 40px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('WHAT IS THE DARK?', 32, 62);
     c.fillStyle = '#a3a6bb'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('nobody knows. these are guesses. what you find moves them.', 32, 98);
     Object.entries(th).sort((a, b) => b[1] - a[1]).forEach(([k, v], i) => { const y = 160 + i * 86, who = T[k].who;
-      c.fillStyle = '#eef0f8'; c.font = '400 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${who[0].toUpperCase() + who.slice(1)}: ${T[k].says}`, 32, y);
-      c.fillStyle = '#ff4fd8'; c.fillRect(32, y + 16, Math.round(560 * v), 10); c.fillStyle = '#eef0f8'; c.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${Math.round(v * 100)}%`, 610, y + 28);
-      c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('(guess)', 680, y + 28); });
+      c.fillStyle = '#eef0f8'; c.font = '400 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(T[k].says, 32, y);   // (the theory on its own line, who holds it under it: nothing overlaps)
+      c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`held by ${who}`, 32, y + 28);
+      c.fillStyle = '#ff4fd8'; c.fillRect(520, y + 22, Math.round(110 * v / 0.85), 6);   /* (the bar sits by the number, never over the words) */ c.fillStyle = '#eef0f8'; c.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`${Math.round(v * 100)}%`, 712, y + 2);
+      c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('(guess)', 712, y + 30); c.textAlign = 'left'; });
     this.ttex.needsUpdate = true;
   }
   update() {
