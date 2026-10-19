@@ -1,17 +1,17 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=17';
-import { Ambience } from './ambience.js?v=17';
-import { Camp } from './camp.js?v=17';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=17';
-import { sound, GUNS } from '../../src/combat.js?v=17';
-import { FX } from '../../src/fx.js?v=17';
+import * as C from '../core/game.js?v=18';
+import { Ambience } from './ambience.js?v=18';
+import { Camp } from './camp.js?v=18';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=18';
+import { sound, GUNS } from '../../src/combat.js?v=18';
+import { FX } from '../../src/fx.js?v=18';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 17;   // (this copy's version; ./version.json says the newest)
+const BUILD = 18;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -62,10 +62,10 @@ groundMat.onBeforeCompile = sh => {   // (light from the network lights the grou
     varying vec3 vW; uniform vec4 uLights[${NODE_MAX}];
     float gh(vec3 p){ p = fract(p * 0.3183 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float gn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(gh(i), gh(i + vec3(1,0,0)), f.x), mix(gh(i + vec3(0,1,0)), gh(i + vec3(1,1,0)), f.x), f.y), mix(mix(gh(i + vec3(0,0,1)), gh(i + vec3(1,0,1)), f.x), mix(gh(i + vec3(0,1,1)), gh(i + vec3(1,1,1)), f.x), f.y), f.z); }`)
-    .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.7 + gn(vW * 1.7) * 0.35 + gn(vW * 7.0) * 0.18;')
+    .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.55 + gn(vW * 0.35) * 0.35 + gn(vW * 1.7) * 0.3 + gn(vW * 7.0) * 0.2;')
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
-      totalEmissiveRadiance += diffuseColor.rgb * vec3(0.75, 0.85, 1.25) * min(L, 1.6) * 1.15;
+      totalEmissiveRadiance += diffuseColor.rgb * vec3(0.7, 0.82, 1.25) * min(L, 1.4) * 0.8;
       float far = smoothstep(55.0, 140.0, length(vW.xz - cameraPosition.xz)); float vein = smoothstep(0.82, 0.97, gn(vW * 0.09 + vec3(0.0, 0.0, 0.0))) * smoothstep(0.35, 0.8, gn(vW * 0.031));
       vec3 hue = mix(vec3(0.25, 0.9, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */`);
 };
@@ -75,7 +75,7 @@ function buildTile(tx, tz, res = RES) {
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i) + tx * TILE, z = pos.getZ(i) + tz * TILE, y = g.land(x, z); pos.setY(i, y);
     const far = Math.min(1, Math.hypot(x, z) / 1500), slope = Math.min(1, Math.abs(g.land(x + 1, z) - y) + Math.abs(g.land(x, z + 1) - y));
-    const base = [0.2 + slope * 0.1, 0.22 + slope * 0.1, 0.27 + slope * 0.08];   // (cold ash and stone; far land drifts toward violet)
+    const base = [0.12 + slope * 0.07, 0.135 + slope * 0.07, 0.17 + slope * 0.06];   // (cold ash and stone; far land drifts toward violet)
     col.set([base[0] + far * 0.08, base[1] - far * 0.03, base[2] + far * 0.12], i * 3);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
@@ -125,7 +125,7 @@ function drawNetwork(t) {
   if (!fireObj && models.campfire) { fireObj = models.campfire.scene.clone(); const b = new THREE.Box3().setFromObject(fireObj); fireObj.scale.setScalar(1.6 / b.getSize(new THREE.Vector3()).x); fireObj.position.set(f.x, g.land(f.x, f.z), f.z); scene.add(fireObj);
     const flame = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.1, 10), new THREE.MeshBasicMaterial({ color: 0xa8ccff })); flame.position.set(f.x, g.land(f.x, f.z) + 0.6, f.z); scene.add(flame); fireObj.userData.flame = flame; }
   const lit = f.fuel > 0; fireLight.position.set(f.x, g.land(f.x, f.z) + 1.5, f.z); fireLight.intensity = lit ? 26 * (0.94 + Math.sin(t * 11) * 0.04) : 2; fireLight.distance = C.fireRadius(f) * 2.2;
-  if (fireObj) fireObj.userData.flame.scale.setScalar(lit ? 0.8 + f.level * 0.15 : 0.3);
+  if (fireObj) { const s = lit ? 0.8 + f.level * 0.15 : 0.3, fl = fireObj.userData.flame; fl.scale.set(s * (1 + Math.sin(t * 9.1) * 0.05), s * (1 + Math.sin(t * 13.3) * 0.09 + Math.sin(t * 5.7) * 0.07), s * (1 + Math.sin(t * 8.3) * 0.05)); fl.rotation.y = t * 0.7; }
   const live = new Set(), pts = [];
   for (const n of g.nodes) {
     live.add(n.id); let o = nodeObjs.get(n.id);
@@ -245,6 +245,8 @@ function move(dt) {
   vel.x += (wx * top - vel.x) * Math.min(1, acc * dt); vel.y += (wz * top - vel.y) * Math.min(1, acc * dt);
   const nx = me.x + vel.x * dt, nz = me.z + vel.y * dt, rise = g.land(nx, nz) - g.land(me.x, me.z);
   if (rise / Math.max(0.001, Math.hypot(vel.x, vel.y) * dt) < 1.4 || !onGround) { me.x = nx; me.z = nz; }   // (slopes steeper than about 55 degrees stop you)
+  { const r = Math.hypot(me.x, me.z), a = Math.atan2(me.z, me.x), gate = Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2))) < 0.1;   /* (the camp wall at 21 m: solid except the gate) */
+    if (!gate && Math.abs(r - 21) < 0.7) { const to = r < 21 ? 20.3 : 21.7; me.x *= to / r; me.z *= to / r; } }
   if (keys.Space && onGround) { vy = 6.2; onGround = false; }
   vy -= 20 * dt; me.y += vy * dt; const ground = g.land(me.x, me.z);
   if (me.y <= ground) { if (!onGround && vy < -7) sound.land(-vy); me.y = ground; vy = 0; onGround = true; } else if (me.y > ground + 0.05) onGround = false;
@@ -355,6 +357,12 @@ $('fbSend').onclick = async () => {
 let updSeen = 0;
 async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || '').slice(0, 200); $('upd').hidden = false; } } catch (e) {} }
 setInterval(checkUpdate, 60000); setTimeout(checkUpdate, 8000);
+(async () => {   // (the menu says which version this is; an old copy from the browser's cache swaps itself for the new one)
+  $('ver').innerHTML = `<b>VERSION ${BUILD}</b>`;
+  try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json();
+    if (v.v > BUILD && mode === 'menu' && sessionStorage.getItem('lastfire2-fresh') !== String(v.v)) { sessionStorage.setItem('lastfire2-fresh', String(v.v)); location.replace(location.pathname + '?v=' + v.v + location.hash); return; }
+    if (v.v === BUILD) $('ver').innerHTML = `<b>VERSION ${BUILD}</b>: ${String(v.notes || '').replace(/[<>&]/g, '')}`; } catch (e) {}
+})();
 $('updNo').onclick = () => { $('upd').hidden = true; };
 $('updYes').onclick = () => {
   try { saveNow(); sessionStorage.setItem('lastfire2-resume', JSON.stringify({ world: worldId, host: !!(net && net.host), code: net ? net.code : '', join: !!(net && !net.host), name: SET.name, at: Date.now() })); } catch (e) {}

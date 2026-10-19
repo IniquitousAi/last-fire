@@ -12,7 +12,7 @@ export class Ambience {
     // the fire: a low roar and crackles, placed at the fire
     this.fireP = ac.createPanner(); Object.assign(this.fireP, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 2.5, rolloffFactor: 1.2, maxDistance: 120 }); this.fireP.connect(this.master);
     const roar = ac.createBufferSource(); roar.buffer = noise(4, 'brown'); roar.loop = true; const rf = ac.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 220; this.roarG = ac.createGain(); this.roarG.gain.value = 0.5; roar.connect(rf).connect(this.roarG).connect(this.fireP); roar.start();
-    this.crack = noise(0.05, 'white');
+    this.crack = noise(0.05, 'white'); { const d = this.crack.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] *= Math.exp(-i / (d.length * 0.18)); }   // (each crackle dies away fast, like wood, not a click)
   }
   update(dt, cam, fire, lightHere, alive) {
     if (!this.ac) return; const ac = this.ac, L = ac.listener;
@@ -20,12 +20,12 @@ export class Ambience {
     if (L.positionX) { L.positionX.value = cam.position.x; L.positionY.value = cam.position.y; L.positionZ.value = cam.position.z; L.forwardX.value = fx; L.forwardY.value = 0; L.forwardZ.value = fz; L.upY.value = 1; } else { L.setPosition(cam.position.x, cam.position.y, cam.position.z); L.setOrientation(fx, 0, fz, 0, 1, 0); }
     this.master.gain.setTargetAtTime(this.vol(), ac.currentTime, 0.2);
     if (this.fireP.positionX) { this.fireP.positionX.value = fire.x; this.fireP.positionY.value = fire.y + 0.8; this.fireP.positionZ.value = fire.z; }
-    this.roarG.gain.setTargetAtTime(alive ? 0.55 : 0.05, ac.currentTime, 0.4);
+    this.roarG.gain.setTargetAtTime(alive ? 0.7 : 0.05, ac.currentTime, 0.4);
     this.t += dt; this.windF.frequency.setTargetAtTime(300 + 220 * (0.5 + 0.5 * Math.sin(this.t * 0.23) * Math.sin(this.t * 0.071)), ac.currentTime, 0.5);
     this.windG.gain.setTargetAtTime(0.06 + 0.32 * (1 - lightHere), ac.currentTime, 0.8);   // (in the light the wind is far away; in the dark it is all around you)
-    if (alive && Math.random() < dt * 9) {   // (a crackle: a short bright snap, each one a little different)
-      const s = ac.createBufferSource(); s.buffer = this.crack; s.playbackRate.value = 0.6 + Math.random() * 1.2; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800 + Math.random() * 2600; bp.Q.value = 2;
-      const g = ac.createGain(); g.gain.value = 0.25 + Math.random() * 0.5; s.connect(bp).connect(g).connect(this.fireP); s.start();
+    if (alive && Math.random() < dt * 4) {   // (a crackle: a short bright snap, each one a little different)
+      const s = ac.createBufferSource(); s.buffer = this.crack; s.playbackRate.value = 0.35 + Math.random() * 0.5; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500 + Math.random() * 900; bp.Q.value = 1.2;
+      const g = ac.createGain(); g.gain.value = 0.08 + Math.random() * 0.14; s.connect(bp).connect(g).connect(this.fireP); s.start();
     }
   }
 }

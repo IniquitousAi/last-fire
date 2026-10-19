@@ -22,9 +22,10 @@ function valueNoise(r) {
 export function makeLand(seed) {
   const r = stream(seed, 'land'), n1 = valueNoise(r), n2 = valueNoise(r), n3 = valueNoise(r), n4 = valueNoise(r);
   return (x, z) => {   // (rolling ground, long ridges, and the far land growing stranger the farther from the first fire)
-    const far = Math.min(1, Math.hypot(x, z) / 1500), home = Math.max(0, 1 - Math.hypot(x, z) / 30);
+    const d = Math.hypot(x, z), far = Math.min(1, d / 1500), k = Math.min(1, Math.max(0, (d - 18) / 30)), home = 1 - k * k * (3 - 2 * k);
     const h = n1(x / 90, z / 90) * 22 + n2(x / 28, z / 28) * 5 + n3(x / 9, z / 9) * 0.8, ridge = Math.abs(n4(x / 160, z / 160) - 0.5) * 2;
-    return (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + 6 * home;
+    const yard = n1(0, 0) * 22 + n2(0, 0) * 5 + n3(x / 9, z / 9) * 0.2;   /* (the camp's yard: level, at the height the hills around it already have, so no bowl) */
+    return (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + yard * home;
   };
 }
 export function heightAt(land, x, z) { return land(x, z); }
