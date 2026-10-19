@@ -1,22 +1,24 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=45';
-import { Ambience } from './ambience.js?v=45';
-import { Camp, BOARD } from './camp.js?v=45';
-import { Guide } from './guide.js?v=45';
-import { buildSites } from './earthsite.js?v=45';
-import { Truck } from './truck.js?v=45';
-import { Wrist } from './wrist.js?v=45';
-import { HudLook } from './hudlook.js?v=45';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=45';
-import { sound, GUNS } from '../../src/combat.js?v=45';
-import { FX } from '../../src/fx.js?v=45';
+import * as C from '../core/game.js?v=46';
+import { Ambience } from './ambience.js?v=46';
+import { Camp, BOARD } from './camp.js?v=46';
+import { Guide } from './guide.js?v=46';
+import { buildSites } from './earthsite.js?v=46';
+import { Truck } from './truck.js?v=46';
+import { Wrist } from './wrist.js?v=46';
+import { think as friendThink } from './friend.js?v=46';
+import { crewFrom } from '../core/habits.js?v=46';
+import { HudLook } from './hudlook.js?v=46';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=46';
+import { sound, GUNS } from '../../src/combat.js?v=46';
+import { FX } from '../../src/fx.js?v=46';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 45;   // (this copy's version; ./version.json says the newest)
+const BUILD = 46;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -330,7 +332,7 @@ function frame(now) {
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   if (locked() && mouse[0] && !panel && !buildPick && (GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
   ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
-  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) C.step(g, dt); else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
+  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { runFriends(dt); C.step(g, dt); } else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
   drawHollow(dt); drawBurns(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
@@ -354,7 +356,15 @@ function frame(now) {
   fpsN++; fpsT += dt; if (fpsT > 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} fps`; fpsN = 0; fpsT = 0; }
 }
 // ---------------------------------------------------------------- DEV: dive in, test one thing, get back to playing (host or alone only: it changes the world)
+function learnedFriend() {   // (a teammate who plays like someone from your recorded nights: a friend if any, else you)
+  const crew = crewFrom(g.history || []), pick = crew.find(c => c.name !== SET.name) || crew[0], n = g.players.filter(p => p.bot).length; if (n >= 2) return 'Two learned friends is the most for now.';
+  const style = pick ? { ...pick } : { name: SET.name || 'You', roam: 10, greed: 8, bankAt: 12, aim: 0.6, together: 0.6, blind: -1 }, id = 90 + n;
+  const p = C.addPlayer(g, id, `${style.name}, learned`); p.bot = true; p.style = style; p.r = C.stream(g.seed, 'friend-' + id); const a = n * 2.4 + 1; p.homeX = g.fire.x + Math.cos(a) * Math.min(6, style.roam); p.homeZ = g.fire.z + Math.sin(a) * Math.min(6, style.roam);
+  return pick ? `${style.name}, learned from ${(g.history || []).length} recorded nights, is at your fire.` : 'No nights recorded yet, so this one plays like a careful newcomer. After a few nights it plays like you.';
+}
+function runFriends(dt) { for (const p of g.players) if (p.bot && !p.ember) { const shot = friendThink(g, p, p.r, dt); if (shot) { const from = new THREE.Vector3(p.x, p.y + 1.5, p.z); sound.shot('pistol', from); fx.tracer(from, new THREE.Vector3(shot.x, shot.y, shot.z)); } } }
 const DEV = [
+  ['A LEARNED FRIEND JOINS', 'a teammate who plays like your recorded nights; keeps the camp', () => learnedFriend()],
   ['RESTART THE NIGHT', 'back to this dusk, as it was', () => { if (!duskSnap) return 'No dusk yet tonight. SKIP TO DUSK first.'; reloadWorld(JSON.parse(duskSnap)); return 'Back to dusk.'; }],
   ['SKIP TO DUSK', 'the dark starts rolling in', () => { g.clock = C.DUSK_AT - 0.002; return 'Dusk in a moment.'; }],
   ['SKIP TO DAWN', 'end the night now', () => { g.clock = 0.969; return 'Dawn in a moment.'; }],

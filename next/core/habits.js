@@ -9,7 +9,7 @@ function slot(rec, p) { return rec.players[p.name] ||= { n: 0, far: 0, roamSum: 
 // one sample a second while the dark is out (dusk and night)
 export function sample(rec, g, fireX, fireZ) {
   for (const p of g.players) {
-    if (p.ember || !p.name) continue; const s = slot(rec, p), d = Math.hypot(p.x - fireX, p.z - fireZ);
+    if (p.ember || !p.name || p.bot) continue; const s = slot(rec, p), d = Math.hypot(p.x - fireX, p.z - fireZ);   // (a learned friend is never recorded: it would learn from itself)
     s.n++; s.roamSum += d; if (d > 15) s.far++;
     if (g.players.some(q => q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8)) s.near++;
     const a = ((Math.atan2(-Math.sin(p.yaw || 0), -Math.cos(p.yaw || 0)) + Math.PI * 2) % (Math.PI * 2)); s.look[Math.floor(a / (Math.PI * 2) * SECTORS) % SECTORS]++;   // (the way they face, as one of 8 compass sectors)
