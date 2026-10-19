@@ -8,12 +8,12 @@ import * as THREE from 'three';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 // model: which rig; h: scale; ground: the clips' measured ground speed in m/s at scale 1 (printed by the Blender script); rim: the vein color.
-export const BODY = {
-  walker: { model: 'hunch', s: 1.0, rim: 0xa561ff, ref: { Walk: 1.47, Run: 5.89 } },   // (the Stalker's thin hunched humanoid, red slit eyes)
-  watcher: { model: 'thorn', s: 1.05, sx: 0.85, rim: 0xe8e0ff, ref: { Walk: 1.88, Run: 8.35 } },   // (the tall tendril creature from his first sheet)
-  giant: { model: 'goliath', s: 1.0, rim: 0xff2b40, ref: { Walk: 1.2, Run: 4.1 } },   // (the Goliath: a black armored brute with red cracks)
-  runner: { model: 'skitter', s: 0.7, rim: 0xff4fa0, ref: { Walk: 2.22, Run: 7.19 } },
-  face: { model: 'skitter', s: 0.95, rim: 0xff4fd8, ref: { Walk: 2.22, Run: 7.19 } },
+export const BODY = {   // rimK: how strong the edge glow is (thin hand-built limbs need little; the sculpted body needs more to read)
+  walker: { model: 'stalker', s: 0.85, rim: 0xa561ff, rimK: 0.5, ref: { Walk: 0.96, Run: 3.74 } },   // (his tendril creature, generated from his sheet by Hunyuan3D-2, rigged by script)
+  watcher: { model: 'stalker', s: 1.0, sx: 0.85, rim: 0xe8e0ff, rimK: 0.5, ref: { Walk: 0.96, Run: 3.74 } },
+  giant: { model: 'stalker', s: 1.15, sx: 1.25, rim: 0xff2b40, rimK: 0.5, ref: { Walk: 0.96, Run: 3.74 } },
+  runner: { model: 'stalker', s: 0.5, sx: 1.25, rim: 0xff4fa0, rimK: 0.5, ref: { Walk: 0.96, Run: 3.74 } },   // (the same generated body, small and wide, until a generated spider exists: Hunyuan's text mode is off and the Shadow Beast sheet is not on disk)
+  face: { model: 'stalker', s: 0.62, sx: 1.2, rim: 0xff4fd8, rimK: 0.5, ref: { Walk: 0.96, Run: 3.74 } },
 };
 const CLIPS = ['Idle', 'Walk', 'Run', 'Attack', 'HitReact', 'Death'];
 const ang = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
@@ -28,7 +28,7 @@ export class Creatures {
       const list = Array.isArray(q.material) ? q.material : [q.material];
       const out = list.map(m => { const n = m.clone();
         if (/Vein/.test(m.name)) { n.color.setHex(0x120008); n.emissive = new THREE.Color(B.rim); n.emissiveIntensity = 0.9; n.roughness = 1; veins.push(n); }
-        else { n.color.setHex(0x07060c); n.emissive = new THREE.Color(0x0a0c18); n.emissiveIntensity = 0.3; n.roughness = 0.9; n.metalness = 0; n.userData.rim = 1; n.defines = { ...(n.defines || {}), USE_RIM: '', RIM_COLOR: rimVec(B.rim) }; n.needsUpdate = true; mats.push(n); }
+        else { n.color.setHex(0x07060c); n.emissive = new THREE.Color(0x0a0c18); n.emissiveIntensity = 0.3; n.roughness = 0.9; n.metalness = 0; n.userData.rim = 1; n.defines = { ...(n.defines || {}), USE_RIM: '', RIM_COLOR: rimVec(B.rim, B.rimK) }; n.needsUpdate = true; mats.push(n); }
         return n; });
       q.material = Array.isArray(q.material) ? out : out[0]; });
     const mix = new THREE.AnimationMixer(o), act = {};
@@ -82,7 +82,7 @@ export class Creatures {
       if (!v) {
         if (k.kind === 'shard') { v = this.makeShard(k); if (!v) continue; }
         else { v = this.make(k); if (!v) continue; if (k.kind === 'face') { this.fx.burst(new THREE.Vector3(k.x, k.y + 1.2, k.z), 28, [0.55, 0.57, 0.66], 5, 0.7); if (this.sound.shatter) this.sound.shatter(new THREE.Vector3(k.x, k.y + 1.2, k.z)); } }   // (it tears out of the wall: concrete dust and a crack)
-        this.scene.add(v.o); seen.set(k.id, v); v.sol = 0; if (k.earth && k.kind !== 'face' && k.kind !== 'shard' && !X.noPod) v.pod = this.makePod(k);
+        this.scene.add(v.o); seen.set(k.id, v); v.sol = 0; if (k.earth && k.kind !== 'face' && k.kind !== 'shard' && X.pods) v.pod = this.makePod(k);
       }
       v.last = k; v.mats = v.mats || [];
       const d = cam ? Math.hypot(cam.position.x - k.x, cam.position.z - k.z) : 0; v.o.visible = d < 120;
@@ -148,4 +148,4 @@ export class Creatures {
     if (v.tag > 0) v.tag -= dt;
   }
 }
-function rimVec(hex) { const c = new THREE.Color(hex), k = 0.14; return `vec3(${(c.r * k).toFixed(3)}, ${(c.g * k).toFixed(3)}, ${(c.b * k).toFixed(3)})`; }   // (thin limbs are all edge: the rim is held low so they read as a shape, not neon)
+function rimVec(hex, k) { const c = new THREE.Color(hex); return `vec3(${(c.r * k).toFixed(3)}, ${(c.g * k).toFixed(3)}, ${(c.b * k).toFixed(3)})`; }   // (thin limbs are all edge: the rim is held low so they read as a shape, not neon)
