@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=4';
-import { Hollow } from './hollow.js?v=4';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=4';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=4';
-import { FX } from './fx.js?v=4';
-import { gunsReady, gunModel } from './guns.js?v=4';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=5';
+import { Hollow } from './hollow.js?v=5';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=5';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=5';
+import { FX } from './fx.js?v=5';
+import { gunsReady, gunModel } from './guns.js?v=5';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -136,7 +136,8 @@ function use() {   // right click: place what you hold, feed a fire, or eat
   const blockOf = { planks: B.PLANKS, cobble: B.COBBLE };
   if (blockOf[it] && inv[it] > 0) { inv[it]--; editBlock(x, y, z, blockOf[it]); }
 }
-function editBlock(x, y, z, b) { if (world.set(x, y, z, b) && net) net.send({ t: 'e', e: [x, y, z, b] }); }
+function editBlock(x, y, z, b) { world.set(x, y, z, b); }   // (sent on by world.listen, set at start)
+function quietSet(x, y, z, b) { world.quiet = true; world.set(x, y, z, b); world.quiet = false; }   // (a change that came over the network is not sent back out)
 function placeFire(x, y, z, fuel, send, small = false) { const f = { x, y, z, fuel, r: small ? 5 : 8, big: false, small: !!small }; fires.push(f); if (!small && !stations.length) placeStations(f); if (send && net) net.send({ t: 'fire', f: [x, y, z, fuel, small ? 1 : 0] }); }
 function addFuel(i, s, send = true) { fires[i].fuel = Math.min(900, fires[i].fuel + s); if (send && net) net.send({ t: 'feed', i, s }); }
 function muzzleWorld() { const g = heldGuns[gunIn(SLOTS[slot])]; if (!g) return eye(); view.updateMatrixWorld(true); return g.localToWorld(g.userData.muzzle.clone()); }
@@ -334,7 +335,7 @@ function onNet(m, from) {
   if (m.t === 'hello' && !H && from === 0) {
     if (!fin(m.seed) || !Array.isArray(m.edits) || !Array.isArray(m.fires)) return;
     me.pid = net.me; start(m.seed, false);
-    for (const e of m.edits) if (ints(e, 4)) world.set(...e);
+    for (const e of m.edits) if (ints(e, 4)) quietSet(...e);
     for (const f of m.fires) if (Array.isArray(f) && f.slice(0, 4).every(fin)) placeFire(f[0], f[1], f[2], f[3], false, !!f[4]);
     if (fin(m.clock)) clock = m.clock; if (Number.isInteger(m.day)) day = m.day;
     for (const d of m.drops || []) if (Array.isArray(d) && d.every(fin) && DROP_KEYS[d[1]]) { const q = { id: d[0], k: DROP_KEYS[d[1]], x: d[2], y: d[3], z: d[4] }; drops.push(q); showDrop(q); }
@@ -364,8 +365,9 @@ function onNet(m, from) {
   if (m.t === 'kf') { if (H && from !== 0) return; if (Number.isInteger(m.w) && m.w !== me.pid) killFeed(m.w, !!m.h, String(m.k)); return; }
   if (m.t === 'e') {
     if (!ints(m.e, 4)) return; const [x, y, z, b] = m.e;
-    if (H) { const p = others.get(from); if (!p || ![B.AIR, B.PLANKS, B.COBBLE].includes(b) || world.get(x, y, z) === B.STEEL || !near(p, x + 0.5, y + 0.5, z + 0.5, 9) || !bucket(p, 'edits', 12, 20)) return; world.set(x, y, z, b); net.relay(m, from); }
-    else world.set(x, y, z, b);
+    if (H) { const p = others.get(from); if (!p || ![B.AIR, B.PLANKS, B.COBBLE].includes(b) || world.get(x, y, z) === B.STEEL || !near(p, x + 0.5, y + 0.5, z + 0.5, 9) || !bucket(p, 'edits', 12, 20)) { net.sendTo(from, { t: 'e', e: [x, y, z, world.get(x, y, z)] }); return; }   // (refused: the sender is told what is really there, so nobody's world drifts)
+      quietSet(x, y, z, b); net.relay(m, from); }
+    else quietSet(x, y, z, b);
     return;
   }
   if (m.t === 'fire') {
@@ -588,7 +590,7 @@ $('invBack').onclick = () => closePanel();
 
 // ---------------------------------------------------------------- start
 function start(s, host) {
-  seed = s; world = new World(seed); world.ready = false; mode = 'play'; if (location.search.includes('night')) clock = NIGHT_AT + 0.03; /* (?night: start at nightfall, for testing) */ $('menu').hidden = true; $('hud').hidden = false; $('loading').hidden = false;
+  seed = s; world = new World(seed); world.ready = false; world.listen = (x, y, z, b) => { if (net) net.send({ t: 'e', e: [x, y, z, b] }); }; mode = 'play'; if (location.search.includes('night')) clock = NIGHT_AT + 0.03; /* (?night: start at nightfall, for testing) */ $('menu').hidden = true; $('hud').hidden = false; $('loading').hidden = false;
   sound.wake(); lockMouse();
 }
 function myName() { me.name = cleanName($('name').value) || 'Player'; SET.name = me.name; saveSettings(); }
@@ -599,4 +601,4 @@ $('solo').onclick = () => { myName(); start(Math.floor(Math.random() * 1e9), tru
 $('host').onclick = () => { myName(); const code = roomCode(); net = new Net(onNet, s => say(s, 6)); net.hostGame(code); start(Math.floor(Math.random() * 1e9), true); say(`Room ${code} is open. Esc, then COPY INVITE, and paste it to your friends.`, 12); };
 $('join').onclick = () => { myName(); const code = cleanCode($('code').value); if (code.length !== CODE_LEN) { $('menuNote').textContent = `Room codes are ${CODE_LEN} letters.`; return; } net = new Net(onNet, s => { $('menuNote').textContent = s; if (mode === 'play') say(s, 6); }); net.joinGame(code); sound.wake(); $('menuNote').textContent = `Joining room ${code}...`; };
 requestAnimationFrame(frame);
-window.lastfire = { got, me, hollow, stations, others, renderer, get net() { return net; }, drops, buffs, shoot: () => { shotReady = true; shotCd = 0; switchT = 0; shoot(); }, get prompt() { return prompt; }, interact, togglePanel, get panel() { return panel; }, get slot() { return slot; }, set slot(v) { slot = v; }, inv, aimAt: k => { const dx = k.x - me.x, dz = k.z - me.z, dy = k.y + 1.4 - (me.y + 1.62); me.yaw = Math.atan2(-dx, -dz); me.pitch = Math.atan2(dy, Math.hypot(dx, dz)); } };   // (a handle for the automated test; nothing in play uses it)
+window.lastfire = { get world() { return world; }, got, me, hollow, stations, others, renderer, get net() { return net; }, drops, buffs, shoot: () => { shotReady = true; shotCd = 0; switchT = 0; shoot(); }, get prompt() { return prompt; }, interact, togglePanel, get panel() { return panel; }, get slot() { return slot; }, set slot(v) { slot = v; }, inv, aimAt: k => { const dx = k.x - me.x, dz = k.z - me.z, dy = k.y + 1.4 - (me.y + 1.62); me.yaw = Math.atan2(-dx, -dz); me.pitch = Math.atan2(dy, Math.hypot(dx, dz)); } };   // (a handle for the automated test; nothing in play uses it)

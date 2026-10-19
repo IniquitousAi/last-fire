@@ -32,6 +32,7 @@ export class World {
   set(x, y, z, b, record = true) {
     if (x < 0 || z < 0 || x >= SIZE || z >= SIZE || y < 1 || y >= HEIGHT) return false;
     this.data[this.idx(x, y, z)] = b; if (record) this.edits.push([x, y, z, b]);
+    if (this.listen && !this.quiet) this.listen(x, y, z, b);   // (every change, whoever made it, a Hollow tearing a wall down too, goes to the other players)
     const cx = Math.floor(x / CHUNK), cz = Math.floor(z / CHUNK); this.dirty.add(cx + ',' + cz);
     if (x % CHUNK === 0) this.dirty.add((cx - 1) + ',' + cz); if (x % CHUNK === CHUNK - 1) this.dirty.add((cx + 1) + ',' + cz);
     if (z % CHUNK === 0) this.dirty.add(cx + ',' + (cz - 1)); if (z % CHUNK === CHUNK - 1) this.dirty.add(cx + ',' + (cz + 1));

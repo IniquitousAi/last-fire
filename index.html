@@ -42,6 +42,7 @@
   #menuNote { min-height: 22px; color: var(--cyan); margin-top: 4px; }
   .how { color: #d4d2e0; font-size: 16px; line-height: 1.45; }
   .how p { margin: 0 0 9px; } .how b { color: var(--cyan); font-weight: 500; } .how em { color: var(--pink); font-style: normal; } .how .r { color: var(--red); }
+  .notes p { margin: 0 0 6px; font-size: 15px; } .notes .soon b { color: var(--pink); } .notes { margin-bottom: 6px; }
   .keys { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; margin: 4px 0 10px; font-size: 15px; } .keys span:nth-child(odd) { color: var(--violet); letter-spacing: .08em; }
   @media (max-width: 760px) { #menu .wrap { grid-template-columns: 1fr; } }
 
@@ -129,6 +130,10 @@
     <div id="menuNote"></div>
   </div>
   <div class="panel how">
+    <h3>PATCH NOTES</h3>
+    <div class="notes"><p><b>v5</b> Broken blocks and holes now show for every player (walls the Hollow tear down were only changing for the host).</p>
+    <p><b>v4</b> Up to 4 players with invite links. Room lock and remove. Gun models, no bobbing, everyone hears every shot. Armor plates, four enemy kinds, drops, the bag (Tab), settings.</p>
+    <p class="soon"><b>Not yet</b> Realistic guns, smooth sights on every gun, melee, a minigun, a sentry turret, real models for every item. Coming next, in that order.</p></div>
     <h3>HOW IT WORKS</h3>
     <p><b>Every night is a round.</b> When the sun goes down the Hollow come out of the dark, more and tougher each night. Live till dawn: sunlight burns them away.</p>
     <p><b>Light is everything.</b> They cannot stand firelight: they burn at its edge and walk around it. In the dark they tear walls apart; a lit wall holds. A big fire calls them from far off. Keep your fires fed with planks.</p>
@@ -171,6 +176,6 @@
   <div class="phead"><h2>BAG</h2><button class="key" id="invBack">BACK<small>(Tab)</small></button></div>
   <div id="invBody"></div>
 </div></div>
-<script type="module" src="./src/main.js?v=4"></script>
+<script type="module" src="./src/main.js?v=5"></script>
 </body>
 </html>
