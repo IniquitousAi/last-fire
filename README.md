@@ -2,7 +2,7 @@
 
 A co-op survival FPS in the browser (Three.js r186 in `vendor/`, PeerJS browser to browser). Up to 4 players: one HOSTs and shares a 6-letter code; friends JOIN with it.
 
-- **The new foundation (play this):** https://iniquitousai.github.io/last-fire/next/ , all code in `next/`.
+- **The new foundation (play this):** https://iniquitousai.github.io/last-fire/next/ , all code in `next/`. Look 3, the cinematic night, is the default since v153 (`?look=0` shows the old look).
 - **The old game:** https://iniquitousai.github.io/last-fire/ (root `src/`, kept running, not developed).
 
 ## The new foundation, in one breath
@@ -15,7 +15,10 @@ You drop to Earth to strip wrecks for truck parts, build the truck, fly the ship
 | Rules (shared by the game and the robots) | `core/game.js`, `core/ship.js`, `core/habits.js`, `core/camp.js` |
 | The game in the browser | `client/main.js` and its modules, `index.html` |
 | Robots (node) and the Simulator page | `sim/*.mjs`, `sim.html` |
-| The work list and the thinking | `QUEUE.md` (every ask, in no order), `INNOVATION.md`, `GAMEDEV-TRICKS.md`, `SHIP.md`, `PLAN-SPACE.md`, `ANSWERS.md` (his picks) |
+| What it is | `DESIGN.md` (the spine and the rules), `LORE.md`, `ANSWERS.md` (his answers, word for word) |
+| The work list | `QUEUE.md` (every ask; JOB ONE on top) |
+| The research | `CYBERPUNK.md` (numbers), `LOOK.md` (art direction), `IMMERSION.md`, `GAMEDEV-TRICKS.md`, `INNOVATION.md`, `BUILDING.md`, `SHIP.md`, `PLAN-SPACE.md`, `CHARACTERS.md`, `OPUS-GAMEDEV.md` |
+| The robot player | `sim/autoplay.cjs` (plays the real game on a fake controller; runs in `playtests/autoplay/`) |
 | What changed | `PATCH-NOTES.md`, and `version.json` (the UPDATE READY pop-up) |
 
 ## Shipping

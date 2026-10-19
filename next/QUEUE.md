@@ -1,122 +1,60 @@
 # Last Fire: the queue
 
+Anything he says to change or add goes here, in no order; he rambles, the queue remembers (his rule, 2026-10-19). Claude picks the order by
+the bottleneck: what he will see first and most. Every finished task adds one new task from research, INNOVATION.md first (his rule, after
+03:18). Temp rule (his words, about 03:13): "never ask, just build nonstop with logic and truth as ur fuel"; a download still needs his yes.
+Item numbers are kept forever (other files cite them); done items move to the Done list with their version.
 
 ## JOB ONE (his words, 2026-10-19 about 09:00): an AI plays the whole game, tutorial to end game
 "If you can progress through the game as an AI, then we're building a decent game. So I just need you to progress to the end game.
 But keep in mind, I really want visuals to be AAA... AAA visuals, but DevOps performance." Also: "not enough immersion... not enough
-guidance of the lore and tutorial"; the ship bobbed and flew confusingly (fixed v152: altitude hold, no bounce, pad flying).
-- Build `?autoplay`: a robot that plays the real client from the menu, step by step through the guide (the 8 steps), the first night,
-  the drop to Earth, the truck, back to the Moon, to the end game, using only what a player sees and can press (controller inputs).
-- Every place it gets stuck, lost or bored is a bug in guidance, lore or mechanics: log it with a screenshot in playtests/autoplay/,
-  fix it, run again. Report how far it got (step N of the run) and the time each stage took.
-- Visuals: AAA is the bar; the look helper's three looks (?look=1/2/3, client/looks.js, playtests/looks/) come first for him to pick.
-- Performance: keep 120+ fps in the headless run at 1000x900.
+guidance of the lore and tutorial".
+- **The robot exists:** `sim/autoplay.cjs` plays the real client with a fake controller only, seeing what a player sees (`?autoplay`'s
+  `window.__eyes`). Each run writes `playtests/autoplay/<time>/run.json` and screenshots. Target stages: the 8 guide steps, the first night,
+  the drop to Earth, the truck, back to the Moon, the end game.
+- **Found and fixed so far (v153):** the use button now checks the board (only B did); the day waits through the first three guide steps
+  (night fell on a slow new player at step 2); the robot's own runs cap at 40 fps (the card hit 97%).
+- **Found, still open:** the menu has no controller focus (SOLO needs a mouse); after the guide nothing says where the drop to Earth is.
+- **Looks:** his pick is look 3, the cinematic night (default from v153; `?look=0` is the old look). Performance floor: 120+ fps at 1000x900.
 
-## The eras and unlocks (his words, 2026-10-19: what the finished game's order is; dev mode today has everything unlocked)
+## The eras and unlocks (his words, 2026-10-19; dev mode today has everything unlocked, "messy af lol")
 - Start on the **Moon: era 3**. Pistol and shotgun only, no vehicle.
 - Then **Earth: era 4**, a taste of the real game.
-- Back to the **Moon for the tutorial** (planning, building, defending), or say skip and stay on Earth and get oriented there.
+- Back to the **Moon for the tutorial** (planning, building, defending), or skip and stay on Earth and get oriented there.
 - Once the tutorial is smooth, **the real game is on Earth, at the real base camp** (reasoned).
-- So the rifle, the rail and the rest are late-game unlocks, not starting guns. Today is dev mode with AI and sims, so everything is unlocked ("messy af lol").
+- So the rifle, the rail and the rest are late-game unlocks.
 
 ## North star (his words, 2026-10-19): Cyberpunk 2077 as close to one-to-one as possible, plus friends and survival
+Never stop working on the game; use REA and GitHub to learn from the best. Cyberpunk's yellow becomes hot pink and violet. Numbers in
+CYBERPUNK.md, art direction in LOOK.md. Open:
+- **Eye HUD:** the wrist hologram plus a Kiroshi frame (thin corner brackets, live readouts). (REA's Venge.io capture hung 16 min once: retry only with a 3-minute limit.)
+- **Neon on wet ground:** more puddles and the camp's signs reflected (the wet shader exists).
 
-Never stop working on the game; use REA and GitHub to learn from the best. Cyberpunk's yellow becomes hot pink and violet (his palette). In order:
-1. Kiroshi scan: middle mouse pings the dark; shapes within 30 m show as violet outlines for 2 s, 8 s cooldown (they stay smoke: you see, you do not hit).
-2. (FOV checked 2026-10-19: in his 1000x900 window our 78 vertical is 84 across, near Cyberpunk's 80; switching to Cyberpunk's 16:9 rule would zoom his window in, so kept.) DONE v146: the rail sniper (key 5): hold to charge 0.4 s, let go to fire; 75% charge or more goes through every shape in line, x4 head, deep scope, 4 rounds.
-3. DONE v147: smart pistol: a shape you scanned stays tagged 8 s; hold the pistol on it 0.6 s (three beeps), its outline turns hot pink and rounds curve onto it.
-4. Eye HUD: the wrist hologram plus a Kiroshi frame (thin corner brackets, live readouts); learn from Venge.io's REA capture.
-5. Neon on wet ground: more puddles and the camp's signs reflected (the wet shader exists).
-6. DONE v143: slow time (T or the mouse's back button, world at 25% for 6 s, 30 s recharge, solo only); double jump and air dash were already the boost jump and air dodge.
-7. DONE v142: the Earth air line was azure (read cyan under bloom), now blue-violet.
-8. DONE v141: item 1, the Kiroshi scan.
-
-## TOP FIVE (Daniel, 2026-10-19 about 05:50: "make sure our top five priority tasks are complete or in progress... finish first or start ASAP")
-1. **The truck**: SHIPPED v130, a smooth code-modeled body that grows part by part. Open: wrecks are heavy (14.6k triangles each), the roof lamp housing not seen by eye yet.
-2. **The spaceship**: body shipped v128, flight works; open: fly the drop to Earth, check the cockpit view from inside.
-3. **The HUD, crosshair included**: crosshair and aim-link ring fixed v129; open: the rest of the HUD pass (gauntlet findings).
-4. **The character model**: SHIPPED v131 (crew.js). Open: shots from friends do not trigger their recoil yet (the bang message has no player id); hits show only from health drops.
-5. **The hands and reload**: first-person arms and a real reload (helper, hands.js + mockups/hands.html), to be wired into main.js.
-- **Next helpers, one at a time (his PC):** the full-game gauntlet with screenshots (stopped 05:55 to lighten the load; restart first), then the realism audit (REALISM.md: why it does not feel real, lighting, shadows, ground detail).
-
-His rule (2026-10-19, before 02:55): anything he says to change or add goes here, in no particular order; he rambles, the queue remembers.
-Claude picks the order by the bottleneck: what he will see first and most.
-
-**Temp rule (his words, 2026-10-19 about 03:13): "never ask, just build nonstop with logic and truth as ur fuel".** No questions until he lifts it; picks are made by evidence and logged. Done items move to the bottom with their version.
-
-**His rule (2026-10-19, after 03:18): every finished task adds one new task to this queue, made up on the spot from research; INNOVATION.md (the research worker's ideas) comes first.**
-
-## Waiting
-
-1. **UI you can't tell is UI.** No plain text floating on the screen; every word has a reason to be there in the world. A super thin wrist screen, a holographic watch that pops up a hologram, the visor's own readouts. Start with the moments he sees most: spawning in (the "Your old desk..." line is plain text), messages, prompts. (2026-10-19)
-2. **The home screen needs a lot of work.** Complicated sci-fi visor vibes, not a plain panel. (2026-10-19)
-3. **Warmth:** parked by him ("I'll think on it later"). His praise for the truck cab warming you; he wants mechanics that replace stereotypical ones. Do not build until he decides. (2026-10-19)
-4. **Two play styles, balanced by teamwork:** all-out violence (hordes, modern military gear, Serious Sam feel) and building anything (logical assembly). The truck exists (v26 to v29); more to build, more horde violence. (2026-10-19)
-5. **More enemy masks** from the plan: the face in the surface, the corner of the eye, the weight on the chest, the thing at the end of the hall. (PLAN-SPACE.md)
-6. **Gritty, gruesome, dark, hardcore** cyberpunk sci-fi space survival; never kiddie. A filter on everything. (2026-10-19)
-
-7. **Simulated real people.** Use everything learned about him (the chat logs, the Twin's data, Rim, Jev) to simulate real people: after Dalton or he plays a lot, play with someone who plays exactly like Dalton and says some of the same things; or work out from how someone plays how they probably talk. Always ask how the simulators can be used in fun ways. (2026-10-19; it builds on the learned friend in ANSWERS.md and the habits recorder in core/habits.js)
-
-
-
-
-
-
-19. **Real mask models, not cute imps** (PLAN-SPACE.md section 3): the free Quaternius wraith and clawed bodies still have cartoon proportions. Make each mask from a concept image through the free TRELLIS.2 demo (MIT), then the Blender cleanup script. Downloading generated models needs his yes first (the safety rule outranks the temp rule). (added when item 18 finished)
-
-
-
-
-
-24. **BIG: min-max the fire** (his ask, 2026-10-19): the fire is the core you build around, moving, loud, full of light; never normal fire colors; as creative and innovative as it can get; research first; the base can change too. Tools found for it: world bloom (three.js official examples), full-size screenshots (Playwright, installed), performance traces (chrome-devtools, installed), Blender 5.2 headless (installed at D:/Daniel/BlenderForSI).
-25. **Scary masks, never cute** (his note: one mob looks like a smiling dog): v65 removed the dog model; real masks still wait on item 19.
-
-
-
-
-
-
-
-
-
-34. **Robot crews for the truck** (INNOVATION.md robot test for seats): crews of 1 to 4 run the same Earth route with the truck; pass line: solo is slower but finishes about as often. (added when item 33 finished)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-54. **Fire min-max, pass 2** (item 24 stays open: his big ask): the fire's level growth as a visible event (a ring of light rolling out across the yard when it grows), and its sound layered with a low hum that rises with level. (added when item 53 finished)
-55. **The loss goes on the board** (INNOVATION.md 13B, reasoned, from ANSWERS.md): when a trip loses a person or the truck, that site's odds on the board drop by exactly what was lost, and the footnote names it. Robot test: the odds change equals the simulated value of the loss. (added when item 54 finished)
-56. **The ship** (his ask): the lander made drivable, smooth, bold and hyper-futuristic, with raycast hover physics (springs, dampers, inertia, banking). Robot test first: overshoot, settle time, landing on the pad. Model needs his download yes. See SHIP.md.
-57. **The cockpit HUD** (his ask): an almost seamless helmet HUD like Iron Man's, laid out by AR and VR research and Vigil's lessons. Three rough looks in mockups/cockpit.html; he picks, then it gets built.
-58. **Start as a kid, only with a real family** (his idea): two players who make a family can have a child; when a parent falls for good you can go on as the child, inheriting standing and one practiced habit. See SHIP.md.
-59. **Genre doses decided by simulators** (his rule): every genre (cozy, hardcore, romance, comedy, cinematic) gets a robot-readable measure and is added only if the core loop's numbers hold.
-60. **The Director** (GAMEDEV-TRICKS.md 11, 12): a stress score per player (damage, alone, time since the last fight); build up, peak, then a forced relax; it hunts whoever is safest. Robots: tension stays in the flow band.
-61. **Aim that feels great** (7, 8, 9): a small bullet pull near the crosshair, the dark's reach a little shorter than its claws look, the last round in the mag cracks harder.
-62. **Coyote time and input buffering** (22): jump 0.15 s after a ledge; F pressed a moment early still counts.
-63. **Bad luck paid back** (10, 19): a dry Earth run is followed by a better one; the first wreck is on the side you walk toward.
-64. **(SHIPPED v123: the eyes)** **The masks show intent** (13): the face turns before it lunges, the watcher's eyes brighten when it decides. Never words.
-65. **(SHIPPED v125)** **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
-66. **(SHIPPED v123: about 102 to 73)** **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
-67. **Bold and confident UI** (his ask: the Reactor is the bar, DESIGN.md's lessons): three rough versions of the HUD and home screen with heavy numbers and status chips; saturated color only on the numbers and words that matter, keys and panels dark matte and heavy (his v115 correction); he picks one.
-68. **(SHIPPED v124: 146 of 146 warned 2 s+, 93% on the weakest light)** **The breach shows before it pours** (INNOVATION.md 5A's unbuilt pass line): when the flood picks the dimmest gap, the dark there visibly bulges and the motion pings point to it at least 2 s before the rush. Robot test: warning lead time 2 s or more on 95% of breaches, and breaches still land on the weakest light. (added when items 64 and 66 finished)
+## Open
+- **The truck:** wrecks are heavy (14.6k triangles each); the roof lamp housing not seen by eye yet.
+- **The ship:** fly the drop to Earth yourself; check the cockpit view from inside; a real model (TRELLIS.2 free quota ran out; download needs his yes).
+- **The HUD pass**, crosshair done (v129, v133); the rest from the robot's findings.
+1. **UI you can't tell is UI.** No plain text floating on the screen; every word has a reason in the world (wrist screen, holographic watch, visor readouts). Wrist messages, heard speech, holo tags and the aim link are done (v35 to v39); still plain: the spawn-in line. (2026-10-19)
+2. **The home screen needs a lot of work.** Complicated sci-fi visor vibes, not a plain panel. (v120's Reactor copy was undone in v121: it felt like an office slide.)
+3. **Warmth:** parked by him ("I'll think on it later"). He praised the truck cab warming you; he wants mechanics that replace stereotypical ones. Do not build until he decides.
+4. **Two play styles, balanced by teamwork:** all-out violence (hordes, modern military gear, Serious Sam feel) and building anything (logical assembly, BUILDING.md).
+5. **More enemy masks** from PLAN-SPACE.md: the face in the surface, the corner of the eye, the weight on the chest, the thing at the end of the hall.
+6. **Gritty, gruesome, dark, hardcore** cyberpunk sci-fi space survival; never kiddie. A filter on everything.
+7. **Simulated real people.** Use everything learned about him (chat logs, the Twin, Rim, Jev) to simulate real people: play with someone who plays exactly like Dalton and says some of the same things. Builds on the learned friend (ANSWERS.md) and `core/habits.js`.
+19. **Real mask models, not cute imps** (PLAN-SPACE.md section 3): each mask from a concept image through the free TRELLIS.2 demo (MIT), then the Blender cleanup script. Download needs his yes.
+24. **BIG: min-max the fire**: the core you build around, moving, loud, full of light; never normal fire colors; as inventive as it can get. First passes: plasma core (v70), the growth ring and hum (v106).
+25. **Scary masks, never cute** (the smiling-dog model went in v65); real masks wait on item 19.
+34. **Robot crews for the truck**: crews of 1 to 4 run the same Earth route; pass line: solo is slower but finishes about as often.
+58. **Start as a kid, only with a real family**: when a parent falls for good you can go on as their child, inheriting standing and one practiced habit (SHIP.md).
+59. **Genre doses decided by simulators**: every genre (cozy, hardcore, romance, comedy, cinematic) gets a robot-readable measure and is added only if the core loop's numbers hold (SHIP.md).
+61. **The last round cracks harder** (GAMEDEV-TRICKS 9, with 23's five-layer gun sound). (The bullet pull and the shorter reach shipped in v112.)
+63. **The first wreck is on the side you walk toward** (GAMEDEV-TRICKS 19). (Bad luck paid back shipped in v118.)
+67. **Bold and confident UI** (the Reactor's weight and color, never its glow or layout): three rough versions of the HUD with heavy numbers; he picks one.
 
 ## Done
+- 2026-10-19, v141 to v152: the Kiroshi scan (v141), the air line blue-violet (v142), slow time (v143), hit reactions and headshots (v144), the rail sniper (v146), the smart pistol (v147), controller with aim assist (v148), footsteps, breath and far sounds (v149 to v151), the ship's altitude hold (v152). FOV checked and kept at 78 (84 across in his window, near Cyberpunk's 80).
+- Items 54 to 57, 60, 62, 64 to 66, 68: the fire's growth ring (v106), the loss on the board (v107), the ship flies with the HELMET HUD (v109, v152), the Director (v113), coyote time and jump buffer (v116), the masks show intent (v123), behind you it moves (v125), draw calls 102 to 73 (v123), the breach shows first (v124: 146 of 146 warned).
+- The top five of 05:50: the truck body (v130), the ship body (v128), crosshair and aim ring (v129), the crew suit (v131), arms and reload (v132), friends' recoil (v132).
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
 - v42 to v51: BOOT locked (v42), every menu is visor glass (v43), the staged first enemy (v44), the face in the wall (v45), the learned friend joins from DEV (v46) and talks in a manner worked out from how it plays (v47), shotgun and LMG (v48), the camp store resupplies ammo (v50), sound is sharp only in light (v51).
 - Item 8, practice makes reloads faster (v52).

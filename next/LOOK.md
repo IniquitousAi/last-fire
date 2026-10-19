@@ -55,6 +55,8 @@ Our vendor folder has ShaderPass but no LUTPass or FilmPass, so the first change
 | 5 | **The masks glitch when they decide**: on the Hollow only, a 120 ms vertex jitter and red or magenta split on the mask when it picks a target. | Trait 5 on the enemy, not on you; it is trick 13 in GAMEDEV-TRICKS (show intent). | under 0.05 ms | medium |
 | 6 | **Era materials**: a short material kit per era (salvage metal plus stencil, leaders' violet panels, Earth's pre-dark kitsch, the dark's seamless black glass) applied to the CC0 models. | Trait 1; makes the world feel old and layered. | 0 ms | large: art pass, era by era |
 
+**Status (v153):** 1 SHIPPED v126 (the grade; look 3 in v153 removed its edge split and lifted shadows); 3 SHIPPED v127 (wet ground near lights, real specular in look 3); 5 partly, as the masks' eyes flaring (v123). Open: 2, 4, 6.
+
 Order: 1, then 2 and 3 together (they need each other), then 4, 5, 6. Each one alone at /last-fire/next/, his eyes judge, three rough
 versions where a look can vary (his rule).
 

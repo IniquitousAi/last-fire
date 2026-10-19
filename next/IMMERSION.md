@@ -1,6 +1,6 @@
 # Immersion: the feeling of really being there, for the least work (plan, 2026-10-19)
 
-Ideas and a plan only: no code was changed for this file. His picks from earlier today are kept word for word at the bottom.
+**Status (v153): the top three are SHIPPED**: footsteps v149, breath and heartbeat v150, far sounds v151 (their tests pass). Next is section 5, Later. His picks from earlier today are kept word for word at the bottom.
 
 **The answer in one line:** the game already looks the part, but it is nearly silent about your own body. You walk in silence (there are no
 footsteps of your own in `next/`), you never breathe, and the world's far sounds are only wind. Sound is the cheapest way to make the
@@ -71,9 +71,9 @@ What works in the browser:
 | One reverb for the whole world: a 2.4 s soft tail, same in the camp, the open Moon and Earth's towers | `src/combat.js` `ctx()` |
 | "Sound is sharp only in light": the world muffles when you stand in the dark | `sound.muffle`, `main.js` line 582 |
 | A landing thud, only for falls faster than 7 m/s | `main.js` `move()` |
-| **No footsteps of your own.** `sound.step()` exists but nothing in `next/` calls it (the old game called it every 1.9 m walking, 2.5 m sprinting) | `src/combat.js` line 104, `src/main.js` line 362 |
+| (fixed v149) **No footsteps of your own.** `sound.step()` exists but nothing in `next/` calls it (the old game called it every 1.9 m walking, 2.5 m sprinting) | `src/combat.js` line 104, `src/main.js` line 362 |
 | No camera bob; the gun and arms bob on their own clock, not tied to your feet | `client/hands.js` `update()` (`this.walk`) |
-| No breathing or heartbeat for you; camp people do breathe (14 a minute) and look around | `client/camp.js` |
+| (fixed v150) No breathing or heartbeat for you; camp people do breathe (14 a minute) and look around | `client/camp.js` |
 | Film grade (violet shadows, grain, edge color split, vignette), bloom, distance fog, wet ground that doubles lights, rim light on bodies | `main.js` lines 40 to 175 |
 | Lamp shadows on the ground for the camp's fixed pieces; moving bodies cast no shadow | `main.js` `updateShade()` |
 | Hit reactions, hit stop, kick, slow time, the scan | `main.js`, `core/game.js` |
@@ -205,7 +205,7 @@ were real: there was a shape of the dark there, or a wreck shifting. Nothing is 
    echo at 2 x distance / 343 s). Route the fire and wind through it too.
 4. **Shadows of moving bodies from the fire** (G): one stretched dark quad per body, length by the fire's height, faded by the light
    at that spot. Your own shadow too.
-5. **Field of view** (H): already CYBERPUNK.md's first item.
+5. **Field of view** (H): checked and kept at 78 (84 across in his window, near Cyberpunk's 80).
 6. **Ground fog at dusk** (I), then **lamp haze** (J), then **wall occlusion** (K).
 7. **Earth rain** (L), the big one, after the cheap ones are proven.
 8. **No for now:** Gaussian splats (N). Baked light in the splats would fight the game's one rule (light), export needs a paid plan,

@@ -1,4 +1,6 @@
-# Last Fire: why the mechanics are what they are
+# The old game (root `src/`, kept running, not developed): why its mechanics are what they are
+
+The new game's design is `next/DESIGN.md`.
 
 Each rule below names the research it leans on. Order of priority (Daniel, 2026-10-18): performance and safety first, then quality of life, then looks.
 

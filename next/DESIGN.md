@@ -1,6 +1,14 @@
 # Last Fire, rebuilt: the design
 
-**North star (his words, 2026-10-19): "imagine arcane+destiny+maze runner had a baby".** Dark and neon, dualities with push and pull, a world that grows in eras. Lore answers: ANSWERS.md, the 20 questions.
+**The spine (his answer, 2026-10-19 about 01:40; the audit behind it is in archive/AUDIT-2026-10-19.md), in order:**
+1. **B, the curiosity machine as a game:** playing is doing what his truth engine does (check, prove, raise the honest number).
+2. **C, a hangout that tells the truth:** solo is the main case; never remind him he is alone, and just as good with friends.
+3. **A, The Last Light's scale:** eras that climb the scale of existence.
+Building it is part of the fun: every "why is this not good" answered with math. Hardcore means real stakes and fair odds (a good player
+usually wins). Lore lives mostly in the world, a little text where it earns it.
+
+**North star:** gameplay and look, Cyberpunk 2077 as close to one-to-one as possible plus friends and survival (QUEUE.md, CYBERPUNK.md,
+LOOK.md); the world, "imagine arcane+destiny+maze runner had a baby" (LORE.md, ANSWERS.md).
 
 His rules (2026-10-18): hardcore, fun, grown-up, never Minecraft or kid-like. It feels brand new: no mechanic anyone would recognize from another game. Copy only the feelings that make the great ones good. Performance and safety first, then quality of life, then looks.
 
@@ -44,7 +52,7 @@ So the code is split from the first commit, like The Last Light's Core and Sim:
 - `sim/`: headless robots and the tactic breeder (Node), run by the daemon behind the heat gate.
 - `client/`: drawing, sound, input and network around the core.
 
-## The game his answers describe (2026-10-18, rounds 1 to 6 in ANSWERS.md; this replaces the valley-and-one-fire concept above where they differ)
+## The game his answers describe (2026-10-18, rounds 1 to 6 in ANSWERS.md; where it differs from the feelings table above, this wins)
 
 **One sentence:** an endless dark you push back with light you engineer, in a world that remembers you and learns you, with something cosmic waiting at the edge.
 

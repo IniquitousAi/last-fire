@@ -2,6 +2,27 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v152** The ship holds the height you set (no bob, no bounce) and flies on a controller.
+- **v151** Far sounds you cannot place, each from something real out there (13 of 13 scheduler tests pass).
+- **v150** Your breath after a sprint and a heartbeat when hurt or near the dark (126 beats a minute at 20 health, silent at rest).
+- **v149** Your own footsteps by surface and load, with a step bob (57 per 100 m walking, 40 sprinting).
+- **v148** Controller support with aim assist (Call of Duty layout).
+- **v147** The smart pistol: a scanned shape locks in 0.6 s and rounds curve onto it.
+- **v146** The rail sniper: charge, pierce every shape in line, deep scope.
+- **v145** Our Blender rifle and arms behind ?fp, plus the sniper model.
+- **v144** Cyberpunk hit reactions (flinch, stagger, knockdown) and headshot multipliers by gun.
+- **v143** Slow time in solo (T or the mouse back button).
+- **v142** Earth's air line is blue-violet, no cyan edge.
+- **v141** The Kiroshi scan: middle mouse or Z outlines shapes within 30 m for 2 s.
+- **v140** Photo-scanned stone ground; the zombie and textures load again (missing since v136).
+- **v139** The flashlight (V): a real beam in the rules that makes shapes solid; no more white blowout on lamps.
+- **v138** Advanced Warfare exo moves: boost jump, boost dodge, boost slam.
+- **v137** Shapes hunt by sight in light and by the sound of your gun (7 Days to Die's own values).
+- **v136** Modern Warfare movement and aim (tactical sprint, slide, per-gun sights), the Mixamo zombie, shadows from camp pieces.
+- **v135** Cold hands out in the dark, solid camp pieces, the solo menu pauses the world.
+- **v134** Wrist messages fit every word, full patch notes, dev tools hidden from friends.
+- **v133** One clean reticle, no white flashes from the papers, ?demo runs that play themselves.
+- **v132** First-person arms on every gun with a real reload; friends' recoil shows.
 - **v131** Friends drawn as the crew suit (crew.js from the free soldier: black nanite suit, violet seams, open helmet with a magenta HUD line, layered walk/run/aim/shoot); 8.4k triangles each.
 - **v130** The truck modeled in code (truckmodel.js): each fitted part appears; 24.6k triangles, 5 draw calls; wrecks as burnt tipped trucks.
 - **v129** Small precise crosshair; the aim-link ring 132 px to 34 px.
