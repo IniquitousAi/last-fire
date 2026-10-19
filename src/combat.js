@@ -43,9 +43,9 @@ function ctx() {
     const verb = ac.createConvolver(), n = Math.floor(ac.sampleRate * 2.4), ir = ac.createBuffer(2, n, ac.sampleRate);   // (the valley's echo: a long soft tail)
     for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2) * (i < ac.sampleRate * 0.03 ? 0.2 : 1); }
     verb.buffer = ir; wet = ac.createGain(); wet.gain.value = 0.32; wet.connect(verb).connect(out);
-    for (const [k, dur, shape] of [['crack', 0.06, 6], ['body', 0.6, 2.2], ['step', 0.09, 3], ['rattle', 0.05, 1.5]]) {   // (made once, not every shot)
+    for (const [k, dur, shape] of [['crack', 0.06, 6], ['body', 0.6, 2.2], ['step', 0.09, 3], ['rattle', 0.05, 1.5], ['breath', 0.55, -1]]) {   // (made once, not every shot)
       const b = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate), d = b.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, shape);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (shape < 0 ? Math.pow(Math.sin(Math.PI * i / d.length), 1.5) : Math.pow(1 - i / d.length, shape));   // (shape -1: a swell, for a breath)
       buf[k] = b;
     }
   }
@@ -104,6 +104,8 @@ export const sound = {
   magIn() { const d = dest(null); play(buf.rattle, d, { rate: 1.8, gain: 0.45, type: 'bandpass', freq: 1900, q: 2 }); tone(d, 500, 380, 0.05, 0.05, 'square', 0.05); },
   step(run, surf = 0, load = 0) { const d = dest(null), S = [[0.62, 520], [1.05, 2200], [0.86, 1300]][surf] || [0.7, 700], r = S[0] * (0.9 + Math.random() * 0.2) * (1 - load * 0.12);   // (surf: 0 Moon dust, soft and low; 1 the camp's metal plates, bright; 2 Earth's concrete, hard. load: carrying light, heavier)
     play(buf.step, d, { rate: r, gain: (run ? 0.22 : 0.13) * (1 + load * 0.3), type: 'lowpass', freq: S[1] }); if (surf === 1) tone(d, 900 + Math.random() * 300, 700, 0.05, 0.025); },
+  breath(g, inhale) { const d = dest(null); play(buf.breath, d, { rate: inhale ? 1.15 : 0.85, gain: g, type: 'bandpass', freq: inhale ? 1400 : 900, q: 0.7 }); },   // (your own breath: air through a filter, in higher than out)
+  heart(g) { const d = dest(null); tone(d, 62, 40, 0.11, g); tone(d, 55, 36, 0.1, g * 0.7, 'sine', 0.19); },   // (lub-dub: two low thumps)
   land(n) { const d = dest(null); play(buf.step, d, { rate: 0.5, gain: Math.min(0.5, 0.15 + n * 0.03), type: 'lowpass', freq: 500 }); },
   hurt() { const d = dest(null); tone(d, 110, 50, 0.2, 0.3); },
   groan(pos, deep) { const d = dest(pos, 3), a = ctx(), o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter(), t = a.currentTime, base = deep ? 48 : 82 + Math.random() * 30;

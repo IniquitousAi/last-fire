@@ -1,35 +1,35 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=149';
-import { Ambience } from './ambience.js?v=149';
-import { Camp, BOARD } from './camp.js?v=149';
-import { Guide } from './guide.js?v=149';
-import { buildSites } from './earthsite.js?v=149';
-import { Truck } from './truck.js?v=149';
-import { ShipView } from './shipview.js?v=149';
-import { Crew } from './crew.js?v=149';
-import { Hands } from './hands.js?v=149';
-import { FpRig } from './fprig.js?v=149';
-import { Wrist } from './wrist.js?v=149';
-import { FireCore } from './firecore.js?v=149';
+import * as C from '../core/game.js?v=150';
+import { Ambience } from './ambience.js?v=150';
+import { Camp, BOARD } from './camp.js?v=150';
+import { Guide } from './guide.js?v=150';
+import { buildSites } from './earthsite.js?v=150';
+import { Truck } from './truck.js?v=150';
+import { ShipView } from './shipview.js?v=150';
+import { Crew } from './crew.js?v=150';
+import { Hands } from './hands.js?v=150';
+import { FpRig } from './fprig.js?v=150';
+import { Wrist } from './wrist.js?v=150';
+import { FireCore } from './firecore.js?v=150';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=149';
-import { FriendVoice } from './friendvoice.js?v=149';
-import { crewFrom } from '../core/habits.js?v=149';
-import { HudLook } from './hudlook.js?v=149';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=149';
-import { sound, GUNS } from '../../src/combat.js?v=149';
-import { FX } from '../../src/fx.js?v=149';
+import { think as friendThink } from './friend.js?v=150';
+import { FriendVoice } from './friendvoice.js?v=150';
+import { crewFrom } from '../core/habits.js?v=150';
+import { HudLook } from './hudlook.js?v=150';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=150';
+import { sound, GUNS } from '../../src/combat.js?v=150';
+import { FX } from '../../src/fx.js?v=150';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 149;   // (this copy's version; ./version.json says the newest)
+const BUILD = 150;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -604,7 +604,13 @@ function frame(now) {
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
   { const dx = me.x - (frame.px ?? me.x), dz = me.z - (frame.pz ?? me.z), d = Math.hypot(dx, dz); frame.px = me.x; frame.pz = me.z;   // (your own footsteps, IMMERSION.md item 1: one every 1.75 m walking, 2.5 m sprinting; the view dips with each)
     if (onGround && !me.ember && !(ship && ship.on) && C.seatOf(g, me.id) < 0 && d < 1) { const L = mvSprint ? 2.5 : 1.75; frame.sd = (frame.sd || 0) + d; if (TEST) window.__dist = (window.__dist || 0) + d / L; if (frame.sd >= L) { frame.sd -= L; sound.step(mvSprint, C.onEarth(me) ? 2 : Math.hypot(me.x - g.fire.x, me.z - g.fire.z) < 22 ? 1 : 0, Math.min(1, (me.carried || 0) / 60)); frame.steps = (frame.steps || 0) + 1; if (TEST) window.__steps = frame.steps; } frame.bob = Math.sin(frame.sd / L * Math.PI) * (mvSprint ? 0.022 : 0.012) * (1 - ads); } else frame.bob = (frame.bob || 0) * 0.85; }
-  camera.position.set(me.x, me.y + eyeH - (frame.bob || 0), me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - (gunKey === 'rail' ? 56 : 22) * ads; camera.updateProjectionMatrix();
+  camera.position.set(me.x, me.y + eyeH - (frame.bob || 0), me.z);
+  { const live = !me.ember && !(ship && ship.on);   // (IMMERSION.md item 2: your breath after a sprint, 14 to 40 a minute; a heartbeat only when badly hurt or the dark is close, 70 + 70 x a minute)
+    frame.puff = Math.max(0, Math.min(1, (frame.puff || 0) + (mvSprint ? dt / 6 : -dt / 10)));
+    if (live && frame.puff > 0.15 && (frame.bt = (frame.bt ?? 0) - dt) <= 0) { const per = 60 / (14 + 26 * frame.puff); frame.bt = per / 2; frame.inh = !frame.inh; sound.breath(0.03 + 0.11 * frame.puff, frame.inh); }
+    let near = 99; for (const k of g.hollow) if (!k.dead && !!k.earth === C.onEarth(me)) near = Math.min(near, Math.hypot(k.x - me.x, k.z - me.z));
+    const x = Math.max(1 - me.hp / 100, near < 10 ? 1 - near / 10 : 0); if (TEST) window.__heart = x >= 0.5 ? 70 + 70 * x : 0;
+    if (live && x >= 0.5 && (frame.ht = (frame.ht ?? 0) - dt) <= 0) { frame.ht = 60 / (70 + 70 * x); sound.heart(0.1 + 0.2 * (x - 0.5)); } } camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - (gunKey === 'rail' ? 56 : 22) * ads; camera.updateProjectionMatrix();
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
     camera.position.set(c.x + Math.sin(me.yaw) * back, cy + up, c.z + Math.cos(me.yaw) * back); camera.lookAt(c.x, cy + 1.6, c.z); }
