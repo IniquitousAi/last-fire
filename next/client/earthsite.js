@@ -1,8 +1,8 @@
 // The lander and the landing site (PLAN-SPACE.md step 3: gray boxes first; real models come after the robots and his hands say the trip is right).
 // The pad on the Moon and the site on Earth each get a lander; Earth gets a dead city of broken towers around the site.
 import * as THREE from 'three';
-import { PAD, EARTH, TOWERS, WALLS } from '../core/game.js?v=166';
-import { buildShip } from './shipmodel.js?v=166';
+import { PAD, EARTH, TOWERS, WALLS } from '../core/game.js?v=167';
+import { buildShip } from './shipmodel.js?v=167';
 
 function lander(scene, x, z, y) {   // (the pad, and on it the ship modeled in code: the old cylinder, cone and floating red window were gray-box stand-ins he saw up close, 2026-10-19)
   const g = new THREE.Group(), line = new THREE.MeshBasicMaterial({ color: 0xff3b5c });

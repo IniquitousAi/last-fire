@@ -2,12 +2,12 @@
 // the strange sky and far land, the dark's edge, fog that thickens at dusk, the mirror realm's signs, moments of hyper-awareness,
 // and the morning after (what last night left, said once at dawn through the wrist).
 import * as THREE from 'three';
-import { fogAt, edgeOf, consequences } from '../core/immersion.js?v=166';
-import { awareStep } from '../core/awareness.js?v=166';
-import { Strange } from './strange.js?v=166';
-import { Edge } from './edge.js?v=166';
-import { MirrorSigns } from './mirror.js?v=166';
-import { onEarth, phase, EARTH } from '../core/game.js?v=166';
+import { fogAt, edgeOf, consequences } from '../core/immersion.js?v=167';
+import { awareStep } from '../core/awareness.js?v=167';
+import { Strange } from './strange.js?v=167';
+import { Edge } from './edge.js?v=167';
+import { MirrorSigns } from './mirror.js?v=167';
+import { onEarth, phase, EARTH } from '../core/game.js?v=167';
 
 const note = (kind, text) => { if (window.__lf) (window.__imm = window.__imm || []).push([kind, text]); };   // (the test hook ?shot reads these: what was said and when)
 export class Immersion {

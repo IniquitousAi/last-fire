@@ -6,14 +6,26 @@
    "task": "Show the honest number on the board and move it only by what the camp really did",
    "where": "lore 18",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#pastDark",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The honest number is the same",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A lamp lit at the edge of the light lifts",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -390,14 +402,26 @@
    "task": "The dark adapts only after two calm nights with no falls",
    "where": "two calm nights with no falls",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#darkLearning",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Two calm nights with no falls",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-learning.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The dark learns only after two calm nights",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -520,14 +544,26 @@
    "task": "Ego as the villain: the leaders who soften the odds",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#councilOdds",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The worse the real number",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-council.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Proving the council wrong",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -536,14 +572,26 @@
    "task": "Random events, dry humor and mayhem every night",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#nightEvent",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Every night has an event",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-night-news.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The night rolls over",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -565,14 +613,26 @@
    "task": "The maze is the dark past the edge: lore that makes you want to know before entering",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#edgeSign",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The edge sign counts",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/edge-sign.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The edge sign shows",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -581,14 +641,26 @@
    "task": "Your old desk, the softened odds you signed: the first minute",
    "where": "lore 15: a former leader who used to hide the odds, and now checks",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/camp.js#startAt",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/lanes/A/play.txt#A new world opens at your old desk",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/first-minute-desk.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A new world opens at your old desk",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -597,14 +669,26 @@
    "task": "Every survivor's theory on the wall; nobody knows",
    "where": "proposed: everyone remembers the same ordinary Tuesday, then the dark",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/camp.js#drawTheories",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#No theory is ever proven",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/theories-wall.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Finding something moves the theory wall",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -613,14 +697,26 @@
    "task": "The camp keeps its own rules (dues, standing), works solo",
    "where": "his answer: the camp itself keeps the rules (people of the camp, not players), so it works alone or with friends. proposed: the fire is a commons; free riders are cut out of its light",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/camp.js#payDues",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Playing alone, the camp still keeps",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-dues.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Banking light at the fire pays your dues",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -629,14 +725,26 @@
    "task": "Light against dark, with the truth making it interesting",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#pastDark",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#A lit lamp, a higher fire",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/light-and-dark.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A lamp lit at the edge of the light lifts",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -645,14 +753,26 @@
    "task": "The dark never shows malice: it is entropy",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#ENTROPY",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The fire loses fuel at one fixed rate",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-fire-down.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#When the fire runs low",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -661,14 +781,26 @@
    "task": "No forever-win: decay and diminishing returns; the score is how long you hold",
    "where": "proposed: decay, diminishing returns, no forever-win; the score is how long you hold",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#holdLine",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The score is only how long you hold",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-night-news.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The night rolls over",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -754,12 +886,18 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-dues.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Banking light at the fire pays your dues",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -776,12 +914,18 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-no-lamps.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -790,14 +934,26 @@
    "task": "Optional honest jobs that cannot be exploited",
    "where": "exploit robots: tiny payments earn exactly what one big one does; dues cannot be paid with the camp's light (jobs themselves not built yet)",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/jobs.js#turnIn",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Ninety tiny hauls",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/clerk-job.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Turning in pays 1 gear credit",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -814,12 +970,18 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-wolf-back.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The lone wolf who did their part is welcome back",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -836,12 +998,18 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-pool.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Grinding while a friend is away",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -858,12 +1026,18 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-in-debt.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -980,14 +1154,26 @@
    "task": "Real odds shown only to whoever checks (board, wrist)",
    "where": "lore 8",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#dawnLine",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Only someone who has checked",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-night-news.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The night rolls over",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -1009,14 +1195,26 @@
    "task": "Eras launch when sims plus real feedback say so",
    "where": "lore 8",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/eras.js#eraAt",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Real feedback weighs more",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real-1920.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The board reads the era",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1041,14 +1239,26 @@
    "task": "Dark and neon: palette and contrast checked per screen",
    "where": "lore 9",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "sim/lore_test.mjs#banned",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#No cyan, orange, gold or brown",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real-1920.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#No screen is more than 1 percent",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1057,14 +1267,26 @@
    "task": "Scavenged, light, then the dark's own tech, era by era",
    "where": "lore 9",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/eras.js#techFor",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Tech comes by era",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real-1920.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The board reads the era",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
