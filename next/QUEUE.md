@@ -19,7 +19,6 @@ Claude picks the order by the bottleneck: what he will see first and most.
 7. **Simulated real people.** Use everything learned about him (the chat logs, the Twin's data, Rim, Jev) to simulate real people: after Dalton or he plays a lot, play with someone who plays exactly like Dalton and says some of the same things; or work out from how someone plays how they probably talk. Always ask how the simulators can be used in fun ways. (2026-10-19; it builds on the learned friend in ANSWERS.md and the habits recorder in core/habits.js)
 
 12. **Take it apart to learn it** (idea 7): strip dead machines on Earth; the blueprint stays reasoned until your rebuilt one runs.
-13. **The learned friend makes his mistakes** (idea 10): misses, panics and overloads like the real one.
 
 
 
@@ -50,7 +49,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-41. **The learned friend makes his mistakes** (INNOVATION.md idea 10, item 13 made concrete): the learned friend's misses, panics (backing off when hurt) and overloads (carrying past its bank point) come from the recorded habits, and a test checks its own recorded habits match its source within 15%. (added when item 40 finished)
+
+42. **Bank point is unmeasurable while the fire auto-banks** (found by the round trip: everyone 'banks at' about 2.5, because walking into the circle banks at once): record instead how far from the fire a player carries light before turning home; that is the real overload habit. (added when item 41 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -81,3 +81,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 38, tested and left as is: 45 Earth settings, 20 trips each; greedy solo tension stays 0.76 to 0.78 in every setting that keeps careful and perfect players in the band. It comes from roaming 60 m out, not from Earth's pressure.
 - Item 39, the visor's motion sense on the compass (v87).
 - Item 40, hit stop and the crack of light (v88); pointer lock refusals caught (v89).
+- Item 41, the learned friend is faithful by a record-to-record round trip (v90, v91).
