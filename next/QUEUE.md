@@ -18,7 +18,6 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 7. **Simulated real people.** Use everything learned about him (the chat logs, the Twin's data, Rim, Jev) to simulate real people: after Dalton or he plays a lot, play with someone who plays exactly like Dalton and says some of the same things; or work out from how someone plays how they probably talk. Always ask how the simulators can be used in fun ways. (2026-10-19; it builds on the learned friend in ANSWERS.md and the habits recorder in core/habits.js)
 
-11. **The dark wears what you looked at** (idea 3): its masks come from what your camera lingered on.
 12. **Take it apart to learn it** (idea 7): strip dead machines on Earth; the blueprint stays reasoned until your rebuilt one runs.
 13. **The learned friend makes his mistakes** (idea 10): misses, panics and overloads like the real one.
 
@@ -39,7 +38,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 25. **Scary masks, never cute** (his note: one mob looks like a smiling dog): v65 removed the dog model; real masks still wait on item 19.
 
 
-27. **The dark wears what you looked at** (INNOVATION.md idea 3): record what your camera lingers on (the watcher, faces, tents, your friend); the next night's masks lean toward it, and the board never says so. (added when item 26 finished)
+
+28. **One light is your health** (INNOVATION.md, UI and HUD): no health bar; your own glow dims as you are hurt, and the visor reads it. (added when item 27 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -56,3 +56,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - v65: the smiling-dog model removed. v70: item 24 first pass, the Last Fire as a plasma core with bloom (kept open for more passes).
 - Item 23, the world keeps your friends' builds and falls (v71); bump.py guards against code after a // comment.
 - Item 26, the roof lamp for the front seat (v72).
+- Item 27, the dark wears what you looked at (v73; its patch note says only 'Small changes', on purpose: it never says so).
