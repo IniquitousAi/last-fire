@@ -51,7 +51,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-43. **The friend says what you say** (his ask in item 7: 'says some of the same things that he says'): when a player types in Tab feedback or chat, keep their short lines (with their yes) as the learned friend's own words, used at the matching moments. (added when item 42 finished)
+
+44. **Lines that fit the moment** (from item 43: your words play at random moments): let a typed line carry an optional moment word (kill, dusk, hurt, bank, fell) so it plays when that happens. (added when item 43 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -84,3 +85,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 40, hit stop and the crack of light (v88); pointer lock refusals caught (v89).
 - Item 41, the learned friend is faithful by a record-to-record round trip (v90, v91).
 - Item 42, the carried-load habit, used once measured (v92).
+- Item 43, YOUR WORDS for your learned copy (v93).
