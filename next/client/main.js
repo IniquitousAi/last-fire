@@ -1,22 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=41';
-import { Ambience } from './ambience.js?v=41';
-import { Camp, BOARD } from './camp.js?v=41';
-import { Guide } from './guide.js?v=41';
-import { buildSites } from './earthsite.js?v=41';
-import { Truck } from './truck.js?v=41';
-import { Wrist } from './wrist.js?v=41';
-import { HudLook } from './hudlook.js?v=41';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=41';
-import { sound, GUNS } from '../../src/combat.js?v=41';
-import { FX } from '../../src/fx.js?v=41';
+import * as C from '../core/game.js?v=42';
+import { Ambience } from './ambience.js?v=42';
+import { Camp, BOARD } from './camp.js?v=42';
+import { Guide } from './guide.js?v=42';
+import { buildSites } from './earthsite.js?v=42';
+import { Truck } from './truck.js?v=42';
+import { Wrist } from './wrist.js?v=42';
+import { HudLook } from './hudlook.js?v=42';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=42';
+import { sound, GUNS } from '../../src/combat.js?v=42';
+import { FX } from '../../src/fx.js?v=42';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 41;   // (this copy's version; ./version.json says the newest)
+const BUILD = 42;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -528,7 +528,7 @@ async function begin(seed, id, saved = null) {
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); } });
   setTimeout(() => guide.start(), 1200);
-  mode = 'play'; $('menu').hidden = true; $('menuLook').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
+  mode = 'play'; $('menu').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
   await ready; prepGun('pistol'); prepGun('ar');
 }
 // ---------------------------------------------------------------- your worlds: saved in this browser, every 20 seconds and when you leave
@@ -552,8 +552,7 @@ function drawWorlds() {
 $('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'older') { $('olderList').hidden = !$('olderList').hidden; return; } myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
 const hudLook = new HudLook(() => 'visor', () => {});   // (he kept VISOR, 2026-10-19; QUIET and GLASS stay in hudlook.js as variants, not on screen)
 
-{ const set = m => { document.body.classList.remove('menu-A', 'menu-B', 'menu-C'); document.body.classList.add('menu-' + m); SET.menuLook = m; save(); for (const b of document.querySelectorAll('#menuLook button')) b.classList.toggle('on', b.dataset.m === m); if (m === 'A') bootLog(); };
-  $('menuLook').addEventListener('click', e => { const b = e.target.closest('button'); if (b) set(b.dataset.m); }); set(SET.menuLook || 'A'); }
+document.body.classList.add('menu-A'); bootLog();   // (BOOT: his pick of three home screens, 2026-10-19)
 function bootLog() {   // (A: the visor's boot, typed once: real numbers from this browser where there are any)
   const lines = ['SUIT 07  ·  VISOR ONLINE', `WORLDS ON THIS SUIT  ·  ${worlds().length}`, 'MOON CAMP LINK  ·  OK', 'EARTH  ·  SIGNAL LOST', 'THE DARK  ·  NO SHAPE ON RECORD', `BUILD  ·  ${BUILD}`]; let i = 0, out = '';
   clearInterval(bootLog.t); bootLog.t = setInterval(() => { if (i >= lines.length) return clearInterval(bootLog.t); out += lines[i++] + String.fromCharCode(10); $('bootLog').textContent = out; }, 260);
