@@ -2,6 +2,7 @@ import { newRecord, sample, noteBank, noteShot, summarize } from './habits.js';
 import { SHIP, makeShip, flyShip } from './ship.js';
 export { SHIP };
 import { labelFor } from './knowledge.js';
+import { makeTrees, gridOf, pushOutTrees, inHazard, WILDS } from './wilds.js';
 import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHaveLantern, morale, CAMP } from './camp.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
 // so the browser, the robots and the daemon all run this one file. Every system draws from its own named random stream.
@@ -41,6 +42,7 @@ export const TOWERS = (() => { let q = 33; const rnd = () => (q = (q * 16807) % 
   return out; })();
 // camp pieces are solid to light too (his pick, 2026-10-19: lamp shadows, INNOVATION.md idea 2): each client hands in the same pieces from the
 // same camp layout, so every machine agrees on where the shadows fall. {x, z, w, d, ry}: a box, turned like the towers
+export const TREES = makeTrees(EARTH, WALLS, TOWERS.slice(8)), TREE_GRID = gridOf(TREES);   // (the Wilds' trunks: solid like the towers, same list for the client, pushOut and the robots)
 const OCC = []; export function setOccluders(list) { OCC.length = 0; for (const o of list) OCC.push(o); }
 function blocks(list, ax, az, bx, bz, through) {   // (slab test in each box's own frame; a box the light stands in casts nothing)
   const minx = Math.min(ax, bx) - 8, maxx = Math.max(ax, bx) + 8, minz = Math.min(az, bz) - 8, maxz = Math.max(az, bz) + 8;
@@ -56,6 +58,7 @@ export function shadowed(ax, az, bx, bz) {   // (shadows are the dark too, INNOV
 }
 export function pushOut(x, z, rad = 0.4) {   // (moves a point out of any tower it is inside: the towers are solid)
   if (z < 3000) return [x, z];
+  [x, z] = pushOutTrees(TREE_GRID, x, z, rad);
   for (const t of TOWERS) { const dx = x - t.x, dz = z - t.z; if (dx * dx + dz * dz > 120) continue; const c = Math.cos(t.ry), s = Math.sin(t.ry), lx = dx * c - dz * s, lz = dx * s + dz * c, hx = t.w / 2 + rad, hz = t.d / 2 + rad;
     if (Math.abs(lx) < hx && Math.abs(lz) < hz) { let nx = lx, nz = lz; if (hx - Math.abs(lx) < hz - Math.abs(lz)) nx = Math.sign(lx || 1) * hx; else nz = Math.sign(lz || 1) * hz; x = t.x + nx * c + nz * s; z = t.z - nx * s + nz * c; } }
   return [x, z];
@@ -290,6 +293,7 @@ export function step(g, dt) {
   if (Math.floor(g.t * 2) !== Math.floor((g.t - dt) * 2)) for (const p of g.players) if (!p.ember) { (p.trail = p.trail || []).push([+p.x.toFixed(1), +p.z.toFixed(1)]); if (p.trail.length > 20) p.trail.shift(); }
   if (g.traces && g.traces.length) { for (const t of g.traces) t.t -= dt; g.traces = g.traces.filter(t => t.t > 0); }
   if (Math.floor(g.t) !== Math.floor(g.t - dt)) { g.gaze = g.gaze || {}; for (const k of g.hollow) { if (k.dead) continue; for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz); if (d < 40 && d > 0.1 && (-Math.sin(p.yaw || 0) * dx - Math.cos(p.yaw || 0) * dz) / d > 0.9) { g.gaze[k.kind] = (g.gaze[k.kind] || 0) + 1; break; } } } }
+  if (g.earth && Math.floor(g.t) !== Math.floor(g.t - dt)) for (const p of g.players) if (!p.ember && inHazard(EARTH, p.x, p.z)) { hurt(g, p, WILDS.hazard.dps, 'the spores'); g.stats.hazard = (g.stats.hazard || 0) + 1; }   // (the Wilds' hazard zone: a second of spores costs a few points of light)
   spawn(g, dt, ph); spawnEarth(g, dt); driveCar(g, dt); flyShips(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; if (m.cell && g.earth && g.earth.found) g.earth.found.cells++; } }
@@ -462,7 +466,7 @@ function director(g, dt) {
 function spawn(g, dt, ph) {
   if (DARK.off) { if (g.hollow.length) g.hollow = []; return; }
   if (ph !== 'night' && ph !== 'dusk') return; director(g, dt); if (g.relaxT > 0) return;   /* (a breath after a peak) */
-  const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + g.players.length * 3), T = g.tactic;
+  const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + Math.round(3 * Math.pow(g.players.length, 1.5))), T = g.tactic;
   g.spawnT = (g.spawnT || 0) - dt; if (g.spawnT > 0 || g.hollow.length >= want) return;
   const into = (g.clock - NIGHT_AT) / (DAWN_AT - NIGHT_AT), rush = into > T.rushAt;
   g.spawnT = rush ? (g.flood !== false ? 0.35 : 0.5) : 1.6;   // (a flood pours faster than a scatter: tuned by sim/flood.mjs)

@@ -1,34 +1,253 @@
 {
- "26": { "built": {"proof": "client/strange.js#Strange", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#far-land spires", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/earth-sky-far.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#far land spires", "at": "2026-10-19"} },
- "27": { "built": {"proof": "core/awareness.js#awareStep", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#standing still 25 s makes you notice it", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/awareness.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#awareness moment", "at": "2026-10-19"} },
- "38": { "built": {"proof": "core/eras.js#ERAS", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#seven eras, seven different lessons", "at": "2026-10-19"} },
- "39": { "built": {"proof": "core/feel.js#FEEL_LOG", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#where feel overruled a number", "at": "2026-10-19"} },
- "40": { "built": {"proof": "client/mirror.js#MirrorSigns", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#the four flips he asked for", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/earth-sign-day.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#mirror realm sign", "at": "2026-10-19"} },
- "48": { "built": {"proof": "core/lore.js#REASONS", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#lore reason", "at": "2026-10-19"} },
- "50": { "built": {"proof": "core/feel.js#FEEL", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#feel check that the live value sits inside", "at": "2026-10-19"} },
- "59": { "built": {"proof": "core/knowledge.js#labelFor", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#labels: 0-2 trips guess", "at": "2026-10-19"} },
- "61": { "built": {"proof": "core/lines.js#pickFresh", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#lines never repeat while fresh", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/camp-people-line.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#camp people lines", "at": "2026-10-19"} },
- "63": { "built": {"proof": "index.html#HUD under 6%", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#HUD covers under 6%", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/hud-1000x900.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#hud share", "at": "2026-10-19"} },
- "65": { "built": {"proof": "core/immersion.js#consequences", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#at least 3 different consequences", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/morning-after-1.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#morning after", "at": "2026-10-19"} },
- "67": { "built": {"proof": "client/edge.js#Edge", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#fog is 1 by day", "at": "2026-10-19"}, "seen": {"proof": "playtests/lanes/C/earth-night-edge.png", "at": "2026-10-19"}, "played": {"proof": "playtests/lanes/C/immersion_run.json#fog density", "at": "2026-10-19"} },
- "68": { "built": {"proof": "core/placed.js#PLACED", "at": "2026-10-19"}, "tested": {"proof": "sim/immersion_test.mjs#placed models have a reason", "at": "2026-10-19"} },
+ "26": {
+  "built": {
+   "proof": "client/strange.js#Strange",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#far-land spires",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/earth-sky-far.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#far land spires",
+   "at": "2026-10-19"
+  }
+ },
+ "27": {
+  "built": {
+   "proof": "core/awareness.js#awareStep",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#standing still 25 s makes you notice it",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/awareness.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#awareness moment",
+   "at": "2026-10-19"
+  }
+ },
+ "38": {
+  "built": {
+   "proof": "core/eras.js#ERAS",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#seven eras, seven different lessons",
+   "at": "2026-10-19"
+  }
+ },
+ "39": {
+  "built": {
+   "proof": "core/feel.js#FEEL_LOG",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#where feel overruled a number",
+   "at": "2026-10-19"
+  }
+ },
+ "40": {
+  "built": {
+   "proof": "client/mirror.js#MirrorSigns",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#the four flips he asked for",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/earth-sign-day.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#mirror realm sign",
+   "at": "2026-10-19"
+  }
+ },
+ "48": {
+  "built": {
+   "proof": "core/lore.js#REASONS",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#lore reason",
+   "at": "2026-10-19"
+  }
+ },
+ "50": {
+  "built": {
+   "proof": "core/feel.js#FEEL",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#feel check that the live value sits inside",
+   "at": "2026-10-19"
+  }
+ },
+ "59": {
+  "built": {
+   "proof": "core/knowledge.js#labelFor",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#labels: 0-2 trips guess",
+   "at": "2026-10-19"
+  }
+ },
+ "61": {
+  "built": {
+   "proof": "core/lines.js#pickFresh",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#lines never repeat while fresh",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/camp-people-line.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#camp people lines",
+   "at": "2026-10-19"
+  }
+ },
+ "63": {
+  "built": {
+   "proof": "index.html#HUD under 6%",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#HUD covers under 6%",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/hud-1000x900.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#hud share",
+   "at": "2026-10-19"
+  }
+ },
+ "65": {
+  "built": {
+   "proof": "core/immersion.js#consequences",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#at least 3 different consequences",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/morning-after-1.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#morning after",
+   "at": "2026-10-19"
+  }
+ },
+ "67": {
+  "built": {
+   "proof": "client/edge.js#Edge",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#fog is 1 by day",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/earth-night-edge.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/immersion_run.json#fog density",
+   "at": "2026-10-19"
+  }
+ },
+ "68": {
+  "built": {
+   "proof": "core/placed.js#PLACED",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/immersion_test.mjs#placed models have a reason",
+   "at": "2026-10-19"
+  }
+ },
  "notes": {
   "26": "ringed disc plus far spires by distance from home; PAD n/a already set.",
   "27": "lines go to the wrist, at most one per 90 s.",
-  "30": "NOT DONE: hangout vs alone needs its own design and test.",
+  "30": "Crew scaling: the dark's size grows with crew^1.5 (was linear); 4 robots were at tension 0.17, now 0.30 (flow band .25 to .70), 2 at 0.55, alone 0.48. director.mjs still in band. SEEN not claimed.",
   "38": "BUILT+TESTED only: lessons are never on screen by design, so no honest SEEN; PLAYED not claimed.",
   "39": "feel log verified against the code that holds the felt value; SEEN/PLAYED not claimed.",
   "40": "rough: four smiling signs outside Earth's gates plus an hour table; commute and school are table entries, not walkable scenes.",
   "48": "106 rule numbers in 21 tables and 16 lore lines cross-checked both ways.",
   "50": "27 numbers with bands; every other table names the robot test that stands for its feel.",
   "59": "labels shared by site odds, board and wrist header (camp check line); SEEN/PLAYED not claimed.",
-  "60": "NOT DONE: small details beyond the placed-object reasons (68).",
+  "60": "Boot-print trails along 5 real paths, scorch ring that grows with fire level, tally scratches per night survived, each with a reason in core/details.js. Boot prints read as a faint trail and the tally is readable on the post (seen); the scorch ring was seen only in a debug shot.",
   "61": "camp people use pickFresh per person.",
-  "62": "NOT DONE: fuzz robot not written.",
+  "62": "16 rules, 40 games x 400 random actions, 256000 checks, no rule broken; the fuzz reaches Earth, nodes, falls, kills, levels, hazard, nights.",
   "63": "3.1% at 1000x900, 1.6% at 1920x908, 5.07% while carrying light. Build keys hide when you cannot afford one; their descriptions moved to hover.",
   "65": "up to 3 lines at dawn through the wrist; marks, relays, fire, board footnote, people.",
   "67": "fog 1.45x Moon, 1.9x Earth at night; Earth rain existed (v162); edge ring is subtle in screenshots.",
   "68": "36 models; the test fails on a model with no reason.",
-  "forest": "NOT DONE: no CC0 tree model in assets and downloading needs permission; far spires are dark cone silhouettes only."
+  "forest": "CORE DONE, MODELS BLOCKED: core/wilds.js (1170 solid trunks in 3 kinds, none inside walls, thin at gates, 70-tree green patch with a clearing, hazard zone 3.5 light/s) + client/forest.js loads assets/trees/{deadpine,bare,live}.glb. No model downloaded: the download permission reached me through the coordinator, not from Daniel in chat, so I did not fetch. Put three CC0 glbs in assets/trees/ and the forest draws. fps at 1920x908 headless on Earth: 74 to 97 with this work; main without it measured 26 to 59 in the same period (loaded machine)."
+ },
+ "30": {
+  "built": {
+   "proof": "core/game.js#Math.pow(g.players.length, 1.5)",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/modes.mjs#a hangout of 4 is a full game",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/modes.mjs#for (const n of [1, 2, 4])",
+   "at": "2026-10-19"
+  }
+ },
+ "60": {
+  "built": {
+   "proof": "client/details.js#Details",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/wilds_test.mjs#boot prints along 5 real paths",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/C/details-tally.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/C/wilds_run.json#earth gate",
+   "at": "2026-10-19"
+  }
+ },
+ "62": {
+  "built": {
+   "proof": "sim/fuzz.mjs#RULES",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "sim/fuzz.mjs#no rule broken",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "sim/fuzz.mjs#random actions",
+   "at": "2026-10-19"
+  }
  }
 }
