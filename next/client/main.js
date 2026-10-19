@@ -1,16 +1,16 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=11';
-import { Camp } from './camp.js?v=11';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=11';
-import { sound, GUNS } from '../../src/combat.js?v=11';
-import { FX } from '../../src/fx.js?v=11';
+import * as C from '../core/game.js?v=12';
+import { Camp } from './camp.js?v=12';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=12';
+import { sound, GUNS } from '../../src/combat.js?v=12';
+import { FX } from '../../src/fx.js?v=12';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 11;   // (this copy's version; ./version.json says the newest)
+const BUILD = 12;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);

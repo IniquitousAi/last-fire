@@ -41,7 +41,8 @@ export class Camp {
     const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75 }, { role: 'the Night worker', url: 'c/soldier.glb', x: -5, z: -2.6, anim: 'Idle_Gun', h: 1.8 }, { role: 'a Council member', url: 'c/survivor.glb', x: -10.8, z: 7.2, anim: 'Idle', h: 1.7 }];
     for (const P of PEOPLE) L.loadAsync('../assets/' + P.url).then(r => {
       const o = skClone(r.scene), b = new THREE.Box3().setFromObject(o); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y); o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
-      o.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.multiplyScalar(0.55); m.castShadow = false; } });   // (dimmed: only the fire lights them)
+      o.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); m.castShadow = false; } });
+      const lamp = new THREE.PointLight(0xcfe0ff, 5, 6, 1.5); lamp.position.set(P.x + 0.6, land(P.x, P.z) + 1.4, P.z + 0.4); scene.add(lamp);   // (each person keeps a small lantern: you see who is talking)
       const mix = new THREE.AnimationMixer(o), clip = r.animations.find(a => a.name.endsWith('|' + P.anim) || a.name.endsWith(P.anim)); if (clip) mix.clipAction(clip).play();
       const tag = Object.assign(document.createElement('div'), { className: 'mark' }); tag.style.maxWidth = '420px'; tag.style.whiteSpace = 'normal'; tag.style.color = '#eef0f8'; tag.hidden = true; document.getElementById('hud').append(tag);
       scene.add(o); this.people.push({ ...P, o, mix, tag, line: '', lineT: 0 }); }).catch(() => {});
