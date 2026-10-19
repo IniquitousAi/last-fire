@@ -2,6 +2,8 @@ import { newRecord, sample, noteBank, noteShot, summarize } from './habits.js';
 import { SHIP, makeShip, flyShip } from './ship.js';
 export { SHIP };
 import { labelFor } from './knowledge.js';
+import { riftStep, riftLight, inRift, RIFT } from './rift.js';
+export { RIFT, inRift, touchConsole, riftSize } from './rift.js';
 import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHaveLantern, morale, CAMP } from './camp.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
 // so the browser, the robots and the daemon all run this one file. Every system draws from its own named random stream.
@@ -128,7 +130,7 @@ export function fit(g, p) {
 }
 export function makeLand(seed) {
   const r = stream(seed, 'land'), n1 = valueNoise(r), n2 = valueNoise(r), n3 = valueNoise(r), n4 = valueNoise(r);
-  return (x, z) => {   // (rolling ground, long ridges, and the far land growing stranger the farther from the first fire)
+  return (x, z) => { if (z > 8500) return n1(x / 60, z / 60) * 3 + n3(x / 7, z / 7) * 0.4;   /* (the Rift's floor: a low, slow swell, nothing to hide behind) */   // (rolling ground, long ridges, and the far land growing stranger the farther from the first fire)
     const d = Math.hypot(x, z), far = Math.min(1, d / 1500), k = Math.min(1, Math.max(0, (d - 18) / 30)), home = 1 - k * k * (3 - 2 * k);
     const h = n1(x / 90, z / 90) * 22 + n2(x / 28, z / 28) * 5 + n3(x / 9, z / 9) * 0.8, ridge = Math.abs(n4(x / 160, z / 160) - 0.5) * 2;
     const yard = n1(0, 0) * 22 + n2(0, 0) * 5 + n3(x / 9, z / 9) * 0.2;   /* (the camp's yard: level, at the height the hills around it already have, so no bowl) */
@@ -199,6 +201,7 @@ export function lightAt(g, x, z, noGlow, noShadow) {   // (noShadow: the light a
   if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8);
     if (p.torch && !p.ember && d < TORCH.r && d > 0.01) { const along = ((x - p.x) * -Math.sin(p.yaw) + (z - p.z) * -Math.cos(p.yaw)) / d; if (along > TORCH.cos && TORCH.s * (1 - d / TORCH.r) > L && !sh(p.x, p.z, x, z)) L = TORCH.s * (1 - d / TORCH.r); } }   /* (a flashlight beam is light: what it touches commits to a shape) */
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !sh(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
+  if (z > 8500) L = Math.max(L, riftLight(g, x, z));
   if (g.flares) for (const f of g.flares) { const d = Math.hypot(f.x - x, f.z - z); if (d < FLARE.r) L = Math.max(L, (1 - d / FLARE.r) * Math.min(1, f.t / 2)); }
   if (g.tracers) for (const t of g.tracers) { const vx = t.bx - t.ax, vz = t.bz - t.az, k = Math.max(0, Math.min(1, ((x - t.ax) * vx + (z - t.az) * vz) / (vx * vx + vz * vz))), d = Math.hypot(t.ax + vx * k - x, t.az + vz * k - z); if (d < TRACER.width) L = Math.max(L, 0.5 * t.t / TRACER.life); }
   if (g.car) { const c = g.car, dx = x - c.x, dz = z - c.z, ahead = -dx * Math.sin(c.yaw) - dz * Math.cos(c.yaw), side = Math.abs(dx * Math.cos(c.yaw) - dz * Math.sin(c.yaw));
@@ -290,7 +293,7 @@ export function step(g, dt) {
   if (Math.floor(g.t * 2) !== Math.floor((g.t - dt) * 2)) for (const p of g.players) if (!p.ember) { (p.trail = p.trail || []).push([+p.x.toFixed(1), +p.z.toFixed(1)]); if (p.trail.length > 20) p.trail.shift(); }
   if (g.traces && g.traces.length) { for (const t of g.traces) t.t -= dt; g.traces = g.traces.filter(t => t.t > 0); }
   if (Math.floor(g.t) !== Math.floor(g.t - dt)) { g.gaze = g.gaze || {}; for (const k of g.hollow) { if (k.dead) continue; for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz); if (d < 40 && d > 0.1 && (-Math.sin(p.yaw || 0) * dx - Math.cos(p.yaw || 0) * dz) / d > 0.9) { g.gaze[k.kind] = (g.gaze[k.kind] || 0) + 1; break; } } } }
-  spawn(g, dt, ph); spawnEarth(g, dt); driveCar(g, dt); flyShips(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
+  spawn(g, dt, ph); spawnEarth(g, dt); riftStep(g, dt, { KINDS, MAX_HOLLOW, DARK, heightAt, stream }); driveCar(g, dt); flyShips(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; if (m.cell && g.earth && g.earth.found) g.earth.found.cells++; } }
   g.motes = g.motes.filter(m => m.t > 0);
@@ -416,9 +419,9 @@ export function rise(g, p) {
   p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'rise', p.id]);
   if (!g.players.some(onEarth)) endTrip(g); return true;
 }
-function endTrip(g) { if (g.earth && g.earth.found) g.dry = g.earth.found.parts ? 0 : (g.dry || 0) + 1; if (g.earth && g.earth.found) { const k = g.earth.site, r = (g.sites = g.sites || {})[k] = (g.sites[k] || { trips: 0, parts: 0, cells: 0 }); r.trips++; r.parts += g.earth.found.parts; r.cells += g.earth.found.cells; const L = g.earth.lost; if (L) { r.lostCells = (r.lostCells || 0) + L.cells; r.lostParts = (r.lostParts || 0) + L.parts; r.falls = (r.falls || 0) + L.falls; r.left = (r.left || 0) + (L.left || 0); } } if (g.car) { for (const k of g.car.store) g.stash[k] = (g.stash[k] || 0) + 1; g.car = null; } g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
+function endTrip(g) { if (g.earth && g.earth.found) g.dry = g.earth.found.parts ? 0 : (g.dry || 0) + 1; if (g.earth && g.earth.found) { const k = g.earth.site, r = (g.sites = g.sites || {})[k] = (g.sites[k] || { trips: 0, parts: 0, cells: 0 }); r.trips++; r.parts += g.earth.found.parts; r.cells += g.earth.found.cells; const L = g.earth.lost; if (L) { r.lostCells = (r.lostCells || 0) + L.cells; r.lostParts = (r.lostParts || 0) + L.parts; r.falls = (r.falls || 0) + L.falls; r.left = (r.left || 0) + (L.left || 0); } } if (g.car) { for (const k of g.car.store) g.stash[k] = (g.stash[k] || 0) + 1; g.car = null; } g.earth = null; if (g.rift) g.rift.on = false; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
 function tripClock(g, dt) {
-  if (!g.earth) return; g.earth.t -= dt; if (g.earth.t > 0) return;
+  if (!g.earth) return; if (!g.players.some(p => inRift(p))) g.earth.t -= dt;   /* (the lander waits while anyone is in the Rift: the infinite mode has no clock) */ if (g.earth.t > 0) return;
   for (const p of g.players) if (onEarth(p)) {   // (left behind: the lander is gone; whatever brings you back up, the light you carried stays down there)
     { const L = g.earth.lost = g.earth.lost || { falls: 0, cells: 0, parts: 0 }; L.cells += (p.carried || 0) / 8; L.parts += (p.pack || []).length; L.left = (L.left || 0) + 1; }
     if (p.ember) { const e = g.embers.find(q => q.of === p.id); if (e) e.x = 1e9; } p.ember = false; p.carrying = null; p.carried = 0; p.pack = []; p.hp = 25;
@@ -435,7 +438,7 @@ function wakeFaces(g) {   // (about a third of the towers hold one face each per
       g.hollow.push({ id: g.nextId++, kind: 'face', earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0.4, dead: false, speed: K.speed }); g.log.push([+g.t.toFixed(2), 'face', i]); evidence(g, 'heads', 1.06);   /* (a face in a wall: is it there, or are we seeing faces?) */ }); }
 }
 function spawnEarth(g, dt) {
-  if (!g.earth || DARK.off) return; wakeFaces(g); const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
+  if (!g.earth || DARK.off) return; wakeFaces(g); const down = g.players.filter(p => onEarth(p) && !inRift(p) && !p.ember); if (!down.length) return;
   const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
   g.spawnE = (g.spawnE || 0) - dt; if (g.spawnE > 0 || g.hollow.filter(k => k.earth).length >= want) return; g.spawnE = EARTH_DARK.every;
   const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'watcher', 'giant'] : into > 30 ? ['walker', 'walker', 'runner', 'watcher'] : ['walker', 'walker', 'runner'];
