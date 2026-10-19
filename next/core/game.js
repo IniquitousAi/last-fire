@@ -1,4 +1,5 @@
 import { newRecord, sample, noteBank, noteShot, summarize } from './habits.js';
+import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHaveLantern, morale, CAMP } from './camp.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
 // so the browser, the robots and the daemon all run this one file. Every system draws from its own named random stream.
 // Units: meters and seconds. The valley is SIZE x SIZE, the fire at its middle.
@@ -153,6 +154,7 @@ export function linkNetwork(g) {   // (which nodes are lit: walk outward from th
   while (open.length) { const a = open.pop(); for (const n of g.nodes) if (!n.lit && n.hp > 0 && Math.hypot(n.x - a.x, n.z - a.z) <= a.reach) { n.lit = true; if (NODE[n.kind].reach) open.push({ x: n.x, z: n.z, reach: NODE[n.kind].reach }); } }
 }
 export function placeNode(g, kind, x, z, by) {
+  { const q = g.players.find(q => q.id === by); if (kind === 'lamp' && q && q.name && !q.bot && !econ.lamps(g, q.name)) return null; }   // (more than a day behind on dues: the camp hands out no lamps)
   const K = NODE[kind]; if (!K) return null; const who = (g.players.find(q => q.id === by) || {}).name || '', n = { id: g.nextId++, kind, x, z, hp: K.hp, lit: false, by, who: who.slice(0, 12), n: g.night };   /* (the world keeps your friends: a node remembers who built it and when) */ g.nodes.push(n); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'node', kind, Math.round(x), Math.round(z)]); return n;
 }
 export function lightAt(g, x, z, noGlow) {   // (noGlow: leave out the glow players carry, for 'is this place lit')   // (0 in the dark, 1 at the heart of a light)
@@ -175,7 +177,8 @@ export const TRACER = { every: 4, life: 0.35, width: 1.8, len: 40 };
 export function fired(g, p, ox, oz, dx, dz) { p.shots = (p.shots || 0) + 1; if (p.shots % TRACER.every) return false; const L = Math.hypot(dx, dz) || 1; (g.tracers = g.tracers || []).push({ ax: ox, az: oz, bx: ox + dx / L * TRACER.len, bz: oz + dz / L * TRACER.len, t: TRACER.life }); return true; }
 // the decoy flare (queue 31, from the shielded-box test): a burning light you throw; it lights where it lands and pulls the hunt to it
 export const FLARE = { cost: 10, life: 12, r: 6.5, reach: 16, pull: 18, burn: 45 };
-export function throwFlare(g, p, x, z) { if (!p || p.ember || p.carried < FLARE.cost || Math.hypot(x - p.x, z - p.z) > FLARE.reach) return false; p.carried -= FLARE.cost; (g.flares = g.flares || []).push({ x, z, t: FLARE.life, earth: onEarth(p) }); g.log.push([+g.t.toFixed(2), 'flare', p.id]); return true; }
+export function throwFlare(g, p, x, z) { const cost = flareCost(g, p); if (!p || p.ember || p.carried < cost || Math.hypot(x - p.x, z - p.z) > FLARE.reach) return false; p.carried -= cost; (g.flares = g.flares || []).push({ x, z, t: FLARE.life, earth: onEarth(p) }); g.log.push([+g.t.toFixed(2), 'flare', p.id]); return true; }
+export function flareCost(g, p) { return p && p.name && !p.bot && g.econ ? Math.round(econ.price(g, p.name, FLARE.cost)) : FLARE.cost; }   // (behind on dues, the camp's flares cost more)
 export const SOLID_AT = 0.02;   // (the dark has no shape of its own: out of every light it is smoke, and shots pass through; light makes it commit to a shape you can kill. PLAN-SPACE.md)
 export const solid = (g, k) => lightAt(g, k.x, k.z) > (g.solidAt ?? SOLID_AT);   /* (g.solidAt: the simulator turns the rule off for its control) */
 export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
@@ -209,6 +212,7 @@ export function step(g, dt) {
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
   if ((ph === 'night' || ph === 'dusk') && Math.floor(g.t) !== Math.floor(g.t - dt)) sample(g.rec, g, g.fire.x, g.fire.z);
+  if (Math.floor(g.t) !== Math.floor(g.t - dt)) { g.seenToday = g.seenToday || []; for (const p of g.players) if (p.name && !p.bot && !g.seenToday.includes(p.name)) g.seenToday.push(p.name); }
   if (Math.floor(g.t * 2) !== Math.floor((g.t - dt) * 2)) for (const p of g.players) if (!p.ember) { (p.trail = p.trail || []).push([+p.x.toFixed(1), +p.z.toFixed(1)]); if (p.trail.length > 20) p.trail.shift(); }
   if (g.traces && g.traces.length) { for (const t of g.traces) t.t -= dt; g.traces = g.traces.filter(t => t.t > 0); }
   if (Math.floor(g.t) !== Math.floor(g.t - dt)) { g.gaze = g.gaze || {}; for (const k of g.hollow) { if (k.dead) continue; for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz); if (d < 40 && d > 0.1 && (-Math.sin(p.yaw || 0) * dx - Math.cos(p.yaw || 0) * dz) / d > 0.9) { g.gaze[k.kind] = (g.gaze[k.kind] || 0) + 1; break; } } } }
@@ -221,7 +225,7 @@ export function step(g, dt) {
     if (p.pack.length && Math.hypot(p.x - BAY.x, p.z - BAY.z) < 5) { for (const k of p.pack) g.stash[k] = (g.stash[k] || 0) + 1; g.log.push([+g.t.toFixed(2), 'stash', p.id, p.pack.length]); p.pack = []; } }
   if (g.parts.some(q => q.taken)) g.parts = g.parts.filter(q => !q.taken);
   for (const p of g.players) {
-    if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); if (p.name && !p.bot) (g.dues = g.dues || {})[p.name] = Math.round((g.dues[p.name] || 0) + p.carried); g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
+    if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); if (p.name && !p.bot) { (g.dues = g.dues || {})[p.name] = Math.round((g.dues[p.name] || 0) + p.carried); const pp = person(g, p.name); pp.own += p.carried; pp.gathered += p.carried; payDues(campOf(g), p.name, p.carried); } g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
     p.hurtT = Math.max(0, p.hurtT - dt); p.calm = p.hurtT > 0 ? 0 : (p.calm || 0) + dt; if (!p.ember && p.calm > 4) p.hp = Math.min(100, p.hp + dt * 8);   // (four quiet seconds and you get your breath back)
     if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) { e.x = p.x; e.z = p.z; if (Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f) * 0.6 || (g.earth && Math.hypot(p.x - EARTH.x, p.z - EARTH.z) < 3.5)) { e.t += dt; if (e.t >= 3) revive(g, e); } else e.t = 0; } else p.carrying = null; }   // (the fire takes three seconds to rekindle someone: hold their Ember near it)
     else if (!p.ember) for (const e of g.embers) if (!e.held && Math.hypot(p.x - e.x, p.z - e.z) < 1.5) { e.held = p.id; p.carrying = e.id; }
@@ -234,7 +238,7 @@ export function mark(g, k, x, z, who) { g.marks.push({ k, x: Math.round(x * 10) 
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, learned: g.learned || {}, sites: g.sites || {}, voice: g.voice || {}, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, learned: g.learned || {}, econ: g.econ ? { day: g.econ.day, pool: g.econ.pool, people: g.econ.people } : null, sites: g.sites || {}, voice: g.voice || {}, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
@@ -248,6 +252,7 @@ export function loadWorld(d) {
   if (d.theories && typeof d.theories === 'object' && Object.keys(THEORIES).every(k => ok(d.theories[k]))) { g.theories = {}; for (const k of Object.keys(THEORIES)) g.theories[k] = Math.max(0.01, Math.min(0.85, d.theories[k])); }
   g.gaze = {}; if (d.gaze && typeof d.gaze === 'object') for (const k of Object.keys(KINDS)) if (ok(d.gaze[k]) && d.gaze[k] >= 0) g.gaze[k] = Math.round(d.gaze[k]);
   g.voice = {}; if (d.voice && typeof d.voice === 'object') for (const [k, v] of Object.entries(d.voice).slice(0, 16)) if (k.length <= 24 && Array.isArray(v)) g.voice[k] = v.filter(l => typeof l === 'string').map(l => l.replace(/[<>&]/g, '').slice(0, 70)).slice(0, 12);
+  if (d.econ && typeof d.econ === 'object' && d.econ.people && typeof d.econ.people === 'object') { const c = campOf(g); c.day = d.econ.day | 0; c.pool = ok(d.econ.pool) ? d.econ.pool : 0; for (const [n, v] of Object.entries(d.econ.people).slice(0, 32)) if (n.length <= 24 && v && [v.paid, v.owed].every(ok)) c.people[n] = { paid: v.paid, owed: v.owed, own: ok(v.own) ? v.own : 0, spent: 0, power: 0, gathered: ok(v.gathered) ? v.gathered : 0, given: 0, days: v.days | 0 }; }
   g.learned = {}; if (d.learned && typeof d.learned === 'object') for (const k of PART_ORDER) if (d.learned[k]) g.learned[k] = 1;
   g.sites = {}; if (d.sites && typeof d.sites === 'object') for (const k of Object.keys(SITES)) { const v = d.sites[k]; if (v && [v.trips, v.parts, v.cells].every(ok)) g.sites[k] = { trips: v.trips | 0, parts: v.parts | 0, cells: v.cells | 0 }; }
   g.dues = {}; if (d.dues && typeof d.dues === 'object') for (const [k, v] of Object.entries(d.dues).slice(0, 32)) if (typeof k === 'string' && k.length <= 24 && ok(v) && v >= 0) g.dues[k] = Math.round(v);
@@ -274,7 +279,13 @@ export function evidence(g, toward, k = 1.12) {   // (one find nudges one theory
   const t = g.theories = g.theories || { mind: 0.25, creatures: 0.25, us: 0.25, heads: 0.25 }; t[toward] *= k; let sum = 0; for (const x in t) sum += t[x]; for (const x in t) t[x] = Math.min(0.85, t[x] / sum);
 }
 export function tripOdds(g) { const h = g.history.slice(-3), n = Math.max(1, g.players.length); if (!h.length) return 0.85; const fallRate = h.reduce((s, x) => s + x.falls, 0) / (h.length * n); return Math.max(0.72, Math.min(0.95, 0.95 - fallRate * 0.4)); }
-function campTrips(g) {
+// the camp economy, live (queue 47; core/camp.js tuned 9 of 9 by sim/camp_sim.mjs): the fire eats 120 light a day, split between whoever was
+// here; banking pays your share; standing is paid minus owed, remembered; behind, prices rise and the camp hands out no lamps
+export function campOf(g) { return g.econ = g.econ || newCamp([]); }
+export function person(g, name) { const c = campOf(g); return c.people[name] = c.people[name] || { paid: 0, owed: 0, own: 0, spent: 0, power: 0, gathered: 0, given: 0, days: 0 }; }
+export const econ = { standing: (g, name) => standing(person(g, name)), behind: (g, name) => daysBehind(campOf(g), person(g, name)), price: (g, name, base) => priceOf(campOf(g), person(g, name), base), lamps: (g, name) => mayHaveLantern(campOf(g), person(g, name)), morale: g => morale(campOf(g)), burn: CAMP.burnPerDay };
+function campDues(g) { const here = {}; for (const n of g.seenToday || []) { person(g, n); here[n] = 1; } if (Object.keys(here).length) campDay(campOf(g), here); g.seenToday = g.players.filter(q => q.name && !q.bot).map(q => q.name); }
+function campTrips(g) { campDues(g);
   g.lost = g.lost || []; const r = stream(g.seed, 'camp-' + g.night);
   if (g.out) { const back = r() < tripOdds(g); if (!back) { g.lost.push(g.out.who); evidence(g, 'us', 1.15); } g.log.push([+g.t.toFixed(2), back ? 'returned' : 'lost', g.out.who]); g.out = null; return; }
   const free = CAMP_OUT.filter(w => !g.lost.includes(w)); if (free.length && r() < 0.3) { g.out = { who: free[Math.floor(r() * free.length)], night: g.night }; g.log.push([+g.t.toFixed(2), 'goes', g.out.who]); }
