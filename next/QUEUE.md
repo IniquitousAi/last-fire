@@ -75,6 +75,7 @@ Claude picks the order by the bottleneck: what he will see first and most.
 65. **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
 66. **(SHIPPED v123: about 102 to 73)** **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
 67. **Bold and confident UI** (his ask: the Reactor is the bar, DESIGN.md's lessons): three rough versions of the HUD and home screen with heavy numbers and status chips; saturated color only on the numbers and words that matter, keys and panels dark matte and heavy (his v115 correction); he picks one.
+68. **The breach shows before it pours** (INNOVATION.md 5A's unbuilt pass line): when the flood picks the dimmest gap, the dark there visibly bulges and the motion pings point to it at least 2 s before the rush. Robot test: warning lead time 2 s or more on 95% of breaches, and breaches still land on the weakest light. (added when items 64 and 66 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
