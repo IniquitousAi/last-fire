@@ -33,7 +33,8 @@ export function applyLook(n, ctx) {
   // ---- the ground: the full 2K PBR sets, at the same world scale the game already used (0.22 and 0.15 repeats a meter). Packed offline to
   // halve the reads: AO baked into the color (as mix(1, ao, 0.85)), roughness in the normal map's blue (z is rebuilt). Only the set a pixel
   // shows is read: the two stones blend in a narrow band, so most pixels read 2 textures, not 4
-  const G = { uRock: tex('lf_gray_rocks_colao_2k.jpg', true), uGN: tex('lf_gray_rocks_nrm_rough_2k.jpg'), uDark: tex('lf_rock035_colao_2k.jpg', true), uRN: tex('lf_rock035_nrm_rough_2k.jpg') };
+  /* (A2 second pass: the big gray_rocks cobble tiled visibly at eye level; the ground is now ambientCG Gravel023 (CC0, fine dark gravel, normal and roughness packed like the others) with its UVs warped by slow noise, over Rock035 patches) */
+  const G = { uRock: tex('lf_gravel023_colao_1k.jpg', true), uGN: tex('lf_gravel023_nrm_rough_1k.jpg'), uDark: tex('lf_rock035_colao_2k.jpg', true), uRN: tex('lf_rock035_nrm_rough_2k.jpg') };
   const prevGround = groundMat.onBeforeCompile;
   if (!OFF.has('ground')) groundMat.onBeforeCompile = (sh, r) => {
     prevGround(sh, r);
@@ -43,9 +44,9 @@ export function applyLook(n, ctx) {
     // the old ground multiplied the photo by three octaves of value noise (1.7 and 7 cycles a meter): that smear over the real stone was the mud
     f = f.replace(/diffuseColor\.rgb \*= 0\.55 \+ gn\(vW \* 0\.35\) \* 0\.35 \+ gn\(vW \* 1\.7\) \* 0\.3 \+ gn\(vW \* 7\.0\) \* 0\.2;/, 'diffuseColor.rgb *= 0.8 + gn(vW * 0.35) * 0.3;');
     f = f.replace(/vec3 rk = mix\(texture2D\(uRock, vW\.xz \* 0\.22\)\.rgb, texture2D\(uDark, vW\.xz \* 0\.15\)\.rgb \* 1\.3, smoothstep\(0\.35, 0\.65, gn\(vW \* 0\.05\)\)\);/, `
-      float gM = smoothstep(0.35, 0.65, gn(vW * 0.05)); vec2 gU1 = vW.xz * 0.22, gU2 = vW.xz * 0.15, d1x = dFdx(gU1), d1y = dFdy(gU1), d2x = dFdx(gU2), d2y = dFdy(gU2);
+      float gM = smoothstep(0.35, 0.65, gn(vW * 0.05)); vec2 gU1 = vW.xz * 0.6 + vec2(gn(vW * 0.09), gn(vW * 0.09 + 7.3)) * 2.2, gU2 = vW.xz * 0.15, d1x = dFdx(gU1), d1y = dFdy(gU1), d2x = dFdx(gU2), d2y = dFdy(gU2);
       vec3 rk = vec3(0.0); vec4 gNR = vec4(0.0);
-      if (gM < 0.999) { float w = 1.0 - gM; rk += textureGrad(uRock, gU1, d1x, d1y).rgb * w; gNR += textureGrad(uGN, gU1, d1x, d1y) * w; }
+      if (gM < 0.999) { float w = 1.0 - gM; rk += textureGrad(uRock, gU1, d1x, d1y).rgb * w * 0.56; gNR += textureGrad(uGN, gU1, d1x, d1y) * w; }
       if (gM > 0.001) { rk += textureGrad(uDark, gU2, d2x, d2y).rgb * 1.3 * gM; gNR += textureGrad(uRN, gU2, d2x, d2y) * gM; }
       vec3 gTN = vec3(gNR.xy * 2.0 - 1.0, 0.0); gTN.z = sqrt(max(0.0, 1.0 - dot(gTN.xy, gTN.xy))); float gRg = gNR.b;
       float gWet = ${R.wet ? 'smoothstep(0.5, 0.62, gn(vW * 0.21))' : '0.0'};`);

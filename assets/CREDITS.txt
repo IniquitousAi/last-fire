@@ -14,3 +14,5 @@ assets/m/dark/thornwalker.glb, skitter.glb, hunched.glb, goliath.glb   our own w
 next/ref/creature-front.png, creature-side.png   his reference cutouts (his Grok sheet). Picture-to-3D on Hugging Face (TRELLIS, TRELLIS.2) was tried 2026-10-19 and refused: free quota spent.
 assets/ph/modular_urban_apartments_facade/*                    Poly Haven (polyhaven.com), "Modular Urban Apartments Facade" by James Ray Cock, CC0 (the dead city outside the Earth walls, next/client/ruins.js; also assets/ph/street_lamp_02 for posts and stands)
 assets/camp/tent.glb, man.glb, soldier2.glb                   Quaternius (quaternius.com), via poly.pizza, CC0 (Tent 5Q7qIrfDxA, Man HMnuH5geEG, Soldier 5EGWBMpuXq), added 2026-10-19: the camp's sleeping tents and two camp people (the Clerk, a Council member); colors pulled to the north star's dark grays in next/client/camp.js
+
+A2 second pass (2026-10-19): ambientCG Gravel023 (CC0, ground; repacked as assets/tex/lf_gravel023_*), Poly Haven metal_office_desk, metal_tool_chest, old_military_compressor (CC0 models in assets/ph/).

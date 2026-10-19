@@ -38,8 +38,8 @@
   #hit.on, #hit.head, #hit.shell, #hit.kill { opacity: 1; animation: hitTick .14s ease-out; } #hit.shell i { border-color: var(--neon); } #hit.head i { width: 11px; height: 11px; }
   #hit.kill { animation: hitTickK .3s ease-out; } #hit.kill i { border-color: var(--red); border-width: 0 0 4px 4px; width: 12px; height: 12px; }
   @keyframes hitTick { from { transform: scale(1.7); } to { transform: scale(1); } } @keyframes hitTickK { from { transform: scale(2.1); } 40% { transform: scale(1); } to { transform: scale(1); } }
-  #light { position: fixed; left: 36%; max-width: 260px; bottom: 22px; transform: translateX(-50%); text-align: center; text-shadow: 0 1px 3px #000; }
-  #light b { display: block; font: 500 44px/1 "Barlow Condensed", sans-serif; color: var(--neon); } #light span { font-size: 15px; color: var(--meta); letter-spacing: .14em; }
+  #light { position: fixed; left: 24px; max-width: 232px; bottom: 92px; text-align: left; text-shadow: 0 1px 3px #000; }   /* (A2 second pass: the carried-light readout sits on the left edge of the YOUR LIGHT box, directly above it, clear of the gun at every size) */
+  #light b { display: block; font: 500 34px/1 "Barlow Condensed", sans-serif; color: var(--neon); } #light span { font-size: 14px; line-height: 1.35; color: var(--meta); letter-spacing: .14em; }
   #fireHud { position: fixed; left: 18px; top: 14px; text-shadow: 0 1px 3px #000; } #fireHud b { font: 500 26px "Barlow Condensed", sans-serif; color: var(--violet); } #fireHud small { display: block; color: var(--meta); font-size: 15px; }
   #phase { position: fixed; right: 18px; top: 14px; text-align: right; text-shadow: 0 1px 3px #000; } #phase b { font: 500 24px "Barlow Condensed", sans-serif; } #phase small { display: block; color: var(--meta); font-size: 15px; }
   #hp { position: fixed; left: 18px; bottom: 22px; width: 200px; } #hp span { font-size: 13px; letter-spacing: .16em; color: var(--meta); } #hp div { height: 5px; background: #ffffff1c; border-radius: 3px; margin-top: 3px; } #hp i { display: block; height: 100%; background: var(--red); border-radius: 3px; }

@@ -26,7 +26,7 @@ export class Strange {
     const k = strangeAt(me.x, me.z), s = skyOf(k), D = 700, ang = 0.9;   // (the disc hangs in the same part of the sky always: west, 28 degrees up)
     const el = 0.49, dx = Math.cos(ang) * Math.cos(el), dz = Math.sin(ang) * Math.cos(el), dy = Math.sin(el), r = D * Math.tan(s.disc / 2);
     this.sky.position.set(camera.position.x + dx * D, camera.position.y + dy * D, camera.position.z + dz * D); this.sky.lookAt(camera.position);
-    this.planet.scale.setScalar(r); this.ring.scale.setScalar(r); this.ring.rotation.set(Math.PI / 2 - s.tilt * 0.5, 0.2, 0); this.sky.visible = true;
+    this.planet.scale.setScalar(r); this.ring.scale.setScalar(r); this.ring.rotation.set(Math.PI / 2 - s.tilt * 0.5, 0.2, 0); this.sky.visible = false;   /* (A2 second pass: the ringed disc hung 28 degrees up in clear sky, a floating glowing ball; his rule says nothing floats, so it is not drawn; the spires on the horizon stay) */
     this.planet.material.color.setScalar(0.45 + 0.55 * k + 0.1 * Math.sin(t / 40));   // (dim when near home: a thing you could miss; clear when far)
     if (Math.hypot(me.x - this.at.x, me.z - this.at.z) > 30) {   // (the spires are recomputed only when you have moved 30 m)
       this.at = { x: me.x, z: me.z }; const list = spiresNear(me.x, me.z, 48); this.spires.count = list.length;

@@ -14,7 +14,7 @@ const GUARD_GLSL = `#include <map_fragment>
 { vec3 c = diffuseColor.rgb; float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn, sat = d / max(mx, 1e-4); float h = 0.0;
   if (d > 1e-4) { h = mx == c.r ? mod((c.g - c.b) / d, 6.0) : (mx == c.g ? (c.b - c.r) / d + 2.0 : (c.r - c.g) / d + 4.0); } h *= 60.0;
   float warm = (h < 175.0 || h > 340.0) ? smoothstep(0.12, 0.3, sat) : 0.0; float l = dot(c, vec3(0.299, 0.587, 0.114));
-  diffuseColor.rgb = mix(c, vec3(0.78, 0.86, 1.0) * l * 1.04, warm); }`;
+  diffuseColor.rgb = mix(c, vec3(0.78, 0.86, 1.0) * l * 1.04, warm); diffuseColor.rgb *= 1.0 - 0.5 * smoothstep(0.4, 0.75, l); }`;   /* (and no prop reads as bright white: steel gray tops off at about half) */
 const GUARDED = new WeakSet();
 export function paletteGuard(root) {
   root.traverse(q => { if (!q.isMesh) return; for (const m of [].concat(q.material)) { if (!m || GUARDED.has(m) || !m.isMeshStandardMaterial) continue; GUARDED.add(m);
@@ -329,8 +329,8 @@ export class Camp {
     const putH = (url, x, z, h, ry = 0) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(), k = h / m.s.y; o.scale.setScalar(k); o.position.set(x - m.c.x * k, land(x, z) - m.y0 * k, z - m.c.z * k); o.rotation.y = ry; this.scene.add(o); return o; });   /* (a real scan stood to a given height: poles and posts are Poly Haven street lamps, not code boxes, 2026-10-19) */
     const LAMPPOST = 'ph/street_lamp_02/street_lamp_02_1k.gltf';
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
-    const FEN = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_double', POST = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_post', BAR = 'ph/Barrel_01/Barrel_01_1k.gltf', CRATE = 'ph/old_military_crate/old_military_crate_1k.gltf', PH = n => `ph/${n}/${n}_1k.gltf`;   // (Poly Haven photo scans, CC0: the Kenney toy kit and the code boxes looked like a placeholder up close, his eyes 2026-10-19)
-    const batch = new Set([FEN, POST, 'kit/stone.glb', BAR, CRATE, 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
+    const FEN = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_double', POST = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_post', BAR = 'ph/Barrel_01/Barrel_01_1k.gltf', PH = n => `ph/${n}/${n}_1k.gltf`;   // (Poly Haven photo scans, CC0: the Kenney toy kit and the code boxes looked like a placeholder up close, his eyes 2026-10-19)
+    const batch = new Set([FEN, POST, 'kit/stone.glb', BAR, 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
     const fold = () => { const groups = new Map(); for (const o of mine) { this.scene.remove(o); o.updateMatrixWorld(true); o.traverse(q => { if (!q.isMesh) return; const k = q.geometry.uuid + '|' + q.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(q); }); }
       for (const list of groups.values()) { const f = list[0], im = new THREE.InstancedMesh(f.geometry, f.material, list.length); list.forEach((q, i) => im.setMatrixAt(i, q.matrixWorld)); im.castShadow = f.castShadow; im.receiveShadow = f.receiveShadow; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); this.scene.add(im); } };
     const face = (x, z) => Math.atan2(-x, -z);
@@ -355,17 +355,17 @@ export class Camp {
           o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0xb9a8ff); q.material.emissiveIntensity = ei; mats.push(q.material); } }); this.scene.add(o); }).catch(() => {}); } (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (the bunk lantern is the real CC0 lantern model, its glow driven by the dues like before)
     // the workshop: a bench, planks, barrels and a chest by the wall
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
-    { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }
+    { const [x, z] = W(32, 15); put(PH('metal_office_desk'), x, z, 2.0, face(x, z)); }
     { const [x, z] = W(40, 17); put('kit/planks.glb', x, z, 2.0, 0.4); }
     for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put(BAR, x, z, 0.62, deg).then(o => o && o.traverse(q => { if (q.isMesh && !q.material.userData.steel) { q.material = q.material.clone(); q.material.color.setHex(0x5a6070); q.material.userData.steel = 1; paletteGuard(q); } })); }   // (the scan is fire-red; red means danger here, so the paint is weathered steel)
-    { const [x, z] = W(47, 16.5); put('kit/chest.glb', x, z, 1.1, face(x, z)); }
-    { const [x, z] = W(55, 17.2); put(CRATE, x, z, 1.7, 0.3); }
+    { const [x, z] = W(47, 16.5); put(PH('metal_tool_chest'), x, z, 1.0, face(x, z)); }
+    { const [x, z] = W(55, 17.2); put(PH('ammo_box'), x, z, 0.9, 0.3); }
     // the store: metal walls by the wall, the camp's stock behind them
     { const [x, z] = W(-15, 17.5); put('kit/structure-metal-wall.glb', x, z, 3.4, face(x, z)); }
     { const [x, z] = W(-3, 17.8); put('kit/structure-metal-wall.glb', x, z, 3.4, face(x, z)); }
-    { const [x, z] = W(-9, 19.2); put(CRATE, x, z, 1.7, 0.2); }
+    { const [x, z] = W(-9, 19.2); put(PH('ammo_box'), x, z, 0.9, 0.2); }
     { const [x, z] = W(-21, 18.6); put(PH('worn_metal_rack'), x, z, 0.95, face(x, z)); }
-    { const [x, z] = W(4, 18.4); put(PH('portable_generator'), x, z, 0.85, face(x, z) + 0.4); }
+    { const [x, z] = W(4, 18.4); put(PH('old_military_compressor'), x, z, 1.1, face(x, z) + 0.4); }
     { const [x, z] = W(84, 18.8); put(PH('utility_box_01'), x, z, 0.55, face(x, z)); }
     // the workshop's leftovers and the tents' stove: the camp is lived in
     for (const [deg, r, n, sz] of [[28, 16.2, 'metal_jerrycan', 0.36], [29, 16.5, 'metal_jerrycan', 0.36], [44, 18.4, 'propane_tank', 0.36], [60, 18.6, 'old_tyre', 0.62], [62, 18.9, 'old_tyre', 0.62], [-28, 18.2, 'propane_tank', 0.36]]) { const [x, z] = W(deg, r); put(PH(n), x, z, sz, deg); }
