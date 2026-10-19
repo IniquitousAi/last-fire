@@ -6,8 +6,8 @@
 // the same bark only (no needle cards), past 240 m nothing; the instance sets are rebuilt when you have moved 25 m. Drawn only on Earth.
 import * as THREE from 'three';
 import { Tree } from '../../vendor/ez-tree/ez-tree.es.js';
-import { TREES, EARTH } from '../core/game.js?v=180';
-import { WILDS } from '../core/wilds.js?v=180';
+import { TREES, EARTH } from '../core/game.js?v=181';
+import { WILDS } from '../core/wilds.js?v=181';
 
 const BARK = 0x06070b, NEEDLE = 0x090a10, GREEN = 0x2b6a3c;
 // variant recipes: preset to start from, seed, and what to change; each kind of core tree picks among its variants by its place in the list

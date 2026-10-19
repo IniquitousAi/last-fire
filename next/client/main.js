@@ -1,47 +1,47 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=180';
-import { Ambience } from './ambience.js?v=180';
-import { Camp, BOARD } from './camp.js?v=180';
-import { Guide } from './guide.js?v=180';
-import { buildSites } from './earthsite.js?v=180';
-import { RiftView, riftGround } from './rift.js?v=180';
-import { FogBank } from './fogbank.js?v=180';
-import { Truck } from './truck.js?v=180';
-import { ShipView } from './shipview.js?v=180';
-import { Crew } from './crew.js?v=180';
-import { Hands } from './hands.js?v=180';
-import { FpRig } from './fprig.js?v=180';
-import { farStep } from './farsound.js?v=180';
-import { OpticsView } from './optics.js?v=180';
-import { Wrist } from './wrist.js?v=180';
-import { FireCore } from './firecore.js?v=180';
-import { startEars } from './ears.js?v=180';
+import * as C from '../core/game.js?v=181';
+import { Ambience } from './ambience.js?v=181';
+import { Camp, BOARD } from './camp.js?v=181';
+import { Guide } from './guide.js?v=181';
+import { buildSites } from './earthsite.js?v=181';
+import { RiftView, riftGround } from './rift.js?v=181';
+import { FogBank } from './fogbank.js?v=181';
+import { Truck } from './truck.js?v=181';
+import { ShipView } from './shipview.js?v=181';
+import { Crew } from './crew.js?v=181';
+import { Hands } from './hands.js?v=181';
+import { FpRig } from './fprig.js?v=181';
+import { farStep } from './farsound.js?v=181';
+import { OpticsView } from './optics.js?v=181';
+import { Wrist } from './wrist.js?v=181';
+import { FireCore } from './firecore.js?v=181';
+import { startEars } from './ears.js?v=181';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=180';
-import { FriendVoice } from './friendvoice.js?v=180';
-import { crewFrom } from '../core/habits.js?v=180';
-import { HudLook } from './hudlook.js?v=180';
-import { UI } from './uikit.js?v=180';
-import { Rain } from './rain.js?v=180';
-import { Immersion } from './immersion.js?v=180';
-import { codexHtml } from './codex.js?v=180';
-import { VisorRain } from './visor.js?v=180';
-import { applyLook } from './looks.js?v=180';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=180';
-import { sound, GUNS } from '../../src/combat.js?v=180';
-import { FX } from '../../src/fx.js?v=180';
+import { think as friendThink } from './friend.js?v=181';
+import { FriendVoice } from './friendvoice.js?v=181';
+import { crewFrom } from '../core/habits.js?v=181';
+import { HudLook } from './hudlook.js?v=181';
+import { UI } from './uikit.js?v=181';
+import { Rain } from './rain.js?v=181';
+import { Immersion } from './immersion.js?v=181';
+import { codexHtml } from './codex.js?v=181';
+import { VisorRain } from './visor.js?v=181';
+import { applyLook } from './looks.js?v=181';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=181';
+import { sound, GUNS } from '../../src/combat.js?v=181';
+import { FX } from '../../src/fx.js?v=181';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { Creatures } from './creatures.js?v=180';
-import { Impact, smokeHit } from './impact.js?v=180';
+import { Creatures } from './creatures.js?v=181';
+import { Impact, smokeHit } from './impact.js?v=181';
 
 const $ = id => document.getElementById(id);
-const BUILD = 180;   // (this copy's version; ./version.json says the newest)
+const BUILD = 181;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true, moveEras: false };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -799,7 +799,7 @@ $('fbSend').onclick = async () => {
 // ---------------------------------------------------------------- updates: a pop-up when a newer version is out; yes puts you right back where you were
 let updSeen = 0;
 async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || ''); $('upd').hidden = false; } } catch (e) {} }
-setInterval(checkUpdate, location.port === '8093' ? 5000 : 60000);   // (played from his own files: a fix shows up in seconds) setTimeout(checkUpdate, 8000);
+setInterval(checkUpdate, location.port === '8093' ? 5000 : 60000); setTimeout(checkUpdate, 8000);   // (played from his own files: a fix shows up in seconds)
 (async () => {   // (the menu says which version this is; an old copy from the browser's cache swaps itself for the new one)
   $('ver').innerHTML = `<b>VERSION ${BUILD}</b>`;
   try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json();
