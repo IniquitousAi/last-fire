@@ -1,5 +1,8 @@
 # Last Fire: rules for Claude (the game's own home, his pick 2026-10-19)
 
+**Top rule, weighs most (Daniel, 2026-10-19, "put a lot of weight on" it): the game must feel like him.** "I want this game to feel like me a lot. I think eventually I'll be able to clone myself in a digital space. At the very least, it'll repeat my same jokes over and over again and make me laugh." Check every choice against him first (his taste rules and the Twin, his words, his jokes, the Atlas); a great feature that is not him loses to one that is.
+
+
 Daniel's browser co-op survival FPS (three.js, plain JS, GitHub Pages). Live: https://iniquitousai.github.io/last-fire/next/ . Code in `next/`.
 **Claude is the main dev. Daniel only plays (on a controller, to relax) and judges by eye.** Anything he finds that a test or Claude's own
 eyes could have caught first is a miss. Who he is and his wider rules: `../vibe-lab/DANIEL.md`, `../vibe-lab/CLAUDE.md`; this file wins for the game.
