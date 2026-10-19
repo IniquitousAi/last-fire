@@ -225,7 +225,7 @@ export function mark(g, k, x, z, who) { g.marks.push({ k, x: Math.round(x * 10) 
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, sites: g.sites || {}, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, sites: g.sites || {}, voice: g.voice || {}, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
@@ -238,6 +238,7 @@ export function loadWorld(d) {
   for (const q of d.parts || []) if (Array.isArray(q) && PARTS[q[0]] && ok(q[1]) && ok(q[2])) g.parts.push({ id: g.nextId++, kind: q[0], x: q[1], z: q[2] });
   if (d.theories && typeof d.theories === 'object' && Object.keys(THEORIES).every(k => ok(d.theories[k]))) { g.theories = {}; for (const k of Object.keys(THEORIES)) g.theories[k] = Math.max(0.01, Math.min(0.85, d.theories[k])); }
   g.gaze = {}; if (d.gaze && typeof d.gaze === 'object') for (const k of Object.keys(KINDS)) if (ok(d.gaze[k]) && d.gaze[k] >= 0) g.gaze[k] = Math.round(d.gaze[k]);
+  g.voice = {}; if (d.voice && typeof d.voice === 'object') for (const [k, v] of Object.entries(d.voice).slice(0, 16)) if (k.length <= 24 && Array.isArray(v)) g.voice[k] = v.filter(l => typeof l === 'string').map(l => l.replace(/[<>&]/g, '').slice(0, 70)).slice(0, 12);
   g.sites = {}; if (d.sites && typeof d.sites === 'object') for (const k of Object.keys(SITES)) { const v = d.sites[k]; if (v && [v.trips, v.parts, v.cells].every(ok)) g.sites[k] = { trips: v.trips | 0, parts: v.parts | 0, cells: v.cells | 0 }; }
   g.dues = {}; if (d.dues && typeof d.dues === 'object') for (const [k, v] of Object.entries(d.dues).slice(0, 32)) if (typeof k === 'string' && k.length <= 24 && ok(v) && v >= 0) g.dues[k] = Math.round(v);
   g.lost = Array.isArray(d.lost) ? d.lost.filter(w => CAMP_OUT.includes(w)) : []; g.out = d.out && CAMP_OUT.includes(d.out.who) ? { who: d.out.who, night: d.out.night | 0 } : null;

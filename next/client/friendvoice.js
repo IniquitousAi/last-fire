@@ -32,9 +32,9 @@ const LINES = {
   },
 };
 export class FriendVoice {
-  constructor(say) { this.say = say; this.heard = new Set(); this.quiet = 0; }
+  constructor(say, own) { this.say = say; this.own = own; this.heard = new Set(); this.quiet = 0; }   // (own: the person's own typed words, when they gave any)
   speak(p, event) {   // (one line at most every 6 s per friend: a friend who never stops talking is not a friend)
-    if ((p.voiceT || 0) > 0) return; const m = manner(p.style), pool = (LINES[event] || {})[m]; if (!pool) return;
+    if ((p.voiceT || 0) > 0) return; const mine = this.own && this.own(p); if (mine) { p.voiceT = 6; this.say(p.name, mine); return; } const m = manner(p.style), pool = (LINES[event] || {})[m]; if (!pool) return;
     const fresh = pool.filter(l => !this.heard.has(p.id + l)), line = (fresh.length ? fresh : pool)[Math.floor(Math.random() * (fresh.length || pool.length))];
     this.heard.add(p.id + line); p.voiceT = 6; this.say(p.name, line);
   }

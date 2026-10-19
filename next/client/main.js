@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=92';
-import { Ambience } from './ambience.js?v=92';
-import { Camp, BOARD } from './camp.js?v=92';
-import { Guide } from './guide.js?v=92';
-import { buildSites } from './earthsite.js?v=92';
-import { Truck } from './truck.js?v=92';
-import { Wrist } from './wrist.js?v=92';
-import { FireCore } from './firecore.js?v=92';
+import * as C from '../core/game.js?v=93';
+import { Ambience } from './ambience.js?v=93';
+import { Camp, BOARD } from './camp.js?v=93';
+import { Guide } from './guide.js?v=93';
+import { buildSites } from './earthsite.js?v=93';
+import { Truck } from './truck.js?v=93';
+import { Wrist } from './wrist.js?v=93';
+import { FireCore } from './firecore.js?v=93';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=92';
-import { FriendVoice } from './friendvoice.js?v=92';
-import { crewFrom } from '../core/habits.js?v=92';
-import { HudLook } from './hudlook.js?v=92';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=92';
-import { sound, GUNS } from '../../src/combat.js?v=92';
-import { FX } from '../../src/fx.js?v=92';
+import { think as friendThink } from './friend.js?v=93';
+import { FriendVoice } from './friendvoice.js?v=93';
+import { crewFrom } from '../core/habits.js?v=93';
+import { HudLook } from './hudlook.js?v=93';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=93';
+import { sound, GUNS } from '../../src/combat.js?v=93';
+import { FX } from '../../src/fx.js?v=93';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 92;   // (this copy's version; ./version.json says the newest)
+const BUILD = 93;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -425,7 +425,12 @@ function learnedFriend() {   // (a teammate who plays like someone from your rec
   const p = C.addPlayer(g, id, `${style.name}, learned`); p.bot = true; p.style = style; p.r = C.stream(g.seed, 'friend-' + id); const a = n * 2.4 + 1; p.homeX = g.fire.x + Math.cos(a) * Math.min(style.roam, 30); p.homeZ = g.fire.z + Math.sin(a) * Math.min(style.roam, 30);   /* (the same home the tested robot uses: sim/certify.mjs play) */
   return pick ? `${style.name}, learned from ${(g.history || []).length} recorded nights, is at your fire.` : 'No nights recorded yet, so this one plays like a careful newcomer. After a few nights it plays like you.';
 }
-const fvoice = new FriendVoice((who, line) => wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who));
+// your words (queue 43: 'says some of the same things that he says'): lines a player typed themselves, kept by the host for their learned copy
+const cleanLines = a => (Array.isArray(a) ? a : []).map(l => String(l).replace(/[<>&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 70)).filter(l => l.length >= 2).slice(0, 12);
+$('myLines').value = (SET.myLines || []).join(String.fromCharCode(10)); $('myLines').addEventListener('change', () => { SET.myLines = cleanLines($('myLines').value.split(String.fromCharCode(10))); save(); if (g && me) shareLines(); });
+function shareLines() { if (isHost()) { (g.voice = g.voice || {})[SET.name] = SET.myLines || []; } else if (net) net.send({ t: 'lines', l: SET.myLines || [] }); }
+const fvoice = new FriendVoice((who, line) => wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who), p => ownLine(p));
+function ownLine(p) { const src = (p.style && p.style.name) || '', own = (g.voice || {})[src]; return own && own.length && Math.random() < 0.5 ? own[Math.floor(Math.random() * own.length)] : null; }   // (half the time, their own words)
 function friendHeard(e) {   // (what a learned friend says, from what really happened)
   const bots = g.players.filter(p => p.bot && !p.ember); if (!bots.length) return; const by = id => bots.find(p => p.id === id);
   if (e[1] === 'kill' && by(e[3])) fvoice.speak(by(e[3]), 'kill'); else if (e[1] === 'bank' && by(e[2])) fvoice.speak(by(e[2]), 'bank');
@@ -531,6 +536,7 @@ function onNet(m, from) {
       dirs.forEach((d, n) => { const L = Math.hypot(d[0], d[1], d[2]); if (L < 0.5) return; if (n === 0) C.fired(g, p, m.o[0], m.o[2], d[0] / L, d[2] / L); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 80);
         if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } }); return;
     }
+    if (m.t === 'lines') { if (!bucket(p, 'lines', 0.2, 2)) return; (g.voice = g.voice || {})[p.name] = cleanLines(m.l); return; }
     if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p, C.SITES[m.s] ? m.s : 'city'); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else if (m.k === 'seat') C.nextSeat(g, p); else if (m.k === 'flare' && fin(m.x) && fin(m.z)) C.throwFlare(g, p, m.x, m.z); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; heardShot(m); net.relay(m, from); return; }
     return;
@@ -624,7 +630,7 @@ async function begin(seed, id, saved = null) {
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); },
     stage: () => { if (!isHost()) return; const f = g.fire, a = Math.atan2(me.z - f.z, me.x - f.x) + 0.35, r = C.fireRadius(f) + 7, x = f.x + Math.cos(a) * r, z = f.z + Math.sin(a) * r, K = C.KINDS.walker;
       g.hollow.push({ id: g.nextId++, kind: 'walker', x, z, y: g.land(x, z), yaw: 0, hp: K.hp, max: K.hp, sh: 0, sb: 0, cd: 0, dead: false, speed: 1.1, staged: true }); } });
-  setTimeout(() => guide.start(), 1200);
+  setTimeout(() => guide.start(), 1200); setTimeout(shareLines, 1500);   // (your own words go to whoever hosts, for your learned copy)
   mode = 'play'; $('menu').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
   await ready; prepGun('pistol'); prepGun('ar'); prepGun('shotgun'); prepGun('lmg');
 }
