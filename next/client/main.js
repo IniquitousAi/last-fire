@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=50';
-import { Ambience } from './ambience.js?v=50';
-import { Camp, BOARD } from './camp.js?v=50';
-import { Guide } from './guide.js?v=50';
-import { buildSites } from './earthsite.js?v=50';
-import { Truck } from './truck.js?v=50';
-import { Wrist } from './wrist.js?v=50';
-import { think as friendThink } from './friend.js?v=50';
-import { FriendVoice } from './friendvoice.js?v=50';
-import { crewFrom } from '../core/habits.js?v=50';
-import { HudLook } from './hudlook.js?v=50';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=50';
-import { sound, GUNS } from '../../src/combat.js?v=50';
-import { FX } from '../../src/fx.js?v=50';
+import * as C from '../core/game.js?v=51';
+import { Ambience } from './ambience.js?v=51';
+import { Camp, BOARD } from './camp.js?v=51';
+import { Guide } from './guide.js?v=51';
+import { buildSites } from './earthsite.js?v=51';
+import { Truck } from './truck.js?v=51';
+import { Wrist } from './wrist.js?v=51';
+import { think as friendThink } from './friend.js?v=51';
+import { FriendVoice } from './friendvoice.js?v=51';
+import { crewFrom } from '../core/habits.js?v=51';
+import { HudLook } from './hudlook.js?v=51';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=51';
+import { sound, GUNS } from '../../src/combat.js?v=51';
+import { FX } from '../../src/fx.js?v=51';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 50;   // (this copy's version; ./version.json says the newest)
+const BUILD = 51;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -355,7 +355,7 @@ function frame(now) {
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt); wrist.update(dt); if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); wrist.update(dt); { const k = Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85; if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();

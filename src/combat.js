@@ -32,13 +32,13 @@ export const DROPS = {
 };
 
 // ---------------------------------------------------------------- sound
-let ac = null, out = null, wet = null, volume = 0.8, whirO = null, whirG = null;
+let ac = null, out = null, dark = null, wet = null, volume = 0.8, whirO = null, whirG = null;
 const buf = {};
 function ctx() {
   if (!ac) {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 5; comp.connect(ac.destination);
-    out = ac.createGain(); out.gain.value = volume; out.connect(comp);
+    out = ac.createGain(); out.gain.value = volume; dark = ac.createBiquadFilter(); dark.type = 'lowpass'; dark.frequency.value = 20000; out.connect(dark).connect(comp);   // (dark: the new game muffles the world when you stand out of the light; the old game never touches it)
     const verb = ac.createConvolver(), n = Math.floor(ac.sampleRate * 2.4), ir = ac.createBuffer(2, n, ac.sampleRate);   // (the valley's echo: a long soft tail)
     for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2) * (i < ac.sampleRate * 0.03 ? 0.2 : 1); }
     verb.buffer = ir; wet = ac.createGain(); wet.gain.value = 0.32; wet.connect(verb).connect(out);
@@ -72,6 +72,7 @@ function tone(d, f0, f1, dur, gain, type = 'sine', at = 0) {
   g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(d.node); if (d.send) g.connect(d.send); o.start(t); o.stop(t + dur + 0.02);
 }
 export const sound = {
+  muffle(k) { if (!dark) return; dark.frequency.setTargetAtTime(20000 * Math.pow(800 / 20000, Math.max(0, Math.min(1, k))), ac.currentTime, 0.25); },
   setVolume(v) { volume = v; if (out) out.gain.value = v; },
   wake() { ctx(); },
   // the ears: where you stand and which way you face, every frame
