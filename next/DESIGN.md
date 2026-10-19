@@ -1,5 +1,7 @@
 # Last Fire, rebuilt: the design
 
+**North star (his words, 2026-10-19): "imagine arcane+destiny+maze runner had a baby".** Dark and neon, dualities with push and pull, a world that grows in eras. Lore answers: ANSWERS.md, the 20 questions.
+
 His rules (2026-10-18): hardcore, fun, grown-up, never Minecraft or kid-like. It feels brand new: no mechanic anyone would recognize from another game. Copy only the feelings that make the great ones good. Performance and safety first, then quality of life, then looks.
 
 ## The feelings we want, and the mechanic that makes each one (all ours, all from one rule: light)
