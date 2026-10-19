@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Last Fire looks</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000} canvas{display:block} #tag{position:fixed;left:16px;top:12px;font:500 22px 'Arial Narrow',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 1px 3px #000}</style>
+<script type="importmap">{ "imports": { "three": "../../vendor/three.module.js" } }</script></head>
+<body><div id="tag"></div>
+<script type="module">
+// Three rough looks of one scene, for his eyes only (?look=painterly | grounded | awe). Same camp, same light, same models; only the rendering changes.
+import * as THREE from 'three';
+import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
+import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
+import { makeLand } from '../core/game.js';
+const LOOK = new URLSearchParams(location.search).get('look') || 'painterly';
+document.getElementById('tag').textContent = { painterly: 'A: PAINTERLY (Arcane)', grounded: 'B: GROUNDED (Icarus)', awe: 'C: SCI-FI AWE (Destiny)' }[LOOK];
+const land = makeLand(7), r = new THREE.WebGLRenderer({ antialias: true }); r.setPixelRatio(1); r.setSize(innerWidth, innerHeight); r.outputColorSpace = THREE.SRGBColorSpace;
+r.toneMapping = LOOK === 'painterly' ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping; r.toneMappingExposure = LOOK === 'awe' ? 1.25 : 1.0; document.body.prepend(r.domElement);
+const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 900);
+const FOG = { painterly: [0x0b0820, 0.022], grounded: [0x0a0c10, 0.03], awe: [0x050a22, 0.009] }[LOOK]; scene.fog = new THREE.FogExp2(FOG[0], FOG[1]);
+const toon = (() => { const d = new Uint8Array([40, 120, 255]); const t = new THREE.DataTexture(d, 3, 1, THREE.RedFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+function mat(color, opts = {}) {   // (one material maker per look)
+  if (LOOK === 'painterly') return new THREE.MeshToonMaterial({ color, gradientMap: toon, ...opts });
+  if (LOOK === 'grounded') return new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.05, ...opts });
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.3, ...opts });
+}
+// sky: the ringed disc and nebulae, stronger in awe, flatter in painterly, faint in grounded
+const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { k: { value: { painterly: 0.8, grounded: 0.35, awe: 1.6 }[LOOK] }, steps: { value: LOOK === 'painterly' ? 5 : 0 } },
+  vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: `varying vec3 vD; uniform float k; uniform float steps;
+  float h(vec3 p){ p = fract(p*0.3183+0.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+  float n(vec3 x){ vec3 i=floor(x),f=fract(x); f=f*f*(3.0-2.0*f); return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z); }
+  float fbm(vec3 p){ float a=0.5,s=0.0; for(int i=0;i<5;i++){ s+=a*n(p); p*=2.03; a*=0.5; } return s; }
+  void main(){ vec3 d=normalize(vD); vec3 c=mix(vec3(0.01,0.012,0.04),vec3(0.0,0.0,0.01),clamp(d.y,0.0,1.0));
+    float band=exp(-pow((d.y-0.22+0.3*d.x)*2.4,2.0)); c+=k*band*(vec3(0.08,0.03,0.2)*smoothstep(0.35,0.8,fbm(d*2.6))+vec3(0.0,0.08,0.14)*smoothstep(0.5,0.9,fbm(d*5.0+3.0))+vec3(0.14,0.01,0.1)*smoothstep(0.62,0.95,fbm(d*3.3-7.0)));
+    c+=vec3(0.9)*step(0.9975,h(floor(d*420.0)))*smoothstep(-0.05,0.2,d.y);
+    vec3 e=normalize(vec3(0.15,0.2,-1.0)); float a=acos(clamp(dot(d,e),-1.0,1.0)); c=mix(c,vec3(0.0),smoothstep(0.125,0.12,a)); c+=vec3(0.45,0.6,1.0)*exp(-pow((a-0.128)*150.0,2.0))*k*1.2 + vec3(0.7,0.2,0.9)*exp(-pow((a-0.15)*35.0,2.0))*0.15*k;
+    if (steps > 0.0) c = floor(c*steps*4.0+0.5)/(steps*4.0);
+    gl_FragColor=vec4(c,1.0); }` }));
+scene.add(sky);
+// the land around the camp
+const geo = new THREE.PlaneGeometry(260, 260, 130, 130); geo.rotateX(-Math.PI / 2); const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), y = land(x, z); pos.setY(i, y); const g = LOOK === 'grounded' ? [0.16, 0.17, 0.18] : LOOK === 'awe' ? [0.12, 0.14, 0.2] : [0.18, 0.15, 0.28]; col.set(g, i * 3); }
+geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals(); scene.add(new THREE.Mesh(geo, mat(0xffffff, { vertexColors: true })));
+// light: moonlight, the fire, the neon of the camp's tech and the network
+scene.add(new THREE.HemisphereLight({ painterly: 0x6a5acd, grounded: 0x4a5878, awe: 0x5a78d0 }[LOOK], 0x05050a, { painterly: 0.45, grounded: 0.18, awe: 0.35 }[LOOK]));
+const fire = new THREE.PointLight({ painterly: 0x9fd0ff, grounded: 0xbcd4ff, awe: 0xa8d8ff }[LOOK], { painterly: 60, grounded: 45, awe: 70 }[LOOK], 40, 1.4); fire.position.set(0, land(0, 0) + 1.6, 0); scene.add(fire);
+const flame = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.4, 10), new THREE.MeshBasicMaterial({ color: 0xb8dcff })); flame.position.set(0, land(0, 0) + 0.8, 0); scene.add(flame);
+const neon = (c, w, h, x, z, y0 = 2.6, ry = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.08), new THREE.MeshBasicMaterial({ color: c })); m.position.set(x, land(x, z) + y0, z); m.rotation.y = ry; scene.add(m); const l = new THREE.PointLight(c, LOOK === 'grounded' ? 3 : 8, 9, 1.6); l.position.copy(m.position); scene.add(l); return m; };
+// the odds board: a dark panel with the morning number
+const bc = document.createElement('canvas'); bc.width = 512; bc.height = 320; const bx = bc.getContext('2d'); bx.fillStyle = '#05060b'; bx.fillRect(0, 0, 512, 320); bx.strokeStyle = '#39e6ff'; bx.lineWidth = 6; bx.strokeRect(6, 6, 500, 308);
+bx.fillStyle = '#39e6ff'; bx.font = '500 42px Arial Narrow, sans-serif'; bx.fillText('SURVIVAL TODAY', 30, 70); bx.fillStyle = '#ffffff'; bx.font = '500 120px Arial Narrow, sans-serif'; bx.fillText('81%', 30, 190);
+bx.fillStyle = '#ff6fb1'; bx.font = '400 26px Arial Narrow, sans-serif'; bx.fillText('down 2% since Greg. have a nice day.', 30, 240); bx.fillStyle = '#9aa0c0'; bx.font = '400 22px Arial Narrow, sans-serif'; bx.fillText('past the dark: 0.0000031%', 30, 286);
+const board = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(bc) })); board.material.map.colorSpace = THREE.SRGBColorSpace; board.position.set(-4, land(-4, 3) + 2.4, 3); board.rotation.y = 0.5; scene.add(board);
+neon(0x39e6ff, 3.4, 0.06, -4, 3, 3.3, 0.9); neon(0xff6fb1, 1.6, 0.06, 5, -2, 2.4, -0.6);
+// relays carrying light out, with a faint beam between them
+const relays = [[9, 6], [17, 11], [25, 15]]; let prev = [0, 0];
+for (const [x, z] of relays) { const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2, 0.12), mat(0x30343e)); post.position.set(x, land(x, z) + 1, z); scene.add(post); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), new THREE.MeshBasicMaterial({ color: 0xb9a8ff })); lamp.position.set(x, land(x, z) + 2.1, z); scene.add(lamp);
+  const l = new THREE.PointLight(0xb9a8ff, LOOK === 'grounded' ? 4 : 10, 12, 1.5); l.position.copy(lamp.position); scene.add(l);
+  const a = new THREE.Vector3(prev[0], land(prev[0], prev[1]) + 2.1, prev[1]), b = lamp.position.clone(); const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, a.distanceTo(b), 6), new THREE.MeshBasicMaterial({ color: 0xb9a8ff, transparent: true, opacity: LOOK === 'grounded' ? 0.25 : 0.6 }));
+  beam.position.copy(a).add(b).multiplyScalar(0.5); beam.lookAt(b); beam.rotateX(Math.PI / 2); scene.add(beam); prev = [x, z]; }
+// the camp's pieces (Kenney survival kit, CC0) and the wraiths at the edge (Quaternius, CC0)
+const L = new GLTFLoader(), put = async (url, x, z, s, ry = 0) => { try { const g = await L.loadAsync(url), o = g.scene; o.scale.setScalar(s); o.position.set(x, land(x, z), z); o.rotation.y = ry;
+  if (LOOK === 'painterly') o.traverse(m => { if (m.isMesh) { const src = m.material; m.material = new THREE.MeshToonMaterial({ color: src.color, map: src.map, gradientMap: toon }); } });
+  scene.add(o); return { g, o }; } catch (e) { console.warn(url, e); } };
+await Promise.all([put('../../assets/kit/tent-canvas.glb', -7, -4, 6, 0.6), put('../../assets/kit/tent.glb', 7, -6, 6, -0.4), put('../../assets/kit/workbench.glb', 4, 3, 4.5, 2.4), put('../../assets/kit/barrel.glb', -3, -3, 4), put('../../assets/kit/box-large.glb', 6, 2, 4, 0.3),
+  put('../../assets/kit/signpost.glb', 2, 6, 5, 3.6), put('../../assets/kit/campfire.glb', 0, 0, 4), put('../../assets/kit/fence-fortified.glb', -10, 2, 6, 1.2), put('../../assets/kit/structure-metal-wall.glb', 10, -3, 6, -1.0)]);
+for (const [x, z, ry] of [[-11, -15, 0.5], [3, -21, 0.1], [14, -14, -0.6]]) { const w = await put('../../assets/c/wraith.glb', x, z, 1, ry); if (!w) continue; const b = new THREE.Box3().setFromObject(w.o); w.o.scale.setScalar(3 / b.getSize(new THREE.Vector3()).y);
+  w.o.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); if (/Secondary/.test(m.material.name)) { m.material.color.setHex(0xd8e4ff); m.material.emissive = new THREE.Color(0xd8e4ff); m.material.emissiveIntensity = 2; } else { m.material.color.setHex(0x0a0a12); } } });
+  const mix = new THREE.AnimationMixer(w.o), clip = w.g.animations.find(a => a.name.endsWith('Flying_Idle')); if (clip) { mix.clipAction(clip).play(); mix.update(0.7); } }
+cam.position.set(-2, land(-2, 12) + 3.0, 12); cam.lookAt(2, land(2, -4) + 2.2, -6);
+r.render(scene, cam); window.done = true;
+</script></body></html>
