@@ -19,8 +19,8 @@ export class Guide {
   constructor(scene, ctx) {
     this.ctx = ctx; this.i = -1; this.t = 0; this.base = 0;
     // the line of light where the next thing is (thin, cold, in the world; never on the screen)
-    this.beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 30, 6, 1, true), new THREE.MeshBasicMaterial({ color: 0xff2a8d, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }));
-    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.8, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff2a8d, transparent: true, opacity: 0.7, depthWrite: false }));
+    this.beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 30, 6, 1, true), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.8, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0.7, depthWrite: false }));
     this.beam.visible = this.ring.visible = false; scene.add(this.beam, this.ring);
     const hud = document.getElementById('hud');
     this.box = Object.assign(document.createElement('div'), { id: 'guide' });
@@ -37,7 +37,7 @@ export class Guide {
   go(i) {
     this.i = i; this.t = 0; const S = STEPS[i], g = this.ctx.g(), me = this.ctx.me();
     this.base = g.nodes.length; this.banked = g.stats.banked;
-    this.goal.innerHTML = `<span style="color:#ff2a8d">${i + 1} / ${STEPS.length}</span>&nbsp; ${S.goal}`;
+    this.goal.innerHTML = `<span style="color:#ff4fd8">${i + 1} / ${STEPS.length}</span>&nbsp; ${S.goal}`;
     this.ctx.speak('the Clerk', S.line, 9);
     if (S.id === 'shoot' && this.ctx.stage) this.ctx.stage();   // (the first one is staged: it walks slowly out of the dark into your light, smoke turning solid as it crosses: the rule, taught with no words. INNOVATION.md idea 5)
   }

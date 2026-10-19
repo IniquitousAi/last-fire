@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v117** v115's palette swap undone everywhere (in game too). Earth 15% bigger; its blue rim breaks where the dark has taken it. A ?sky view for UI mockups.
 - **v116** Back to grim and heavy: dark matte keys, saturated pink only on key words (v115's lit outlines missed). Coyote time and a jump buffer (0.15 s each).
 - **v115** Neon accents: the Reactor's saturated hot pink #ff2a8d and electric violet #b026ff everywhere (97 color uses), 2 px outlines.
 - **v114** Real stars (round points, twinkle, rare glints, a dust lane), Earth without shine or cyan, the home view above the hills.

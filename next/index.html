@@ -9,13 +9,13 @@
 <meta name="theme-color" content="#04060c">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
 <style>
-  :root { --ink: #eef0f8; --meta: #c6c8dc; --neon: #ff2a8d; --violet: #c77dff; --pink: #ff3df0; --red: #ff4f6d; --line: #262a44; }
+  :root { --ink: #eef0f8; --meta: #c6c8dc; --neon: #ff4fd8; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
   * { box-sizing: border-box; } [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--ink); font: 400 17px/1.35 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; user-select: none; }
   canvas { display: block; }
   /* every panel is visor glass (his BOOT pick and UI rule): dark, faint scanlines, corner marks, violet on the left, pink on the right (his rule: cyan the least possible), no rounded box */
-  .panel { position: relative; background: repeating-linear-gradient(0deg, rgba(255,42,141,.035) 0 1px, transparent 1px 4px), rgba(3,6,12,.9); border-radius: 0; padding: 24px 26px 20px; }
-  .panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#b026ff, #b026ff) left top / 22px 1.5px no-repeat, linear-gradient(#b026ff, #b026ff) left top / 1.5px 22px no-repeat, linear-gradient(#ff3df0, #ff3df0) right top / 22px 1.5px no-repeat, linear-gradient(#ff3df0, #ff3df0) right top / 1.5px 22px no-repeat, linear-gradient(#b026ff, #b026ff) left bottom / 22px 1.5px no-repeat, linear-gradient(#b026ff, #b026ff) left bottom / 1.5px 22px no-repeat, linear-gradient(#ff3df0, #ff3df0) right bottom / 22px 1.5px no-repeat, linear-gradient(#ff3df0, #ff3df0) right bottom / 1.5px 22px no-repeat; }
+  .panel { position: relative; background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgba(3,6,12,.9); border-radius: 0; padding: 24px 26px 20px; }
+  .panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#7b5cff, #7b5cff) left top / 22px 1.5px no-repeat, linear-gradient(#7b5cff, #7b5cff) left top / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 1.5px 22px no-repeat, linear-gradient(#7b5cff, #7b5cff) left bottom / 22px 1.5px no-repeat, linear-gradient(#7b5cff, #7b5cff) left bottom / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 1.5px 22px no-repeat; }
   .key { display: block; width: 100%; margin: 0 0 10px; padding: 11px 14px 9px; font: 500 19px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0e0f17; border: 1px solid #000; border-radius: 9px; cursor: pointer; text-align: left; box-shadow: 0 0 0 1px #2c2f4a inset; transition: transform .1s; }
   .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
   .key:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--neon) inset; } .key:active { transform: translateY(1px); }
@@ -26,7 +26,7 @@
   #name { width: 100%; margin-bottom: 10px; font: 500 22px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0b0c14; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; outline: none; }
   .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--neon); font-weight: 500; }
   #paused { background: radial-gradient(circle at 50% 50%, #00000060, #000000c0); } #paused .panel { width: min(420px, 100%); }
-  label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--neon); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #ff2a8d; }
+  label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--neon); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #ff4fd8; }
   /* the HUD */
   #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #0009; pointer-events: none; }
   #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
@@ -43,10 +43,10 @@
   .bk small { display: block; font: 400 13px "Barlow Condensed", sans-serif; color: var(--meta); letter-spacing: .02em; } .bk.on { border-color: var(--neon); } .bk.off { opacity: .45; }
   #msg { position: fixed; left: 50%; top: 27%; transform: translateX(-50%); font-size: 21px; text-shadow: 0 1px 3px #000; text-align: center; max-width: 80vw; pointer-events: none; }
   #prompt { position: fixed; left: 0; top: 0; transform: translate(50vw, 60vh) translate(-50%, -100%); font-size: 17px; letter-spacing: .06em; color: #cfeeff; white-space: nowrap; pointer-events: none; padding: 7px 14px 6px;
-    background: repeating-linear-gradient(0deg, rgba(255,42,141,.07) 0 1px, transparent 1px 4px), rgba(4,14,24,.55); }
+    background: repeating-linear-gradient(0deg, rgba(255,79,216,.07) 0 1px, transparent 1px 4px), rgba(4,14,24,.55); }
   #prompt:empty { display: none; }
   /* a holo tag: corner marks only, hung over the thing it belongs to (his UI rule: words are there for a reason in the world) */
-  #prompt::before, #prompt::after { content: ''; position: absolute; width: 10px; height: 10px; border: 1.5px solid #ff2a8d; pointer-events: none; }
+  #prompt::before, #prompt::after { content: ''; position: absolute; width: 10px; height: 10px; border: 1.5px solid #ff4fd8; pointer-events: none; }
   #prompt::before { left: 0; top: 0; border-right: 0; border-bottom: 0; } #prompt::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
   .mark { position: fixed; left: 0; top: 0; padding: 2px 8px; font-size: 15px; letter-spacing: .08em; color: var(--neon); background: #05060bb0; border-radius: 5px; white-space: nowrap; pointer-events: none; } .mark.down { color: var(--red); }
   #room .code { font-size: 18px; letter-spacing: .14em; color: var(--meta); margin: 4px 0 10px; } #room .code b { font-size: 32px; color: #fff; letter-spacing: .3em; margin-left: 8px; font-weight: 500; }
@@ -59,14 +59,14 @@
   body[class*=menu-] #menu { background: transparent; }
   /* A: BOOT, the visor powering on: menu in the left column under visor rims, a boot log typing once */
   body.menu-A #menu { place-items: center start; padding-left: 7vw; } body.menu-A #menu .panel { background: transparent; width: min(420px, 100%); } body.menu-A #menu .panel::after { display: none; }
-  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 500 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #ff2a8d; line-height: 1.7; font-size: 15px; white-space: pre; text-align: right; }
+  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 500 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #ff4fd8; line-height: 1.7; font-size: 15px; white-space: pre; text-align: right; }
   body.menu-A #menu .key { background: #07080dee; box-shadow: 0 0 0 1px #24263a inset; }
   /* grim and heavy (his correction, 2026-10-19): dark matte keys with a quiet edge; the saturated color is only on the words that matter and on hover */
-  body.menu-A #menu .key:hover { box-shadow: 0 0 0 1px #ff2a8d inset; } body.menu-A #menu .key small { color: #c6c8dc; }
+  body.menu-A #menu .key:hover { box-shadow: 0 0 0 1px #ff4fd8 inset; } body.menu-A #menu .key small { color: #c6c8dc; }
   body.menu-A #name, body.menu-A #code { border: 1px solid #2a2c40 !important; background: #07080dee !important; } body.menu-A #name::placeholder, body.menu-A #code::placeholder { color: #6e7090; }
   body.menu-A #menu .tag { color: #eef0f8; } body.menu-A #menu h1 { color: #fff; }
   label.tick { color: #d4d6e8 !important; cursor: pointer; } label.tick input { display: inline-block; width: 18px; height: 18px; margin: 0 9px 0 0; vertical-align: -3px; appearance: none; -webkit-appearance: none; border: 1px solid #3a3d5c; background: #05060b; cursor: pointer; }
-  label.tick input:checked { background: #ff2a8d; box-shadow: inset 0 0 0 3px #05060b; }
+  label.tick input:checked { background: #ff4fd8; box-shadow: inset 0 0 0 3px #05060b; }
   #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 20px; letter-spacing: .1em; }
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
@@ -127,6 +127,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=116"></script>
+<script type="module" src="./client/main.js?v=117"></script>
 </body>
 </html>
