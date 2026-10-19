@@ -10,9 +10,9 @@ const { chromium } = require(process.env.PLAYWRIGHT || 'C:/Users/danie/AppData/L
   const press = async (i, ms = 120) => { await p.evaluate(i => { __pad.buttons[i] = { pressed: true, value: 1 }; }, i); await p.waitForTimeout(ms); await p.evaluate(i => { __pad.buttons[i] = { pressed: false, value: 0 }; }, i); await p.waitForTimeout(120); };
   const ammo = () => p.evaluate(() => (document.getElementById('ammo')?.innerText || '').replace(/\s+/g, ' ')), n = s => +(s.match(/^(\d+)/) || [0, NaN])[1];
   await p.goto('http://localhost:8092/next/?shot'); await p.waitForTimeout(2500);
-  // the menu on a controller: the D-pad reaches PLAY ALONE and A presses it
+  // the menu on a controller: the D-pad reaches PLAY and A presses it
   let at = ''; for (let i = 0; i < 12 && at !== 'solo'; i++) { await press(13, 60); at = await p.evaluate(() => document.activeElement && document.activeElement.id); }
-  check('menu works on a controller (D-pad reaches PLAY ALONE)', at === 'solo', `focus on ${at || 'nothing'}`);
+  check('menu works on a controller (D-pad reaches PLAY)', at === 'solo', `focus on ${at || 'nothing'}`);
   if (at === 'solo') await press(0); else await p.click('#solo');
   await p.waitForFunction(() => window.__lf && __lf.g && __lf.g.ready, null, { timeout: 60000 }); await p.waitForTimeout(1500);
   await p.evaluate(() => { for (const b of window.__pad.buttons) { b.pressed = false; b.value = 0; } }); await p.mouse.move(500, 450); await p.mouse.click(500, 450); await p.waitForTimeout(400);
@@ -33,4 +33,5 @@ const { chromium } = require(process.env.PLAYWRIGHT || 'C:/Users/danie/AppData/L
   check('the pause menu has a visible way back to play', await p.evaluate(() => { const r = document.getElementById('resume'); return !!(r && r.offsetParent); }), 'BACK TO THE DARK key');
   check('no errors in the page', errs.length === 0, errs.slice(0, 2).join(' | ') || 'none');
   const fails = res.filter(r => !r.pass).length; console.log(`\n${res.length - fails} of ${res.length} basics pass${fails ? '; FAIL blocks the ship' : ''}`);
+  require('fs').writeFileSync(require('path').join(__dirname, '..', 'playtests', 'checklist', 'test-basics.txt'), res.map(r => `${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  (${r.saw})`).join(String.fromCharCode(10)) + `${String.fromCharCode(10).repeat(2)}${res.length - fails} of ${res.length} pass  (basics)${String.fromCharCode(10)}`);   /* (the Simulator's 'why' table reads it) */
   await b.close(); process.exit(fails ? 1 : 0); })().catch(e => { console.log('FAIL', e.message); process.exit(1); });

@@ -1,0 +1,77 @@
+{
+ "at": "2026-10-19T16:17:27.065Z",
+ "steps": [
+  {
+   "name": "hud share 1000x900 (day, camp)",
+   "pct": 3.1,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
+  },
+  {
+   "name": "hud share 1000x900 (night, camp)",
+   "pct": 3.08,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
+  },
+  {
+   "name": "hud share 1920x908 (day, camp)",
+   "pct": 1.6,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
+  },
+  {
+   "name": "hud share 1000x900 (carrying light: build keys shown)",
+   "pct": 5.45,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk,fps,big,I"
+  },
+  {
+   "name": "fog density through the day (Moon)",
+   "0.3": 0.0064,
+   "0.5": 0.0064,
+   "0.57": 0.007,
+   "0.6": 0.0087,
+   "0.7": 0.0093,
+   "0.99": 0.0071
+  },
+  {
+   "name": "camp people lines (no repeats)",
+   "heard": 3,
+   "distinct": 3,
+   "lines": [
+    "A Council member: Survival today is 88%. Officially. We round with compassion.",
+    "A Council member: The real number upsets people. Upset people do not feed fires.",
+    "The Clerk: Night 1. The board says 88%. The board says a lot of things."
+   ]
+  },
+  {
+   "name": "awareness moment",
+   "after_s": 26.4,
+   "got": [
+    "aware:still",
+    "You noticed you stopped. Now you are noticing the noticing."
+   ]
+  },
+  {
+   "name": "morning after (lines said)",
+   "n": 2,
+   "lines": [
+    "2 marks on the ground from last night, 1 where someone fell.",
+    "1 relay out there went dark and stayed dark."
+   ]
+  },
+  {
+   "name": "mirror realm sign (wrist said)",
+   "lines": [
+    "Mirror hour (work): a shift at a desk; here a shift at the fire.",
+    "Mirror hour (home): dinner and a screen; here a screen of smiling signs while the dark presses in."
+   ]
+  },
+  {
+   "name": "far land spires drawn at 480 m out",
+   "spires": 48,
+   "fog": 0.0096
+  },
+  {
+   "name": "errors",
+   "errs": []
+  }
+ ],
+ "errs": []
+}

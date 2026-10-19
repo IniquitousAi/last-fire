@@ -1,0 +1,10 @@
+{
+ "port": 8103,
+ "fps": {
+  "earth gate": 74.6,
+  "earth outside": 77.8,
+  "earth deep": 96.9
+ },
+ "at": "2026-10-19T16:14:52.538Z",
+ "errs": []
+}

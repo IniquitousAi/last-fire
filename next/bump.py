@@ -3,7 +3,12 @@
 Checks every client and core file as a module (the way the browser reads it) before writing anything."""
 import json, pathlib, re, shutil, subprocess, sys, tempfile
 HERE = pathlib.Path(__file__).resolve().parent
-note = ' '.join(sys.argv[1:]).strip() or 'Small fixes.'
+args = sys.argv[1:]; serves = ''; check = '--check' in args; args = [a for a in args if a != '--check']
+if '--serves' in args: i = args.index('--serves'); serves = (args[i + 1] if i + 1 < len(args) else '').upper(); del args[i:i + 2]
+# the spine (DESIGN.md): every new feature says which of B, C, A it serves before it ships (checklist item 3)
+if not serves or any(c not in 'BCA' for c in serves.replace(',', '')): sys.exit('NOT SHIPPED: say which part of the spine this serves: --serves B (the curiosity machine), C (the hangout) or A (the scale), e.g. --serves C or --serves B,A')
+note = ' '.join(args).strip() or 'Small fixes.'
+if check: print(f'ok: serves {serves}: {note}'); sys.exit(0)
 tmp = pathlib.Path(tempfile.mkdtemp())
 for f in list((HERE / 'client').glob('*.js')) + list((HERE / 'core').glob('*.js')):
     shutil.copy(f, tmp / (f.stem + '.mjs'))
@@ -23,5 +28,6 @@ s = re.sub(r"(\.js)\?v=\d+'", rf"\1?v={new}'", s); main.write_text(s, encoding='
 for f in (HERE / 'client').glob('*.js'):   # (every module's own imports carry the same version, so a reload never mixes old and new)
     if f.name != 'main.js': t = f.read_text(encoding='utf-8'); f.write_text(re.sub(r"(\.js)\?v=\d+'", rf"\1?v={new}'", t), encoding='utf-8')
 idx = HERE / 'index.html'; idx.write_text(re.sub(r'main\.js\?v=\d+', f'main.js?v={new}', idx.read_text(encoding='utf-8')), encoding='utf-8')
-(HERE / 'version.json').write_text(json.dumps({'v': new, 'notes': note}), encoding='utf-8')
+(HERE / 'version.json').write_text(json.dumps({'v': new, 'notes': note, 'serves': serves}), encoding='utf-8')
+with open(HERE / 'SPINE-LOG.md', 'a', encoding='utf-8') as f: f.write(f'- v{new} serves {serves}: {note}' + chr(10))
 print(f'version {old} -> {new}: {note}')

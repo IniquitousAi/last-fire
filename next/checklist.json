@@ -6,99 +6,187 @@
    "task": "Show the honest number on the board and move it only by what the camp really did",
    "where": "lore 18",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#pastDark",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The honest number is the same",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A lamp lit at the edge of the light lifts",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "The feel mix: Maze Runner + Destiny 2 + Cyberpunk + 7 Days to Die + Icarus + Halo 2 + Sons of the Forest 2 + Gears of War + Divergent + Diablo 3 (lore only); feelings only, no copied mechanics",
    "task": "Side-by-side screenshots against each reference game; fix the biggest gap each round",
    "where": "ANSWERS.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "sim/lookmatch.py#def side",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-look_rounds.txt#4 of 4 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/look/side-outside-veins-6.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "sim/lookshots.cjs#mouth-night",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "The look: grounded near, awe far (immersion first, leaning sci-fi awe); the closer, the more real; the farther, the more wondrous",
    "task": "Near things photo-real (scans), far things strange: compare camp and sky shots",
    "where": "ANSWERS.md, the look",
    "checks": {
-    "built": null,
+    "built": {
+     "proof": "next/client/camp.js#yard",
+     "at": "2026-10-19"
+    },
     "tested": null,
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/camp-sheet.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The spine: B (the curiosity machine as a game), then C (a hangout that tells the truth), then A (The Last Light's scale)",
    "task": "Every new feature says which of B, C, A it serves before it is built",
    "where": "AUDIT-2026-10-19.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "bump.py#say which part of the spine this serves",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-spine.txt#4 of 4 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/checklist/list-spine.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/checklist/test-listshot.txt#PASS  the in-game checklist shows what every item serves",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "Solo is the main case: never remind me I'm alone; just as good solo as with friends",
    "task": "A solo night with the learned friend feels like company: robot and screenshot check",
    "where": "AUDIT-2026-10-19.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
-   }
+    "built": {
+     "proof": "client/main.js#learnedFriend();   /* (solo is the main case",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-solo_company.txt#6 of 6 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/checklist/solo-company.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "playtests/checklist/test-solo_company.txt#PASS  started on the controller",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/solo_company.cjs#live through dusk into the night",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Building it is part of the fun: see the truth the whole way (every 'why isn't it good' answered with math)",
    "task": "The Simulator page answers 'why is this not good' with a number for every system",
    "where": "AUDIT-2026-10-19.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "sim/why.mjs#every system has a number",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-why.txt#PASS  every system has a number",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/checklist/why-table.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/checklist/test-whyshot.txt#PASS  the Simulator page shows a number for every system",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "Hardcore, fun, grown-up; never Minecraft or kid-like (no block world)",
    "task": "No block shapes left in view anywhere in the camp or on Earth (screenshot sweep)",
    "where": "piece 1: smooth endless land",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
+    "built": {
+     "proof": "next/client/ruins.js#buildRuins",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_models.mjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/ruin-probe.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "n/a: nothing to press",
+     "at": "2026-10-19"
+    },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Feels brand new: no mechanic copied from another game, only the feelings",
@@ -119,19 +207,33 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Real models for every gun, item and character (CC0)",
    "task": "Every gun, item and character is a real model (pistol, shotgun, LMG, tents still kit)",
    "where": "Quaternius and Kenney, assets/CREDITS.txt",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "next/client/main.js#prepGun",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_models.mjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/guns-sheet.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
-   }
+    "played": {
+     "proof": "next/sim/basics.cjs#the mouse wheel cycles guns both ways",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Nothing bobs",
@@ -142,14 +244,21 @@
      "proof": "client/main.js#no step bob",
      "at": "2026-10-19"
     },
-    "tested": null,
+    "tested": {
+     "proof": "next/sim/lane_d_nobob.mjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "next/sim/basics.cjs#nothing bobs",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Hear your own and your friends' gunshots, from where they are",
@@ -160,26 +269,43 @@
      "proof": "src/combat.js#dest",
      "at": "2026-10-19"
     },
-    "tested": null,
+    "tested": {
+     "proof": "next/sim/lane_d_shots3d.cjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Smooth, clear, centered sights on every gun",
    "task": "Sights dead center on every gun, steady",
    "where": "guns drawn in their own pass",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "next/client/fprig.js#FpRig",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_sights.cjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/ar-ads-sky.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
-   }
+    "played": {
+     "proof": "next/sim/lane_d_sights.cjs",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Multiplayer from a link, up to 4, safe from strangers",
@@ -197,7 +323,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Endless world, drop in anytime",
@@ -215,7 +342,8 @@
      "proof": "playtests/autoplay/2026-10-19-14-22/run.json",
      "at": "2026-10-19"
     }
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "The world remembers everything",
@@ -227,7 +355,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "No babysitting, logic wins",
@@ -251,7 +380,8 @@
      "proof": "playtests/autoplay/2026-10-19-14-22/run.json",
      "at": "2026-10-19"
     }
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Deaths that feel fair (no unavoidable death)",
@@ -272,7 +402,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Growing the fire is your choice (you decide when to provoke the dark)",
@@ -287,7 +418,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Dev tools: restart, skip ahead, test, keep playing (like Era 1 and 2)",
@@ -302,7 +434,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "A checklist I can see, so no idea gets lost",
@@ -314,7 +447,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The dark learns you, unsettling, never says what it learned",
@@ -335,22 +469,36 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Only adapts when you get too comfortable",
    "task": "The dark adapts only after two calm nights with no falls",
    "where": "two calm nights with no falls",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#darkLearning",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Two calm nights with no falls",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-learning.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The dark learns only after two calm nights",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "One mind for every world (your daemon learns for Dalton's worlds too, free)",
@@ -365,19 +513,36 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Clever engineering: mirrors, lenses, prisms that bend and focus light",
    "task": "Mirrors, lenses and prisms that bend light (piece 5)",
    "where": "piece 5",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
-   }
+    "built": {
+     "proof": "next/core/optics.js#beams",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_optics.mjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/optics-mirror.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "next/sim/lane_d_optics_play.cjs",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "next/sim/lane_d_optics_play.cjs",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Infinite progression, scaled by logic; grinders and casuals both fine",
@@ -392,7 +557,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Movement that grows (more options as you go)",
@@ -404,226 +570,410 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Awe: cosmic, unknowable; the sky and the far land get stranger",
    "task": "The sky and far land get stranger the farther out you go",
    "where": "the ringed disc is the first piece",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/strange.js#Strange",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#far-land spires",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/earth-sky-far.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#far land spires",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Hyper-awareness",
    "task": "Moments that make you notice how aware you are (lines, board footnotes)",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/awareness.js#awareStep",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#standing still 25 s makes you notice it",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/awareness.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#awareness moment",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "A villain who is iniquitous by nature",
    "task": "Ego as the villain: the leaders who soften the odds",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#councilOdds",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The worse the real number",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-council.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Proving the council wrong",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Random elements, dry dark humor, lots of mayhem",
    "task": "Random events, dry humor and mayhem every night",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#nightEvent",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Every night has an event",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-night-news.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The night rolls over",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Hanging out with the guys, yet surviving alone in the dark",
    "task": "With friends it is a hangout; alone it is survival: both full games",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/game.js#Math.pow(g.players.length, 1.5)",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/modes.mjs#a hangout of 4 is a full game",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": null,
-    "played": null
-   }
+    "played": {
+     "proof": "sim/modes.mjs#for (const n of [1, 2, 4])",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Maze Runner vibe, but not trapped: the maze is the obvious lore, so dark that people want to learn before entering",
    "task": "The maze is the dark past the edge: lore that makes you want to know before entering",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#edgeSign",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The edge sign counts",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/edge-sign.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The edge sign shows",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Who you are",
    "task": "Your old desk, the softened odds you signed: the first minute",
    "where": "lore 15: a former leader who used to hide the odds, and now checks",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/camp.js#startAt",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/lanes/A/play.txt#A new world opens at your old desk",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/first-minute-desk.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A new world opens at your old desk",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "The origin is honestly unknown, like humanity's own",
    "task": "Every survivor's theory on the wall; nobody knows",
    "where": "proposed: everyone remembers the same ordinary Tuesday, then the dark",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/camp.js#drawTheories",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#No theory is ever proven",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/theories-wall.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Finding something moves the theory wall",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Trapped by need, not walls: a community bound to the fire, punishing anyone who doesn't contribute",
    "task": "The camp keeps its own rules (dues, standing), works solo",
    "where": "his answer: the camp itself keeps the rules (people of the camp, not players), so it works alone or with friends. proposed: the fire is a commons; free riders are cut out of its light",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/camp.js#payDues",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Playing alone, the camp still keeps",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-dues.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Banking light at the fire pays your dues",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Light against dark (good vs evil frame), made interesting by the truth",
    "task": "Light against dark, with the truth making it interesting",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#pastDark",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#A lit lamp, a higher fire",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/light-and-dark.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A lamp lit at the edge of the light lifts",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "The dark doesn't care: you're meaningless on its scale (entropy, not malice)",
    "task": "The dark never shows malice: it is entropy",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#ENTROPY",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The fire loses fuel at one fixed rate",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-fire-down.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#When the fire runs low",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "The game tells the truth: statistically, winning is never on your side",
    "task": "No forever-win: decay and diminishing returns; the score is how long you hold",
    "where": "proposed: decay, diminishing returns, no forever-win; the score is how long you hold",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lore.js#holdLine",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#The score is only how long you hold",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-night-news.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The night rolls over",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "Teaches entropy, diminishing returns, scale, existential dread, logic, suspense, psychological payoff",
    "task": "Each era teaches one of these by play, never text",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/lessons.js#ERAS",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#seven eras, seven different lessons",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Feeling real matters more than being real",
    "task": "Feel beats number: tune by feel when the two disagree",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/feel.js#FEEL_LOG",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#where feel overruled a number",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The mirror realm: the most stereotypical day on Earth, flipped only where it's cool",
    "task": "The mirror realm: an ordinary day flipped where it is cool",
    "where": "proposed: commute into the dark, shifts at the fire, a school for the maze, smiling signs",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
-   }
+    "built": {
+     "proof": "client/mirror.js#MirrorSigns",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#the four flips he asked for",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/earth-sign-day.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "n/a: nothing to press (it is seen and walked past, never used)",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#mirror realm sign",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Community life: work, fire dues, chores; what you get follows what you contribute",
@@ -638,13 +988,20 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-dues.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Banking light at the fire pays your dues",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Soft punishment for never feeding the fire: no more lanterns, higher prices, lower morale; no forced rule, 'we know'",
@@ -659,28 +1016,48 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
-    "pad": {
-     "proof": "n/a: nothing to press",
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-no-lamps.png",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "pad": {
+     "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Optional jobs for better gear and convenience; honest work only, never exploitable; all measured and logged",
    "task": "Optional honest jobs that cannot be exploited",
    "where": "exploit robots: tiny payments earn exactly what one big one does; dues cannot be paid with the camp's light (jobs themselves not built yet)",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": {
-     "proof": "n/a: nothing to press",
+    "built": {
+     "proof": "core/jobs.js#turnIn",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Ninety tiny hauls",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/clerk-job.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "playtests/lanes/A/play.txt#The D-pad right takes the job",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Turning in pays 1 gear credit",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Contribution is credit the camp remembers (the lone wolf who did his part is welcome back)",
@@ -695,13 +1072,20 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-wolf-back.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The lone wolf who did their part is welcome back",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Grinding while friends are offline has a measured low impact, so nobody gets outscaled",
@@ -716,13 +1100,20 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-pool.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#Grinding while a friend is away",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Every layer min-maxed by the simulators (prices, morale, dues)",
@@ -737,13 +1128,20 @@
      "proof": "playtests/checklist/test-camp_sim.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/A/board-in-debt.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "A NOTE button to give feedback while playing (like Era 1)",
@@ -758,22 +1156,30 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Lore first, then merge it with the mechanics: each relies on the other",
    "task": "Every mechanic has a lore reason and every lore line a mechanic",
    "where": "next talk",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/reasons.js#REASONS",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#lore reason",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Updates arrive while I play: a pop-up, yes or no, and it feels automatic (straight back where I was)",
@@ -788,22 +1194,30 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "A feel beats a number",
    "task": "Feel checks beside every number",
    "where": "taste rule 80",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/feel.js#FEEL",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#feel check that the live value sits inside",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "One permanent link per crew",
@@ -818,7 +1232,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Plan: max the browser game with the crew until the feedback runs out, then Godot, then Steam",
@@ -833,163 +1248,304 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The odds are known by whoever cares enough to check (Arcane vibes)",
    "task": "Real odds shown only to whoever checks (board, wrist)",
    "where": "lore 8",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": {
-     "proof": "n/a: nothing to press",
+    "built": {
+     "proof": "core/lore.js#dawnLine",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Only someone who has checked",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/wrist-night-news.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "playtests/lanes/A/play.txt#The D-pad right checks the real odds",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The night rolls over",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "Tech scales from primitive to futuristic (wrist screens)",
    "task": "Wrist screen and tech grow by era",
    "where": "lore 8",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
-   }
+    "built": {
+     "proof": "next/client/wrist.js#draw",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_wrist.cjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/wrist-era2.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "n/a: nothing to press",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "next/sim/lane_d_wrist.cjs",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "The game grows in eras, each deeper into the lore, launched when sims plus real feedback (weighted more) say so",
    "task": "Eras launch when sims plus real feedback say so",
    "where": "lore 8",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/eras.js#eraAt",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Real feedback weighs more",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real-1920.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The board reads the era",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "North star: Arcane + Destiny + Maze Runner had a baby",
    "task": "Arcane + Destiny + Maze Runner: the look and story checked against all three",
    "where": "DESIGN.md, top",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "NORTHSTAR-CHECK.md#Maze Runner",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-northstar.txt#4 of 4 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/look/side-mouth-night-6.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "sim/lookshots.cjs#console",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Dark and neon: dualities, push and pull of emotions",
    "task": "Dark and neon: palette and contrast checked per screen",
    "where": "lore 9",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "sim/lore_test.mjs#banned",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#No cyan, orange, gold or brown",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real-1920.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#No screen is more than 1 percent",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Tech by era: scavenged, then light, then the dark itself; creativity simulated too",
    "task": "Scavenged, light, then the dark's own tech, era by era",
    "where": "lore 9",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/eras.js#techFor",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-lore_test.txt#Tech comes by era",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/A/board-real-1920.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/A/play.txt#The board reads the era",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "Knowledge is the crew's shared currency, labeled checked / reasoned / guess; a research computer is a real job",
    "task": "Knowledge labeled checked / reasoned / guess on the board and wrist",
    "where": "merge answers",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/knowledge.js#labelFor",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#labels: 0-2 trips guess",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Immersion, small details and depth: the feeling that matters most; fun for the masses checked by research",
    "task": "Small details and depth everywhere you look up close",
    "where": "research next",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/details.js#Details",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/wilds_test.mjs#boot prints along 5 real paths",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/details-tally.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/C/wilds_run.json#earth gate",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "No fake-feeling people: camp people speak from what really happened, never a repeated line",
    "task": "Camp people never repeat a line while fresh ones remain",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lines.js#pickFresh",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#lines never repeat while fresh",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/camp-people-line.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#camp people lines",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "No rules that don't add up: robots try to break every rule",
    "task": "Robots try to break every rule",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "sim/fuzz.mjs#RULES",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/fuzz.mjs#no rule broken",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "sim/fuzz.mjs#random actions",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "No UI in the way: information lives in the world (board, wrist screen, light); HUD under 6% of the screen",
    "task": "HUD covers under 6% of the screen in play",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
-   }
+    "built": {
+     "proof": "index.html#HUD under 6%",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#HUD covers under 6%",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/hud-1000x900.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "n/a: nothing to press (it is seen and walked past, never used)",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#hud share",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "No repetition you notice: sound variants, novelty every 4 beats",
@@ -1004,22 +1560,36 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The world reacts (marks, people remember yesterday, footnotes cite real events)",
    "task": "At least 3 visible consequences of last night the next day",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/immersion.js#consequences",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#at least 3 different consequences",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/morning-after-1.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#morning after",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Sound: the camp's murmur, wind, distant sounds, crunchy hits",
@@ -1040,37 +1610,59 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Light and weather: fog rolling in, rain on the fire, the dark's edge moving",
    "task": "Fog rolls in at dusk, rain on Earth, the edge moves",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/edge.js#Edge",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#fog is 1 by day",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/earth-night-edge.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#fog density",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "A"
   },
   {
    "idea": "Things make sense up close: every object has a reason and a story",
    "task": "Every placed object has a reason",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/placed.js#PLACED",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#placed models have a reason",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   }
- ]
+ ],
+ "spine": "B: the curiosity machine as a game; C: a hangout that tells the truth; A: The Last Light's scale (DESIGN.md, the spine). Every item names the one it serves."
 }

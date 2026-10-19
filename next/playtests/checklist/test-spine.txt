@@ -1,0 +1,6 @@
+PASS  every checklist item names the part of the spine it serves  (69 of 69)
+PASS  bump.py refuses a version that does not say what it serves  (NOT SHIPPED: say which part of the spine this serves: --serv)
+PASS  bump.py accepts one that does  (ok: serves C: a learned friend joins solo)
+PASS  all three parts have work  ({"B":20,"C":23,"A":26})
+
+4 of 4 pass  (spine)

@@ -14,6 +14,7 @@ const TEX = '../assets/tex/';
 const RECIPES = {
   1: { name: 'PBR + HDRI', env: 0.45, msaa: 0, ao: null, smaa: true, tone: 'ACES', exposure: 1.0, bloom: null, clean: false, fogK: 1, rim: 0.7, moon: 0, wet: false },
   2: { name: 'PBR + N8AO + SMAA + AgX', env: 0.45, msaa: 0, ao: { aoRadius: 1.4, distanceFalloff: 0.5, intensity: 2.6 }, smaa: true, tone: 'AgX', exposure: 1.0, bloom: { threshold: 1.0, strength: 0.55, radius: 0.55 }, clean: false, punchy: true, fogK: 1, rim: 0.7, moon: 0, wet: false },
+  4: { name: 'Dev light', env: 0.55, msaa: 0, ao: null, smaa: true, tone: 'Neutral', exposure: 1.0, bloom: null, noBloom: true, clean: true, fogK: 0.4, rim: 0.0, moon: 0, wet: false, dev: true },   // (his ask, 2026-10-19: "we need some dev lighting": plain even light where everything reads, no glare, no wet shine, no bloom; no AO: it halved the frame rate, 42 to 85 fps on Earth headless)
   3: { name: 'Cinematic night', env: 0.4, msaa: 0, ao: { aoRadius: 1.8, distanceFalloff: 0.6, intensity: 3.2 }, smaa: true, tone: 'Neutral', exposure: 1.15, bloom: { threshold: 1.1, strength: 0.5, radius: 0.75 }, clean: true, fogK: 0.75, rim: 0.35, moon: 0.22, wet: true },
 };
 
@@ -55,6 +56,7 @@ export function applyLook(n, ctx) {
       vec3 gLd = normalize(vec3(uLights[0].x - vW.x, 2.2, uLights[0].y - vW.z));
       float gRel = clamp((0.3 + 0.7 * max(dot(gN2, gLd), 0.0)) / (0.3 + 0.7 * max(dot(gWN, gLd), 0.05)), 0.4, 1.8);   /* (the camp's light is painted on as glow; this lets the stone's relief shade it) */`);
     f = f.replace('min(L, 1.4) * 0.8;', 'min(L, 1.4) * 0.8 * gRel;');
+    if (R.dev) { f = f.replace('wet * min(st, 1.4) * 0.55', '0.0').replace('vec3(0.06, 0.05, 0.1) * wet * min(L, 1.0)', 'vec3(0.0)').replace('hue * vein * far * 0.55', 'vec3(0.0)').replace('diffuseColor.rgb *= rk * 1.9;', 'diffuseColor.rgb *= rk * 1.35;').replace('roughnessFactor = mix(clamp(gRg * 1.05, 0.6, 1.0), 0.28, gWet);', 'roughnessFactor = clamp(gRg * 1.05, 0.85, 1.0);'); }
     if (!f.includes('gNR') || !f.includes('* gRel;')) console.warn('look ' + n + ': the ground shader in main.js moved; the PBR ground is only partly on');
     sh.fragmentShader = f;
   };
@@ -101,6 +103,8 @@ export function applyLook(n, ctx) {
     scene.environmentIntensity = R.env; stats.env = true; }));
   if (R.moon && !OFF.has('moon')) { const moon = new THREE.DirectionalLight(0x9a8cff, R.moon); moon.position.set(-0.4, 0.8, 0.45); scene.add(moon); }   // (a faint violet key from high up: shape everywhere, not only in the lamps)
 
+  if (R.dev) { const key = new THREE.DirectionalLight(0xe8ecf6, 1.1); key.position.set(-0.5, 1, 0.35); scene.add(key); stats.dev = true; }   // (one plain sun from high up: every shape reads, nothing glares)
+  if (R.noBloom && bloom) { bloom.strength = 0; bloom.enabled = false; }
   // ---- tone mapping and bloom
   renderer.toneMapping = { ACES: THREE.ACESFilmicToneMapping, AgX: THREE.AgXToneMapping, Neutral: THREE.NeutralToneMapping }[R.tone]; renderer.toneMappingExposure = R.exposure;
   if (R.bloom) Object.assign(bloom, R.bloom);   // (the old threshold, 0.82, sat under a lit sheet of paper, so text under a lamp bled a halo)
@@ -112,6 +116,7 @@ export function applyLook(n, ctx) {
   if (R.punchy) { let f = grade.material.fragmentShader;
     f = f.replace('c += vec3(0.010, 0.0, 0.024) * (1.0 - smoothstep(0.0, 0.12, l));', '{ float pl = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = max(mix(vec3(pl), c, 1.3), 0.0); c = 0.18 * pow(c / 0.18, vec3(1.2)); }');
     grade.material.fragmentShader = f; grade.material.needsUpdate = true; }
+  if (R.dev) { let f = grade.material.fragmentShader; f = f.replace('c += vec3(0.010, 0.0, 0.024) * (1.0 - smoothstep(0.0, 0.12, l));', '').replace('* 0.018 *', '* 0.004 *'); grade.material.fragmentShader = f; grade.material.needsUpdate = true; R.clean = false; }   // (dev: no violet in the shadows, almost no grain: what you see is what is there)
   if (R.clean) { let f = grade.material.fragmentShader;
     f = f.replace('c += vec3(0.010, 0.0, 0.024) * (1.0 - smoothstep(0.0, 0.12, l));', 'c *= mix(vec3(0.9, 0.86, 1.12), vec3(1.0), smoothstep(0.0, 0.25, l)); c = 0.18 * pow(max(c, 0.0) / 0.18, vec3(1.1));');
     f = f.replace('* 0.018 *', '* 0.006 *').replace('(0.004 + 0.012 * uS)', '(0.012 * uS)');
@@ -125,5 +130,5 @@ export function applyLook(n, ctx) {
     Object.assign(ao.configuration, R.ao, { gammaCorrection: false, halfRes: true, depthAwareUpsampling: true, aoSamples: 8, denoiseSamples: 4, denoiseRadius: 12, color: new THREE.Color(0, 0, 0) });
     const i = composer.passes.indexOf(renderPass); composer.removePass(renderPass); composer.insertPass(ao, Math.max(0, i)); stats.passes = composer.passes.map(p => p.constructor.name); });
   stats.passes = composer.passes.map(p => p.constructor.name);
-  return { fogK: R.fogK, info: () => ({ ...stats, tone: R.tone, exposure: renderer.toneMappingExposure, samples: composer.renderTarget1.samples, aniso }) };
+  return { fogK: R.fogK, dev: !!R.dev, info: () => ({ ...stats, tone: R.tone, exposure: renderer.toneMappingExposure, samples: composer.renderTarget1.samples, aniso }) };
 }

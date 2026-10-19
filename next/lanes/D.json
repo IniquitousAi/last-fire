@@ -1,0 +1,58 @@
+{
+ "2": {
+  "built": {"proof": "next/client/camp.js#yard", "at": "2026-10-19"},
+  "seen": {"proof": "next/playtests/lanes/D/camp-sheet.png", "at": "2026-10-19"}
+ },
+ "6": {
+  "built": {"proof": "next/client/ruins.js#buildRuins", "at": "2026-10-19"},
+  "tested": {"proof": "next/sim/lane_d_models.mjs", "at": "2026-10-19"},
+  "seen": {"proof": "next/playtests/lanes/D/ruin-probe.png", "at": "2026-10-19"},
+  "pad": {"proof": "n/a: nothing to press", "at": "2026-10-19"}
+ },
+ "8": {
+  "built": {"proof": "next/client/main.js#prepGun", "at": "2026-10-19"},
+  "tested": {"proof": "next/sim/lane_d_models.mjs", "at": "2026-10-19"},
+  "seen": {"proof": "next/playtests/lanes/D/guns-sheet.png", "at": "2026-10-19"},
+  "played": {"proof": "next/sim/basics.cjs#the mouse wheel cycles guns both ways", "at": "2026-10-19"}
+ },
+ "9": {
+  "tested": {"proof": "next/sim/lane_d_nobob.mjs", "at": "2026-10-19"},
+  "played": {"proof": "next/sim/basics.cjs#nothing bobs", "at": "2026-10-19"}
+ },
+ "10": {
+  "tested": {"proof": "next/sim/lane_d_shots3d.cjs", "at": "2026-10-19"}
+ },
+ "11": {
+  "built": {"proof": "next/client/fprig.js#FpRig", "at": "2026-10-19"},
+  "tested": {"proof": "next/sim/lane_d_sights.cjs", "at": "2026-10-19"},
+  "seen": {"proof": "next/playtests/lanes/D/ar-ads-sky.png", "at": "2026-10-19"},
+  "played": {"proof": "next/sim/lane_d_sights.cjs", "at": "2026-10-19"}
+ },
+ "23": {
+  "built": {"proof": "next/core/optics.js#beams", "at": "2026-10-19"},
+  "tested": {"proof": "next/sim/lane_d_optics.mjs", "at": "2026-10-19"},
+  "seen": {"proof": "next/playtests/lanes/D/optics-mirror.png", "at": "2026-10-19"},
+  "pad": {"proof": "next/sim/lane_d_optics_play.cjs", "at": "2026-10-19"},
+  "played": {"proof": "next/sim/lane_d_optics_play.cjs", "at": "2026-10-19"}
+ },
+ "54": {
+  "built": {"proof": "next/client/wrist.js#draw", "at": "2026-10-19"},
+  "tested": {"proof": "next/sim/lane_d_wrist.cjs", "at": "2026-10-19"},
+  "seen": {"proof": "next/playtests/lanes/D/wrist-era2.png", "at": "2026-10-19"},
+  "pad": {"proof": "n/a: nothing to press", "at": "2026-10-19"},
+  "played": {"proof": "next/sim/lane_d_wrist.cjs", "at": "2026-10-19"}
+ },
+ "notes": {
+  "2": "Near: Poly Haven scans (fence, crates, barrels, lamp posts) in camp; far: the planet, sky and the black spires. Seen and built; no robot test of 'near real far strange' (it is a judgment of the eye), so TESTED and PLAYED stay empty.",
+  "6": "Replaced code boxes with real models: camp posts, board post, gate posts, hanging-lamp poles, theory wall stand, edge sign post (Poly Haven street_lamp_02 and Kenney signpost), bunk lamps (CC0 lantern), placed lamp/relay stands in main.js, the wrist band (removed; it also read as a stray pink bar low-left), and the towers outside the Earth walls (Poly Haven modular urban apartments facade, instanced, tinted cold and dark; the old boxes stay hidden). Left alone on purpose: earthsite.js walls (the lead's). Not covered: the Kenney tents and bedrolls are real models but still blocky; the survivor NPC is low-poly.",
+  "8": "Pistol, shotgun, LMG, AR, rifle, rail and the crew soldier are real CC0 or Blender models (assets/m, assets/fp, assets/c). Tried the crew suit sheet on Hugging Face Hunyuan3D-2: got a 68k-triangle unrigged white mesh (3.4 MB); not shipped, a static unrigged mesh cannot walk. The crew soldier already wears the black plated suit and a seamless visor. Not done: the weapons sheet's black cyber-rifle with red accents and sidearm (no free glTF matching found yet); PAD empty (gun cycle on Y has no pad test).",
+  "9": "Core: 45,206 creature samples over 3 nights, 4 seeds, worst height error 0. Camera eye height is constant. SEEN and BUILT were already there or not claimed here; SEEN is empty (a still cannot show absence of bob).",
+  "10": "Friend shots (and the bots' shots) create a spatial HRTF panner at the shooter's exact world position; your own shot stays at your ear by design (no panner). Tested with a real AudioContext in the browser. SEEN and PLAYED empty: it is audio.",
+  "11": "Held guns (pistol, shotgun, LMG): the sight point lands within 2 px of screen center and holds within 1 px over 2 s (the old 6 mm offset removed). The Blender rigs (M4, rail): the reticle pixels center within 2 px and hold within 1 px; the aimed clip was drifting 2 to 4 px and is now held still. PAD empty: aiming on a pad is not scripted.",
+  "23": "Rough playable optics: MIRROR (8 light) bounces the torch beam from its front only, LENS (12) carries it far and narrow, PRISM (16) splits it 26 degrees either side; beams chain through three pieces and light the ground in lightAt, so they count for the light rule. B or pad Select cycles the piece, click or RT places it, clicking a piece turns it a step for free. Synced to friends (snapshot field op). Mirrors and lenses are drawn as a thin disc, a glass lens and a glass prism on a real lamp stand (primitives; no CC0 optics model found). Not saved in the world file.",
+  "54": "The wrist hologram is now deep blue (#3d63ff, no cyan) after his sheet. Era 1 (Scavenged): words only. Era 2 (Light): a map ring with the fire's bearing and distance. Era 3 (the dark's own): map plus a schematic and a scan line. The era is the real one from era_state.json via camp.era.",
+  "1": "Lead took it.",
+  "5": "Lead took it.",
+  "56": "Lead took it."
+ }
+}

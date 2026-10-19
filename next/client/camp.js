@@ -4,8 +4,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
+import { pickFresh } from '../core/lines.js?v=170';
+import * as LO from '../core/lore.js?v=170';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
+import * as JOB from '../core/jobs.js?v=170';
+import { stream } from '../core/game.js?v=170';
 
-export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 };
+export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 }, EDGE = { x: 3.4, z: 18.2 };   // (the edge sign stands inside the gate, which opens on the dark at 21 m)
 // the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
 // size, carries its planted foot back 0.55 m in 0.40 s: 1.39 m/s of ground per clip second, so the clip plays at pace / (1.39 x his scale)
 const PACE = [1.1, 1.45], CLIP_WALK = 1.39;
@@ -45,20 +49,20 @@ export class Camp {
     const real = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.6), new THREE.MeshStandardMaterial({ color: 0x8a8d99, roughness: 1, map: paper([['the real one', 34, '#6b2fa0'], ['Survival today: 81%  (reasoned)', 34], ['Past the dark: 0.0000031%  (guess)', 30], ['not zero.', 40, '#8a2b4f']]), roughness: 0.9 }));
     const deskY = land(HUT.x - 0.6, HUT.z - 0.9) + 1.06;
     form.rotation.x = real.rotation.x = -Math.PI / 2; form.rotation.z = 0.5; real.rotation.z = 0.75;
-    form.position.set(HUT.x - 0.95, deskY, HUT.z - 1.05); real.position.set(HUT.x - 0.2, deskY + 0.002, HUT.z - 0.7); scene.add(form, real);
+    form.position.set(HUT.x - 0.8, deskY, HUT.z - 0.3); real.position.set(HUT.x + 0.1, deskY + 0.002, HUT.z - 0.45); scene.add(form, real);
     desk.then(o => { if (!o) return; o.updateMatrixWorld(true); const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);   // (each paper dropped straight down onto whatever is really under it)
       for (const [pp, lift] of [[form, 0.004], [real, 0.006]]) { ray.set(new THREE.Vector3(pp.position.x, pp.position.y + 3, pp.position.z), down); const hit = ray.intersectObject(o, true)[0]; if (hit) pp.position.y = hit.point.y + lift; } });
     // the board: a dark panel on a post at the edge of the fire's light, redrawn only when what it shows changes
     this.bc = document.createElement('canvas'); this.bc.width = 768; this.bc.height = 480; this.btex = new THREE.CanvasTexture(this.bc); this.btex.colorSpace = THREE.SRGBColorSpace;
-    const by = land(BOARD.x, BOARD.z); const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.2, 0.16), new THREE.MeshStandardMaterial({ color: 0x2b2f38, roughness: 0.7 })); post.position.set(BOARD.x, by + 1.1, BOARD.z);
+    const by = land(BOARD.x, BOARD.z); 
     this.board = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.25), new THREE.MeshBasicMaterial({ map: this.btex, color: 0xc4c4c4 }));   /* (a hair under the bloom threshold: no halo behind its big numbers, his rule) */ this.board.position.set(BOARD.x, by + 2.7, BOARD.z); this.board.rotation.y = Math.atan2(-BOARD.x, -BOARD.z);
-    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(post, this.board, glow);
+    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(this.board, glow);
     // the CHECK key: shown only when you stand at the board (click it, or press C)
     this.btn = Object.assign(document.createElement('button'), { className: 'bk', innerHTML: 'CHECK THE REAL ODDS<small>(the board shows what the council approved)</small>' });
-    Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '55%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
+    Object.assign(this.btn.style, { position: 'fixed', left: '63%', top: '74%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
     this.btn.onclick = () => this.check(); addEventListener('keydown', e => { if (e.code === 'KeyC' && this.near) this.check(); });
     // camp people: each speaks from what really happened, one line at a time, never repeating while a fresh one is left (IMMERSION.md)
-    this.people = []; this.heard = new Set();
+    this.people = []; this.heard = new Set(); this.said = {};
     // (the soldier's Idle_Gun and Idle hold a rifle he does not carry: Idle_Neutral has his arms at rest; Interact reaches out to check a thing)
     const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75, chain: [['Spine2', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Spine1', yawMax: 1.05 },
       { role: 'the Night worker', url: 'c/soldier.glb', x: 0, z: -17, anim: 'Idle_Neutral', walk: 'Walk', act: 'Interact', h: 1.8, chain: [['Chest', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Chest', yawMax: 1.2 },
@@ -85,15 +89,54 @@ export class Camp {
     // the wall of theories by the hut: every survivor's guess at what the dark is, with odds that what you find moves; none ever reads 'checked'
     this.tc = document.createElement('canvas'); this.tc.width = 768; this.tc.height = 512; this.ttex = new THREE.CanvasTexture(this.tc); this.ttex.colorSpace = THREE.SRGBColorSpace;
     const tx = -7, tz = 13.5, ty = land(tx, tz), wall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.73), new THREE.MeshBasicMaterial({ map: this.ttex, color: 0xc4c4c4 }));
-    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); const legs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x15171d })); legs.position.set(tx, ty + 0.6, tz); this.scene.add(wall, legs); this.tdrawn = '';
+    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); this.scene.add(wall); this.tdrawn = '';
+    // the edge sign by the gate: what the camp's paperwork says about the dark past the wall (LORE.md: the maze is the dark; know before you go)
+    this.ec = document.createElement('canvas'); this.ec.width = 768; this.ec.height = 480; this.etex = new THREE.CanvasTexture(this.ec); this.etex.colorSpace = THREE.SRGBColorSpace; this.edrawn = '';
+    const ex = EDGE.x, ez = EDGE.z, ey = land(ex, ez), sign = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: this.etex, color: 0xc4c4c4 }));
+    sign.position.set(ex, ey + 2, ez); sign.rotation.y = Math.atan2(-ex, -ez); this.scene.add(sign); this.sign = sign;
+    this.checks = 0; try { this.checks = +localStorage.getItem('lf_checks') || 0; } catch (e) { /* (private window: counted this session only) */ }   // (how many nights you went and looked: the dinner table remembers)
+    this.era = null; fetch('era_state.json?t=' + Date.now()).then(r => r.json()).then(j => { this.era = j; this.drawn = ''; }).catch(() => {});   // (written by sim/eras.mjs from the real robot results and your verdicts)
+    this.lastNight = -1; this.jobMsgT = 0;
+  }
+  drawEdge() {
+    const g = this.ctx.g(), rows = LO.edgeSign(g), key = rows.map(r => r.t).join('|'); if (key === this.edrawn) return; this.edrawn = key;
+    const c = this.ec.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 480); c.strokeStyle = '#ff3b5c'; c.lineWidth = 8; c.strokeRect(8, 8, 752, 464);
+    let y = 84; for (const r of rows) { c.fillStyle = y === 84 ? '#ff3b5c' : '#eef0f8'; c.font = `500 ${r.size * 1.5}px "Barlow Condensed", "Arial Narrow", sans-serif`; c.fillText(r.t, 36, y); y += r.size * 1.5 + 26; }
+    this.etex.needsUpdate = true;
+  }
+  // each night: what happened (the paperwork's dry line), and, for someone who has checked, the real odds on the wrist
+  nightNews() {
+    const g = this.ctx.g(); if (this.lastNight < 0) { this.lastNight = g.night; return; } if (g.night === this.lastNight) return; this.lastNight = g.night;
+    const e = LO.nightEvent(g.seed, g.night - 1, stream), d = LO.dawnLine(g, this.checks);
+    this.ctx.say(`Last night: ${e.line}${d ? '  ' + d : ''}`, d ? 8 : 5);   // (one message: the dry line, then the real odds, but only for someone who has checked)
+  }
+  // the Clerk's counter: optional honest jobs for gear credit (core/jobs.js; measured, never exploitable)
+  clerk() { const P = this.people.find(p => p.role === 'the Clerk'), me = this.ctx.me(); return P && P.o.visible && me && Math.hypot(me.x - P.o.position.x, me.z - P.o.position.z) < 3.2 ? P : null; }
+  jobState() {
+    const g = this.ctx.g(), me = this.ctx.me(); if (!me || !this.clerk()) return null; const taken = Object.keys(JOB.JOBS).filter(id => me.jobs && me.jobs.taken[id]), cr = JOB.credit(me);
+    const ready = taken.find(id => JOB.progress(g, me, id) >= JOB.JOBS[id].target); if (ready) return { act: 'in', id: ready };
+    if (cr >= JOB.SPEND.resupply && this.ctx.shortAmmo && this.ctx.shortAmmo()) return { act: 'spend' };
+    const open = Object.keys(JOB.JOBS).find(id => !taken.includes(id)); if (open) return { act: 'take', id: open };
+    return { act: 'wait', id: taken[0] };
+  }
+  jobNear() { return !!this.jobState(); }
+  jobLine() {
+    const s = this.jobState(), g = this.ctx.g(), me = this.ctx.me(); if (!s) return ''; const cr = JOB.credit(me), tail = cr ? `  ·  gear credit ${cr}` : '';
+    if (s.act === 'in') return `F  ·  TURN IN: ${JOB.JOBS[s.id].task} (+${JOB.JOBS[s.id].credit} gear credit)${tail}`;
+    if (s.act === 'spend') return `F  ·  TRADE ${JOB.SPEND.resupply} GEAR CREDIT: top up every gun${tail}`;
+    if (s.act === 'take') return `F  ·  A JOB, IF YOU WANT ONE: ${JOB.JOBS[s.id].task} (pays ${JOB.JOBS[s.id].credit} gear credit)${tail}`;
+    return `The Clerk: ${JOB.JOBS[s.id].task}, ${Math.floor(JOB.progress(g, me, s.id))} of ${JOB.JOBS[s.id].target} so far${tail}`;
+  }
+  jobAct() {
+    const s = this.jobState(), g = this.ctx.g(), me = this.ctx.me(); if (!s) return; const say = this.ctx.say;
+    if (s.act === 'take') { JOB.take(g, me, s.id); say(`Job taken: ${JOB.JOBS[s.id].task}. Only work from now on counts.`, 4); }
+    else if (s.act === 'in') { const r = JOB.turnIn(g, me, s.id); say(r.ok ? `Paid: 1 gear credit. It buys gear, never your dues.` : r.why === 'paid today' ? 'One pay per job per day. The rest keeps for tomorrow.' : 'Not done yet.', 4); }
+    else if (s.act === 'spend') { if (JOB.spendCredit(me, 'resupply')) this.ctx.resupply(); }
   }
   // the honest numbers, from what really happened (labels say how sure)
-  odds() {
-    const g = this.ctx.g(), h = g.history.slice(-3), players = Math.max(1, g.players.length);
-    let surv = 0.81, label = 'reasoned';   // (no nights yet: the camp's old average)
-    if (h.length) { const fallRate = h.reduce((s, n) => s + n.falls, 0) / (h.length * players); surv = Math.max(0.05, Math.min(0.99, 1 - fallRate * 0.6 - (g.fire.fuel < 60 ? 0.15 : 0))); }
-    const lit = g.nodes.filter(n => n.lit).length, past = 3.1e-6 * (1 + lit * 0.35 + g.fire.level * 0.9 + g.history.length * 0.05);
-    return { surv: Math.round(surv * 100), council: Math.min(99, Math.round(surv * 100) + 11), past, label };
+  odds() {   // (the numbers come from core/lore.js: the same rules the robots test)
+    const g = this.ctx.g(), sv = LO.survival(g);
+    return { surv: sv.pct, council: LO.councilOdds(sv.pct), past: LO.pastDark(g), label: sv.label };
   }
   footnote() {   // (the dry part: written from yesterday's real events)
     const g = this.ctx.g(), y = g.history[g.history.length - 1]; if (!y) return 'no data yet. the council recommends optimism.';
@@ -111,6 +154,8 @@ export class Camp {
       if (y && y.falls > 0) out.push('Form 9-C is for when someone stops being anywhere. We are out of 9-C.');
       if (this.checkedNight === g.night) out.push('You checked the real odds. Nobody checks. Huh.');
       out.push("I don't make the quotas. I laminate them.");
+      out.push(LO.TUESDAY);
+      if (this.checks > 0 && !(this.checkedNight === g.night)) out.push(LO.afterProof(this.checks));
     } else if (role === 'the Night worker') {
       out.push(g.fire.level ? `Fire's at level ${g.fire.level}. Something out there noticed. It always does.` : 'Fire is small. The dark is not. That is the whole job description.');
       if ((g.marks || []).some(m => m.k === 'wreck')) out.push('A relay went dark out there. I filed it under expected.');
@@ -123,17 +168,17 @@ export class Camp {
     }
     return out;
   }
-  check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; this.ctx.say('The real odds. Nobody else came to check.', 4); }
+  check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; this.checks++; try { localStorage.setItem('lf_checks', String(this.checks)); } catch (e) { /* (not saved in a private window) */ } const lb = (this.odds() || {}).label || 'reasoned'; this.ctx.say(LO.afterProof(this.checks) || `The real odds (${lb}). Nobody else came to check.`, 5, lb.toUpperCase()); }
   draw() {
-    const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, st = this.ctx.stakes ? this.ctx.stakes() : null, ec = this.ctx.econ ? this.ctx.econ() : null, key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote(), st && st.n, ec && ec.key].join('|'); if (key === this.drawn) return; this.drawn = key;
+    const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, st = this.ctx.stakes ? this.ctx.stakes() : null, ec = this.ctx.econ ? this.ctx.econ() : null, rows = LO.boardRows(g, { ec, st, era: this.era });
+    const key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote(), rows.map(r => r.text).join('/')].join('|'); if (key === this.drawn) return; this.drawn = key;
     const c = this.bc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 480); c.strokeStyle = real ? '#ff4fd8' : '#b9a8ff'; c.lineWidth = 8; c.strokeRect(8, 8, 752, 464);
     c.fillStyle = real ? '#ff4fd8' : '#b9a8ff'; c.font = '500 46px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `THE REAL ODDS, DAY ${g.night}` : `SURVIVAL TODAY, DAY ${g.night}`, 36, 76);
     c.fillStyle = '#fff'; c.font = '500 170px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${real ? o.surv : o.council}%`, 36, 250);
-    c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillStyle = '#a3a6bb'; c.fillText(real ? `(${o.label}: from the last ${Math.min(3, g.history.length) || 'no'} nights)` : '(approved by the council)', 40, 300);
-    c.fillStyle = '#ff6fb1'; c.font = '400 34px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(this.footnote().slice(0, 52), 40, 362);
-    c.fillStyle = real ? '#3dff9a' : '#6f7188'; c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `past the dark: ${(o.past).toFixed(7)}%  (guess)` : 'have a nice day.', 40, 430);
-    if (ec) { c.fillStyle = '#a3a6bb'; c.font = '400 24px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`each person the fire lights owes ${ec.burn} light a day`, 728, 150); c.fillStyle = ec.standing >= 0 ? '#b9a8ff' : '#ff3b5c'; c.fillText(`your standing ${ec.standing >= 0 ? '+' : ''}${ec.standing}   camp morale ${ec.morale}%`, 728, 180); if (ec.pool > 0) { c.fillStyle = '#ff6fb1'; c.fillText(`camp pool ${ec.pool} light: into the fire when friends are back`, 728, 210); } c.textAlign = 'left'; }   /* (the camp economy, in the open) */
-    if (st) { c.fillStyle = '#b9a8ff'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`your trip guesses: ${st.n}, came back ${st.back}`, 728, 76); c.fillText(`how true: ${st.brier.toFixed(2)} (0 is perfect, 0.25 is a coin)`, 728, 108); c.textAlign = 'left'; }   // (the Brier score of your own stakes: checked math, your own record)
+    c.font = '400 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillStyle = '#a3a6bb'; c.fillText(real ? (g.history.length ? `(${o.label}: from the last ${Math.min(3, g.history.length)} night${g.history.length > 1 ? 's' : ''})` : `(${o.label}: the camp's old average)`) : '(approved by the council, not checked)', 40, 296);
+    c.fillStyle = '#ff6fb1'; c.font = '400 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(this.footnote(), 40, 352);
+    c.fillStyle = real ? '#3dff9a' : '#8d90a8'; c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `past the dark: ${o.past.toFixed(7)}%  (guess)` : 'have a nice day.', 40, 410);
+    c.textAlign = 'right'; rows.slice(0, 8).forEach((r, i) => { c.fillStyle = r.text.startsWith('your standing') && ec && ec.standing < 0 ? '#ff3b5c' : '#b9a8ff'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${r.text} (${r.label})`, 728, 76 + i * 29); }); c.textAlign = 'left';   // (every row says how sure it is)
     this.btex.needsUpdate = true;
   }
   bunkLight() {   // (your bunk shows your dues, INNOVATION.md: each bunk burns as bright as what its sleeper has fed the fire; no rule, only light)
@@ -150,6 +195,7 @@ export class Camp {
       c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`held by ${who}`, 32, y + 28);
       c.fillStyle = '#ff4fd8'; c.fillRect(520, y + 22, Math.round(110 * v / 0.85), 6);   /* (the bar sits by the number, never over the words) */ c.fillStyle = '#eef0f8'; c.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`${Math.round(v * 100)}%`, 712, y + 2);
       c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('(guess)', 712, y + 30); c.textAlign = 'left'; });
+    c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(LO.TUESDAY.split('. ').slice(0, 2).join('. ') + '.', 32, 494);   // (the one thing everyone agrees on)
     this.ttex.needsUpdate = true;
   }
   pushOut(px, pz, r = 0.35) {   /* (out of any solid camp piece, to its nearest side: boxes turned with their piece) */
@@ -159,7 +205,8 @@ export class Camp {
   }
   update(dt = 1 / 60) {   // (dt is the real frame time: a fixed 1/60 walked him 1.7 m/s at 82 fps and 3 m/s on a 144 Hz screen)
     const me = this.ctx.me(); if (!me) return; if (this.ctx.theories) this.drawTheories(this.ctx.theories); if (!this.bunkT || (this.bunkT -= dt) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
-    this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
+    this.btn.style.display = this.near ? 'block' : 'none'; this.draw(); this.drawEdge(); this.nightNews();
+    { const g1 = this.ctx.g(); if (g1.fire.fuel < 60 && this.fireSaid !== g1.night) { this.fireSaid = g1.night; this.ctx.say(LO.DARK_LINES.fire, 5); } }   // (the fire going down is nobody's doing: the dark has no wants, only a rate)
     const cam = this.ctx.camera();
     let talk = null, best = 1e9; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw);
     const g0 = this.ctx.g(), gone = new Set([...(g0.lost || []), ...(g0.out ? [g0.out.who] : [])]);
@@ -169,7 +216,7 @@ export class Camp {
       P.mix.update(dt); const d = Math.hypot(me.x - P.o.position.x, me.z - P.o.position.z);
       if (P.walk) this.patrol(P, dt, d, me);   // (the night worker walks the wall with reasons to stop, and stops to talk when you come close)
       if (P.chain && P.chain.length) this.live(P, dt, d, cam);
-      if (d < 4.5 && (P.lineT -= dt) <= 0) { const all = this.lines(P.role), fresh = all.filter(l => !this.heard.has(l)); P.line = (fresh.length ? fresh : all)[0]; this.heard.add(P.line); P.lineT = 9; }
+      if (d < 4.5 && (P.lineT -= dt) <= 0) { const all = this.lines(P.role); P.line = pickFresh(this.said[P.role] = this.said[P.role] || {}, all); this.heard.add(P.line); P.lineT = 9;   /* (never the same line while a fresh one remains, per person) */ }
       if (d >= 6) P.lineT = 0;
       const facing = ((P.o.position.x - me.x) * fx + (P.o.position.z - me.z) * fz) / Math.max(d, 0.01);
       if (d < 4.5 && facing > 0.5 && P.line && d < best) { best = d; talk = P; }
@@ -265,8 +312,9 @@ export class Camp {
         o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; if (m.s.y * k > 1) this.solids.push([x, z, hx, hz, cs, sn, m.s.y * k]); }   /* (anything taller than a meter is solid: the camera never walks inside a wall) */
       this.scene.add(o); if (batch.has(url)) mine.push(o); return o; });
     const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
+    const putH = (url, x, z, h, ry = 0) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(), k = h / m.s.y; o.scale.setScalar(k); o.position.set(x - m.c.x * k, land(x, z) - m.y0 * k, z - m.c.z * k); o.rotation.y = ry; this.scene.add(o); return o; });   /* (a real scan stood to a given height: poles and posts are Poly Haven street lamps, not code boxes, 2026-10-19) */
+    const LAMPPOST = 'ph/street_lamp_02/street_lamp_02_1k.gltf';
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
-    const poleG = new THREE.BoxGeometry(0.12, 3, 0.12), poleM = new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 }), bulbG = new THREE.BoxGeometry(0.26, 0.3, 0.26), bulbM = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xe0d8ff, emissiveIntensity: 0.55 });   /* (was 1.4: up close it blew out to a white blob in his eyes, 2026-10-19) */   /* (the three hanging lamps share one pole and one bulb) */
     const FEN = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_double', POST = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_post', BAR = 'ph/Barrel_01/Barrel_01_1k.gltf', CRATE = 'ph/old_military_crate/old_military_crate_1k.gltf', PH = n => `ph/${n}/${n}_1k.gltf`;   // (Poly Haven photo scans, CC0: the Kenney toy kit and the code boxes looked like a placeholder up close, his eyes 2026-10-19)
     const batch = new Set([FEN, POST, 'kit/stone.glb', BAR, CRATE, 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
     const fold = () => { const groups = new Map(); for (const o of mine) { this.scene.remove(o); o.updateMatrixWorld(true); o.traverse(q => { if (!q.isMesh) return; const k = q.geometry.uuid + '|' + q.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(q); }); }
@@ -279,8 +327,7 @@ export class Camp {
         const x = Math.cos(a) * R, z = Math.sin(a) * R; put(FEN, x, z, SEG, -a - Math.PI / 2 + along, 0.02);
         const b = (i + 0.5) / n * Math.PI * 2; if (Math.abs(Math.atan2(Math.sin(b - GATE), Math.cos(b - GATE))) > 0.12 - 0.5 / n * Math.PI * 2) put(POST, Math.cos(b) * R, Math.sin(b) * R, 0.15, 0, 0.02); } });
     const gx = Math.cos(GATE) * R, gz = Math.sin(GATE) * R;
-    for (const s of [-1, 1]) { const x = gx + s * 2.2, z = gz, post = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.4, 0.22), new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6, metalness: 0.3 })); post.position.set(x, land(x, z) + 1.7, z);
-      this.scene.add(post); get(PH('security_light')).then(m => { if (!m) return; const o = m.scene.clone(), k = 0.5 / Math.max(m.s.x, m.s.z); o.scale.setScalar(k); o.position.set(x, land(x, z) + 3.4 - m.y0 * k, z); o.rotation.y = face(x, z); this.scene.add(o); }); }
+    for (const s of [-1, 1]) { const x = gx + s * 2.2, z = gz; putH(LAMPPOST, x, z, 3.4); get(PH('security_light')).then(m => { if (!m) return; const o = m.scene.clone(), k = 0.5 / Math.max(m.s.x, m.s.z); o.scale.setScalar(k); o.position.set(x, land(x, z) + 3.4 - m.y0 * k, z); o.rotation.y = face(x, z); this.scene.add(o); }); }
     for (const s of [-1, 1]) put(PH('concrete_road_barrier'), gx + s * 3.6, gz + 1.6, 1.6, Math.PI / 2 + s * 0.15);   // (barriers flank the gate outside)   // (the gate heads glow white-violet: they read cyan, his rule is no cyan)
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
@@ -288,7 +335,9 @@ export class Camp {
       const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z)).then(cloth);
       const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2);
       const lx = bx - Math.sin(a) * 0.8, lz = bz + Math.cos(a) * 0.8;   /* (the bunk lantern stands on the ground beside the bedroll: it hung in the air half a meter up) */
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.16), new THREE.MeshStandardMaterial({ color: 0x07070c, emissive: 0xb9a8ff, emissiveIntensity: 0 })); lamp.position.set(lx, land(lx, lz) + 0.12, lz); this.scene.add(lamp); (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (no real light per bunk: 5 more lights would cost every surface; the lamp's own glow is the receipt)
+      const lamp = { material: {} }; { let ei = 0; const mats = []; Object.defineProperty(lamp.material, 'emissiveIntensity', { get: () => ei, set: v => { ei = v; for (const m of mats) m.emissiveIntensity = v; } });
+        L.loadAsync('../assets/m/lantern.glb').then(r => { const o = r.scene.clone(), bb = new THREE.Box3().setFromObject(o), k = 0.3 / (bb.max.y - bb.min.y); o.scale.setScalar(k); o.position.set(lx - (bb.min.x + bb.max.x) / 2 * k, land(lx, lz) - bb.min.y * k, lz - (bb.min.z + bb.max.z) / 2 * k);
+          o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0xb9a8ff); q.material.emissiveIntensity = ei; mats.push(q.material); } }); this.scene.add(o); }).catch(() => {}); } (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (the bunk lantern is the real CC0 lantern model, its glow driven by the dues like before)
     // the workshop: a bench, planks, barrels and a chest by the wall
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }
@@ -308,12 +357,12 @@ export class Camp {
     { const [x, z] = W(237, 9.4); put(PH('barrel_stove'), x, z, 0.6, 0); }
     // three hanging lamps: the tents, the workshop, the store (each lit corner reads as a place, not a floor)
     for (const [deg, r] of [[237, 10.5], [36, 13], [-9, 14]]) { const [x, z] = W(deg, r), y = land(x, z), l = new THREE.PointLight(0xcfe0ff, 9, 13, 1.4); l.position.set(x, y + 2.8, z);
-      const pole = new THREE.Mesh(poleG, poleM); pole.position.set(x, y + 1.5, z);
-      this.scene.add(l); mine.push(pole); put(PH('security_light'), x, z, 0.42, deg * Math.PI / 180, -2.92); }
+      this.scene.add(l); putH(LAMPPOST, x, z, 3.1); put(PH('security_light'), x, z, 0.42, deg * Math.PI / 180, -2.92); }
     // outside: stones and rubble in the dark, so the land is somewhere and not a floor
     let q = 7; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = 24 + rnd() * 50, x = Math.cos(a) * r, z = Math.sin(a) * r; put('kit/stone.glb', x, z, 0.5 + rnd() * rnd() * 2.6, rnd() * 6.3, 0, true); }
     for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, r = 4 + rnd() * 15, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.hypot(x - HUT.x, z - HUT.z) < 5 || Math.hypot(x - BOARD.x, z - BOARD.z) < 3 || r < 5) continue; put('kit/stone.glb', x, z, 0.25 + rnd() * 0.35, rnd() * 6.3, 0, true); }
+    putH(LAMPPOST, BOARD.x, BOARD.z - 0.1, 2.5); putH('kit/signpost.glb', -7, 13.3, 1.5); putH('kit/signpost.glb', EDGE.x, EDGE.z - 0.1, 2.0);   // (the board's post and the theory wall's stand: real models)
     fenceP.then(() => Promise.all(pend)).then(fold);
   }
   speak(role, line, sec) { this.voice = { role, line: line.replace(/[<>&]/g, ''), until: performance.now() + sec * 1000 }; }

@@ -41,3 +41,9 @@ for (const T of TESTS) {
     say.textContent = `${pass} of ${judged} in line, in ${((performance.now() - t0) / 1000).toFixed(1)} s. Same rules as the game (core/game.js), run in your browser.`; btn.disabled = false;
   };
 }
+// "why is this not good", answered with a number for every system (checklist item 5): sim/why.mjs reads the robots' result files into why.json
+(async () => { try { const d = await (await fetch('./why.json?t=' + Date.now())).json(), esc = x => String(x || '').replace(/[<&>]/g, ''), rows = d.rows.slice().sort((a, b) => a.good - b.good);
+  const box = document.createElement('div'); box.className = 'test'; box.id = 'why';
+  box.innerHTML = `<div class="head"><span><b>WHY IS THIS NOT GOOD</b><small>Every system, one number, the bar it must clear. From the robots' last runs (${esc(d.at)}).</small></span></div>
+    <table><tr><th>system</th><th>the number</th><th>the bar</th><th></th></tr>${rows.map(r => `<tr><td>${esc(r.name)}<div class="say" style="margin:2px 0 0">${esc(r.what)}</div></td><td class="n">${esc(r.shown)}</td><td>${esc(r.bar)}</td><td class="${r.good ? 'pass' : 'fail'}">${r.good ? 'GOOD' : 'NOT GOOD: ' + esc(r.why)}</td></tr>`).join('')}</table>`;
+  const t = $('#tests'); t.parentNode.insertBefore(box, t); } catch (e) { /* (no why.json yet: run node next/sim/why.mjs) */ } })();

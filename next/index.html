@@ -20,6 +20,7 @@
   .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
   .key:hover, .key:focus-visible, .bk:focus-visible { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--neon) inset; outline: none; } .key:active { transform: translateY(1px); }
   .over { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10; }
+  #list, #dev { background: #000000d8; z-index: 30; } #list .panel, #dev .panel { background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgb(3,6,12); }   /* (a reading page is solid: nothing of the game shows through or overlaps it) */
   #menu { background: radial-gradient(circle at 50% 35%, #0b1022 0%, #000 70%); }
   #menu .panel { width: min(460px, 100%); }
   h1 { margin: 0 0 2px; font: 500 56px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; } .tag { color: var(--meta); margin: 0 0 18px; font-size: 18px; }
@@ -41,6 +42,8 @@
   #hp { position: fixed; left: 18px; bottom: 22px; width: 200px; } #hp span { font-size: 13px; letter-spacing: .16em; color: var(--meta); } #hp div { height: 5px; background: #ffffff1c; border-radius: 3px; margin-top: 3px; } #hp i { display: block; height: 100%; background: var(--red); border-radius: 3px; }
   #ammo { position: fixed; right: 18px; bottom: 18px; text-align: right; text-shadow: 0 1px 3px #000; } #ammo b { font: 500 48px/1 "Barlow Condensed", sans-serif; } #ammo span { font-size: 22px; color: var(--meta); margin-left: 6px; } #ammo small { display: block; color: var(--neon); font-size: 16px; letter-spacing: .12em; }
   #build { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; gap: 8px; }
+  #build .bk small { white-space: nowrap; }   /* (a key's line never wraps: his window is 1000 wide) */
+  #build:not(:has(.bk:not(.off))) { display: none; }   /* (HUD under 6% of the screen, his rule: the build keys appear only when you carry enough light to use one) */
   .bk { min-width: 110px; padding: 7px 12px 6px; font: 500 16px "Barlow Condensed", sans-serif; letter-spacing: .1em; color: #fff; background: #05060bcc; border: 1px solid #23253a; border-radius: 8px; cursor: pointer; text-align: left; }
   .bk small { display: block; font: 400 13px "Barlow Condensed", sans-serif; color: var(--meta); letter-spacing: .02em; } .bk.on { border-color: var(--neon); } .bk.off { opacity: .45; }
   #msg { position: fixed; left: 50%; top: 27%; transform: translateX(-50%); font-size: 21px; text-shadow: 0 1px 3px #000; text-align: center; max-width: 80vw; pointer-events: none; }
@@ -86,7 +89,7 @@
   <label class="tick" style="margin:-2px 0 12px;font-size:15px;color:var(--meta)"><input type="checkbox" id="asHost"> Open a CONTINUE world to friends (host it)</label>
   <button class="key" id="host">HOST<small>(opens your newest world to your crew; your room code and link never change)</small></button>
   <div style="display:flex;gap:10px;margin-bottom:10px"><input id="code" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Room code" style="width:150px;font:500 22px 'Barlow Condensed';letter-spacing:.3em;text-transform:uppercase;color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:0 12px;outline:none"><button class="key" id="join" style="margin:0">JOIN<small>(a friend's code)</small></button></div>
-  <button class="key" id="solo">PLAY ALONE<small>(your own world)</small></button>
+  <button class="key" id="solo">PLAY<small>(your own world, a learned friend keeps the camp with you)</small></button>
   <div id="menuNote" style="min-height:22px;color:var(--neon)"></div>
 </div></div>
 <div id="hud" hidden>
@@ -133,6 +136,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=163"></script>
+<script type="module" src="./client/main.js?v=170"></script>
 </body>
 </html>
