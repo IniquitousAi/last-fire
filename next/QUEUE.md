@@ -59,7 +59,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-52. **Earth trips for a perfect player sit at 71%** (the Simulator page shows it red; the band tops at 70%): the tightest fix with the least change, e.g. Earth's late pressure per minute, checked on the page. (added when item 51 finished)
+
+53. **The Simulator tests the economy too** (item 49's sim is node-only): add THE CAMP'S BOOKS to the Simulator page so the dues rules are watchable like the rest. (added when item 52 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -101,3 +102,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 49, the economy made fair in real nights by robot crews (v102).
 - Item 50, honor lamps for credit (v103).
 - Item 51, the Simulator page, opened from DEV (v104).
+- Item 52, Earth's late pressure eased, perfect tension 0.68 (v105).
