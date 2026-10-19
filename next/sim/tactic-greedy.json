@@ -1,0 +1,30 @@
+{
+ "crew": "greedy",
+ "at": "2026-10-19T02:38:38.415Z",
+ "tactic": {
+  "probe": 0.8359654974192381,
+  "spread": 1.1539127532626376,
+  "rushAt": 0.7248292991425842,
+  "isolate": 1.7717892333766776,
+  "fireBias": 0.5814367751624987,
+  "greed": 1.5372601464356561
+ },
+ "judged": {
+  "score": -3.0482144373673035,
+  "fair": true,
+  "falls": 33,
+  "perNight": 3.67,
+  "drained": 158,
+  "tense": 0.6,
+  "perfectFalls": 0
+ },
+ "base": {
+  "score": -3.8255484784147202,
+  "fair": false,
+  "falls": 43,
+  "perNight": 4.78,
+  "drained": 0,
+  "tense": 0.48,
+  "perfectFalls": 102
+ }
+}

@@ -1,0 +1,30 @@
+{
+ "crew": "split",
+ "at": "2026-10-19T02:39:25.705Z",
+ "tactic": {
+  "probe": -0.23269686670973896,
+  "spread": 1.3140141676180064,
+  "rushAt": 0.5614335408434272,
+  "isolate": 1.842725986673031,
+  "fireBias": 0.834310733829625,
+  "greed": 1.4403781211003661
+ },
+ "judged": {
+  "score": -2.374734607218684,
+  "fair": true,
+  "falls": 30,
+  "perNight": 3.33,
+  "drained": 0,
+  "tense": 0.51,
+  "perfectFalls": 0
+ },
+ "base": {
+  "score": -3.4076762208067937,
+  "fair": false,
+  "falls": 33,
+  "perNight": 3.67,
+  "drained": 1361,
+  "tense": 0.52,
+  "perfectFalls": 102
+ }
+}

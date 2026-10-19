@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-63HB+x6cOSoyjjoUNwGyHweuS+XXQ8XSHH9W7emvUp8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Last Fire</title>
+<meta name="theme-color" content="#04060c">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
+<style>
+  :root { --ink: #eef0f8; --meta: #a3a6bb; --cyan: #39e6ff; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
+  * { box-sizing: border-box; } [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--ink); font: 400 17px/1.35 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; user-select: none; }
+  canvas { display: block; }
+  .panel { position: relative; background: #05060bf2; border-radius: 12px; padding: 24px 26px 20px; }
+  .panel::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; background: linear-gradient(90deg, #29e6ff, #8f7bff, #ff5fd2);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  .key { display: block; width: 100%; margin: 0 0 10px; padding: 11px 14px 9px; font: 500 19px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0e0f17; border: 1px solid #000; border-radius: 9px; cursor: pointer; text-align: left; box-shadow: 0 0 0 1px #2c2f4a inset; transition: transform .1s; }
+  .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
+  .key:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--cyan) inset; } .key:active { transform: translateY(1px); }
+  .over { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10; }
+  #menu { background: radial-gradient(circle at 50% 35%, #0b1022 0%, #000 70%); }
+  #menu .panel { width: min(460px, 100%); }
+  h1 { margin: 0 0 2px; font: 500 56px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; } .tag { color: var(--meta); margin: 0 0 18px; font-size: 18px; }
+  #name { width: 100%; margin-bottom: 10px; font: 500 22px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0b0c14; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; outline: none; }
+  .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--cyan); font-weight: 500; }
+  #paused { background: #000000a0; } #paused .panel { width: min(420px, 100%); }
+  label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--cyan); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #39e6ff; }
+  /* the HUD */
+  #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #0009; pointer-events: none; }
+  #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
+  #hit::before, #hit::after { content: ''; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); } #hit::after { transform: rotate(-45deg); }
+  #hit.on { opacity: .9; } #hit.shell::before, #hit.shell::after { background: var(--cyan); height: 18px; top: 2px; } #hit.shell { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); }
+  #light { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); text-align: center; text-shadow: 0 1px 3px #000; }
+  #light b { display: block; font: 500 44px/1 "Barlow Condensed", sans-serif; color: var(--cyan); } #light span { font-size: 15px; color: var(--meta); letter-spacing: .14em; }
+  #fireHud { position: fixed; left: 18px; top: 14px; text-shadow: 0 1px 3px #000; } #fireHud b { font: 500 26px "Barlow Condensed", sans-serif; color: var(--violet); } #fireHud small { display: block; color: var(--meta); font-size: 15px; }
+  #phase { position: fixed; right: 18px; top: 14px; text-align: right; text-shadow: 0 1px 3px #000; } #phase b { font: 500 24px "Barlow Condensed", sans-serif; } #phase small { display: block; color: var(--meta); font-size: 15px; }
+  #hp { position: fixed; left: 18px; bottom: 22px; width: 200px; } #hp span { font-size: 13px; letter-spacing: .16em; color: var(--meta); } #hp div { height: 5px; background: #ffffff1c; border-radius: 3px; margin-top: 3px; } #hp i { display: block; height: 100%; background: var(--red); border-radius: 3px; }
+  #ammo { position: fixed; right: 18px; bottom: 18px; text-align: right; text-shadow: 0 1px 3px #000; } #ammo b { font: 500 48px/1 "Barlow Condensed", sans-serif; } #ammo span { font-size: 22px; color: var(--meta); margin-left: 6px; } #ammo small { display: block; color: var(--cyan); font-size: 16px; letter-spacing: .12em; }
+  #build { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; gap: 8px; }
+  .bk { min-width: 110px; padding: 7px 12px 6px; font: 500 16px "Barlow Condensed", sans-serif; letter-spacing: .1em; color: #fff; background: #05060bcc; border: 1px solid #23253a; border-radius: 8px; cursor: pointer; text-align: left; }
+  .bk small { display: block; font: 400 13px "Barlow Condensed", sans-serif; color: var(--meta); letter-spacing: .02em; } .bk.on { border-color: var(--cyan); } .bk.off { opacity: .45; }
+  #msg { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); font-size: 21px; text-shadow: 0 1px 3px #000; text-align: center; max-width: 80vw; pointer-events: none; }
+  #prompt { position: fixed; left: 50%; top: 60%; transform: translateX(-50%); font-size: 19px; text-shadow: 0 1px 3px #000; white-space: nowrap; pointer-events: none; }
+  #fps { position: fixed; left: 18px; top: 70px; font-size: 13px; color: var(--meta); }
+  #hurt { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 50%, #b0002280 100%); opacity: 0; transition: opacity .15s; }
+  #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 20px; letter-spacing: .1em; }
+</style>
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.js" } }</script>
+</head>
+<body>
+<div id="menu" class="over"><div class="panel">
+  <h1>LAST FIRE</h1>
+  <p class="tag">The dark has no edge. Push it back.</p>
+  <input id="name" maxlength="12" placeholder="YOUR NAME" autocomplete="off" aria-label="Your name">
+  <button class="key" id="solo">PLAY<small>(the new foundation, alone for now: piece 1 of 5)</small></button>
+  <p class="note"><b>Piece 1:</b> the endless dark, your fire, your light, the wraiths. Kill them and they burst into light: walk through it to gather it, bring it to the fire to grow the fire, or spend it on relays that carry the light outward (left click with RELAY picked). <b>Not yet:</b> co-op, saving, more machines, the dark learning you.</p>
+</div></div>
+<div id="hud" hidden>
+  <div id="cross"></div><div id="hit"></div>
+  <div id="fireHud"></div><div id="phase"></div>
+  <div id="hp"><span>HEALTH</span><div><i id="hpBar"></i></div></div>
+  <div id="light"></div><div id="ammo"></div><div id="build"></div>
+  <div id="msg"></div><div id="prompt"></div><div id="fps"></div><div id="hurt"></div>
+  <div id="loading">Lighting the fire...</div>
+</div>
+<div id="paused" class="over" hidden><div class="panel">
+  <button class="key" id="resume">BACK TO THE DARK<small>(takes the mouse again)</small></button>
+  <label>Mouse speed <b id="vSens"></b><input type="range" id="sSens" min="0.2" max="3" step="0.05"></label>
+  <label>Volume <b id="vVol"></b><input type="range" id="sVol" min="0" max="1" step="0.05"></label>
+  <button class="key" id="leave">LEAVE<small>(back to the start; this piece saves nothing yet)</small></button>
+</div></div>
+<script type="module" src="./client/main.js?v=1"></script>
+</body>
+</html>

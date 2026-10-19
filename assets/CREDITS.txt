@@ -5,3 +5,5 @@ assets/m/knife.glb, flashlight.glb, lantern.glb              poly.pizza, marked 
 assets/guns/minigun.glb (+ Textures)                          Kenney Blaster Kit (kenney.nl), repainted gunmetal
 assets/kit/*                                                  Kenney Survival Kit (kenney.nl), warm colors repainted cold
 assets/food/*                                                 Kenney Food Kit (kenney.nl), warm colors repainted cold
+
+assets/c/wraith.glb, clawed.glb, shard.glb, soldier.glb      Quaternius (quaternius.com), via poly.pizza, CC0 (models TX8r9WBXpe, Iip30bDHmu, 39uv7ux42v, Btfn3G5Xv4)
