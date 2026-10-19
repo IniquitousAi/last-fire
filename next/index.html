@@ -57,11 +57,13 @@
   <h1>LAST FIRE</h1>
   <p class="tag">The dark has no edge. Push it back.</p>
   <input id="name" maxlength="12" placeholder="YOUR NAME" autocomplete="off" aria-label="Your name">
+  <div id="worlds"></div>
+  <label class="tick" style="margin:-2px 0 12px;font-size:15px;color:var(--meta)"><input type="checkbox" id="asHost"> Open a CONTINUE world to friends (host it)</label>
   <button class="key" id="host">HOST<small>(your world; a 6-letter code and an invite link for up to 3 friends)</small></button>
   <div style="display:flex;gap:10px;margin-bottom:10px"><input id="code" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Room code" style="width:150px;font:500 22px 'Barlow Condensed';letter-spacing:.3em;text-transform:uppercase;color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:0 12px;outline:none"><button class="key" id="join" style="margin:0">JOIN<small>(a friend's code)</small></button></div>
   <button class="key" id="solo">PLAY ALONE<small>(your own world)</small></button>
   <div id="menuNote" style="min-height:22px;color:var(--cyan)"></div>
-  <p class="note"><b>Piece 2 (now):</b> play together. HOST gives a code; Esc, then COPY INVITE, paste it in Discord. <b>Piece 1:</b> the endless dark, your fire, your light, the wraiths. Kill them and they burst into light: walk through it to gather it, bring it to the fire to grow the fire, or spend it on relays that carry the light outward (left click with RELAY picked). Together, a friend who falls becomes an <b>Ember</b>: walk over it and carry it to the fire to bring them back. <b>Not yet:</b> saving, more machines, the dark learning you.</p>
+  <p class="note"><b>Piece 3 (now):</b> your world saves by itself (every 20 s and when you leave) and keeps its scars: where relays were torn down, where friends fell. CONTINUE picks it up. <b>Piece 2:</b> play together. HOST gives a code; Esc, then COPY INVITE, paste it in Discord. <b>Piece 1:</b> the endless dark, your fire, your light, the wraiths. Kill them and they burst into light: walk through it to gather it, bring it to the fire to grow the fire, or spend it on relays that carry the light outward (left click with RELAY picked). Together, a friend who falls becomes an <b>Ember</b>: walk over it and carry it to the fire to bring them back. <b>Not yet:</b> saving, more machines, the dark learning you.</p>
 </div></div>
 <div id="hud" hidden>
   <div id="cross"></div><div id="hit"></div>
@@ -76,8 +78,8 @@
   <label>Mouse speed <b id="vSens"></b><input type="range" id="sSens" min="0.2" max="3" step="0.05"></label>
   <label>Volume <b id="vVol"></b><input type="range" id="sVol" min="0" max="1" step="0.05"></label>
   <div id="room"></div>
-  <button class="key" id="leave">LEAVE<small>(back to the start; this piece saves nothing yet)</small></button>
+  <button class="key" id="leave">LEAVE<small>(saves your world first)</small></button>
 </div></div>
-<script type="module" src="./client/main.js?v=2"></script>
+<script type="module" src="./client/main.js?v=3"></script>
 </body>
 </html>

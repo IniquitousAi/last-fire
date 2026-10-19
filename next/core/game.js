@@ -53,11 +53,11 @@ export function clampTactic(t) {
 export function newGame(seed, tactic = BASE_TACTIC) {
   const C = 0;   // (the first fire stands at the world's middle; the world runs on forever from it)
   return { seed, land: makeLand(seed), t: 0, clock: 0.3, night: 1, tactic: clampTactic(tactic), rSpawn: stream(seed, 'spawn'), rAim: stream(seed, 'aim'), rMote: stream(seed, 'mote'),
-    fire: { x: C, z: C, level: 0, light: 0, fuel: 180, woke: [] }, nodes: [], players: [], hollow: [], motes: [], embers: [], nextId: 1, log: [], stats: { kills: 0, falls: 0, banked: 0, tense: 0, beats: 0, drained: 0 } };
+    fire: { x: C, z: C, level: 0, light: 0, fuel: 180, woke: [] }, nodes: [], marks: [], keep: {}, players: [], hollow: [], motes: [], embers: [], nextId: 1, log: [], stats: { kills: 0, falls: 0, banked: 0, tense: 0, beats: 0, drained: 0 } };
 }
 export function addPlayer(g, id, name = 'Player') {
   const p = { id, name, x: g.fire.x + 3 + g.players.length, z: g.fire.z, y: 0, yaw: 0, pitch: 0, hp: 100, carried: 0, ember: false, carrying: null, isPlayer: true, hurtT: 0 };
-  p.y = heightAt(g.land, p.x, p.z); g.players.push(p); return p;
+  p.y = heightAt(g.land, p.x, p.z); if (g.keep && g.keep[name] > 0) { p.carried = g.keep[name]; } g.players.push(p); return p;
 }
 export const phase = c => c < DUSK_AT ? 'day' : c < NIGHT_AT ? 'dusk' : c < DAWN_AT ? 'night' : 'dawn';
 export function fireRadius(f) { return f.fuel > 0 ? 9 + f.level * 2.5 : 3; }
@@ -129,6 +129,23 @@ export function step(g, dt) {
   // a tense beat: a player hurt in the last second, or a Hollow within 5 m (for the fun checklist)
   if (ph === 'night' && Math.floor(g.t) !== Math.floor(g.t - dt)) { g.stats.beats++; if (g.players.some(p => !p.ember && (p.hurtT > 0 || g.hollow.some(k => Math.hypot(k.x - p.x, k.z - p.z) < 5)))) g.stats.tense++; }
 }
+export function mark(g, k, x, z) { g.marks.push({ k, x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, n: g.night }); if (g.marks.length > 600) g.marks.splice(0, g.marks.length - 600); }   // (the world keeps where things happened)
+// ---------------------------------------------------------------- saving: everything that lasts, as plain data (the dark itself does not keep; it comes back each night)
+export function saveWorld(g) {
+  for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
+  return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
+    nodes: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), marks: g.marks, keep: g.keep, stats: g.stats,
+    host: g.players[0] ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : null };
+}
+export function loadWorld(d) {
+  const ok = v => typeof v === 'number' && Number.isFinite(v); if (!d || d.v !== 1 || !ok(d.seed)) return null;
+  const g = newGame(d.seed, d.tactic || BASE_TACTIC); g.t = ok(d.t) ? d.t : 0; g.clock = ok(d.clock) ? d.clock : 0.3; g.night = Number.isInteger(d.night) ? d.night : 1; g.nextId = Number.isInteger(d.nextId) ? d.nextId : 1;
+  if (d.fire) { g.fire.level = Math.max(0, Math.min(FIRE_COST.length - 1, d.fire.level | 0)); g.fire.light = ok(d.fire.light) ? d.fire.light : 0; g.fire.fuel = ok(d.fire.fuel) ? d.fire.fuel : 180; }
+  for (const n of d.nodes || []) if (Array.isArray(n) && NODE[n[1]] && [n[0], n[2], n[3], n[4]].every(ok)) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false });
+  for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
+  g.marks = Array.isArray(d.marks) ? d.marks.filter(m => m && ok(m.x) && ok(m.z)).slice(-600) : []; g.keep = d.keep && typeof d.keep === 'object' ? d.keep : {}; if (d.stats) Object.assign(g.stats, d.stats);
+  g.startAt = Array.isArray(d.host) && d.host.every(ok) ? d.host : null; linkNetwork(g); return g;
+}
 function revive(g, e) {
   const p = g.players.find(q => q.id === e.of); if (p) { p.ember = false; p.hp = 50; p.x = g.fire.x + 1; p.z = g.fire.z; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; }   // (tp: tells a friend's screen it was moved)
   const h = g.players.find(q => q.id === e.held); if (h) h.carrying = null;
@@ -139,7 +156,7 @@ export function hurt(g, p, n, from) {
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
     p.ember = true; p.hp = 0; g.stats.falls++; if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) e.held = null; p.carrying = null; }
     for (let i = 0; i < Math.ceil(p.carried / 5); i++) g.motes.push({ id: g.nextId++, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2, v: 5, t: 60 });
-    p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0 }); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
+    p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0 }); mark(g, 'fall', p.x, p.z); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
     if (g.players.every(q => q.ember)) { for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.fire.light = Math.max(0, g.fire.light); g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }   // (everyone down: all wake at the fire; the fire keeps every level)
   }
 }
@@ -175,7 +192,7 @@ function moveHollow(g, dt, ph) {
       const s = Math.hypot(p.x - k.x, p.z - k.z) / ((near === 0 ? T.isolate : 1) * (1 + Math.min(1, p.carried * 0.02) * (T.greed - 1))); if (s < best) { best = s; target = p; } }
     let node = null; if (g.nodes.length) { let nb = Infinity; for (const n of g.nodes) if (n.lit && n.hp > 0) { const s2 = Math.hypot(n.x - k.x, n.z - k.z) * (n.hp / NODE[n.kind].hp + 0.5) / T.fireBias; if (s2 < nb) { nb = s2; node = n; } } if (node && (!target || nb < best * 0.8)) target = null; }   // (a weak, lonely relay is a better prize than a person)
     if (!target && !node) continue;
-    if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
+    if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
     tx = target.x; tz = target.z;
     let dx = tx - k.x, dz = tz - k.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
     const ahead = lightAt(g, k.x + dx * 1.5, k.z + dz * 1.5), here = lightAt(g, k.x, k.z);

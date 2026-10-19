@@ -1,8 +1,8 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=2';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=2';
+import * as C from '../core/game.js?v=3';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=3';
 import { sound, GUNS } from '../../src/combat.js?v=11';
 import { FX } from '../../src/fx.js?v=11';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
@@ -134,6 +134,13 @@ function drawNetwork(t) {
   const near = g.nodes.filter(n => n.lit && lit).sort((a, b) => Math.hypot(a.x - me.x, a.z - me.z) - Math.hypot(b.x - me.x, b.z - me.z));
   for (let i = 2; i < NODE_MAX; i++) { const n = near[i - 2]; if (n) arr[i].set(n.x, n.z, C.NODE[n.kind].r, 0.9); else arr[i].set(0, 0, 0, 0); }
 }
+// marks: what the world remembers, drawn as scars on the ground (one draw call)
+const MARKS = 600, markMesh = new THREE.InstancedMesh(new THREE.RingGeometry(0.35, 0.75, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false }), MARKS);
+markMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MARKS * 3), 3); markMesh.count = 0; markMesh.frustumCulled = false; scene.add(markMesh);
+let marksDrawn = -1; const _m = new THREE.Matrix4(), _c = new THREE.Color();
+function drawMarks() { if (g.marks.length === marksDrawn) return; marksDrawn = g.marks.length; markMesh.count = Math.min(MARKS, g.marks.length);
+  g.marks.slice(-MARKS).forEach((m, i) => { _m.makeTranslation(m.x, g.land(m.x, m.z) + 0.04, m.z); markMesh.setMatrixAt(i, _m); markMesh.setColorAt(i, _c.setHex(m.k === 'fall' ? 0xb9a8ff : 0x39407a)); });
+  markMesh.instanceMatrix.needsUpdate = true; markMesh.instanceColor.needsUpdate = true; }
 // motes of light: a few hundred points in one draw call; they drift toward you when you walk close
 const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xbfe0ff, size: 0.35, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
 motes.geometry.setAttribute('position', new THREE.BufferAttribute(motePos, 3)); motes.frustumCulled = false; scene.add(motes);
@@ -166,7 +173,7 @@ function drawPause() {
 $('sSens').oninput = e => { SET.sens = +e.target.value; $('vSens').textContent = SET.sens.toFixed(2); save(); };
 $('sVol').oninput = e => { SET.vol = +e.target.value; sound.setVolume(SET.vol); $('vVol').textContent = Math.round(SET.vol * 100); save(); };
 $('resume').onclick = () => { panel = null; $('paused').hidden = true; renderer.domElement.requestPointerLock(); };
-$('leave').onclick = () => { location.href = location.pathname; };
+$('leave').onclick = () => { saveNow(); location.href = location.pathname; };
 $('room').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'copyInvite') { const url = `${location.origin}${location.pathname}#join=${net.code}`; navigator.clipboard?.writeText(url).then(() => { b.firstChild.textContent = 'COPIED'; setTimeout(() => b.firstChild.textContent = 'COPY INVITE', 1500); }, () => { b.querySelector('small').textContent = url; }); }
   if (b.id === 'lockRoom') { net.lock(!net.locked); drawPause(); } });
@@ -245,7 +252,7 @@ function frame(now) {
   const hp0 = me.hp; if (isHost()) C.step(g, dt); else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
-  drawHollow(dt); drawNetwork(now / 1000); drawMotes(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000;
+  drawHollow(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000;
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
@@ -271,7 +278,7 @@ function onNet(m, from) {
     if (!p) return;
     if (m.t === 'in') {   // (a friend's own move: checked against how fast a person can go; the host keeps their health, light and Ember)
       if (![m.x, m.y, m.z, m.yaw, m.pi].every(fin)) return; const dt = Math.max(0.02, (performance.now() - (p.inT || 0)) / 1000); p.inT = performance.now();
-      if (!p.ember && Math.hypot(m.x - p.x, m.z - p.z) < Math.max(1.5, 11 * dt)) { p.x = m.x; p.z = m.z; p.y = m.y; } else if (!p.ember) p.tp = (p.tp || 0) + 1;   /* (too far, too fast: snap them back to the last good spot, so a lag spike can never strand anyone) */ p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); p.gun = GUNS[m.g] ? m.g : 'pistol'; p.name = String(m.n || '').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Friend'; return;
+      if (!p.ember && Math.hypot(m.x - p.x, m.z - p.z) < Math.max(1.5, 11 * dt)) { p.x = m.x; p.z = m.z; p.y = m.y; } else if (!p.ember) p.tp = (p.tp || 0) + 1;   /* (too far, too fast: snap them back to the last good spot, so a lag spike can never strand anyone) */ p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); p.gun = GUNS[m.g] ? m.g : 'pistol'; const nm = String(m.n || '').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Friend'; if (p.name !== nm) { p.name = nm; if (!p.kept && g.keep[nm] > 0) { p.carried += g.keep[nm]; p.kept = true; } } return;
     }
     if (m.t === 'shot') {   // (the host traces it in its own world with the gun's own damage, no faster than the gun fires)
       const G = GUNS[m.g]; if (!G || p.ember || !Array.isArray(m.o) || !Array.isArray(m.d) || ![...m.o, ...m.d].every(fin) || Math.hypot(m.o[0] - p.x, m.o[2] - p.z) > 3 || !bucket(p, 'shots', G.rpm / 60 + 1, 4)) return;
@@ -294,7 +301,7 @@ function onNet(m, from) {
   if (m.t === 'left' && from === 0) say('The host left: the world went with them.', 8);
 }
 function heardShot(m) { const o = new THREE.Vector3(m.x, m.y, m.z); sound.shot(m.g, o); if (Array.isArray(m.e) && m.e.length === 3 && m.e.every(fin)) { const e = new THREE.Vector3(...m.e); fx.tracer(o, e); fx.spark(e); } }
-let sendT = 0, stateT = 0;
+let sendT = 0, stateT = 0, sentMarks = -1;
 function sync(dt) {
   if (!net || !net.live) return; sendT += dt; stateT += dt;
   if (!net.host && sendT >= 1 / 15) { sendT = 0; net.send({ t: 'in', x: +me.x.toFixed(2), y: +me.y.toFixed(2), z: +me.z.toFixed(2), yaw: +me.yaw.toFixed(3), pi: +me.pitch.toFixed(2), g: gunKey, n: SET.name }); }
@@ -305,7 +312,7 @@ function sync(dt) {
     h: g.hollow.flatMap(k => [k.id, KIND_I.indexOf(k.kind), +k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2), +k.yaw.toFixed(2)]),
     m: g.motes.slice(0, 300).flatMap(q => [+q.x.toFixed(1), +q.z.toFixed(1)]),
     nd: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.lit ? 1 : 0]),
-    em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]) }); }
+    em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z]) } : {}) }); sentMarks = g.marks.length; }
 }
 function applyState(m) {   // (a friend's copy of the world, from the host; their own position stays their own unless the host moved them)
   if (fin(m.c)) g.clock = m.c; if (Number.isInteger(m.n)) g.night = m.n; if (Array.isArray(m.f) && m.f.every(fin)) [g.fire.level, g.fire.light, g.fire.fuel] = m.f;
@@ -315,6 +322,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
   if (Array.isArray(m.h) && m.h.length <= C.MAX_HOLLOW * 6) { const old = new Map(g.hollow.map(k => [k.id, k])), hs = []; for (let i = 0; i + 5 < m.h.length; i += 6) { const [id, ki, x, y, z, yaw] = m.h.slice(i, i + 6); if (![id, ki, x, y, z, yaw].every(fin) || !KIND_I[ki]) continue; const k = old.get(id) || { id, kind: KIND_I[ki], x, y, z, yaw, sh: 0, sb: 0 }; Object.assign(k, { tx: x, ty: y, tz: z, tyaw: yaw }); hs.push(k); } g.hollow = hs; }
   if (Array.isArray(m.m)) { g.motes = []; for (let i = 0; i + 1 < m.m.length && i < 600; i += 2) if (fin(m.m[i]) && fin(m.m[i + 1])) g.motes.push({ x: m.m[i], z: m.m[i + 1] }); }
   if (Array.isArray(m.nd)) g.nodes = m.nd.filter(a => Array.isArray(a) && C.NODE[a[1]]).slice(0, 400).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3], hp: a[4], lit: !!a[5] }));
+  if (Array.isArray(m.mk)) g.marks = m.mk.filter(a => Array.isArray(a) && a.every(fin)).slice(-MARKS).map(a => ({ k: a[0] ? 'fall' : 'wreck', x: a[1], z: a[2] }));
   if (Array.isArray(m.em)) g.embers = m.em.filter(a => Array.isArray(a) && a.every(fin)).map(a => ({ id: a[0], of: a[1], x: a[2], z: a[3], held: a[4] || null }));
 }
 // friends as you see them: the CC0 soldier, running or standing, their gun in hand, their name over them; an Ember is a small light on the ground
@@ -342,13 +350,32 @@ function drawFriends(dt) {
 // ---------------------------------------------------------------- start
 $('name').value = SET.name || '';
 function myName() { SET.name = ($('name').value || 'Player').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Player'; save(); return SET.name; }
-async function begin(seed, id) {
-  g = C.newGame(seed); me = C.addPlayer(g, id, SET.name); me.y = g.land(me.x, me.z); g.clock = 0.3; myId = id;
+async function begin(seed, id, saved = null) {
+  g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   mode = 'play'; $('menu').hidden = true; $('hud').hidden = false; drawBuild(); renderer.domElement.requestPointerLock();
   await ready; prepGun('pistol'); prepGun('ar');
 }
-$('solo').onclick = () => { myName(); sound.wake(); begin(Math.floor(Math.random() * 1e9), 1); };
-$('host').onclick = () => { myName(); sound.wake(); const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); begin(Math.floor(Math.random() * 1e9), 1); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); };
+// ---------------------------------------------------------------- your worlds: saved in this browser, every 20 seconds and when you leave
+const WKEY = 'lastfire2-worlds'; let worldId = null;
+const worlds = () => { try { return JSON.parse(localStorage.getItem(WKEY) || '[]'); } catch (e) { return []; } };
+function saveNow() {
+  if (!g || !isHost() || !g.ready) return; try {
+    const d = C.saveWorld(g), list = worlds().filter(w => w.id !== worldId); localStorage.setItem('lastfire2-w-' + worldId, JSON.stringify(d));
+    list.unshift({ id: worldId, name: SET.name + "'s world", night: g.night, level: g.fire.level, nodes: g.nodes.length, at: Date.now() }); localStorage.setItem(WKEY, JSON.stringify(list.slice(0, 6)));
+    for (const w of worlds().slice(6)) localStorage.removeItem('lastfire2-w-' + w.id);
+  } catch (e) { say('This browser would not save the world (storage full or blocked).', 5); } }
+setInterval(saveNow, 20000); addEventListener('pagehide', saveNow); document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+function loadSaved(id) { try { return C.loadWorld(JSON.parse(localStorage.getItem('lastfire2-w-' + id) || 'null')); } catch (e) { return null; } }
+function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const saved = id ? loadSaved(id) : null; begin(saved ? saved.seed : Math.floor(Math.random() * 1e9), 1, saved); if (saved) say(`Back in your world: night ${saved.night}, fire ${saved.fire.level}. The light you left is where you left it.`, 6); }
+function drawWorlds() {
+  const list = worlds(); if (!list.length) { $('worlds').innerHTML = ''; return; }
+  const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
+  $('worlds').innerHTML = list.map(w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`).join('');
+}
+$('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); startWorld(pendingWorld); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); } else startWorld(pendingWorld); });
+let pendingWorld = null; drawWorlds();
+$('solo').onclick = () => { myName(); sound.wake(); startWorld(null); };
+$('host').onclick = () => { myName(); sound.wake(); const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); startWorld(null); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); };
 $('join').onclick = () => { myName(); sound.wake(); const code = cleanCode($('code').value); if (code.length !== CODE_LEN) { $('menuNote').textContent = `Room codes are ${CODE_LEN} letters.`; return; } net = new Net(onNet, t => { $('menuNote').textContent = t; if (mode === 'play') say(t, 5); }); net.joinGame(code); $('menuNote').textContent = `Joining room ${code}...`; };
 function readInvite() { const c = cleanCode((location.hash.match(/join=([A-Za-z]+)/) || [])[1]); if (c.length === CODE_LEN && mode === 'menu') { $('code').value = c; $('menuNote').textContent = `Your friend's room ${c} is filled in: type your name, then click JOIN.`; } }
 readInvite(); addEventListener('hashchange', readInvite);
