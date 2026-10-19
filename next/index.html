@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <title>Last Fire</title>
 <meta name="theme-color" content="#04060c">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
 <style>
   :root { --ink: #eef0f8; --meta: #c6c8dc; --neon: #ff4fd8; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
   * { box-sizing: border-box; } [hidden] { display: none !important; }
@@ -67,45 +67,6 @@
   body.menu-A #menu .tag { color: #eef0f8; } body.menu-A #menu h1 { color: #fff; }
   label.tick { color: #d4d6e8 !important; cursor: pointer; } label.tick input { display: inline-block; width: 18px; height: 18px; margin: 0 9px 0 0; vertical-align: -3px; appearance: none; -webkit-appearance: none; border: 1px solid #3a3d5c; background: #05060b; cursor: pointer; }
   label.tick input:checked { background: #ff4fd8; box-shadow: inset 0 0 0 3px #05060b; }
-  /* the home screen: THE SUIT, his pick of three (2026-10-19, mockups/ui-B.html): the visor booting. Heavy readings on dark plates,
-     quiet status chips, cut corners; saturated color only on the numbers that matter (taste 93) */
-  body.menu-B #menu { display: block; padding: 24px 28px; background: transparent; } body.menu-B #bootLog { display: none; }
-  #menu .cut { clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); } #menu .cut-s { clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
-  #menu .lbl { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: #8d90a8; }
-  #menu .stop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; } #menu .brand { font-weight: 800; font-size: 22px; letter-spacing: .12em; margin-right: 14px; }
-  #menu .chip { display: inline-flex; gap: 8px; align-items: baseline; padding: 5px 12px 4px; background: #0a0b12f0; box-shadow: inset 0 0 0 1px #24263a; } #menu .chip b { font-weight: 800; font-size: 15px; letter-spacing: .08em; }
-  #menu .cv { color: #b026ff; } #menu .cr { color: #ff3b5c; } #menu .boot { margin-left: auto; font-size: 13px; letter-spacing: .18em; color: #8d90a8; } #menu .boot b { color: #fff; font-weight: 800; }
-  #menu .sleft { width: min(420px, 44vw); display: flex; flex-direction: column; gap: 12px; }
-  #menu .plate { background: #0a0b12f0; box-shadow: inset 0 0 0 1px #24263a; }
-  #menu .reading { padding: 16px 20px 14px; } #menu .odds { font-weight: 800; font-size: clamp(40px, 5.6vw, 58px); line-height: .95; color: #ff2a8d; font-variant-numeric: tabular-nums; margin-top: 4px; white-space: nowrap; }
-  #menu .odds small { font-size: .5em; color: #fff; } #menu .fine { font-size: 15px; color: #a3a6bb; margin-top: 8px; line-height: 1.35; } #menu .fine b { color: #fff; font-weight: 400; }
-  #menu .skeys { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } #menu #worlds { display: contents; } #menu #olderList { grid-column: 1 / -1; display: grid; gap: 8px; } #menu #olderList[hidden] { display: none; }
-  #menu .key { margin: 0; border-radius: 0; background: #0a0b12f0; box-shadow: inset 0 0 0 1px #24263a; font: 800 22px/1.05 "Barlow Condensed", sans-serif; letter-spacing: .06em; padding: 10px 14px 9px; }
-  #menu .key small { font: 400 13px/1.2 "Barlow Condensed", sans-serif; letter-spacing: .08em; color: #8d90a8; text-transform: uppercase; }
-  #menu .key:hover { box-shadow: inset 0 0 0 1px #ff2a8d; color: #ff2a8d; transform: none; } #menu .key:active { transform: translateY(1px); }
-  #menu [data-w] { grid-column: 1 / -1; box-shadow: inset 0 0 0 1px #33364f; } #menu .codeRow { grid-column: 1 / -1; display: flex; gap: 8px; }
-  #menu #code { width: 150px; font: 800 22px "Barlow Condensed", sans-serif; letter-spacing: .3em; text-transform: uppercase; color: #fff; background: #05060a; border: 0; box-shadow: inset 0 0 0 1px #24263a; padding: 0 14px; outline: none; } #menu #code:focus { box-shadow: inset 0 0 0 1px #b026ff; } #menu #join { flex: 1; }
-  #menu .form { padding: 12px 14px; display: grid; gap: 10px; } #menu .field { display: flex; gap: 10px; align-items: center; }
-  #menu #name { flex: 1; margin: 0; background: #05060a; border: 1px solid #24263a; border-radius: 0; color: #fff; font: 800 18px "Barlow Condensed", sans-serif; letter-spacing: .06em; padding: 6px 10px; } #menu #name:focus { border-color: #b026ff; }
-  #menu label.tick { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; color: #d4d6e8; cursor: pointer; } #menu label.tick input { display: none; }
-  #menu .sw { width: 38px; height: 18px; border: 1px solid #33364f; background: #05060a; position: relative; flex: none; } #menu .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; background: #8d90a8; }
-  #menu label.tick input:checked + .sw::after { left: 23px; background: #b026ff; } #menu .st { margin-left: auto; font-weight: 800; letter-spacing: .12em; color: #8d90a8; } #menu label.tick input:checked ~ .st { color: #b026ff; }
-  #menu .note { margin: 0; font-size: 14px; color: #8d90a8; } #menu #menuNote { min-height: 20px; color: #ff2a8d; }
-  #menu .you { position: fixed; right: 28px; top: 70px; width: min(370px, 40vw); padding: 14px 18px; } #menu .you .mem { font-size: 20px; line-height: 1.25; margin-top: 8px; }
-  #menu .you .num { display: block; font-weight: 800; font-size: 64px; line-height: .95; color: #b026ff; font-variant-numeric: tabular-nums; } #menu .you .num small { font-size: 22px; color: #fff; letter-spacing: .08em; margin-left: 6px; }
-  #menu .you .also { display: block; margin-top: 10px; padding-top: 8px; border-top: 1px solid #24263a; font-size: 16px; color: #a3a6bb; } #menu .you .also b { color: #fff; font-weight: 800; }
-  #menu .you .sell { font-weight: 800; font-size: 34px; line-height: 1.05; margin-top: 8px; } #menu .you .sell span { color: #ff3b5c; }
-  /* Earth in the center (his ask, 2026-10-19: "the Earth is the main character, in the center, symmetrical"): the big number in open sky above it
-     (look C's open space), the fine print under it, the keys in the left wing and your record in the right, mirrored */
-  body.menu-B #menu .stop { justify-content: center; } body.menu-B #menu .brand { margin: 0 14px; }
-  body.menu-B #menu .reading { position: fixed; left: 50%; top: 9vh; transform: translateX(-50%); text-align: center; padding: 0; }
-  body.menu-B #menu .odds { font-size: clamp(44px, 6vw, 68px); }
-  body.menu-B #menu #oddsFine { position: fixed; left: 50%; top: calc(50% + 150px); transform: translateX(-50%); width: min(520px, 46vw); text-align: center; }
-  body.menu-B #menu .wing { position: fixed; top: 50%; transform: translateY(-50%); width: min(300px, 30vw); display: flex; flex-direction: column; gap: 8px; }
-  body.menu-B #menu .sleft { left: 28px; } body.menu-B #menu .sright { right: 28px; gap: 10px; }
-  body.menu-B #menu #worlds { display: contents; } body.menu-B #menu #olderList { display: grid; gap: 8px; } body.menu-B #menu #olderList[hidden] { display: none; }
-  body.menu-B #menu .you { position: static; width: auto; } body.menu-B #menu .codeRow #code { width: 110px; }
-  body.menu-B #menu #ver { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); width: min(620px, 80vw); text-align: center; }
   #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 20px; letter-spacing: .1em; }
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
@@ -113,32 +74,18 @@
 </head>
 <body>
 <div id="bootLog"></div>
-<div id="menu" class="over">
-  <div class="stop">
-    <span class="chip cut-s"><span class="lbl">Suit</span><b>07</b></span>
-    <span class="chip cut-s"><span class="lbl">Visor</span><b class="cv">ONLINE</b></span>
-    <span class="brand">LAST FIRE</span>
-    <span class="chip cut-s"><span class="lbl">Earth signal</span><b class="cr">LOST</b></span>
-    <span class="chip cut-s"><span class="lbl">Build</span><b id="buildNo"></b></span>
-  </div>
-  <div class="reading"><div class="lbl" id="oddsLbl">Camp's odds, next 100 nights</div><div class="odds" id="odds"></div></div>
-  <div class="fine" id="oddsFine"></div>
-  <div class="wing sleft">
-    <div id="worlds"></div>
-    <button class="key cut" id="host">HOST<small>(your crew joins your newest world)</small></button>
-    <button class="key cut" id="solo">PLAY ALONE<small>(a new world)</small></button>
-    <div class="codeRow"><input id="code" class="cut" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Room code"><button class="key cut" id="join">JOIN<small>(a friend's code)</small></button></div>
-    <div id="menuNote"></div>
-  </div>
-  <div class="wing sright">
-    <div class="plate cut you" id="you"></div>
-    <div class="plate cut form">
-      <div class="field"><span class="lbl">Name</span><input id="name" maxlength="12" placeholder="YOUR NAME" autocomplete="off" aria-label="Your name"></div>
-      <label class="tick"><input type="checkbox" id="asHost"><span class="sw"></span>Open a CONTINUE world to friends<span class="st">OPEN</span></label>
-    </div>
-  </div>
-  <p class="note" id="ver"></p>
-</div>
+<div id="menu" class="over"><div class="panel">
+  <h1>LAST FIRE</h1>
+  <p class="tag">The dark has no edge. Push it back.</p>
+  <p class="note" id="ver" style="margin:-10px 0 16px"></p>
+  <input id="name" maxlength="12" placeholder="YOUR NAME" autocomplete="off" aria-label="Your name">
+  <div id="worlds"></div>
+  <label class="tick" style="margin:-2px 0 12px;font-size:15px;color:var(--meta)"><input type="checkbox" id="asHost"> Open a CONTINUE world to friends (host it)</label>
+  <button class="key" id="host">HOST<small>(opens your newest world to your crew; your room code and link never change)</small></button>
+  <div style="display:flex;gap:10px;margin-bottom:10px"><input id="code" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Room code" style="width:150px;font:500 22px 'Barlow Condensed';letter-spacing:.3em;text-transform:uppercase;color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:0 12px;outline:none"><button class="key" id="join" style="margin:0">JOIN<small>(a friend's code)</small></button></div>
+  <button class="key" id="solo">PLAY ALONE<small>(your own world)</small></button>
+  <div id="menuNote" style="min-height:22px;color:var(--neon)"></div>
+</div></div>
 <div id="hud" hidden>
   <div id="cross"></div><div id="hit"></div>
   <div id="fireHud"></div><div id="phase"></div>
@@ -180,6 +127,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=120"></script>
+<script type="module" src="./client/main.js?v=121"></script>
 </body>
 </html>

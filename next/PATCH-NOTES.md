@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v121** Back to the old grim menu at his word (v120 copied the Reactor's layout and felt like an office slide); the sky, the bigger Earth and the game fixes stay. BUILDING.md: how building will work.
 - **v120** THE SUIT menu, his pick: Earth dead center, the camp's odds for the next 100 nights from his own record above it, keys left, his best night and favorite site right (all real numbers from the save).
 - **v118** Bad luck paid back: two dry trips, then an extra wreck closer in (robots: city 22 to 16 trips, reservoir 33 to 19, depot 6).
 - **v117** v115's palette swap undone everywhere (in game too). Earth 15% bigger; its blue rim breaks where the dark has taken it. A ?sky view for UI mockups.
