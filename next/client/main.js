@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=57';
-import { Ambience } from './ambience.js?v=57';
-import { Camp, BOARD } from './camp.js?v=57';
-import { Guide } from './guide.js?v=57';
-import { buildSites } from './earthsite.js?v=57';
-import { Truck } from './truck.js?v=57';
-import { Wrist } from './wrist.js?v=57';
-import { think as friendThink } from './friend.js?v=57';
-import { FriendVoice } from './friendvoice.js?v=57';
-import { crewFrom } from '../core/habits.js?v=57';
-import { HudLook } from './hudlook.js?v=57';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=57';
-import { sound, GUNS } from '../../src/combat.js?v=57';
-import { FX } from '../../src/fx.js?v=57';
+import * as C from '../core/game.js?v=60';
+import { Ambience } from './ambience.js?v=60';
+import { Camp, BOARD } from './camp.js?v=60';
+import { Guide } from './guide.js?v=60';
+import { buildSites } from './earthsite.js?v=60';
+import { Truck } from './truck.js?v=60';
+import { Wrist } from './wrist.js?v=60';
+import { think as friendThink } from './friend.js?v=60';
+import { FriendVoice } from './friendvoice.js?v=60';
+import { crewFrom } from '../core/habits.js?v=60';
+import { HudLook } from './hudlook.js?v=60';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=60';
+import { sound, GUNS } from '../../src/combat.js?v=60';
+import { FX } from '../../src/fx.js?v=60';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 57;   // (this copy's version; ./version.json says the newest)
+const BUILD = 60;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -37,7 +37,12 @@ scene.add(new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09));   // (barely any
 THREE.ShaderChunk.emissivemap_fragment += `
 #ifdef USE_RIM
   { float rimF = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 6.0), rimD = smoothstep(60.0, 6.0, length(vViewPosition));
-    totalEmissiveRadiance += vec3(0.48, 0.30, 1.0) * rimF * rimD * 0.7; }
+    #ifdef RIM_COLOR
+    totalEmissiveRadiance += RIM_COLOR * rimF * rimD * 1.3;   /* (a mask's own edge color, stronger: the thing you must read first) */
+    #else
+    totalEmissiveRadiance += vec3(0.48, 0.30, 1.0) * rimF * rimD * 0.7;
+    #endif
+    }
 #endif`;
 function rimAll() { scene.traverse(o => { if (!o.isMesh || !o.material || o.material === groundMat) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.isMeshStandardMaterial && !m.userData.rim) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '' }; m.needsUpdate = true; } }); }
 setInterval(() => { if (g) rimAll(); }, 2000);   // (new things get their edge within two seconds; a material is changed once)
@@ -125,20 +130,22 @@ function updateTiles() {   // (two tiles a frame at most, nearest first; tiles p
 const loader = new GLTFLoader(), models = {};
 const load = (k, url) => loader.loadAsync('../assets/' + url).then(r => { models[k] = r; }).catch(e => console.warn('model', k, e));
 const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
-function darken(root, eyes) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
-  root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; const m = o.material = o.material.clone(); if (/Eye_White|Secondary/.test(m.name)) { m.color.setHex(eyes); m.emissive = new THREE.Color(eyes); m.emissiveIntensity = 2.4; } else { m.color.setHex(0x0b0b14); m.emissive = new THREE.Color(0x10142a); m.emissiveIntensity = 0.35; m.roughness = 0.9; } /* (a faint cold rim so a shape reads against the dark) */ });
+const MASK_RIM = { walker: 'vec3(0.62, 0.38, 1.0)', runner: 'vec3(1.0, 0.25, 0.65)', watcher: 'vec3(0.85, 0.85, 1.0)', face: 'vec3(1.0, 0.3, 0.85)', giant: 'vec3(1.0, 0.18, 0.25)' };
+function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
+  root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; const m = o.material = o.material.clone(); if (/Eye_White|Secondary/.test(m.name)) { m.color.setHex(0x030305); m.emissive = new THREE.Color(0); m.emissiveIntensity = 0; }   /* (no cartoon eyeballs or grins: black, so the face reads as a hollow) */ else if (/Eye_Black/.test(m.name)) { m.color.setHex(eyes); m.emissive = new THREE.Color(eyes); m.emissiveIntensity = 3; }   /* (only the pupils burn: pinpoint eyes, like the stars) */ else { m.color.setHex(0x07070c); m.emissive = new THREE.Color(0x0a0c18); m.emissiveIntensity = 0.3; m.roughness = 0.9; if (MASK_RIM[kind]) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '', RIM_COLOR: MASK_RIM[kind] }; m.needsUpdate = true; } } /* (a faint cold rim so a shape reads against the dark) */ });
 }
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
 const seen = new Map();
-const LOOK = { walker: ['wraith', 1.6, 0xc8d4ff], runner: ['clawed', 1.0, 0xd8c8ff], giant: ['wraith', 3.4, 0xff5577], watcher: ['wraith', 2.4, 0xeef0f8], face: ['clawed', 1.1, 0xff6fb1] };
+const LOOK = { walker: ['wraith', 1.6, 0xb48cff], runner: ['clawed', 1.0, 0xff4fa0], giant: ['wraith', 3.4, 0xff2b40], watcher: ['wraith', 2.4, 0xffffff], face: ['clawed', 1.1, 0xff4fd8] };   // (eye color = the mask's own edge color)
 function drawHollow(dt) {
   const alive = new Set();
   for (const k of g.hollow) {
     alive.add(k.id); let v = seen.get(k.id);
     if (!v) {
       if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0x9fb6ff); q.material.emissiveIntensity = 0.5; } }); v = { o }; }
-      else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; const o = skClone(src.scene); darken(o, eyes); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
+      else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; if (!src.box) { src.scene.updateMatrixWorld(true); src.box = new THREE.Box3().setFromObject(src.scene); }   /* (measured on the original: a copy of an animated model measures wrong, the camp people's old bug) */
+        const o = skClone(src.scene); darken(o, eyes, k.kind); const b = src.box, s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
         if (k.kind === 'watcher') { const sc = size * 1.6 / s.y; o.scale.set(sc * 0.6, sc, sc * 0.6);   // (the tall one: stretched thin, a wide-brimmed hat, nothing else you can name)
           const hatM = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 1 }), brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.03, 24), hatM), crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.42, 20), hatM);
           const hat = new THREE.Group(); crown.position.y = 0.22; hat.add(brim, crown); hat.scale.set(1 / (sc * 0.6), 1 / sc, 1 / (sc * 0.6)); hat.position.y = b.max.y - 0.05 * s.y; o.add(hat); }
