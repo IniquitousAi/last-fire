@@ -10,6 +10,8 @@ Never stop working on the game; use REA and GitHub to learn from the best. Cyber
 4. Eye HUD: the wrist hologram plus a Kiroshi frame (thin corner brackets, live readouts); learn from Venge.io's REA capture.
 5. Neon on wet ground: more puddles and the camp's signs reflected (the wet shader exists).
 6. Double jump and air dash (have: boost jump and dodge); sandevistan-style slow time only in solo.
+7. Small: the camp board's Earth hologram has a cyan rim (banned color); it is not drawn by firecore.js, likely a model's texture: find it and recolor violet.
+8. DONE v141: item 1, the Kiroshi scan.
 
 ## TOP FIVE (Daniel, 2026-10-19 about 05:50: "make sure our top five priority tasks are complete or in progress... finish first or start ASAP")
 1. **The truck**: SHIPPED v130, a smooth code-modeled body that grows part by part. Open: wrecks are heavy (14.6k triangles each), the roof lamp housing not seen by eye yet.
