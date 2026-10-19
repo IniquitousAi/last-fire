@@ -153,17 +153,23 @@ export class Camp {
     // (the bedroll's base is 5 cm under its pivot), and set on the lowest ground under its footprint so no corner floats on a slope.
     // lie = a loose thing (a stone): tipped to rest on the slope's own plane and bedded a tenth of its height in, not balanced level on a hill
     const up = new THREE.Vector3(0, 1, 0), spin = new THREE.Quaternion();
-    const put = (url, x, z, size, ry = 0, sink = 0, lie = false) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(), k = size / Math.max(m.s.x, m.s.z); o.scale.setScalar(k);
+    const put0 = (url, x, z, size, ry = 0, sink = 0, lie = false) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(), k = size / Math.max(m.s.x, m.s.z); o.scale.setScalar(k);
       const cs = Math.cos(ry), sn = Math.sin(ry), ox = (m.c.x * cs + m.c.z * sn) * k, oz = (-m.c.x * sn + m.c.z * cs) * k, hx = m.s.x * k / 2, hz = m.s.z * k / 2;
       if (lie) { const e = 0.5, n = new THREE.Vector3(land(x - e, z) - land(x + e, z), 2 * e, land(x, z - e) - land(x, z + e)).normalize();
         o.quaternion.setFromUnitVectors(up, n).multiply(spin.setFromAxisAngle(up, ry)); o.position.set(x - ox, land(x, z) - m.y0 * k - sink - 0.1 * m.s.y * k, z - oz); }
       else { let low = land(x, z); for (const [a, b] of [[hx, hz], [-hx, hz], [hx, -hz], [-hx, -hz]]) low = Math.min(low, land(x + a * cs + b * sn, z - a * sn + b * cs));
         o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; }
-      this.scene.add(o); return o; });
+      this.scene.add(o); if (batch.has(url)) mine.push(o); return o; });
+    const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
+    /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
+    const poleG = new THREE.BoxGeometry(0.12, 3, 0.12), poleM = new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 }), bulbG = new THREE.BoxGeometry(0.26, 0.3, 0.26), bulbM = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xcfe0ff, emissiveIntensity: 1.4 });   /* (the three hanging lamps share one pole and one bulb) */
+    const batch = new Set(['kit/fence-fortified.glb', 'kit/stone.glb', 'kit/barrel.glb', 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
+    const fold = () => { const groups = new Map(); for (const o of mine) { this.scene.remove(o); o.updateMatrixWorld(true); o.traverse(q => { if (!q.isMesh) return; const k = q.geometry.uuid + '|' + q.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(q); }); }
+      for (const list of groups.values()) { const f = list[0], im = new THREE.InstancedMesh(f.geometry, f.material, list.length); list.forEach((q, i) => im.setMatrixAt(i, q.matrixWorld)); im.castShadow = f.castShadow; im.receiveShadow = f.receiveShadow; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); this.scene.add(im); } };
     const face = (x, z) => Math.atan2(-x, -z);
     const cloth = o => o && o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.map = null; q.material.color.setHex(0x505a70); q.material.roughness = 0.95; } });   // (the repainted canvas was near black: tents read as bare frames at night, so they get one plain cloth color)   // (turns a thing's front toward the fire)
     const R = 21, SEG = 2.7, n = Math.round(2 * Math.PI * R / SEG), GATE = Math.PI / 2;   // (the gate faces out past the hut's side)
-    get('kit/fence-fortified.glb').then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;
+    const fenceP = get('kit/fence-fortified.glb').then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, gap = Math.abs(Math.atan2(Math.sin(a - GATE), Math.cos(a - GATE))); if (gap < 0.12) continue;
         const x = Math.cos(a) * R, z = Math.sin(a) * R; put('kit/fence-fortified.glb', x, z, SEG * 1.04, -a - Math.PI / 2 + along, 0.05); } });
     const gx = Math.cos(GATE) * R, gz = Math.sin(GATE) * R;
@@ -189,12 +195,13 @@ export class Camp {
     { const [x, z] = W(-9, 19.2); put('kit/box-large.glb', x, z, 1.3, 0.2); }
     // three hanging lamps: the tents, the workshop, the store (each lit corner reads as a place, not a floor)
     for (const [deg, r] of [[237, 10.5], [36, 13], [-9, 14]]) { const [x, z] = W(deg, r), y = land(x, z), l = new THREE.PointLight(0xcfe0ff, 9, 13, 1.4); l.position.set(x, y + 2.8, z);
-      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3, 0.12), new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 })); pole.position.set(x, y + 1.5, z);
-      const bulb = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.3, 0.26), new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xcfe0ff, emissiveIntensity: 1.4 })); bulb.position.set(x, y + 3.05, z); this.scene.add(l, pole, bulb); }
+      const pole = new THREE.Mesh(poleG, poleM); pole.position.set(x, y + 1.5, z);
+      const bulb = new THREE.Mesh(bulbG, bulbM); bulb.position.set(x, y + 3.05, z); this.scene.add(l); mine.push(pole, bulb); }
     // outside: stones and rubble in the dark, so the land is somewhere and not a floor
     let q = 7; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = 24 + rnd() * 50, x = Math.cos(a) * r, z = Math.sin(a) * r; put('kit/stone.glb', x, z, 0.5 + rnd() * rnd() * 2.6, rnd() * 6.3, 0, true); }
     for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, r = 4 + rnd() * 15, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.hypot(x - HUT.x, z - HUT.z) < 5 || Math.hypot(x - BOARD.x, z - BOARD.z) < 3 || r < 5) continue; put('kit/stone.glb', x, z, 0.25 + rnd() * 0.35, rnd() * 6.3, 0, true); }
+    fenceP.then(() => Promise.all(pend)).then(fold);
   }
   speak(role, line, sec) { this.voice = { role, line: line.replace(/[<>&]/g, ''), until: performance.now() + sec * 1000 }; }
   // a new world starts you at your old desk, facing the two papers

@@ -71,9 +71,9 @@ Claude picks the order by the bottleneck: what he will see first and most.
 61. **Aim that feels great** (7, 8, 9): a small bullet pull near the crosshair, the dark's reach a little shorter than its claws look, the last round in the mag cracks harder.
 62. **Coyote time and input buffering** (22): jump 0.15 s after a ledge; F pressed a moment early still counts.
 63. **Bad luck paid back** (10, 19): a dry Earth run is followed by a better one; the first wreck is on the side you walk toward.
-64. **The masks show intent** (13): the face turns before it lunges, the watcher's eyes brighten when it decides. Never words.
+64. **(SHIPPED v123: the eyes)** **The masks show intent** (13): the face turns before it lunges, the watcher's eyes brighten when it decides. Never words.
 65. **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
-66. **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
+66. **(SHIPPED v123: about 102 to 73)** **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
 67. **Bold and confident UI** (his ask: the Reactor is the bar, DESIGN.md's lessons): three rough versions of the HUD and home screen with heavy numbers and status chips; saturated color only on the numbers and words that matter, keys and panels dark matte and heavy (his v115 correction); he picks one.
 
 ## Done

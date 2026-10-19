@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=122';
-import { Ambience } from './ambience.js?v=122';
-import { Camp, BOARD } from './camp.js?v=122';
-import { Guide } from './guide.js?v=122';
-import { buildSites } from './earthsite.js?v=122';
-import { Truck } from './truck.js?v=122';
-import { ShipView } from './shipview.js?v=122';
-import { Wrist } from './wrist.js?v=122';
-import { FireCore } from './firecore.js?v=122';
+import * as C from '../core/game.js?v=123';
+import { Ambience } from './ambience.js?v=123';
+import { Camp, BOARD } from './camp.js?v=123';
+import { Guide } from './guide.js?v=123';
+import { buildSites } from './earthsite.js?v=123';
+import { Truck } from './truck.js?v=123';
+import { ShipView } from './shipview.js?v=123';
+import { Wrist } from './wrist.js?v=123';
+import { FireCore } from './firecore.js?v=123';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=122';
-import { FriendVoice } from './friendvoice.js?v=122';
-import { crewFrom } from '../core/habits.js?v=122';
-import { HudLook } from './hudlook.js?v=122';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=122';
-import { sound, GUNS } from '../../src/combat.js?v=122';
-import { FX } from '../../src/fx.js?v=122';
+import { think as friendThink } from './friend.js?v=123';
+import { FriendVoice } from './friendvoice.js?v=123';
+import { crewFrom } from '../core/habits.js?v=123';
+import { HudLook } from './hudlook.js?v=123';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=123';
+import { sound, GUNS } from '../../src/combat.js?v=123';
+import { FX } from '../../src/fx.js?v=123';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 122;   // (this copy's version; ./version.json says the newest)
+const BUILD = 123;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -173,12 +173,16 @@ function drawHollow(dt) {
           const hat = new THREE.Group(); crown.position.y = 0.22; hat.add(brim, crown); hat.scale.set(1 / (sc * 0.6), 1 / sc, 1 / (sc * 0.6)); hat.position.y = b.max.y - 0.05 * s.y; o.add(hat); }
         const mix = new THREE.AnimationMixer(o), A = n => { const c = src.animations.find(a => a.name.endsWith(n)); return c ? mix.clipAction(c) : null; }; v = { o, mix, fly: A('Fast_Flying'), idle: A('Flying_Idle'), hit: A('Punch'), death: A('Death') }; (v.fly || v.idle)?.play(); }
       if (k.kind === 'face') { const at = new THREE.Vector3(k.x, k.y + 1.2, k.z); fx.burst(at, 28, [0.55, 0.57, 0.66], 5, 0.7); if (sound.shatter) sound.shatter(at); }   // (it tears out of the wall: concrete dust and a crack)
-      v.mats = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
+      v.mats = []; v.eyes = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); if (/Eye_Black/.test(q.material.name)) v.eyes.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
       scene.add(v.o); seen.set(k.id, v);
     }
     { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
       for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
       const w = (1 - v.sol) * 0.1, t = performance.now() / 1000 + k.id; v.o.scale.set(v.base * (1 + w * Math.sin(t * 11)), v.base * (1 + w * Math.sin(t * 7.3)), v.base * (1 + w * Math.cos(t * 9.1))); }
+    if (v.eyes.length) {   /* (the masks show intent, never in words, GAMEDEV-TRICKS.md 13: the pinpoint eyes flare as it closes to striking range, and the watcher's brighten while nobody looks at it, because that is when it moves) */
+      const K = C.KINDS[k.kind], reach = (K && K.reach) || 1.2; let d = 1e9; for (const p of g.players) if (!p.ember) d = Math.min(d, Math.hypot(p.x - k.x, p.z - k.z));
+      const tell = Math.max(0, Math.min(1, 1 - (d - reach) / (reach * 1.6))) + (k.kind === 'watcher' && !C.lookedAt(g, k) && d < 30 ? 0.5 : 0); v.tell = (v.tell || 0) + (tell - (v.tell || 0)) * Math.min(1, dt * 8);
+      for (const m of v.eyes) m.emissiveIntensity = 3 + 9 * v.tell; }
     const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;   // (no bob: they hold their height; the animation does the moving)
     if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix && hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k))) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));   // (seen, it freezes mid-motion)
   }
