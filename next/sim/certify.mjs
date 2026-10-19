@@ -7,27 +7,36 @@ import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, BASE_TACTIC,
 import { crewFrom, summarize, SECTORS, CAL } from '../core/habits.js';
 
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
+const RIFLE = { dmg: 48, head: 2.0, ap: 0.3, rate: 0.12 };   // (the M4 he starts with, at a human pace: a perfect crew carries it, the recorded players keep the pistol)
+const M14 = { dmg: 120, head: 3.0, ap: 0.7, rate: 0.2 };   // (a perfect crew has bought the M14 by night 5)
+const RAIL = { dmg: 260, head: 4.0, ap: 1.0, rate: 0.55 };   // (and the rail by night 8: its slow, heavy shot is how a crew drops a giant)
 const PERFECT = { name: 'perfect', roam: 12, greed: 8, bankAt: 12, aim: 0.95, together: 1, blind: -1 };
 
 export function think(g, p, r, dt) {   // (one robot plays one person's habits: where they roam, when they bank, how they aim, the way they never look)
-  const S = p.style; if (p.ember) return; const f = g.fire;
+  const S = p.style; if (p.ember) return; const W = S.blind < 0 ? (g.night >= 8 ? RAIL : g.night >= 5 ? M14 : RIFLE) : PISTOL; const f = g.fire;
   let tx = p.homeX, tz = p.homeZ; const ember = g.embers.find(e => !e.held && Math.hypot(e.x - p.x, e.z - p.z) < 40);
   if (p.carrying || p.carried >= S.bankAt) { tx = f.x; tz = f.z; } else if (ember) { tx = ember.x; tz = ember.z; }
   else { const m = g.motes.filter(m => Math.hypot(m.x - p.x, m.z - p.z) < S.greed).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (m) { tx = m.x; tz = m.z; } }
+  if (S.blind < 0 && Math.hypot(p.x - f.x, p.z - f.z) > 10 && g.hollow.filter(k => !k.dead && Math.hypot(k.x - p.x, k.z - p.z) < 22).length >= 3) { tx = f.x; tz = f.z; }   // (a perfect player falls back to the light when three or more of the dark are close)
   if (S.together > 0) { const mates = g.players.filter(q => q !== p && !q.ember); if (mates.length) { const cx = mates.reduce((s, q) => s + q.x, 0) / mates.length, cz = mates.reduce((s, q) => s + q.z, 0) / mates.length, w = Math.min(1, S.together) * CAL.pull; tx = tx * (1 - w) + cx * w; tz = tz * (1 - w) + cz * w; } }   // (sticking with others is a dial, not a switch: a 0.56 player is pulled about halfway, never glued)
-  const giant = g.hollow.find(k => k.kind === 'giant' && Math.hypot(k.x - p.x, k.z - p.z) < 7); if (giant && S.aim > 0.5) { tx = p.x + (p.x - giant.x) * 2; tz = p.z + (p.z - giant.z) * 2; }   // (a skilled player backs away from a giant and keeps shooting)
+  if (S.blind < 0) { let rx = 0, rz = 0, n = 0; for (const k of g.hollow) { if (k.dead || k.kind !== 'giant') continue; const gd = Math.hypot(k.x - p.x, k.z - p.z); if (gd < 12) { rx += (p.x - k.x) / (gd * gd + 1); rz += (p.z - k.z) / (gd * gd + 1); n++; } }
+    if (n) { const L = Math.hypot(rx, rz) || 1; tx = p.x + rx / L * 6; tz = p.z + rz / L * 6; } }   // (a perfect player steps away from every giant at once, never into the next one)
+  else { const giant = g.hollow.find(k => k.kind === 'giant' && Math.hypot(k.x - p.x, k.z - p.z) < 7); if (giant && S.aim > 0.5) { tx = p.x + (p.x - giant.x) * 2; tz = p.z + (p.z - giant.z) * 2; } }   // (a skilled player backs away from a giant and keeps shooting)
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); if (d > 0.5) { const sp = Math.min(d, 4.4 * dt); p.x += dx / d * sp; p.z += dz / d * sp; }
   if (canGrow(g) && g.fire.level < g.night - 1 && g.clock < 0.5) grow(g, p);   // (robots grow the fire by day, at most one level per night survived)
   p.y = heightAt(g.land, p.x, p.z);
   // where they face: mostly out from the fire, never toward their blind sector
   const out = Math.atan2(-(p.x - f.x), -(p.z - f.z)) + Math.PI; p.yaw = out;
+  const watchers = S.blind < 0 ? g.hollow.filter(k => !k.dead && KINDS[k.kind].watched && Math.hypot(k.x - f.x, k.z - f.z) < 60) : [], duty = watchers.length && g.players.filter(q => !q.ember).sort((a, b) => a.id - b.id)[0] === p;
+  if (duty) { const w = watchers.sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; p.yaw = Math.atan2(-(w.x - p.x), -(w.z - p.z)); p.cd = (p.cd || 0) - dt; if (p.cd > 0) return; p.cd = W.rate; if (Math.hypot(w.x - p.x, w.z - p.z) > 30 || r() > S.aim * Math.max(0.15, 1 - Math.hypot(w.x - p.x, w.z - p.z) / 40)) { shotBy(g, p, false); return; }
+    const hy = KINDS[w.kind].hits[KINDS[w.kind].hits.length - 1][0], ox = p.x, oy = p.y + 1.6, oz = p.z, vx = w.x - ox, vy = w.y + hy - oy, vz = w.z - oz, L = Math.hypot(vx, vy, vz); fired(g, p, ox, oz, vx / L, vy / L); const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); shotBy(g, p, !!h); if (h) damage(g, h.k, h.part, W.dmg * (h.mult > 1 ? W.head : 1), W.ap, p.id); return; }   // (a perfect crew keeps one pair of eyes on the tall one, which only moves unwatched, and that one shoots it; the rest fight on)   // (a perfect player never turns their back on the tall one: it only moves unwatched)
   p.cd = (p.cd || 0) - dt; if (p.cd > 0) return;
   const sectorOf = (x, z) => { const a = ((Math.atan2(-(x - p.x), -(z - p.z)) + Math.PI * 4) % (Math.PI * 2)); return Math.floor(a / (Math.PI * 2) * SECTORS) % SECTORS; };
   const k = g.hollow.filter(k => { const dd = Math.hypot(k.x - p.x, k.z - p.z); return dd < 30 && (S.blind < 0 || sectorOf(k.x, k.z) !== S.blind || dd < 7); }).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
-  p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), chance = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < chance * 0.35;
+  p.cd = W.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), chance = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < chance * 0.35;
   if (r() > chance) { shotBy(g, p, false); return; }
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], ox = p.x, oy = p.y + 1.6, oz = p.z, vx = k.x - ox, vy = k.y + hy - oy, vz = k.z - oz, L = Math.hypot(vx, vy, vz);
-  fired(g, p, ox, oz, vx / L, vz / L); const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); shotBy(g, p, !!h); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
+  fired(g, p, ox, oz, vx / L, vz / L); const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); shotBy(g, p, !!h); if (h) damage(g, h.k, h.part, W.dmg * (h.mult > 1 ? W.head : 1), W.ap, p.id);
 }
 // one game: this crew of robots plays some nights against a tactic
 export function play(tactic, crew, seed, nights = 2) {

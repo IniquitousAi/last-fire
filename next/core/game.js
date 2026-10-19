@@ -158,7 +158,14 @@ export const KINDS = {
 };
 // what each fire level wakes in the dark that night: the player chooses when to provoke it, by feeding the fire
 export const WAKES = [[], ['runner'], ['shard'], ['giant'], ['runner', 'giant'], ['shard', 'giant']];
+export const MOVES = { jump: 0, sprint: 0, crouch: 0, slide: 1, dodge: 2, boost: 3, slam: 4 };   // (movement that grows: the fire level each move unlocks at; the era is how far the fire has grown. The client can turn the gate off, dev default)
+export const MOVE_NAMES = { slide: 'the slide', dodge: 'the dodge', boost: 'the boost jump', slam: 'the slam' };
+export const moveOn = (g, k) => !!g && g.fire.level >= (MOVES[k] ?? 0);
+export const movesAt = level => Object.keys(MOVES).filter(k => MOVES[k] <= level);
+export const nextMove = g => Object.keys(MOVES).filter(k => MOVES[k] > g.fire.level).sort((a, b) => MOVES[a] - MOVES[b])[0] || null;
 export const FIRE_COST = [0, 60, 180, 400, 750, 1200];   // (banked light a level costs; growing it is the players' choice)
+export const FIRE_TAIL = { ratio: 1.3, decay: 0.95 };   // (past the table each level costs ratio x the last, and the ratio itself falls toward 1 by decay each step: the curve flattens and never stops. Tuned by sim/growth.mjs --tune)
+export function levelCost(n, tail = FIRE_TAIL) { if (n < FIRE_COST.length) return FIRE_COST[n]; let c = FIRE_COST[FIRE_COST.length - 1], r = tail.ratio; for (let i = FIRE_COST.length; i <= n; i++) { c = Math.round(c * r); r = 1 + (r - 1) * tail.decay; } return c; }   // (the table's levels today; the fire's look and what it wakes stop at the table's end until the levels past it are made)
 
 // ---------------------------------------------------------------- the dark's tactics: a genome the daemon breeds from recorded nights
 // probe: the angle the first wave comes from (radians); spread: how wide they fan; rushAt: share of the night before they all commit;
@@ -389,7 +396,7 @@ export function hurt(g, p, n, from) {
   // Assassin's Creed), and no single hit takes you from healthy to down (Control). Falls stay earned, never one cheap blow.
   p.stress = (p.stress || 0) + n * DIRECTOR.hurt; const was = p.hp; if (was <= 25) n *= 0.6; p.hp -= n; if (was > 40 && p.hp <= 0) p.hp = 1; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
-    for (const k of p.pack || []) g.parts.push({ id: g.nextId++, kind: k, x: p.x + (Math.random() - 0.5) * 2, z: p.z + (Math.random() - 0.5) * 2 }); p.pack = [];
+    for (const k of p.pack || []) g.parts.push({ id: g.nextId++, kind: k, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2 }); p.pack = [];
     if (g.earth && onEarth(p)) { const L = g.earth.lost = g.earth.lost || { falls: 0, cells: 0, parts: 0 }; L.falls++; L.cells += p.carried / 8; }
     p.ember = true; p.hp = 0; g.stats.falls++; g.rec.falls++; if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) e.held = null; p.carrying = null; }
     for (let i = 0; i < Math.ceil(p.carried / 5); i++) g.motes.push({ id: g.nextId++, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2, v: 5, t: 60 });

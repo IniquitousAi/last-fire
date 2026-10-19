@@ -34,7 +34,7 @@ export class Net {
   }
   wire(c, id) {   // (id: the friend's number on the host's side; 0 on a friend's side, where the only connection is the host)
     let bad = 0; const strike = () => { if (++bad > 40) { this.onStatus('Dropped a player: their game sent too much garbage.'); c.close(); } };
-    c.on('open', () => { this.conns.set(id, c); if (this.host) this.onMessage({ t: 'joined' }, id); else this.onStatus('Connected.'); });
+    c.on('open', () => { this.conns.set(id, c); if (this.host) { try { this.onMessage({ t: 'joined' }, id); } catch (e) { console.warn(e); } } else this.onStatus('Connected.'); });
     c.on('data', d => {
       if (typeof d !== 'string' || d.length > MAX_BYTES) return strike();
       let m; try { m = JSON.parse(d); } catch (e) { return strike(); }

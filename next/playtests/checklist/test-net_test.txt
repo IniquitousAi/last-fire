@@ -1,0 +1,32 @@
+PASS  room codes are 6 letters, never I or O, and do not repeat (2000 made)  (2000 distinct, 0 malformed)
+PASS  a typed code is cleaned to capital letters, 6 at most  (ABCDEF)
+PASS  first friend joins as player 1  ([{"t":"joined"},1])
+PASS  a friend claiming to be the host is stamped as themselves (from 1, not 0)  (from 1)
+PASS  and claiming to be player 3 changes nothing  (from 1)
+PASS  garbage (bad JSON, arrays, strings, unknown kinds, numbers, 400 KB) never reaches the game  (0 got through)
+PASS  a good message right after garbage still passes  (passes)
+PASS  a browser that keeps sending garbage is dropped (closed)  (14 drop notice)
+Error: boom
+    at Net.onMessage (file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/sim/net_test.mjs:25:36)
+    at Object.open (file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/client/net.js:37:77)
+    at FakeConn.emit (file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/sim/net_test.mjs:5:277)
+    at file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/sim/net_test.mjs:25:187
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+Error: boom
+    at Net.onMessage (file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/sim/net_test.mjs:25:36)
+    at Object.data (file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/client/net.js:44:18)
+    at FakeConn.emit (file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/sim/net_test.mjs:5:277)
+    at file:///C:/Users/danie/Desktop/projects/survival/.claude/worktrees/agent-a2920a2aeadfd1396/next/sim/net_test.mjs:25:204
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+PASS  a message that makes the game code throw is swallowed, never crashes the host  (safe)
+PASS  the room holds 4 at most: the 4th friend is told "full" and closed  (2 turned away)
+PASS  LOCKED: a stranger with the right code is told "locked" and closed, never joined  (count 1)
+PASS  LOCKED: the friend already inside stays  (still in)
+PASS  UNLOCKED: the next friend joins again  (count 2)
+PASS  the host can kick someone (told "kicked", closed)  (kicked)
+
+all passed
