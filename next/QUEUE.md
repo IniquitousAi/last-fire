@@ -72,7 +72,7 @@ Claude picks the order by the bottleneck: what he will see first and most.
 62. **Coyote time and input buffering** (22): jump 0.15 s after a ledge; F pressed a moment early still counts.
 63. **Bad luck paid back** (10, 19): a dry Earth run is followed by a better one; the first wreck is on the side you walk toward.
 64. **(SHIPPED v123: the eyes)** **The masks show intent** (13): the face turns before it lunges, the watcher's eyes brighten when it decides. Never words.
-65. **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
+65. **(SHIPPED v125)** **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
 66. **(SHIPPED v123: about 102 to 73)** **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
 67. **Bold and confident UI** (his ask: the Reactor is the bar, DESIGN.md's lessons): three rough versions of the HUD and home screen with heavy numbers and status chips; saturated color only on the numbers and words that matter, keys and panels dark matte and heavy (his v115 correction); he picks one.
 68. **(SHIPPED v124: 146 of 146 warned 2 s+, 93% on the weakest light)** **The breach shows before it pours** (INNOVATION.md 5A's unbuilt pass line): when the flood picks the dimmest gap, the dark there visibly bulges and the motion pings point to it at least 2 s before the rush. Robot test: warning lead time 2 s or more on 95% of breaches, and breaches still land on the weakest light. (added when items 64 and 66 finished)

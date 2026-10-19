@@ -465,7 +465,8 @@ function moveHollow(g, dt, ph) {
     if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; }
     if (K.watched && (k.still = lookedAt(g, k))) { k.y = heightAt(g.land, k.x, k.z); continue; }   // (seen: it holds perfectly still, wherever it was caught)
     k.yaw = Math.atan2(dx, dz);
-    if (d < K.reach * 0.88) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind);   /* (its claws look longer than they reach: a near miss you can see, GAMEDEV-TRICKS.md 8) */ k.cd = K.wait; } }
+    const back = target.yaw !== undefined && d > K.reach * 0.45 && (-Math.sin(target.yaw) * (k.x - target.x) - Math.cos(target.yaw) * (k.z - target.z)) / Math.max(d, 0.01) < -0.17;   /* (behind you it moves, in front it strikes, GAMEDEV-TRICKS.md 5: more than about 100 degrees off your facing it closes in but holds its blow until you turn or it is right on you) */
+    if (d < K.reach * 0.88 && !back) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind);   /* (its claws look longer than they reach: a near miss you can see, GAMEDEV-TRICKS.md 8) */ k.cd = K.wait; } }
     else { k.x += dx * k.speed * dt; k.z += dz * k.speed * dt; }
     k.y = heightAt(g.land, k.x, k.z);
   }
