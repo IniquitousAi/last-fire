@@ -14,3 +14,4 @@
 - v177 serves A: Rift wall now reads as lit slate at night and the leaders' desk is dark worn wood (was near black / pale)
 - v178 serves A: Faster world rules: the dark's thinking step is 28% quicker and the robot nights run about 29% faster, every result bit for bit the same (proved by a lockstep replay of the old and new rules)
 - v179 serves B: Talk while you play: on your PC the game listens (MIC in the corner) and your words reach Claude
+- v180 serves B: The mic now reaches your PC (the game's safety list was blocking it)
