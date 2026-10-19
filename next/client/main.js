@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=132';
-import { Ambience } from './ambience.js?v=132';
-import { Camp, BOARD } from './camp.js?v=132';
-import { Guide } from './guide.js?v=132';
-import { buildSites } from './earthsite.js?v=132';
-import { Truck } from './truck.js?v=132';
-import { ShipView } from './shipview.js?v=132';
-import { Crew } from './crew.js?v=132';
-import { Hands } from './hands.js?v=132';
-import { Wrist } from './wrist.js?v=132';
-import { FireCore } from './firecore.js?v=132';
+import * as C from '../core/game.js?v=133';
+import { Ambience } from './ambience.js?v=133';
+import { Camp, BOARD } from './camp.js?v=133';
+import { Guide } from './guide.js?v=133';
+import { buildSites } from './earthsite.js?v=133';
+import { Truck } from './truck.js?v=133';
+import { ShipView } from './shipview.js?v=133';
+import { Crew } from './crew.js?v=133';
+import { Hands } from './hands.js?v=133';
+import { Wrist } from './wrist.js?v=133';
+import { FireCore } from './firecore.js?v=133';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=132';
-import { FriendVoice } from './friendvoice.js?v=132';
-import { crewFrom } from '../core/habits.js?v=132';
-import { HudLook } from './hudlook.js?v=132';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=132';
-import { sound, GUNS } from '../../src/combat.js?v=132';
-import { FX } from '../../src/fx.js?v=132';
+import { think as friendThink } from './friend.js?v=133';
+import { FriendVoice } from './friendvoice.js?v=133';
+import { crewFrom } from '../core/habits.js?v=133';
+import { HudLook } from './hudlook.js?v=133';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=133';
+import { sound, GUNS } from '../../src/combat.js?v=133';
+import { FX } from '../../src/fx.js?v=133';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 132;   // (this copy's version; ./version.json says the newest)
+const BUILD = 133;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -117,8 +117,8 @@ scene.add(sky);
 // ---------------------------------------------------------------- the game (rules) and you
 const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); };   // (what you hear and what you see agree: each crackle makes the flame jump)
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
-clickPlay.innerHTML = '<div style="width:34px;height:34px;margin:0 auto;border:1px solid rgba(255,79,216,.6);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-4px;width:1px;height:7px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-4px;width:1px;height:7px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-4px;width:7px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-4px;width:7px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:8px;font-size:12px;letter-spacing:.22em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:12px;letter-spacing:.06em;color:#a3a6bb;margin-top:1px">click to link your aim</div>';   /* (was 132 px across, his note: way too giant) */
-Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
+clickPlay.innerHTML = '<div style="font-size:12px;letter-spacing:.22em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:12px;letter-spacing:.06em;color:#a3a6bb;margin-top:1px">click to link your aim</div>';   /* (the reticle itself dims on standby: his note, 2026-10-19, a second ring here made a double crosshair) */
+Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, 22px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
 let truck = null, ship = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
@@ -274,7 +274,19 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
   b = new THREE.Box3().setFromObject(holder); holder.userData = { len: b.max.z - b.min.z, top: b.max.y, muzzle: new THREE.Vector3(0, b.max.y * 0.35, b.min.z) }; holder.visible = false; view.add(holder); held[k] = holder; }
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
-const locked = () => document.pointerLockElement === renderer.domElement;
+const DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
+// the demo run's script: [start s, what]. Each gun: hip fire, spam the sights, fire aimed, empty it and reload; then move while aiming
+const DEMO_RUN = [[0, 'look'], [4, 'gun ar'], [5, 'ads spam'], [11, 'fire hip'], [14, 'ads fire'], [18, 'reload'], [22, 'gun pistol'], [23, 'ads spam'], [27, 'reload'], [30, 'gun shotgun'], [31, 'fire hip'], [33, 'reload'], [37, 'gun lmg'], [38, 'move ads'], [42, 'reload'], [46, 'end']];
+function demoStep(dt) { const d = demoStep; d.t = (d.t || 0) + dt; const t = d.t, cur = DEMO_RUN.filter(r => r[0] <= t).pop(), [, what] = cur, fresh = d.on !== cur; d.on = cur;
+  me.yaw += Math.sin(t * 0.6) * 0.25 * dt * (what === 'look' ? 3 : 1); me.pitch = Math.sin(t * 0.37) * 0.06;   // (a slow, smooth sweep: never a jerk)
+  mouse[0] = false; keys.KeyW = keys.KeyA = false;
+  if (what.startsWith('gun') && fresh) switchGun(what.split(' ')[1]);
+  if (what === 'ads spam') aimOn = Math.floor(t / 0.55) % 2 === 0;
+  if (what === 'fire hip') { aimOn = false; mouse[0] = t % 0.5 < 0.25; }
+  if (what === 'ads fire') { aimOn = t - cur[0] > 0.5; mouse[0] = aimOn && t % 0.6 < 0.3; }
+  if (what === 'reload' && fresh) { aimOn = false; ammo[gunKey].mag = Math.min(ammo[gunKey].mag, 1); reload(); }
+  if (what === 'move ads') { aimOn = true; keys.KeyW = true; keys.KeyA = t % 2 < 1; mouse[0] = t % 0.7 < 0.2; }
+  if (what === 'end' && fresh) { aimOn = false; say('Demo run over.', 3); } }
 let buildPick = null;
 addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
   if (e.code === 'Space' && !e.repeat) jumpBuf = 0.15; if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat && SET.sprintToggle) sprintOn = !sprintOn; if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
@@ -443,7 +455,7 @@ function frame(now) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
-  if (!panel) move(dt);
+  if (DEMO && !panel) demoStep(dt); if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
@@ -467,7 +479,7 @@ function frame(now) {
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), 0); }
   hands.update(dt, { reloading: reloadT > 0 ? 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)) : -1, ads, kick, moving: onGround ? Math.min(1, vel.length() / 4.6) : 0, gun: gunKey });   /* (the arms: hands.js, the reload as a real hand motion; it hides itself when the gun is hidden) */
   drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) ship.update(dt, keys, me, g, isHost()); wrist.update(dt); { const k = Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85; if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
-  const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
+  const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free; { const o = free ? 0.4 : Math.max(0, 1 - ads * 2.5); if (Math.abs(o - (frame.xo ?? -1)) > 0.02) { frame.xo = o; $('cross').style.opacity = o.toFixed(2); } }   /* (one reticle: dim on standby, gone by 40% into the sights, where the gun's own sight takes over) */
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z, level: g.fire.level }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
   composer.render();   // (the world through bloom: only the brightest light bleeds, the fire, lamps, tracers; the HUD is never touched)

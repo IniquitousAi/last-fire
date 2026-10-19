@@ -39,10 +39,10 @@ export class Camp {
     const put = (url, x, z, s, ry = 0) => L.loadAsync('../assets/' + url).then(r => { const o = r.scene; o.scale.setScalar(s); o.position.set(x, land(x, z), z); o.rotation.y = ry; scene.add(o); return o; }).catch(() => null);
     // the leaders' hut: a big canvas shelter over a desk, a cold lamp, and the two papers
     put('kit/structure-canvas.glb', HUT.x, HUT.z, 4.6, 0.6); const desk = put('kit/workbench.glb', HUT.x - 0.6, HUT.z - 0.9, 3.2, 0.6); put('kit/chest.glb', HUT.x + 1.4, HUT.z + 1.2, 2.4, 2);
-    const lamp = new THREE.PointLight(0xdfe6ff, 6, 9, 1.6); lamp.position.set(HUT.x, land(HUT.x, HUT.z) + 2.4, HUT.z); scene.add(lamp);
+    const lamp = new THREE.PointLight(0xdfe6ff, 3, 9, 1.6);   /* (was 6: the papers under it blew out to pure white and flashed his eyes, 2026-10-19) */ lamp.position.set(HUT.x, land(HUT.x, HUT.z) + 2.4, HUT.z); scene.add(lamp);
     const name = ctx.name();
-    const form = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.6), new THREE.MeshStandardMaterial({ map: paper([['FORM 12-A: MORNING ODDS', 34, '#2b3a8f'], ['Survival today: 92%', 44], ['(approved by the council)', 26, '#555a6e'], [`Signed: ${name}`, 30], ['Please do not round down.', 24, '#8a2b4f']]), roughness: 0.9 }));
-    const real = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.6), new THREE.MeshStandardMaterial({ map: paper([['the real one', 34, '#6b2fa0'], ['Survival today: 81%  (reasoned)', 34], ['Past the dark: 0.0000031%  (guess)', 30], ['not zero.', 40, '#8a2b4f']]), roughness: 0.9 }));
+    const form = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.6), new THREE.MeshStandardMaterial({ color: 0x8a8d99, roughness: 1, map: paper([['FORM 12-A: MORNING ODDS', 34, '#2b3a8f'], ['Survival today: 92%', 44], ['(approved by the council)', 26, '#555a6e'], [`Signed: ${name}`, 30], ['Please do not round down.', 24, '#8a2b4f']]), roughness: 0.9 }));
+    const real = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.6), new THREE.MeshStandardMaterial({ color: 0x8a8d99, roughness: 1, map: paper([['the real one', 34, '#6b2fa0'], ['Survival today: 81%  (reasoned)', 34], ['Past the dark: 0.0000031%  (guess)', 30], ['not zero.', 40, '#8a2b4f']]), roughness: 0.9 }));
     const deskY = land(HUT.x - 0.6, HUT.z - 0.9) + 1.06;
     form.rotation.x = real.rotation.x = -Math.PI / 2; form.rotation.z = 0.5; real.rotation.z = 0.75;
     form.position.set(HUT.x - 0.95, deskY, HUT.z - 1.05); real.position.set(HUT.x - 0.2, deskY + 0.002, HUT.z - 0.7); scene.add(form, real);

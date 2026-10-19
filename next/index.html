@@ -29,10 +29,8 @@
   .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 14px; } .opts .key { margin: 0; font-size: 16px; padding: 8px 12px 6px; } .opts .key b { color: var(--neon); font-weight: 500; }
   label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--neon); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #ff4fd8; }
   /* the HUD */
-  #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #0009; pointer-events: none; }
-  /* a small, precise crosshair (his note: the reticle was way too giant): a 2 px dot and four 6 px ticks with a 5 px gap, white with a dark edge so it reads on any ground */
-  #cross { width: 2px; height: 2px; margin: -1px 0 0 -1px; } #cross::before, #cross::after { content: ''; position: absolute; left: -12px; top: 0; width: 26px; height: 2px; pointer-events: none; background: linear-gradient(90deg, #fff 0 6px, transparent 6px 20px, #fff 20px); filter: drop-shadow(0 0 1px #000); }
-  #cross::after { left: 0; top: -12px; width: 2px; height: 26px; background: linear-gradient(180deg, #fff 0 6px, transparent 6px 20px, #fff 20px); }
+  /* one reticle, the Halo battle rifle / DMR shape (his pick, 2026-10-19): a thin ring, four short ticks pointing in, a center dot. White on a dark edge so it reads on any ground; it sizes with the screen (21 px across at 900 tall, was 26 px of ticks) and fades out as the sights come up */
+  #cross { position: fixed; left: 50%; top: 50%; width: clamp(18px, 2.35vh, 26px); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; } #cross svg { display: block; width: 100%; height: 100%; overflow: visible; }
   #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
   #hit::before, #hit::after { content: ''; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); } #hit::after { transform: rotate(-45deg); }
   #hit.on { opacity: .9; } #hit.shell::before, #hit.shell::after { background: var(--neon); height: 18px; top: 2px; } #hit.shell { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); }
@@ -91,7 +89,7 @@
   <div id="menuNote" style="min-height:22px;color:var(--neon)"></div>
 </div></div>
 <div id="hud" hidden>
-  <div id="cross"></div><div id="hit"></div>
+  <div id="cross"><svg viewBox="-12 -12 24 24"><g fill="none" stroke-linecap="round"><g stroke="#000" stroke-opacity=".55" stroke-width="3.2"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g><g stroke="#fff" stroke-width="1.3"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g></g><circle r="1.9" fill="#000" fill-opacity=".55"/><circle r="1.1" fill="#fff"/></svg></div><div id="hit"></div>
   <div id="fireHud"></div><div id="phase"></div>
   <div id="hp"><span>YOUR LIGHT</span><div><i id="hpBar"></i></div></div>
   <div id="light"></div><div id="ammo"></div><div id="build"></div>
@@ -134,6 +132,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=132"></script>
+<script type="module" src="./client/main.js?v=133"></script>
 </body>
 </html>
