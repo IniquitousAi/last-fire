@@ -510,5 +510,12 @@ function moveHollow(g, dt, ph) {
     else { k.x += dx * k.speed * dt; k.z += dz * k.speed * dt; }
     k.y = heightAt(g.land, k.x, k.z);
   }
+  // bodies keep their room (his eyes, 2026-10-19: they clipped through him and stuck to him, and through each other): a shape never stands
+  // inside a person or inside another shape; it is pushed out to touching, the giant's body wider. Positions only: who it hunts is unchanged.
+  const R = k => k.kind === 'giant' ? 1.15 : 0.55, live = g.hollow.filter(k => !k.dead && !(K_WATCH(k) && k.still));
+  for (const k of live) { for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz), min = R(k) + 0.4; if (d < min) { const u = d > 1e-4 ? 1 / d : 0; k.x = p.x + (u ? dx * u : 1) * min; k.z = p.z + (u ? dz * u : 0) * min; } } }
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) { const a = live[i], b = live[j], dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), min = R(a) + R(b); if (d < min && d > 1e-4) { const push = (min - d) / 2 / d; a.x -= dx * push; a.z -= dz * push; b.x += dx * push; b.z += dz * push; } }
+  for (const k of live) k.y = heightAt(g.land, k.x, k.z);
   g.hollow = g.hollow.filter(k => !k.dead); g.nodes = g.nodes.filter(n => n.hp > 0);
 }
+const K_WATCH = k => KINDS[k.kind] && KINDS[k.kind].watched;
