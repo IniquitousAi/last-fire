@@ -24,6 +24,7 @@ export class Ambience {
     this.t += dt; this.windF.frequency.setTargetAtTime(300 + 220 * (0.5 + 0.5 * Math.sin(this.t * 0.23) * Math.sin(this.t * 0.071)), ac.currentTime, 0.5);
     this.windG.gain.setTargetAtTime(0.06 + 0.32 * (1 - lightHere), ac.currentTime, 0.8);   // (in the light the wind is far away; in the dark it is all around you)
     if (alive && Math.random() < dt * 4) {   // (a crackle: a short bright snap, each one a little different)
+      if (this.onCrackle) this.onCrackle();
       const s = ac.createBufferSource(); s.buffer = this.crack; s.playbackRate.value = 0.35 + Math.random() * 0.5; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500 + Math.random() * 900; bp.Q.value = 1.2;
       const g = ac.createGain(); g.gain.value = 0.08 + Math.random() * 0.14; s.connect(bp).connect(g).connect(this.fireP); s.start();
     }

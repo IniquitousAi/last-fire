@@ -1,25 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=65';
-import { Ambience } from './ambience.js?v=65';
-import { Camp, BOARD } from './camp.js?v=65';
-import { Guide } from './guide.js?v=65';
-import { buildSites } from './earthsite.js?v=65';
-import { Truck } from './truck.js?v=65';
-import { Wrist } from './wrist.js?v=65';
-import { think as friendThink } from './friend.js?v=65';
-import { FriendVoice } from './friendvoice.js?v=65';
-import { crewFrom } from '../core/habits.js?v=65';
-import { HudLook } from './hudlook.js?v=65';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=65';
-import { sound, GUNS } from '../../src/combat.js?v=65';
-import { FX } from '../../src/fx.js?v=65';
+import * as C from '../core/game.js?v=70';
+import { Ambience } from './ambience.js?v=70';
+import { Camp, BOARD } from './camp.js?v=70';
+import { Guide } from './guide.js?v=70';
+import { buildSites } from './earthsite.js?v=70';
+import { Truck } from './truck.js?v=70';
+import { Wrist } from './wrist.js?v=70';
+import { FireCore } from './firecore.js?v=70';
+import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
+import { think as friendThink } from './friend.js?v=70';
+import { FriendVoice } from './friendvoice.js?v=70';
+import { crewFrom } from '../core/habits.js?v=70';
+import { HudLook } from './hudlook.js?v=70';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=70';
+import { sound, GUNS } from '../../src/combat.js?v=70';
+import { FX } from '../../src/fx.js?v=70';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 65;   // (this copy's version; ./version.json says the newest)
+const BUILD = 70;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -29,6 +34,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'hi
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(78, innerWidth / innerHeight, 0.05, 900);
+const composer = new EffectComposer(renderer), bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.5, 0.82); composer.addPass(new RenderPass(scene, camera)); composer.addPass(bloom); composer.addPass(new OutputPass());
+const softDot = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();   // (round, soft points: embers and motes were square specks)
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
 scene.add(new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09));   // (barely any moonlight: the dark is dark, the light is yours)
 // the sky's logic, given to everything (his rule: the sky is the reference for pretty). Research: small bright accents read on large dark
@@ -77,7 +84,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
 scene.add(sky);
 
 // ---------------------------------------------------------------- the game (rules) and you
-const amb = new Ambience(() => SET.vol);
+const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); };   // (what you hear and what you see agree: each crackle makes the flame jump)
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
 clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(255,79,216,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
@@ -171,10 +178,9 @@ let fireObj = null; const nodeObjs = new Map(), linkLines = new THREE.LineSegmen
 scene.add(linkLines);
 function drawNetwork(t) {
   const f = g.fire;
-  if (!fireObj && models.campfire) { fireObj = models.campfire.scene.clone(); const b = new THREE.Box3().setFromObject(fireObj); fireObj.scale.setScalar(1.6 / b.getSize(new THREE.Vector3()).x); fireObj.position.set(f.x, g.land(f.x, f.z), f.z); scene.add(fireObj);
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.1, 10), new THREE.MeshBasicMaterial({ color: 0xa8ccff })); flame.position.set(f.x, g.land(f.x, f.z) + 0.6, f.z); scene.add(flame); fireObj.userData.flame = flame; }
-  const lit = f.fuel > 0; fireLight.position.set(f.x, g.land(f.x, f.z) + 1.5, f.z); fireLight.intensity = lit ? 26 * (0.94 + Math.sin(t * 11) * 0.04) : 2; fireLight.distance = C.fireRadius(f) * 2.2;
-  if (fireObj) { const s = lit ? 0.8 + f.level * 0.15 : 0.3, fl = fireObj.userData.flame; fl.scale.set(s * (1 + Math.sin(t * 9.1) * 0.05), s * (1 + Math.sin(t * 13.3) * 0.09 + Math.sin(t * 5.7) * 0.07), s * (1 + Math.sin(t * 8.3) * 0.05)); fl.rotation.y = t * 0.7; }
+  if (!fireObj) { fireObj = new FireCore(scene); fireObj.place(f.x, g.land(f.x, f.z), f.z); }   // (the Last Fire: a plasma core, client/firecore.js)
+  const lit = f.fuel > 0, pulse = fireObj.update(t, 1 / 60, f.level, Math.min(1, f.fuel / 300), Math.hypot(camera.position.x - f.x, camera.position.z - f.z));
+  fireLight.position.set(f.x, g.land(f.x, f.z) + 1.8 + f.level * 0.5, f.z); fireLight.color.setHex(0xd7a0ff); fireLight.intensity = lit ? 26 * (0.9 + Math.sin(t * 11) * 0.03 + Math.sin(t * 4.3) * 0.03 + pulse * 0.25) : 2; fireLight.distance = C.fireRadius(f) * 2.2;   // (the light breathes with the flame and jumps with each crackle)
   const live = new Set(), pts = [];
   for (const n of g.nodes) {
     live.add(n.id); let o = nodeObjs.get(n.id);
@@ -200,7 +206,7 @@ function drawMarks() { if (g.marks.length === marksDrawn) return; marksDrawn = g
   g.marks.slice(-MARKS).forEach((m, i) => { _m.makeTranslation(m.x, g.land(m.x, m.z) + 0.04, m.z); markMesh.setMatrixAt(i, _m); markMesh.setColorAt(i, _c.setHex(m.k === 'fall' ? 0xb9a8ff : 0x39407a)); });
   markMesh.instanceMatrix.needsUpdate = true; markMesh.instanceColor.needsUpdate = true; }
 // embers off the fire: a few dozen sparks rising and fading (one draw call)
-const EMB = 60, embPos = new Float32Array(EMB * 3), embVel = new Float32Array(EMB * 3), embLife = new Float32Array(EMB), embMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xcfe4ff, size: 0.09, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+const EMB = 60, embPos = new Float32Array(EMB * 3), embVel = new Float32Array(EMB * 3), embLife = new Float32Array(EMB), embMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ map: softDot, alphaTest: 0.01, color: 0xffc8f2, size: 0.09, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
 embMesh.geometry.setAttribute('position', new THREE.BufferAttribute(embPos, 3)); embMesh.frustumCulled = false; scene.add(embMesh);
 function embers(dt) { if (!g) return; const f = g.fire, y0 = g.land(f.x, f.z) + 0.5, on = f.fuel > 0;
   for (let i = 0; i < EMB; i++) { if ((embLife[i] -= dt) <= 0) { if (!on) { embPos[i * 3 + 1] = -999; continue; } embLife[i] = 1.2 + Math.random() * 2.2; embPos.set([f.x + (Math.random() - 0.5) * 0.6, y0, f.z + (Math.random() - 0.5) * 0.6], i * 3); embVel.set([(Math.random() - 0.5) * 0.4, 0.9 + Math.random() * 1.4, (Math.random() - 0.5) * 0.4], i * 3); }
@@ -209,11 +215,11 @@ function embers(dt) { if (!g) return; const f = g.fire, y0 = g.land(f.x, f.z) + 
 // far lights: a few slow drifting lights out where nobody has been (awe far; one draw call)
 const FAR = 9, farPos = new Float32Array(FAR * 3), farCol = new Float32Array(FAR * 3), farSeed = Array.from({ length: FAR }, (_, i) => ({ a: i / FAR * Math.PI * 2 + Math.random(), r: 150 + Math.random() * 90, h: 18 + Math.random() * 40, s: (Math.random() - 0.5) * 0.02 }));
 farSeed.forEach((f, i) => farCol.set([[0.3, 0.9, 1], [0.95, 0.35, 1], [0.6, 0.5, 1]][i % 3], i * 3));
-const farMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 9, vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+const farMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ map: softDot, size: 9, vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
 farMesh.geometry.setAttribute('position', new THREE.BufferAttribute(farPos, 3)); farMesh.geometry.setAttribute('color', new THREE.BufferAttribute(farCol, 3)); farMesh.frustumCulled = false; scene.add(farMesh);
 function farLights(dt) { if (!me) return; farSeed.forEach((f, i) => { f.a += f.s * dt; farPos.set([me.x + Math.cos(f.a) * f.r, f.h, me.z + Math.sin(f.a) * f.r], i * 3); }); farMesh.geometry.attributes.position.needsUpdate = true; }
 // motes of light: a few hundred points in one draw call; they drift toward you when you walk close
-const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xbfe0ff, size: 0.35, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ map: softDot, color: 0xe0c8ff, size: 0.5, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
 motes.geometry.setAttribute('position', new THREE.BufferAttribute(motePos, 3)); motes.frustumCulled = false; scene.add(motes);
 function drawMotes() { let i = 0; for (const m of g.motes) { if (i >= MOTES) break; motePos.set([m.x, g.land(m.x, m.z) + 0.6, m.z], i * 3); i++; } for (; i < MOTES; i++) motePos[i * 3 + 1] = -999; motes.geometry.attributes.position.needsUpdate = true; }
 
@@ -238,7 +244,7 @@ addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = tr
 addEventListener('mouseup', e => mouse[e.button] = false);
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
-addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = vcam.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); vcam.updateProjectionMatrix(); });
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth, innerHeight); camera.aspect = vcam.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); vcam.updateProjectionMatrix(); });
 function drawPause() {
   $('room').innerHTML = net ? `<div class="code">ROOM <b>${net.code}</b></div><button class="key" id="copyInvite">COPY INVITE<small>(a link with the code in it: paste it in Discord)</small></button>${net.host ? `<button class="key" id="lockRoom">${net.locked ? 'UNLOCK THE ROOM' : 'LOCK THE ROOM'}<small>(${net.locked ? 'let new friends in again' : 'nobody new can join, even with the code'})</small></button>` : ''}` : ''; $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); }
 $('sSens').oninput = e => { SET.sens = +e.target.value; $('vSens').textContent = SET.sens.toFixed(2); save(); };
@@ -389,7 +395,7 @@ function frame(now) {
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
-  renderer.render(scene, camera);
+  composer.render();   // (the world through bloom: only the brightest light bleeds, the fire, lamps, tracers; the HUD is never touched)
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
   if (!driving) { renderer.autoClear = false; renderer.clearDepth(); renderer.render(vscene, vcam); renderer.autoClear = true; }
   fpsN++; fpsT += dt; if (fpsT > 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} fps`; fpsN = 0; fpsT = 0; }

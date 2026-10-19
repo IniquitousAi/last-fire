@@ -36,6 +36,9 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 23. **The world keeps your friends** (INNOVATION.md, co-op and solo): what an offline friend built and where they fell stays in the world as traces you meet while solo, so you are never alone in it. (added when item 22 finished)
 
+24. **BIG: min-max the fire** (his ask, 2026-10-19): the fire is the core you build around, moving, loud, full of light; never normal fire colors; as creative and innovative as it can get; research first; the base can change too. Tools found for it: world bloom (three.js official examples), full-size screenshots (Playwright, installed), performance traces (chrome-devtools, installed), Blender 5.2 headless (installed at D:/Daniel/BlenderForSI).
+25. **Scary masks, never cute** (his note: one mob looks like a smiling dog): v65 removed the dog model; real masks still wait on item 19.
+
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
 - v42 to v51: BOOT locked (v42), every menu is visor glass (v43), the staged first enemy (v44), the face in the wall (v45), the learned friend joins from DEV (v46) and talks in a manner worked out from how it plays (v47), shotgun and LMG (v48), the camp store resupplies ammo (v50), sound is sharp only in light (v51).
