@@ -1,14 +1,15 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=4';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=4';
+import * as C from '../core/game.js?v=5';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=5';
 import { sound, GUNS } from '../../src/combat.js?v=11';
 import { FX } from '../../src/fx.js?v=11';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
+const BUILD = 5;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -157,7 +158,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
-addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
+addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
   if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') tryGrow(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouse.fill(false); });
@@ -166,7 +167,7 @@ addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * S
 addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); });
 addEventListener('mouseup', e => mouse[e.button] = false);
 addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked()) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
+document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = vcam.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); vcam.updateProjectionMatrix(); });
 function drawPause() {
   $('room').innerHTML = net ? `<div class="code">ROOM <b>${net.code}</b></div><button class="key" id="copyInvite">COPY INVITE<small>(a link with the code in it: paste it in Discord)</small></button>${net.host ? `<button class="key" id="lockRoom">${net.locked ? 'UNLOCK THE ROOM' : 'LOCK THE ROOM'}<small>(${net.locked ? 'let new friends in again' : 'nobody new can join, even with the code'})</small></button>` : ''}` : ''; $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); }
@@ -299,6 +300,51 @@ function reloadWorld(d) {   // (the world as it was at dusk; everyone here now s
   for (const [, v] of seen) scene.remove(v.o); seen.clear(); for (const [, o] of nodeObjs) scene.remove(o); nodeObjs.clear(); marksDrawn = -1;
   for (const p of g.players) p.tp = (p.tp || 0) + 1;   // (friends snap back to the fire too)
 }
+// ---------------------------------------------------------------- feedback while you play (Tab): words or voice, a picture of the moment, straight to Claude
+const FB_URL = 'http://127.0.0.1:8050/game/feedback', FB_Q = 'lastfire2-feedback-queue';
+function toggleTab() { if (panel === 'tab') { closeTab(); return; } if (panel) return; panel = 'tab'; for (const k in keys) keys[k] = false; mouse.fill(false); $('tabmenu').hidden = false; if (document.pointerLockElement) document.exitPointerLock(); $('fbNote').textContent = ''; setTimeout(() => $('fbText').focus(), 30); }
+function closeTab() { stopMic(); $('tabmenu').hidden = true; panel = null; renderer.domElement.requestPointerLock(); }
+$('tabBack').onclick = closeTab;
+let rec = null, recOn = false;
+function stopMic() { recOn = false; try { rec && rec.stop(); } catch (e) {} $('fbMic').firstChild.textContent = 'TALK'; }
+$('fbMic').onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { $('fbMicNote').textContent = '(this browser has no speech-to-text: type it below)'; return; }
+  if (recOn) return stopMic();
+  rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US'; const base = $('fbText').value ? $('fbText').value.trim() + ' ' : '';
+  rec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; $('fbText').value = base + t; };
+  rec.onend = () => { if (recOn) { try { rec.start(); } catch (e) {} } };   // (keeps listening through pauses until you click again)
+  rec.onerror = e => { if (e.error === 'not-allowed') { $('fbMicNote').textContent = '(the browser said no to the mic: allow it in the address bar, or type)'; stopMic(); } };
+  recOn = true; rec.start(); $('fbMic').firstChild.textContent = 'LISTENING... (click to stop)';
+};
+function snapshot() { try { renderer.render(scene, camera); const c = document.createElement('canvas'), w = 640, src = renderer.domElement; c.width = w; c.height = Math.round(src.height / src.width * w); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.6); } catch (e) { return null; } }
+async function postFeedback(item) { const r = await fetch(FB_URL, { method: 'POST', body: JSON.stringify(item) }); if (!r.ok) throw new Error(r.status); }
+function queued() { try { return JSON.parse(localStorage.getItem(FB_Q) || '[]'); } catch (e) { return []; } }
+async function flushQueue() { const q = queued(); if (!q.length) return; const left = []; for (const it of q) { try { await postFeedback(it); } catch (e) { left.push(it); } } try { localStorage.setItem(FB_Q, JSON.stringify(left)); } catch (e) {} if (left.length < q.length) say(`${q.length - left.length} saved note${q.length - left.length > 1 ? 's' : ''} reached Claude.`, 3); }
+setInterval(flushQueue, 60000);
+$('fbSend').onclick = async () => {
+  const text = $('fbText').value.trim(); if (!text) { $('fbNote').textContent = 'Say or type something first.'; return; } stopMic();
+  const item = { text, name: SET.name, version: 'next-' + BUILD, shot: snapshot(), ctx: { night: g ? g.night : 0, phase: g ? C.phase(g.clock) : '', fire: g ? g.fire.level : 0, x: me ? Math.round(me.x) : 0, z: me ? Math.round(me.z) : 0, hollow: g ? g.hollow.length : 0, players: g ? g.players.length : 0, fps: $('fps').textContent, host: isHost(), room: net ? net.code : '' } };
+  $('fbText').value = ''; closeTab();
+  try { await postFeedback(item); say('Sent to Claude. Keep playing.', 3); }
+  catch (e) { const q = queued(); q.push({ ...item, shot: null }); try { localStorage.setItem(FB_Q, JSON.stringify(q.slice(-30))); } catch (er) {} say('Saved. It reaches Claude as soon as Vigil is running on your PC.', 4); }
+};
+// ---------------------------------------------------------------- updates: a pop-up when a newer version is out; yes puts you right back where you were
+let updSeen = 0;
+async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || '').slice(0, 200); $('upd').hidden = false; } } catch (e) {} }
+setInterval(checkUpdate, 60000); setTimeout(checkUpdate, 8000);
+$('updNo').onclick = () => { $('upd').hidden = true; };
+$('updYes').onclick = () => {
+  try { saveNow(); sessionStorage.setItem('lastfire2-resume', JSON.stringify({ world: worldId, host: !!(net && net.host), code: net ? net.code : '', join: !!(net && !net.host), name: SET.name, at: Date.now() })); } catch (e) {}
+  if (net && net.host) net.send({ t: 'bye', why: 'update' });
+  setTimeout(() => location.reload(), 150);
+};
+function resume() {   // (after an update: straight back in, same world, same room, no menu)
+  let r = null; try { r = JSON.parse(sessionStorage.getItem('lastfire2-resume') || 'null'); sessionStorage.removeItem('lastfire2-resume'); } catch (e) {}
+  if (!r || Date.now() - r.at > 120000) return false; $('name').value = r.name || ''; myName(); sound.wake();
+  if (r.join && r.code) { net = new Net(onNet, t => { $('menuNote').textContent = t; }); const tryJoin = (n) => { net.joinGame(r.code); setTimeout(() => { if (!g && n > 0) { net = new Net(onNet, t => { $('menuNote').textContent = t; }); tryJoin(n - 1); } }, 4000); }; tryJoin(8); $('menuNote').textContent = 'Updated. Rejoining your friend...'; return true; }
+  if (r.host && r.code) { net = new Net(onNet, t => { if (/taken/.test(t)) setTimeout(() => net.hostGame(r.code), 3000); else say(t, 5); }); net.hostGame(r.code); }
+  startWorld(r.world || null); setTimeout(() => say(`Updated to version ${BUILD}.`, 3), 1500); return true;
+}
 // ---------------------------------------------------------------- together: the host runs the rules and sends the world; friends send where they are
 const inbox = [], fin = v => typeof v === 'number' && Number.isFinite(v), KIND_I = Object.keys(C.KINDS);
 function bucket(o, key, perSec, cap, cost = 1) { const now = performance.now() / 1000; o[key] = Math.min(cap, (o[key] ?? cap) + (now - (o[key + 'T'] || now)) * perSec); o[key + 'T'] = now; if (o[key] < cost) return false; o[key] -= cost; return true; }
@@ -329,6 +375,7 @@ function onNet(m, from) {
   if (m.t === 'ev' && Array.isArray(m.e)) for (const e of m.e.slice(0, 20)) if (Array.isArray(e)) inbox.push(e);
   if (m.t === 'hit' && m.r) showHit(m.r, !!m.r.head);
   if (m.t === 'bang' && GUNS[m.g] && [m.x, m.y, m.z].every(fin)) heardShot(m);
+  if (m.t === 'bye' && m.why === 'update') { try { sessionStorage.setItem('lastfire2-resume', JSON.stringify({ join: true, code: net.code, name: SET.name, at: Date.now() })); } catch (e) {} say('The host is updating. You will be right back.', 4); setTimeout(() => location.reload(), 1200); return; }
   if (m.t === 'bye') say({ full: `That room is full (${MAX_PLAYERS} players).`, locked: 'The host locked that room.', kicked: 'The host removed you.' }[m.why] || 'The host closed the game.', 8);
   if (m.t === 'left' && from === 0) say('The host left: the world went with them.', 8);
 }
@@ -405,7 +452,7 @@ function drawWorlds() {
   $('worlds').innerHTML = list.map(w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`).join('');
 }
 $('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); startWorld(pendingWorld); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); } else startWorld(pendingWorld); });
-let pendingWorld = null; drawWorlds();
+let pendingWorld = null; drawWorlds(); setTimeout(() => { if (mode === 'menu') resume(); }, 50); setTimeout(flushQueue, 5000);
 $('solo').onclick = () => { myName(); sound.wake(); startWorld(null); };
 $('host').onclick = () => { myName(); sound.wake(); const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); startWorld(null); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); };
 $('join').onclick = () => { myName(); sound.wake(); const code = cleanCode($('code').value); if (code.length !== CODE_LEN) { $('menuNote').textContent = `Room codes are ${CODE_LEN} letters.`; return; } net = new Net(onNet, t => { $('menuNote').textContent = t; if (mode === 'play') say(t, 5); }); net.joinGame(code); $('menuNote').textContent = `Joining room ${code}...`; };

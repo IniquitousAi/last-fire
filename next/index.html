@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'sha256-63HB+x6cOSoyjjoUNwGyHweuS+XXQ8XSHH9W7emvUp8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: data: https://0.peerjs.com wss://0.peerjs.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'sha256-63HB+x6cOSoyjjoUNwGyHweuS+XXQ8XSHH9W7emvUp8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: data: https://0.peerjs.com wss://0.peerjs.com http://127.0.0.1:8050; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Last Fire</title>
 <meta name="theme-color" content="#04060c">
@@ -66,7 +66,7 @@
   <div style="display:flex;gap:10px;margin-bottom:10px"><input id="code" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Room code" style="width:150px;font:500 22px 'Barlow Condensed';letter-spacing:.3em;text-transform:uppercase;color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:0 12px;outline:none"><button class="key" id="join" style="margin:0">JOIN<small>(a friend's code)</small></button></div>
   <button class="key" id="solo">PLAY ALONE<small>(your own world)</small></button>
   <div id="menuNote" style="min-height:22px;color:var(--cyan)"></div>
-  <p class="note"><b>Now:</b> growing the fire is your choice (F at the fire), Esc has DEV (restart the night and more) and CHECKLIST. <b>Piece 3:</b> your world saves by itself (every 20 s and when you leave) and keeps its scars: where relays were torn down, where friends fell. CONTINUE picks it up. <b>Piece 2:</b> play together. HOST gives a code; Esc, then COPY INVITE, paste it in Discord. <b>Piece 1:</b> the endless dark, your fire, your light, the wraiths. Kill them and they burst into light: walk through it to gather it, bring it to the fire to grow the fire, or spend it on relays that carry the light outward (left click with RELAY picked). Together, a friend who falls becomes an <b>Ember</b>: walk over it and carry it to the fire to bring them back. <b>Not yet:</b> saving, more machines, the dark learning you.</p>
+  <p class="note"><b>Now:</b> Tab, then TALK or type, then SEND TO CLAUDE: your feedback reaches Claude while you play, and updates arrive as a pop-up that puts you right back. Also: growing the fire is your choice (F at the fire), Esc has DEV (restart the night and more) and CHECKLIST. <b>Piece 3:</b> your world saves by itself (every 20 s and when you leave) and keeps its scars: where relays were torn down, where friends fell. CONTINUE picks it up. <b>Piece 2:</b> play together. HOST gives a code; Esc, then COPY INVITE, paste it in Discord. <b>Piece 1:</b> the endless dark, your fire, your light, the wraiths. Kill them and they burst into light: walk through it to gather it, bring it to the fire to grow the fire, or spend it on relays that carry the light outward (left click with RELAY picked). Together, a friend who falls becomes an <b>Ember</b>: walk over it and carry it to the fire to bring them back. <b>Not yet:</b> saving, more machines, the dark learning you.</p>
 </div></div>
 <div id="hud" hidden>
   <div id="cross"></div><div id="hit"></div>
@@ -94,6 +94,19 @@
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">CHECKLIST</b><button class="key" id="listBack" style="width:auto;margin:0">BACK</button></div>
   <div id="listBody"></div>
 </div></div>
-<script type="module" src="./client/main.js?v=4"></script>
+<div id="tabmenu" class="over" hidden><div class="panel" style="width:min(560px,100%)">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">MENU</b><button class="key" id="tabBack" style="width:auto;margin:0">BACK<small>(Tab)</small></button></div>
+  <div id="fbForm">
+    <button class="key" id="fbMic">TALK<small id="fbMicNote">(click, say what's wrong or what you want, click again to stop)</small></button>
+    <textarea id="fbText" rows="5" placeholder="Or type it here. Anything: a bug, a feeling, an idea." style="width:100%;font:400 18px 'Barlow Condensed';color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:10px 12px;outline:none;resize:vertical"></textarea>
+    <button class="key" id="fbSend" style="margin-top:10px">SEND TO CLAUDE<small>(with a picture of this moment; you're straight back in the game)</small></button>
+    <p class="note" id="fbNote"></p>
+  </div>
+</div></div>
+<div id="upd" hidden style="position:fixed;right:18px;bottom:110px;z-index:12;width:min(340px,calc(100vw - 36px))"><div class="panel" style="padding:14px 16px 12px">
+  <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--cyan)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
+  <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
+</div></div>
+<script type="module" src="./client/main.js?v=5"></script>
 </body>
 </html>
