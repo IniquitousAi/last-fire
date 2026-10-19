@@ -14,7 +14,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The feel mix: Maze Runner + Destiny 2 + Cyberpunk + 7 Days to Die + Icarus + Halo 2 + Sons of the Forest 2 + Gears of War + Divergent + Diablo 3 (lore only); feelings only, no copied mechanics",
@@ -29,7 +30,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The look: grounded near, awe far (immersion first, leaning sci-fi awe); the closer, the more real; the farther, the more wondrous",
@@ -44,34 +46,64 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The spine: B (the curiosity machine as a game), then C (a hangout that tells the truth), then A (The Last Light's scale)",
    "task": "Every new feature says which of B, C, A it serves before it is built",
    "where": "AUDIT-2026-10-19.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "bump.py#say which part of the spine this serves",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-spine.txt#4 of 4 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/checklist/list-spine.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
-   }
+    "played": {
+     "proof": "playtests/checklist/test-listshot.txt#PASS  the in-game checklist shows what every item serves",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "B"
   },
   {
    "idea": "Solo is the main case: never remind me I'm alone; just as good solo as with friends",
    "task": "A solo night with the learned friend feels like company: robot and screenshot check",
    "where": "AUDIT-2026-10-19.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
-   }
+    "built": {
+     "proof": "client/main.js#learnedFriend();   /* (solo is the main case",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-solo_company.txt#6 of 6 pass",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/checklist/solo-company.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "playtests/checklist/test-solo_company.txt#PASS  started on the controller",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/solo_company.cjs#live through dusk into the night",
+     "at": "2026-10-19"
+    }
+   },
+   "spine": "C"
   },
   {
    "idea": "Building it is part of the fun: see the truth the whole way (every 'why isn't it good' answered with math)",
@@ -86,7 +118,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Hardcore, fun, grown-up; never Minecraft or kid-like (no block world)",
@@ -98,7 +131,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Feels brand new: no mechanic copied from another game, only the feelings",
@@ -119,7 +153,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Real models for every gun, item and character (CC0)",
@@ -131,7 +166,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Nothing bobs",
@@ -149,7 +185,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Hear your own and your friends' gunshots, from where they are",
@@ -167,7 +204,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Smooth, clear, centered sights on every gun",
@@ -179,7 +217,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Multiplayer from a link, up to 4, safe from strangers",
@@ -197,7 +236,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Endless world, drop in anytime",
@@ -215,7 +255,8 @@
      "proof": "playtests/autoplay/2026-10-19-14-22/run.json",
      "at": "2026-10-19"
     }
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "The world remembers everything",
@@ -227,7 +268,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "No babysitting, logic wins",
@@ -251,7 +293,8 @@
      "proof": "playtests/autoplay/2026-10-19-14-22/run.json",
      "at": "2026-10-19"
     }
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Deaths that feel fair (no unavoidable death)",
@@ -272,7 +315,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Growing the fire is your choice (you decide when to provoke the dark)",
@@ -287,7 +331,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Dev tools: restart, skip ahead, test, keep playing (like Era 1 and 2)",
@@ -302,7 +347,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "A checklist I can see, so no idea gets lost",
@@ -314,7 +360,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The dark learns you, unsettling, never says what it learned",
@@ -335,7 +382,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Only adapts when you get too comfortable",
@@ -350,7 +398,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "One mind for every world (your daemon learns for Dalton's worlds too, free)",
@@ -365,7 +414,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Clever engineering: mirrors, lenses, prisms that bend and focus light",
@@ -377,7 +427,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Infinite progression, scaled by logic; grinders and casuals both fine",
@@ -392,7 +443,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Movement that grows (more options as you go)",
@@ -404,7 +456,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Awe: cosmic, unknowable; the sky and the far land get stranger",
@@ -419,7 +472,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Hyper-awareness",
@@ -434,7 +488,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "A villain who is iniquitous by nature",
@@ -449,7 +504,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Random elements, dry dark humor, lots of mayhem",
@@ -464,7 +520,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Hanging out with the guys, yet surviving alone in the dark",
@@ -476,7 +533,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Maze Runner vibe, but not trapped: the maze is the obvious lore, so dark that people want to learn before entering",
@@ -491,7 +549,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Who you are",
@@ -506,7 +565,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "The origin is honestly unknown, like humanity's own",
@@ -521,7 +581,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Trapped by need, not walls: a community bound to the fire, punishing anyone who doesn't contribute",
@@ -536,7 +597,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Light against dark (good vs evil frame), made interesting by the truth",
@@ -551,7 +613,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The dark doesn't care: you're meaningless on its scale (entropy, not malice)",
@@ -566,7 +629,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The game tells the truth: statistically, winning is never on your side",
@@ -581,7 +645,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Teaches entropy, diminishing returns, scale, existential dread, logic, suspense, psychological payoff",
@@ -596,7 +661,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Feeling real matters more than being real",
@@ -611,7 +677,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The mirror realm: the most stereotypical day on Earth, flipped only where it's cool",
@@ -623,7 +690,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Community life: work, fire dues, chores; what you get follows what you contribute",
@@ -644,7 +712,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Soft punishment for never feeding the fire: no more lanterns, higher prices, lower morale; no forced rule, 'we know'",
@@ -665,7 +734,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Optional jobs for better gear and convenience; honest work only, never exploitable; all measured and logged",
@@ -680,7 +750,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Contribution is credit the camp remembers (the lone wolf who did his part is welcome back)",
@@ -701,7 +772,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Grinding while friends are offline has a measured low impact, so nobody gets outscaled",
@@ -722,7 +794,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Every layer min-maxed by the simulators (prices, morale, dues)",
@@ -743,7 +816,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "A NOTE button to give feedback while playing (like Era 1)",
@@ -758,7 +832,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Lore first, then merge it with the mechanics: each relies on the other",
@@ -773,7 +848,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Updates arrive while I play: a pop-up, yes or no, and it feels automatic (straight back where I was)",
@@ -788,7 +864,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "A feel beats a number",
@@ -803,7 +880,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "One permanent link per crew",
@@ -818,7 +896,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Plan: max the browser game with the crew until the feedback runs out, then Godot, then Steam",
@@ -833,7 +912,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The odds are known by whoever cares enough to check (Arcane vibes)",
@@ -848,7 +928,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Tech scales from primitive to futuristic (wrist screens)",
@@ -860,7 +941,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "The game grows in eras, each deeper into the lore, launched when sims plus real feedback (weighted more) say so",
@@ -875,7 +957,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "North star: Arcane + Destiny + Maze Runner had a baby",
@@ -890,7 +973,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Dark and neon: dualities, push and pull of emotions",
@@ -905,7 +989,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Tech by era: scavenged, then light, then the dark itself; creativity simulated too",
@@ -920,7 +1005,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "Knowledge is the crew's shared currency, labeled checked / reasoned / guess; a research computer is a real job",
@@ -935,7 +1021,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Immersion, small details and depth: the feeling that matters most; fun for the masses checked by research",
@@ -947,7 +1034,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "No fake-feeling people: camp people speak from what really happened, never a repeated line",
@@ -962,7 +1050,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "No rules that don't add up: robots try to break every rule",
@@ -977,7 +1066,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "No UI in the way: information lives in the world (board, wrist screen, light); HUD under 6% of the screen",
@@ -989,7 +1079,8 @@
     "seen": null,
     "pad": null,
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "No repetition you notice: sound variants, novelty every 4 beats",
@@ -1004,7 +1095,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "B"
   },
   {
    "idea": "The world reacts (marks, people remember yesterday, footnotes cite real events)",
@@ -1019,7 +1111,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "C"
   },
   {
    "idea": "Sound: the camp's murmur, wind, distant sounds, crunchy hits",
@@ -1040,7 +1133,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Light and weather: fog rolling in, rain on the fire, the dark's edge moving",
@@ -1055,7 +1149,8 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   },
   {
    "idea": "Things make sense up close: every object has a reason and a story",
@@ -1070,7 +1165,9 @@
      "at": "2026-10-19"
     },
     "played": null
-   }
+   },
+   "spine": "A"
   }
- ]
+ ],
+ "spine": "B: the curiosity machine as a game; C: a hangout that tells the truth; A: The Last Light's scale (DESIGN.md, the spine). Every item names the one it serves."
 }

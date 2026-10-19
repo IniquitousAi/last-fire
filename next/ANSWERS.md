@@ -195,3 +195,10 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - His complaint at v163 (Earth): the flare does nothing and looks like a floating glowing blob; nothing is explained; the floor blinds him; the enemies are holograms whose pathing makes no sense with the physics; no depth or immersion in shooting them, so take them out until they are reworked; walls and lights float; the lighting makes no sense, "we need some dev lighting", not a white light on every scene.
 - His order: up to five helpers, the cheapest fastest that make sense; knock out the whole checklist to zero; reply for the final time only when the checklist is zero, the inbox is empty, and the game looks AAA and plays perfectly. Ask only when super unsure; otherwise do not stop.
 - Picks: big items (mirror realm, eras, Godot port, the daemon) reach zero as rough playable versions; enemies come back as real rigged models with real movement, only once they pass screenshots; dev light is the default, the moody night one click away in the dev menu.
+
+## His vision picture (2026-10-19 about 10:45, made with Grok: "THIS! i told grok my vision")
+- A dark night forest of black dead pines. The ground is cracked with glowing crimson and violet veins of corruption that run across it and climb the trunks.
+- Low silver-gray fog. A huge black monolithic wall (the community's wall) with glowing red alien glyphs in columns.
+- Tall many-limbed creatures made of tendrils, like walking dead trees, half hidden in the fog as silhouettes.
+- A deep starfield with a faint blue-gray nebula. The player is a sleek black suit, a round black helmet and a dark rifle.
+- Palette: black, crimson, violet, cold gray fog. The world is near black; only the corruption glows. This is the target for the night look, the Wilds, the Rift's spread and the enemies.

@@ -1,39 +1,39 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=164';
-import { Ambience } from './ambience.js?v=164';
-import { Camp, BOARD } from './camp.js?v=164';
-import { Guide } from './guide.js?v=164';
-import { buildSites } from './earthsite.js?v=164';
-import { Truck } from './truck.js?v=164';
-import { ShipView } from './shipview.js?v=164';
-import { Crew } from './crew.js?v=164';
-import { Hands } from './hands.js?v=164';
-import { FpRig } from './fprig.js?v=164';
-import { farStep } from './farsound.js?v=164';
-import { Wrist } from './wrist.js?v=164';
-import { FireCore } from './firecore.js?v=164';
+import * as C from '../core/game.js?v=165';
+import { Ambience } from './ambience.js?v=165';
+import { Camp, BOARD } from './camp.js?v=165';
+import { Guide } from './guide.js?v=165';
+import { buildSites } from './earthsite.js?v=165';
+import { Truck } from './truck.js?v=165';
+import { ShipView } from './shipview.js?v=165';
+import { Crew } from './crew.js?v=165';
+import { Hands } from './hands.js?v=165';
+import { FpRig } from './fprig.js?v=165';
+import { farStep } from './farsound.js?v=165';
+import { Wrist } from './wrist.js?v=165';
+import { FireCore } from './firecore.js?v=165';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=164';
-import { FriendVoice } from './friendvoice.js?v=164';
-import { crewFrom } from '../core/habits.js?v=164';
-import { HudLook } from './hudlook.js?v=164';
-import { Rain } from './rain.js?v=164';
-import { VisorRain } from './visor.js?v=164';
-import { applyLook } from './looks.js?v=164';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=164';
-import { sound, GUNS } from '../../src/combat.js?v=164';
-import { FX } from '../../src/fx.js?v=164';
+import { think as friendThink } from './friend.js?v=165';
+import { FriendVoice } from './friendvoice.js?v=165';
+import { crewFrom } from '../core/habits.js?v=165';
+import { HudLook } from './hudlook.js?v=165';
+import { Rain } from './rain.js?v=165';
+import { VisorRain } from './visor.js?v=165';
+import { applyLook } from './looks.js?v=165';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=165';
+import { sound, GUNS } from '../../src/combat.js?v=165';
+import { FX } from '../../src/fx.js?v=165';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 164;   // (this copy's version; ./version.json says the newest)
+const BUILD = 165;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -333,7 +333,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
-if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, scene, renderer, composer, info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
+if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
 // a relay or the truck's cab warm them back in about 3 s. The drift moves your real aim, so where the sight sits is where the round goes.
@@ -526,7 +526,7 @@ function build(p, kind, x, z) {   // (host only: the player must carry the light
 }
 function tryBuild() { if (buildPick === 'lamp' && SET.name && g.econ && !C.econ.lamps(g, SET.name)) return say(`You are ${C.econ.behind(g, SET.name).toFixed(1)} days behind on dues. The camp hands out no lamps until you catch up: bank light into the fire.`, 5); const K = C.NODE[buildPick]; if (me.carried < K.cost) return say(`A ${buildPick} costs ${K.cost} light. You carry ${Math.floor(me.carried)}.`); const s = buildSpot(); sound.buy();
   if (isHost()) { const n = build(me, buildPick, s.x, s.z); if (n) say(n.lit ? `The ${buildPick} takes the light.` : `Too far from the light: the ${buildPick} stays dark. Place it within reach of a lit relay.`, 3); } else net.send({ t: 'build', k: buildPick, x: +s.x.toFixed(2), z: +s.z.toFixed(2) }); }
-function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'carries light on, ' + K.reach + ' m' : 'shines wide, carries nothing'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: lights the ground for ${C.FLARE.life} s${C.DARK.off ? '' : ', draws the dark in and burns it'}</small></button>`; }
+function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'passes light ' + K.reach + ' m' : 'lights a wide circle'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: lights the ground ${C.FLARE.life} s${C.DARK.off ? '' : ', burns the dark'}</small></button>`; }
 $('build').addEventListener('click', e => { const b = e.target.closest('.bk'); if (!b) return; if (b.dataset.k === 'flare') return throwFlare(); pickBuild(buildPick === b.dataset.k ? null : b.dataset.k); });
 function flareSpot() { const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), d = look(); for (let t = 1; t <= C.FLARE.reach; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z) + 0.1) return [x, z]; } return [o.x + d.x * 12, o.z + d.z * 12]; }   // (where you aim, on the ground, up to 16 m)
 function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const j = C.nextSeat(g, me); if (j >= 0) say(['You take the wheel.', 'You take the roof lamp. Look where it should shine.', 'You take the mounted gun.', 'You take the mounted gun.'][j], 2); } else net.send({ t: 'build', k: 'seat', x: 0, z: 0 }); }
@@ -671,14 +671,14 @@ function frame(now) {
 function learnedFriend() {   // (a teammate who plays like someone from your recorded nights: a friend if any, else you)
   const crew = crewFrom(g.history || []), pick = crew.find(c => c.name !== SET.name) || crew[0], n = g.players.filter(p => p.bot).length; if (n >= 2) return 'Two learned friends is the most for now.';
   const style = pick ? { ...pick } : { name: SET.name || 'You', roam: 10, greed: 8, bankAt: 12, aim: 0.6, together: 0.6, blind: -1 }, id = 90 + n;
-  const p = C.addPlayer(g, id, `${style.name}, learned`); p.bot = true; p.style = style; p.r = C.stream(g.seed, 'friend-' + id); const a = n * 2.4 + 1; p.homeX = g.fire.x + Math.cos(a) * Math.min(style.roam, 30); p.homeZ = g.fire.z + Math.sin(a) * Math.min(style.roam, 30);   /* (the same home the tested robot uses: sim/certify.mjs play) */
+  const p = C.addPlayer(g, id, !style.name || style.name === SET.name || style.name === 'Player' ? 'You, learned' : `${style.name}, learned`);   /* (a copy of you is named as one, never 'Player') */ p.bot = true; p.style = style; p.r = C.stream(g.seed, 'friend-' + id); const a = n * 2.4 + 1; p.homeX = g.fire.x + Math.cos(a) * Math.min(style.roam, 30); p.homeZ = g.fire.z + Math.sin(a) * Math.min(style.roam, 30);   /* (the same home the tested robot uses: sim/certify.mjs play) */
   return pick ? `${style.name}, learned from ${(g.history || []).length} recorded nights, is at your fire.` : 'No nights recorded yet, so this one plays like a careful newcomer. After a few nights it plays like you.';
 }
 // your words (queue 43: 'says some of the same things that he says'): lines a player typed themselves, kept by the host for their learned copy
 const cleanLines = a => (Array.isArray(a) ? a : []).map(l => String(l).replace(/[<>&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 70)).filter(l => l.length >= 2).slice(0, 12);
 $('myLines').value = (SET.myLines || []).join(String.fromCharCode(10)); $('myLines').addEventListener('change', () => { SET.myLines = cleanLines($('myLines').value.split(String.fromCharCode(10))); save(); if (g && me) shareLines(); });
 function shareLines() { if (isHost()) { (g.voice = g.voice || {})[SET.name] = SET.myLines || []; } else if (net) net.send({ t: 'lines', l: SET.myLines || [] }); }
-const fvoice = new FriendVoice((who, line) => wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who), (p, ev) => ownLine(p, ev));
+let heardN = 0; const fvoice = new FriendVoice((who, line) => (heardN++, wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who)), (p, ev) => ownLine(p, ev));
 const MOMENTS = { kill: 'kill', dusk: 'dusk', hurt: 'hurt', bank: 'bank', fell: 'youFell' };   // (a line may start with a moment word and a colon: 'kill: that one had it coming')
 function ownLine(p, event) { const src = (p.style && p.style.name) || '', own = (g.voice || {})[src] || [];
   const fit = own.map(l => { const m = l.match(/^(\w+):\s*(.+)$/); return m && MOMENTS[m[1].toLowerCase()] ? { at: MOMENTS[m[1].toLowerCase()], line: m[2] } : { at: null, line: l }; }).filter(x => !x.at || x.at === event);
@@ -709,7 +709,7 @@ $('devBack').onclick = () => { $('dev').hidden = true; $('paused').hidden = fals
 $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidden = false; panel = 'list';
   try { const d = await (await fetch('./checklist.json?t=' + Date.now())).json(), K = [['built', 'BUILT'], ['tested', 'TESTED'], ['seen', 'SEEN'], ['pad', 'PAD'], ['played', 'PLAYED']], esc = x => String(x || '').replace(/[<&>]/g, '');
     const n = it => K.filter(([k]) => it.checks[k]).length, done = d.items.filter(it => n(it) === 5).length;   // (five proven marks per item, his rule 2026-10-19; sim/checklist_verify.mjs erases any mark without its proof)
-    $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${done} of ${d.items.length} done. Each idea has a task and five marks; a mark only counts with its proof.</p>` + d.items.slice().sort((a, b) => n(b) - n(a)).map(it => `<div class="ck"><b class="${n(it) === 5 ? 'done' : n(it) ? 'in' : 'later'}">${n(it)} / 5</b><span>${esc(it.task)}<small>${esc(it.idea)}</small><small>${K.map(([k, w]) => `<i style="font-style:normal;margin-right:10px;color:${it.checks[k] ? '#ff4fd8' : '#5a5d72'}">${it.checks[k] ? '&#10003;' : '&#9675;'} ${w}</i>`).join('')}</small></span></div>`).join(''); }
+    $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${done} of ${d.items.length} done. Each idea has a task and five marks; a mark only counts with its proof.</p>` + d.items.slice().sort((a, b) => n(b) - n(a)).map(it => `<div class="ck"><b class="${n(it) === 5 ? 'done' : n(it) ? 'in' : 'later'}">${n(it)} / 5</b><span>${esc(it.task)}<small>${esc(it.idea)}</small><small>serves ${({ B: 'B, the curiosity machine', C: 'C, the hangout', A: 'A, the scale' })[it.spine] || 'nothing yet'}</small><small>${K.map(([k, w]) => `<i style="font-style:normal;margin-right:10px;color:${it.checks[k] ? '#ff4fd8' : '#5a5d72'}">${it.checks[k] ? '&#10003;' : '&#9675;'} ${w}</i>`).join('')}</small></span></div>`).join(''); }
   catch (e) { $('listBody').textContent = 'The checklist could not load.'; } };
 $('listBack').onclick = () => { $('list').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 function reloadWorld(d) {   // (the world as it was at dusk; everyone here now stays, back at the fire)
@@ -934,11 +934,11 @@ function saveNow() {
   } catch (e) { say('This browser would not save the world (storage full or blocked).', 5); } }
 setInterval(saveNow, 20000); addEventListener('pagehide', saveNow); document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
 function loadSaved(id) { try { return C.loadWorld(JSON.parse(localStorage.getItem('lastfire2-w-' + id) || 'null')); } catch (e) { return null; } }
-function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const saved = id ? loadSaved(id) : null; begin(saved ? saved.seed : Math.floor(Math.random() * 1e9), 1, saved); if (saved) say(`Back in your world: night ${saved.night}, fire ${saved.fire.level}. The light you left is where you left it.`, 6); }
+function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const saved = id ? loadSaved(id) : null; begin(saved ? saved.seed : Math.floor(Math.random() * 1e9), 1, saved); if (!net && g && !g.players.some(p => p.bot)) learnedFriend();   /* (solo is the main case, never a reminder you are alone: a learned friend keeps the camp with you, AUDIT-2026-10-19) */ if (saved) say(`Back in your world: night ${saved.night}, fire ${saved.fire.level}. The light you left is where you left it.`, 6); }
 function drawWorlds() {
   const list = worlds(); if (!list.length) { $('worlds').innerHTML = ''; return; }
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
-  const key = w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`;
+  const key = w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'or HOST it below to bring friends' : ''})</small></button>`;
   $('worlds').innerHTML = key(list[0]) + (list.length > 1 ? `<button class="key" id="older">OLDER WORLDS (${list.length - 1})<small>(show the rest)</small></button><div id="olderList" hidden>${list.slice(1).map(key).join('')}</div>` : '');   // (the newest first; the rest one click away)
 }
 $('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'older') { $('olderList').hidden = !$('olderList').hidden; return; } myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
