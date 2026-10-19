@@ -12,6 +12,9 @@ export class Ambience {
     // the fire: a low roar and crackles, placed at the fire
     this.fireP = ac.createPanner(); Object.assign(this.fireP, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 2.5, rolloffFactor: 1.2, maxDistance: 120 }); this.fireP.connect(this.master);
     const roar = ac.createBufferSource(); roar.buffer = noise(4, 'brown'); roar.loop = true; const rf = ac.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 220; this.roarG = ac.createGain(); this.roarG.gain.value = 0.5; roar.connect(rf).connect(this.roarG).connect(this.fireP); roar.start();
+    // the hum: a low tone and its fifth under the crackle, placed at the fire; each level it rises (the core is bigger, so it sings higher)
+    this.hum = [ac.createOscillator(), ac.createOscillator()]; this.humG = ac.createGain(); this.humG.gain.value = 0; this.hum[0].type = 'sine'; this.hum[1].type = 'triangle';
+    const hf = ac.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 400; for (const o of this.hum) { o.connect(hf); o.start(); } hf.connect(this.humG).connect(this.fireP);
     this.crack = noise(0.05, 'white'); { const d = this.crack.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] *= Math.exp(-i / (d.length * 0.18)); }   // (each crackle dies away fast, like wood, not a click)
   }
   update(dt, cam, fire, lightHere, alive) {
@@ -21,6 +24,7 @@ export class Ambience {
     this.master.gain.setTargetAtTime(this.vol(), ac.currentTime, 0.2);
     if (this.fireP.positionX) { this.fireP.positionX.value = fire.x; this.fireP.positionY.value = fire.y + 0.8; this.fireP.positionZ.value = fire.z; }
     this.roarG.gain.setTargetAtTime(alive ? 0.7 : 0.05, ac.currentTime, 0.4);
+    if (this.hum) { const lv = fire.level || 0, f0 = 49 * Math.pow(1.122, lv); this.hum[0].frequency.setTargetAtTime(f0, ac.currentTime, 1.5); this.hum[1].frequency.setTargetAtTime(f0 * 1.5, ac.currentTime, 1.5); this.humG.gain.setTargetAtTime(alive ? 0.05 + lv * 0.012 : 0, ac.currentTime, 0.8); }
     this.t += dt; this.windF.frequency.setTargetAtTime(300 + 220 * (0.5 + 0.5 * Math.sin(this.t * 0.23) * Math.sin(this.t * 0.071)), ac.currentTime, 0.5);
     this.windG.gain.setTargetAtTime(0.06 + 0.32 * (1 - lightHere), ac.currentTime, 0.8);   // (in the light the wind is far away; in the dark it is all around you)
     if (alive && Math.random() < dt * 4) {   // (a crackle: a short bright snap, each one a little different)
