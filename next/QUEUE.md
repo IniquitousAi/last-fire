@@ -30,7 +30,6 @@ Claude picks the order by the bottleneck: what he will see first and most.
 19. **Real mask models, not cute imps** (PLAN-SPACE.md section 3): the free Quaternius wraith and clawed bodies still have cartoon proportions. Make each mask from a concept image through the free TRELLIS.2 demo (MIT), then the Blender cleanup script. Downloading generated models needs his yes first (the safety rule outranks the temp rule). (added when item 18 finished)
 
 
-21. **Theories with odds** (INNOVATION.md, lore delivery): the camp's theories about what the dark is, each with live odds that move with what you discover. (added when item 10 finished)
 
 
 
@@ -41,6 +40,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 29. **Pick the site by its odds** (INNOVATION.md, Earth trips): the lander offers a few landing sites, each with posted odds and what it holds; choosing is a real bet. (added when item 28 finished; replaced a duplicate of item 21)
+
+30. **Light shows through your pack, part 2: the shielded box** (INNOVATION.md, storage): carried light glows and draws the dark (already true); a heavy shielded box at the workbench hides it. (added when item 21 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -59,3 +60,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 26, the roof lamp for the front seat (v72).
 - Item 27, the dark wears what you looked at (v73; its patch note says only 'Small changes', on purpose: it never says so).
 - Item 28, one light is your health (v74).
+- Item 21, the wall of theories with live odds (v75 to v77).
