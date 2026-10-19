@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=88';
-import { Ambience } from './ambience.js?v=88';
-import { Camp, BOARD } from './camp.js?v=88';
-import { Guide } from './guide.js?v=88';
-import { buildSites } from './earthsite.js?v=88';
-import { Truck } from './truck.js?v=88';
-import { Wrist } from './wrist.js?v=88';
-import { FireCore } from './firecore.js?v=88';
+import * as C from '../core/game.js?v=89';
+import { Ambience } from './ambience.js?v=89';
+import { Camp, BOARD } from './camp.js?v=89';
+import { Guide } from './guide.js?v=89';
+import { buildSites } from './earthsite.js?v=89';
+import { Truck } from './truck.js?v=89';
+import { Wrist } from './wrist.js?v=89';
+import { FireCore } from './firecore.js?v=89';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=88';
-import { FriendVoice } from './friendvoice.js?v=88';
-import { crewFrom } from '../core/habits.js?v=88';
-import { HudLook } from './hudlook.js?v=88';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=88';
-import { sound, GUNS } from '../../src/combat.js?v=88';
-import { FX } from '../../src/fx.js?v=88';
+import { think as friendThink } from './friend.js?v=89';
+import { FriendVoice } from './friendvoice.js?v=89';
+import { crewFrom } from '../core/habits.js?v=89';
+import { HudLook } from './hudlook.js?v=89';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=89';
+import { sound, GUNS } from '../../src/combat.js?v=89';
+import { FX } from '../../src/fx.js?v=89';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 88;   // (this copy's version; ./version.json says the newest)
+const BUILD = 89;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -238,7 +238,7 @@ addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.
   if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
-renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
+renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
 addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * SET.sens * (1 - ads * 0.35); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k)); });
 addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); });
 addEventListener('mouseup', e => mouse[e.button] = false);
@@ -249,7 +249,7 @@ function drawPause() {
   $('room').innerHTML = net ? `<div class="code">ROOM <b>${net.code}</b></div><button class="key" id="copyInvite">COPY INVITE<small>(a link with the code in it: paste it in Discord)</small></button>${net.host ? `<button class="key" id="lockRoom">${net.locked ? 'UNLOCK THE ROOM' : 'LOCK THE ROOM'}<small>(${net.locked ? 'let new friends in again' : 'nobody new can join, even with the code'})</small></button>` : ''}` : ''; $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); }
 $('sSens').oninput = e => { SET.sens = +e.target.value; $('vSens').textContent = SET.sens.toFixed(2); save(); };
 $('sVol').oninput = e => { SET.vol = +e.target.value; sound.setVolume(SET.vol); $('vVol').textContent = Math.round(SET.vol * 100); save(); };
-$('resume').onclick = () => { panel = null; $('paused').hidden = true; renderer.domElement.requestPointerLock(); };
+$('resume').onclick = () => { panel = null; $('paused').hidden = true; lockMouse(); };
 $('leave').onclick = () => { saveNow(); location.href = location.pathname; };
 $('room').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'copyInvite') { const url = `${location.origin}${location.pathname}#join=${net.code}`; navigator.clipboard?.writeText(url).then(() => { b.firstChild.textContent = 'COPIED'; setTimeout(() => b.firstChild.textContent = 'COPY INVITE', 1500); }, () => { b.querySelector('small').textContent = url; }); }
@@ -444,7 +444,7 @@ const DEV = [
   ['CLEAR THE DARK', 'every Hollow gone, right now', () => { g.hollow = []; return 'The dark is empty, for now.'; }],
 ];
 function drawDev() { $('devBody').innerHTML = DEV.map(([n, d], i) => `<button class="key" data-i="${i}">${n}<small>(${d})</small></button>`).join(''); $('devNote').textContent = isHost() ? 'Each one closes this and puts you straight back in.' : 'Only the host can use DEV: it changes the whole world.'; }
-$('devBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !isHost()) return; const msg = DEV[+b.dataset.i][2](); $('dev').hidden = true; panel = null; $('paused').hidden = true; renderer.domElement.requestPointerLock(); say(msg, 3); });
+$('devBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !isHost()) return; const msg = DEV[+b.dataset.i][2](); $('dev').hidden = true; panel = null; $('paused').hidden = true; lockMouse(); say(msg, 3); });
 $('openDev').onclick = () => { $('paused').hidden = true; $('dev').hidden = false; panel = 'dev'; drawDev(); };
 $('devBack').onclick = () => { $('dev').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidden = false; panel = 'list';
@@ -462,6 +462,7 @@ function reloadWorld(d) {   // (the world as it was at dusk; everyone here now s
 // ---------------------------------------------------------------- feedback while you play (Tab): words or voice, a picture of the moment, straight to Claude
 const FB_URL = 'http://127.0.0.1:8050/game/feedback', FB_Q = 'lastfire2-feedback-queue';
 function toggleTab() { if (panel === 'tab') { closeTab(); return; } if (panel) return; panel = 'tab'; for (const k in keys) keys[k] = false; mouse.fill(false); $('tabmenu').hidden = false; if (document.pointerLockElement) document.exitPointerLock(); $('fbNote').textContent = ''; setTimeout(() => $('fbText').focus(), 30); }
+function lockMouse() { try { const r = renderer.domElement.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }   /* (a refused lock never throws: some browsers and frames say no) */
 function closeTab() { stopMic(); $('tabmenu').hidden = true; panel = null; }   /* (the mouse stays yours until you click the game: his stuck-cursor report, 2026-10-19) */
 $('tabBack').onclick = closeTab;
 let rec = null, recOn = false;
