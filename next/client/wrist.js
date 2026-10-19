@@ -6,11 +6,9 @@ export class Wrist {
   constructor(vcam) {
     this.c = document.createElement('canvas'); this.c.width = 1024; this.c.height = 384; this.tex = new THREE.CanvasTexture(this.c); this.tex.colorSpace = THREE.SRGBColorSpace;
     this.root = new THREE.Group(); this.root.position.set(-0.13, -0.115, -0.55); this.root.rotation.set(-0.16, 0.32, 0.03); vcam.add(this.root);
-    // the band and its emitter: a dark strip, a hair of magenta where the light comes out
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.02, 0.055), new THREE.MeshStandardMaterial({ color: 0x0b0d13, roughness: 0.4, metalness: 0.7 })); band.position.set(0, -0.062, 0.02);
-    const lip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.003, 0.004), new THREE.MeshBasicMaterial({ color: 0xff4fd8 })); lip.position.set(0, -0.051, 0.048);
+    // (no floating band or pink lip: a dark slab with a pink line hung in the middle of the screen and read as a stray glitch at 1920x908, so the hologram unfolds on its own, 2026-10-19)
     this.holo = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.09), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true, opacity: 0, depthWrite: false }));
-    this.holo.position.set(0, 0, 0); this.root.add(band, lip, this.holo); this.root.visible = false;
+    this.holo.position.set(0, 0, 0); this.root.add(this.holo); this.root.visible = false;
     this.text = ''; this.t = 0; this.hold = 0; this.open = 0;
   }
   draw(text, head = 'INCOMING') {   /* (the box hugs its words and sits on the band; nothing is ever cut: long lines step the type down until every word fits) */

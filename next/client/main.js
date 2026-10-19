@@ -205,6 +205,7 @@ function updateTiles() {   // (two tiles a frame at most, nearest first; tiles p
 // ---------------------------------------------------------------- models (every one CC0: assets/CREDITS.txt)
 const loader = new GLTFLoader(), models = {};
 const load = (k, url) => loader.loadAsync('../assets/' + url).then(r => { models[k] = r; }).catch(e => console.warn('model', k, e));
+load('lamppost', 'ph/street_lamp_02/street_lamp_02_1k.gltf');   // (the real scan the placed lamp and relay stand on, was a code box)
 const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('mutant', 'zombie/mutant.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), ...(/[?&]nofp(&|$)/.test(location.search) ? [] : [load('fp_rifle', 'fp/rifle_fp.glb')]),   /* (the Blender rifle and arms are the default since v155, his rule: the newest rig is never behind a switch) */ load('fp_rail', 'fp/sniper_fp.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 const MASK_RIM = { walker: 'vec3(0.62, 0.38, 1.0)', runner: 'vec3(1.0, 0.25, 0.65)', watcher: 'vec3(0.85, 0.85, 1.0)', face: 'vec3(1.0, 0.3, 0.85)', giant: 'vec3(1.0, 0.18, 0.25)' };
 function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
@@ -283,7 +284,7 @@ function drawNetwork(t) {
   const live = new Set(), pts = [];
   for (const n of g.nodes) {
     live.add(n.id); let o = nodeObjs.get(n.id);
-    if (!o && models.lantern) { o = new THREE.Group(); const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, n.kind === 'lamp' ? 2.4 : 1.6, 0.1), new THREE.MeshStandardMaterial({ color: 0x3a3e48, metalness: 0.4, roughness: 0.5 })); post.position.y = n.kind === 'lamp' ? 1.2 : 0.8;
+    if (!o && models.lantern && models.lamppost) { o = new THREE.Group(); const post = models.lamppost.scene.clone(), pb = new THREE.Box3().setFromObject(post), ph = n.kind === 'lamp' ? 2.4 : 1.6, pk = ph / (pb.max.y - pb.min.y); post.scale.setScalar(pk); post.position.y = -pb.min.y * pk;
       const l = models.lantern.scene.clone(); const b = new THREE.Box3().setFromObject(l); l.scale.setScalar((n.kind === 'lamp' ? 0.7 : 0.45) / b.getSize(new THREE.Vector3()).y); l.position.y = n.kind === 'lamp' ? 2.4 : 1.6; o.add(post, l); o.userData.l = l; o.position.set(n.x, g.land(n.x, n.z), n.z); scene.add(o); nodeObjs.set(n.id, o); }
     if (o) o.userData.l.traverse(q => { if (q.material) { q.material.emissive = q.material.emissive || new THREE.Color(); q.material.emissive.setHex(n.lit && lit ? 0x9fb8ff : 0x000000); q.material.emissiveIntensity = 0.9; } });
   }
@@ -332,7 +333,8 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
-if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, scene, renderer, composer, gun: k => switchGun(k), aim: v => { aimOn = v; }, info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
+if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, scene, renderer, composer, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
+  sight: () => { const gm = held[gunKey]; if (!gm || !gm.visible) return null; vcam.updateMatrixWorld(true); gm.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(gm), c = bx.getCenter(new THREE.Vector3()), p = new THREE.Vector3(c.x, bx.max.y, c.z).applyMatrix4(vcam.matrixWorldInverse).applyMatrix4(vcam.projectionMatrix); return { x: p.x * innerWidth / 2, y: p.y * innerHeight / 2, ads }; },   /* (test: where the held gun's sight point lands, in pixels from screen center) */ info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
 // a relay or the truck's cab warm them back in about 3 s. The drift moves your real aim, so where the sight sits is where the round goes.
@@ -650,7 +652,7 @@ function frame(now) {
   sound.listen(me.x, me.y + eyeH, me.z, -Math.sin(me.yaw), 0, -Math.cos(me.yaw));
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember && !(ship && ship.on)) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads);
-    gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), 0); }
+    gm.position.set(0.15 * (1 - a), -0.15 + (-u.top + 0.15) * a, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), 0); }
   if (models.fp_rifle && !fpRig) { fpRig = new FpRig(THREE, vcam, models.fp_rifle); if (DEMO) window.__fp = fpRig; } if (fpRig) { const on = !!(gm && gm.visible && gunKey === 'ar'); if (on) gm.visible = false; fpRig.update(dt, on, ads, kick); }
   if (models.fp_rail && !railRig) railRig = new FpRig(THREE, vcam, models.fp_rail); if (railRig) { const on = !!(gm && gm.visible && gunKey === 'rail'); if (on) gm.visible = false; railRig.update(dt, on, ads, kick, railC); }   /* (the rail sniper is only ever the Blender rig) */   /* (?fp: the Blender rifle stands in for the M4 and its arms) */
   hands.update(dt, { reloading: reloadT > 0 ? 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)) : -1, ads, kick, moving: onGround ? Math.min(1, vel.length() / 4.6) : 0, gun: gunKey });   /* (the arms: hands.js, the reload as a real hand motion; it hides itself when the gun is hidden) */
