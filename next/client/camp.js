@@ -262,7 +262,7 @@ export class Camp {
       if (lie) { const e = 0.5, n = new THREE.Vector3(land(x - e, z) - land(x + e, z), 2 * e, land(x, z - e) - land(x, z + e)).normalize();
         o.quaternion.setFromUnitVectors(up, n).multiply(spin.setFromAxisAngle(up, ry)); o.position.set(x - ox, land(x, z) - m.y0 * k - sink - 0.1 * m.s.y * k, z - oz); }
       else { let low = land(x, z); for (const [a, b] of [[hx, hz], [-hx, hz], [hx, -hz], [-hx, -hz]]) low = Math.min(low, land(x + a * cs + b * sn, z - a * sn + b * cs));
-        o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; if (m.s.y * k > 1) this.solids.push([x, z, hx, hz, cs, sn]); }   /* (anything taller than a meter is solid: the camera never walks inside a wall) */
+        o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; if (m.s.y * k > 1) this.solids.push([x, z, hx, hz, cs, sn, m.s.y * k]); }   /* (anything taller than a meter is solid: the camera never walks inside a wall) */
       this.scene.add(o); if (batch.has(url)) mine.push(o); return o; });
     const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */

@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=135';
-import { Ambience } from './ambience.js?v=135';
-import { Camp, BOARD } from './camp.js?v=135';
-import { Guide } from './guide.js?v=135';
-import { buildSites } from './earthsite.js?v=135';
-import { Truck } from './truck.js?v=135';
-import { ShipView } from './shipview.js?v=135';
-import { Crew } from './crew.js?v=135';
-import { Hands } from './hands.js?v=135';
-import { Wrist } from './wrist.js?v=135';
-import { FireCore } from './firecore.js?v=135';
+import * as C from '../core/game.js?v=136';
+import { Ambience } from './ambience.js?v=136';
+import { Camp, BOARD } from './camp.js?v=136';
+import { Guide } from './guide.js?v=136';
+import { buildSites } from './earthsite.js?v=136';
+import { Truck } from './truck.js?v=136';
+import { ShipView } from './shipview.js?v=136';
+import { Crew } from './crew.js?v=136';
+import { Hands } from './hands.js?v=136';
+import { Wrist } from './wrist.js?v=136';
+import { FireCore } from './firecore.js?v=136';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=135';
-import { FriendVoice } from './friendvoice.js?v=135';
-import { crewFrom } from '../core/habits.js?v=135';
-import { HudLook } from './hudlook.js?v=135';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=135';
-import { sound, GUNS } from '../../src/combat.js?v=135';
-import { FX } from '../../src/fx.js?v=135';
+import { think as friendThink } from './friend.js?v=136';
+import { FriendVoice } from './friendvoice.js?v=136';
+import { crewFrom } from '../core/habits.js?v=136';
+import { HudLook } from './hudlook.js?v=136';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=136';
+import { sound, GUNS } from '../../src/combat.js?v=136';
+import { FX } from '../../src/fx.js?v=136';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 135;   // (this copy's version; ./version.json says the newest)
+const BUILD = 136;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -125,20 +125,35 @@ const isHost = () => !net || net.host;
 const keys = {}, mouse = [false, false, false];
 const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once: the fire, your glow, the nearest nodes)
 const uLights = { value: Array.from({ length: NODE_MAX }, () => new THREE.Vector4(0, 0, 0, 0)) };
+// lamp shadows (his pick, 2026-10-19; INNOVATION.md idea 2): the rule decides where light is blocked (core shadowed: camp pieces taller than a
+// person), and the ground shows exactly that. A 192 x 192 map over the camp (25 cm a texel) holds lit-with-shadows over lit-without, built
+// 8 rows a frame (about 0.4 s) only when the lights or the pieces change; the ground multiplies the fire's and the nodes' light by it
+const SHADE = { N: 192, half: 24, key: '', row: 192, occ: -1 }; SHADE.back = new Uint8Array(SHADE.N * SHADE.N).fill(255);
+SHADE.tex = new THREE.DataTexture(new Uint8Array(SHADE.N * SHADE.N).fill(255), SHADE.N, SHADE.N, THREE.RedFormat); SHADE.tex.magFilter = SHADE.tex.minFilter = THREE.LinearFilter; SHADE.tex.needsUpdate = true;
+const uShade = { value: SHADE.tex }, uShadeBox = { value: new THREE.Vector3(0, 0, SHADE.half) };
+function updateShade() { if (!g || C.onEarth(me)) return;
+  if (camp && camp.solids && camp.solids.length !== SHADE.occ) { SHADE.occ = camp.solids.length; C.setOccluders(camp.solids.filter(q => q[6] > 1.8).map(([x, z, hx, hz, cs, sn]) => ({ x, z, w: 2 * hx, d: 2 * hz, ry: Math.atan2(sn, cs) }))); }
+  const f = g.fire, key = SHADE.occ + '|' + Math.round(C.fireRadius(f) * 2) + (f.fuel > 0) + '|' + g.nodes.filter(n => n.lit && !C.onEarth(n)).map(n => n.id).join(',');
+  if (key !== SHADE.key) { SHADE.key = key; SHADE.row = 0; }
+  if (SHADE.row >= SHADE.N) return; const N = SHADE.N, cell = 2 * SHADE.half / N, end = Math.min(N, SHADE.row + 8);
+  for (let r = SHADE.row; r < end; r++) { const z = -SHADE.half + (r + 0.5) * cell; for (let c = 0; c < N; c++) { const x = -SHADE.half + (c + 0.5) * cell, lu = C.lightAt(g, x, z, true, true);
+    SHADE.back[r * N + c] = lu > 0.002 ? Math.round(255 * Math.min(1, C.lightAt(g, x, z, true) / lu)) : 255; } }
+  SHADE.row = end; if (end === N) { SHADE.tex.image.data.set(SHADE.back); SHADE.tex.needsUpdate = true; } }
 
 // ---------------------------------------------------------------- the land: endless, in 32 m tiles built around you as you walk
 const TILE = 32, RES = 33, VIEW = 4, NEAR = 1.6, tiles = new Map();   // (to 128 m: the fog hides everything past about 130 m; tiles past the first ring at a quarter of the detail)
 const groundMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
 groundMat.onBeforeCompile = sh => {   // (light from the network lights the ground: one loop over a small array, no extra lamps)
-  sh.uniforms.uLights = uLights;
+  sh.uniforms.uLights = uLights; sh.uniforms.uShade = uShade; sh.uniforms.uShadeBox = uShadeBox;
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
   sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-    varying vec3 vW; uniform vec4 uLights[${NODE_MAX}];
+    varying vec3 vW; uniform vec4 uLights[${NODE_MAX}]; uniform sampler2D uShade; uniform vec3 uShadeBox;
     float gh(vec3 p){ p = fract(p * 0.3183 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float gn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(gh(i), gh(i + vec3(1,0,0)), f.x), mix(gh(i + vec3(0,1,0)), gh(i + vec3(1,1,0)), f.x), f.y), mix(mix(gh(i + vec3(0,0,1)), gh(i + vec3(1,0,1)), f.x), mix(gh(i + vec3(0,1,1)), gh(i + vec3(1,1,1)), f.x), f.y), f.z); }`)
     .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.55 + gn(vW * 0.35) * 0.35 + gn(vW * 1.7) * 0.3 + gn(vW * 7.0) * 0.2;')
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-      float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
+      vec2 su = (vW.xz - uShadeBox.xy) / (2.0 * uShadeBox.z) + 0.5; float shd = (su.x > 0.0 && su.y > 0.0 && su.x < 1.0 && su.y < 1.0) ? texture2D(uShade, su).r : 1.0;   /* (the rule's shadows: on the fire and the nodes, never on your own glow, the truck's lamps or a flare) */
+      float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += (i == 0 || i >= 5 ? shd : 1.0) * q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
       totalEmissiveRadiance += diffuseColor.rgb * vec3(0.7, 0.82, 1.25) * min(L, 1.4) * 0.8;
       /* wet ground that doubles every light (LOOK.md change 3): coolant and condensation pool near the camp's lights; in a puddle each light lays a
          streak toward your eye, the way a wet street doubles a neon sign. No reflection pass: one more loop over the same few lights */
@@ -174,7 +189,7 @@ function updateTiles() {   // (two tiles a frame at most, nearest first; tiles p
 // ---------------------------------------------------------------- models (every one CC0: assets/CREDITS.txt)
 const loader = new GLTFLoader(), models = {};
 const load = (k, url) => loader.loadAsync('../assets/' + url).then(r => { models[k] = r; }).catch(e => console.warn('model', k, e));
-const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
+const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('mutant', 'zombie/mutant.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 const MASK_RIM = { walker: 'vec3(0.62, 0.38, 1.0)', runner: 'vec3(1.0, 0.25, 0.65)', watcher: 'vec3(0.85, 0.85, 1.0)', face: 'vec3(1.0, 0.3, 0.85)', giant: 'vec3(1.0, 0.18, 0.25)' };
 function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
   root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; const m = o.material = o.material.clone(); if (/Eye_White|Secondary/.test(m.name)) { m.color.setHex(0x030305); m.emissive = new THREE.Color(0); m.emissiveIntensity = 0; }   /* (no cartoon eyeballs or grins: black, so the face reads as a hollow) */ else if (/Eye_Black/.test(m.name)) { m.color.setHex(eyes); m.emissive = new THREE.Color(eyes); m.emissiveIntensity = 3; }   /* (only the pupils burn: pinpoint eyes, like the stars) */ else { m.color.setHex(0x07070c); m.emissive = new THREE.Color(0x0a0c18); m.emissiveIntensity = 0.3; m.roughness = 0.9; if (MASK_RIM[kind]) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '', RIM_COLOR: MASK_RIM[kind] }; m.needsUpdate = true; } } /* (a faint cold rim so a shape reads against the dark) */ });
@@ -182,7 +197,8 @@ function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near 
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
 const seen = new Map();
-const LOOK = { walker: ['wraith', 1.6, 0xb48cff], runner: ['wraith', 1.1, 0xff4fa0], giant: ['wraith', 3.4, 0xff2b40], watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
+const LOOK = { walker: ['mutant', 1.75, 0xb48cff], runner: ['mutant', 1.55, 0xff4fa0], giant: ['mutant', 3.0, 0xff2b40],   /* (the baseline zombie, his ask 2026-10-19: Mixamo's Mutant via mohsenheydari/three-fps, drawn as shadow like the rest) */
+  watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
 function drawHollow(dt) {
   const alive = new Set();
   for (const k of g.hollow) {
@@ -191,12 +207,12 @@ function drawHollow(dt) {
       if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0x9fb6ff); q.material.emissiveIntensity = 0.5; } }); v = { o }; }
       else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; if (!src.box) { src.scene.updateMatrixWorld(true); src.box = new THREE.Box3().setFromObject(src.scene); }   /* (measured on the original: a copy of an animated model measures wrong, the camp people's old bug) */
         const o = skClone(src.scene); darken(o, eyes, k.kind); const b = src.box, s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
-        if (k.kind === 'runner') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.35, sc * 0.75, sc * 1.6); }   // (the runner: low and long, built to close distance)
+        if (k.kind === 'runner' && mk !== 'mutant') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.35, sc * 0.75, sc * 1.6); }   // (the runner: low and long, built to close distance)
         if (k.kind === 'face') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.5, sc * 1.2, sc * 0.45); }   // (the face: flat and wide, the way it came out of the wall)
         if (k.kind === 'watcher') { const sc = size * 1.6 / s.y; o.scale.set(sc * 0.6, sc, sc * 0.6);   // (the tall one: stretched thin, a wide-brimmed hat, nothing else you can name)
           const hatM = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 1 }), brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.03, 24), hatM), crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.42, 20), hatM);
           const hat = new THREE.Group(); crown.position.y = 0.22; hat.add(brim, crown); hat.scale.set(1 / (sc * 0.6), 1 / sc, 1 / (sc * 0.6)); hat.position.y = b.max.y - 0.05 * s.y; o.add(hat); }
-        const mix = new THREE.AnimationMixer(o), A = n => { const c = src.animations.find(a => a.name.endsWith(n)); return c ? mix.clipAction(c) : null; }; v = { o, mix, fly: A('Fast_Flying'), idle: A('Flying_Idle'), hit: A('Punch'), death: A('Death') }; (v.fly || v.idle)?.play(); }
+        const mix = new THREE.AnimationMixer(o), A = n => { const c = src.animations.find(a => a.name.endsWith(n)); return c ? mix.clipAction(c) : null; }; const Z = mk === 'mutant'; v = { o, mix, fly: A(Z ? (k.kind === 'runner' ? 'run' : 'walk') : 'Fast_Flying'), idle: A(Z ? 'idle' : 'Flying_Idle'), hit: A(Z ? 'punch' : 'Punch'), death: A(Z ? 'die' : 'Death') }; (v.fly || v.idle)?.play(); }
       if (k.kind === 'face') { const at = new THREE.Vector3(k.x, k.y + 1.2, k.z); fx.burst(at, 28, [0.55, 0.57, 0.66], 5, 0.7); if (sound.shatter) sound.shatter(at); }   // (it tears out of the wall: concrete dust and a crack)
       v.mats = []; v.eyes = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); if (/Eye_Black/.test(q.material.name)) v.eyes.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
       scene.add(v.o); seen.set(k.id, v);
@@ -344,11 +360,11 @@ function drawBurns(dt) { for (let i = 0; i < BURN; i++) { burnLife[i] = Math.max
 const MOUNT = { ...GUNS.lmg, name: 'MOUNTED GUN', spread: 0.02, auto: true }; let heat = 0, overheat = false;
 const mounted = () => g && g.car && C.seatOf(g, me.id) >= 2;
 function shoot() {
-  const mount = mounted(), G = mount ? MOUNT : GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || (!mount && reloadT > 0) || me.ember) return;
+  const mount = mounted(), G = mount ? MOUNT : GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || (!mount && (reloadT > 0 || mvSprint || readyT > 0)) || me.ember) return;   /* (sprinting, the gun is down; it comes up in the sprint-to-fire time) */
   if (mount) { if (overheat) { if (!shoot.hot) { sound.click(); shoot.hot = true; } return; } shoot.hot = false; heat = Math.min(1, heat + 0.045); if (heat >= 1) { overheat = true; say('The mount is red hot. Let it cool.', 2); } }
   else { if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; } a.mag--; if (!a.mag && SET.autoReload) setTimeout(() => { if (!ammo[gunKey].mag) reload(); }, 250); }
-  shotCd = 60 / G.rpm; sound.shot(mount ? 'lmg' : gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6);
-  const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), sp = G.spread * (ads > 0.5 ? 0.3 : 1), ds = [], gm = held[gunKey]; let end = null;
+  shotCd = 60 / G.rpm; sound.shot(mount ? 'lmg' : gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6 * (crouch ? 0.85 : 1));
+  const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), sp = G.spread * (ads > 0.5 ? 0.3 : 1) * (onGround ? 1 : 3) * (crouch || slideT > 0 ? 0.8 : 1), ds = [], gm = held[gunKey]; let end = null;
   if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
   const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
   for (let n = 0; n < (G.pellets || 1); n++) {   // (a shotgun throws a handful of pellets: each is its own line through the air)
@@ -399,7 +415,7 @@ $('prompt').addEventListener('click', e => { if (e.target.closest('.seatnext')) 
 let stake = null; function settleStake(back) { if (stake === null) return; SET.stakes = [...(SET.stakes || []), [stake, back ? 1 : 0]].slice(-200); save(); stake = null; }
 const stakeScore = () => { const st = SET.stakes || []; return st.length ? { n: st.length, brier: st.reduce((a, [p, o]) => a + (p - o) ** 2, 0) / st.length, back: st.filter(x => x[1]).length } : null; }; $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
-function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
+function buildSpot() { const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
 const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
 function build(p, kind, x, z) {   // (host only: the player must carry the light, and stand within 9 m of where it goes)
   const K = C.NODE[kind]; if (!K || !Number.isFinite(x) || !Number.isFinite(z) || p.ember || p.carried < K.cost || Math.hypot(p.x - x, p.z - z) > 9) return null;
@@ -409,29 +425,44 @@ function tryBuild() { if (buildPick === 'lamp' && SET.name && g.econ && !C.econ.
   if (isHost()) { const n = build(me, buildPick, s.x, s.z); if (n) say(n.lit ? `The ${buildPick} takes the light.` : `Too far from the light: the ${buildPick} stays dark. Place it within reach of a lit relay.`, 3); } else net.send({ t: 'build', k: buildPick, x: +s.x.toFixed(2), z: +s.z.toFixed(2) }); }
 function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'carries light on, ' + K.reach + ' m' : 'shines wide, carries nothing'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: pulls the hunt and burns it, ${C.FLARE.life} s</small></button>`; }
 $('build').addEventListener('click', e => { const b = e.target.closest('.bk'); if (!b) return; if (b.dataset.k === 'flare') return throwFlare(); pickBuild(buildPick === b.dataset.k ? null : b.dataset.k); });
-function flareSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t <= C.FLARE.reach; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z) + 0.1) return [x, z]; } return [o.x + d.x * 12, o.z + d.z * 12]; }   // (where you aim, on the ground, up to 16 m)
+function flareSpot() { const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), d = look(); for (let t = 1; t <= C.FLARE.reach; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z) + 0.1) return [x, z]; } return [o.x + d.x * 12, o.z + d.z * 12]; }   // (where you aim, on the ground, up to 16 m)
 function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const j = C.nextSeat(g, me); if (j >= 0) say(['You take the wheel.', 'You take the roof lamp. Look where it should shine.', 'You take the mounted gun.', 'You take the mounted gun.'][j], 2); } else net.send({ t: 'build', k: 'seat', x: 0, z: 0 }); }
 function throwFlare() { if (me.ember) return; const cost = C.flareCost(g, me); if (me.carried < cost) return say(`A flare costs ${cost} light${cost > C.FLARE.cost ? ' (more, while you are behind on dues)' : ''}. You carry ${Math.floor(me.carried)}.`, 3); const [x, z] = flareSpot(); sound.buy(); if (isHost()) C.throwFlare(g, me, x, z); else net.send({ t: 'build', k: 'flare', x: +x.toFixed(2), z: +z.toFixed(2) }); }
 
 // ---------------------------------------------------------------- moving: grounded but sharp (fast to start and stop, real weight on slopes)
-let aimOn = false, sprintOn = false;   /* (aim and sprint as toggles, when he picks that in the pause menu) */
+let aimOn = false, sprintOn = false;
+// Modern Warfare (2019)'s movement and aim as the baseline (his pick, 2026-10-19; taste rule 101). Mechanics from Activision's own movement guide
+// (blog.activision.com, 2019-10): tactical sprint (double-tap sprint, once a life, gun raised so slower to fire after), crouch (steadier, slower),
+// slide (crouch while sprinting: a burst, then low and steady), repeated jumps get shorter, firing mid-air is far less accurate; sprint and fire never
+// mix. Numbers: ADS by class from published averages (rifle 0.25 s, machine gun 0.45 s; pistol 'nearly instant'), sprint-to-fire 0.21 s from Modern
+// Warfare II on the same engine. Marked 'ours' where no number was published and it is our tuning.
+const MW = { adsT: { pistol: 0.15, ar: 0.25, shotgun: 0.3, lmg: 0.45 }, toFire: 0.21, tacToFire: 0.35 /* ours */, tacMul: 1.25 /* ours */, tacTime: 3 /* ours */,
+  crouchMul: 0.55 /* ours */, slideV: 9 /* ours */, slideT: 0.8 /* ours */, jumpFade: 0.82 /* ours */, eye: [1.62, 1.1, 0.85] };
+let tac = 0, tacLeft = 1, lastShift = -9, crouch = false, slideT = 0, slideDir = [0, 0], readyT = 0, eyeH = 1.62, jumps = 0, groundT = 0, mvSprint = false;
+addEventListener('keydown', e => { if (e.repeat || mode !== 'play' || !me || panel || me.ember) return;
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { const t = performance.now() / 1000; if (t - lastShift < 0.3 && tacLeft > 0 && keys.KeyW && onGround) { tac = MW.tacTime; tacLeft--; crouch = false; } lastShift = t; }
+  if (e.code === 'KeyC' || e.code === 'ControlLeft') { if (mvSprint && onGround) { const L = Math.hypot(vel.x, vel.y) || 1; slideT = MW.slideT; slideDir = [vel.x / L, vel.y / L]; crouch = true; tac = 0; } else crouch = !crouch; } });   /* (aim and sprint as toggles, when he picks that in the pause menu) */
 const vel = new THREE.Vector2(); let vy = 0, onGround = true, coyote = 0, jumpBuf = 0;   /* (GAMEDEV-TRICKS.md 22: a jump still works 0.15 s after a ledge, and a press 0.15 s before landing counts) */
 function move(dt) {
-  if (me.ember) return; if (ship && ship.on) { vel.x = vel.y = 0; vy = 0; onGround = true; return; }   /* (flying: the ship moves you) */
+  if (me.ember) { tacLeft = 1; crouch = false; slideT = 0; return; } if (ship && ship.on) { vel.x = vel.y = 0; vy = 0; onGround = true; return; }   /* (flying: the ship moves you) */
   const seat = C.seatOf(g, me.id); if (seat >= 0 && g.car) {   // (in the truck: you ride; the driver's W/S and A/D are throttle and steering)
     me.drive = seat === 0 ? { th: (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), st: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) } : null;
     [me.x, me.z] = C.seatPos(g.car, seat); me.y = g.land(me.x, me.z) + 0.9; vel.x = vel.y = 0; vy = 0; onGround = true; return; }
-  const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), sprint = (SET.sprintToggle ? sprintOn : (keys.ShiftLeft || keys.ShiftRight)) && f > 0 && ads < 0.5; if (f <= 0) sprintOn = false;
+  const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), wantAds = (SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0, sprintKey = (SET.sprintToggle ? sprintOn : (keys.ShiftLeft || keys.ShiftRight)) && f > 0, sprint = sprintKey && !wantAds && !mouse[0] && slideT <= 0;   /* (aiming or firing ends a sprint, as in Modern Warfare) */
+  if (sprint && crouch) crouch = false; mvSprint = sprint; if (!sprint) tac = 0; else if (tac > 0) tac -= dt; readyT = sprint ? (tac > 0 ? MW.tacToFire : MW.toFire) : Math.max(0, readyT - dt); if (f <= 0) sprintOn = false;
   const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * f + cosY * s, wz = -cosY * f - sinY * s; const len = Math.hypot(wx, wz) || 1; wx /= len; wz /= len;
-  const top = (sprint ? 7.4 : 4.6) * C.speedOf(me) * (1 - ads * 0.35) * (f || s ? 1 : 0), acc = onGround ? 14 : 3;   // (about a third of a second to full speed, less to stop)
-  vel.x += (wx * top - vel.x) * Math.min(1, acc * dt); vel.y += (wz * top - vel.y) * Math.min(1, acc * dt);
+  const top = (sprint ? 7.4 * (tac > 0 ? MW.tacMul : 1) : 4.6) * C.speedOf(me) * (1 - ads * 0.35) * (f || s ? 1 : 0) * (crouch && !sprint ? MW.crouchMul : 1), acc = onGround ? 14 : 3;   // (about a third of a second to full speed, less to stop)
+  if (slideT > 0 && onGround) { slideT -= dt; const k = Math.max(0, slideT / MW.slideT), v = MW.slideV * k + 4.6 * MW.crouchMul * (1 - k); vel.x = slideDir[0] * v; vel.y = slideDir[1] * v; }   /* (the slide: a burst along where you were running, easing down to a crouch) */
+  else { vel.x += (wx * top - vel.x) * Math.min(1, acc * dt); vel.y += (wz * top - vel.y) * Math.min(1, acc * dt); }
   const nx = me.x + vel.x * dt, nz = me.z + vel.y * dt, rise = g.land(nx, nz) - g.land(me.x, me.z);
   if (rise / Math.max(0.001, Math.hypot(vel.x, vel.y) * dt) < 1.4 || !onGround) { me.x = nx; me.z = nz; }   // (slopes steeper than about 55 degrees stop you)
   [me.x, me.z] = C.pushOut(me.x, me.z); if (camp) [me.x, me.z] = camp.pushOut(me.x, me.z);   /* (Earth's towers are solid) */
   { const r = Math.hypot(me.x, me.z), a = Math.atan2(me.z, me.x), gate = Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2))) < 0.1;   /* (the camp wall at 21 m: solid except the gate) */
     if (!gate && Math.abs(r - 21) < 0.7) { const to = r < 21 ? 20.3 : 21.7; me.x *= to / r; me.z *= to / r; } }
   coyote = onGround ? 0.15 : coyote - dt; jumpBuf -= dt;
-  if ((keys.Space || jumpBuf > 0) && (onGround || coyote > 0)) { vy = 6.2; onGround = false; coyote = 0; jumpBuf = 0; }
+  groundT = onGround ? groundT + dt : 0;
+  if ((keys.Space || jumpBuf > 0) && (onGround || coyote > 0)) { jumps = groundT < 1 ? jumps + 1 : 0; vy = 6.2 * Math.pow(MW.jumpFade, Math.min(jumps, 4)); onGround = false; coyote = 0; jumpBuf = 0; slideT = 0; crouch = false; }   /* (jump again quickly and each jump is shorter) */
+  eyeH += ((slideT > 0 ? MW.eye[2] : crouch ? MW.eye[1] : MW.eye[0]) - eyeH) * Math.min(1, dt * 12);
   vy -= 20 * dt; me.y += vy * dt; const ground = g.land(me.x, me.z);
   if (me.y <= ground) { if (!onGround && vy < -7) sound.land(-vy); me.y = ground; vy = 0; onGround = true; } else if (me.y > ground + 0.05) onGround = false;
 }
@@ -467,7 +498,7 @@ function frame(now) {
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
-  if (me.ember || (ship && ship.on)) aimOn = false; ads += (((SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
+  if (me.ember || (ship && ship.on)) aimOn = false; { const want = (SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0 && !mvSprint && readyT <= 0, T = MW.adsT[gunKey] || 0.25; ads = want ? Math.min(1, ads + dt / T) : Math.max(0, ads - dt / (T * 0.8)); }   /* (each gun reaches its sights in its own time, a straight line in, as in Modern Warfare) */
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { if (!(panel && !net)) { runFriends(dt); C.step(g, dt); } }   /* (alone, a menu pauses the world: the fire stops burning while you read) */ else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
@@ -476,13 +507,13 @@ function frame(now) {
   drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
-  coldHands(dt);
-  camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - 22 * ads; camera.updateProjectionMatrix();
+  coldHands(dt); updateShade();
+  camera.position.set(me.x, me.y + eyeH, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - 22 * ads; camera.updateProjectionMatrix();
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
     camera.position.set(c.x + Math.sin(me.yaw) * back, cy + up, c.z + Math.cos(me.yaw) * back); camera.lookAt(c.x, cy + 1.6, c.z); }
   if (ship && ship.on) { ship.camera(camera, me); ship.hud(me.yaw); }
-  sound.listen(me.x, me.y + 1.62, me.z, -Math.sin(me.yaw), 0, -Math.cos(me.yaw));
+  sound.listen(me.x, me.y + eyeH, me.z, -Math.sin(me.yaw), 0, -Math.cos(me.yaw));
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember && !(ship && ship.on)) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads);
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), 0); }
