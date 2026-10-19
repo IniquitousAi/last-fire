@@ -168,3 +168,25 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - **Earth:** a normal day and night cycle (we never talked about lighting since we started on the Moon). A clean Earth map: Maze Runner
   turned to life with black walls instead of white, walls you can tell were white once but got consumed by the dark. Outside the walls,
   dark gray, fog mixed with dark in most spots, but some green, uncorrupted spots remain. Lore needs discussing.
+
+## The Rift, the wilds, and the scaling (his words, 2026-10-19 about 11:00, summarized closely)
+- **The walls stay; there is no maze.** Where Maze Runner's maze entrance would be, one section of the wall opens into a dimension: a dark,
+  corrupted world. Every day people in the community stand around it and wonder what it is. Some go in. Those have never come back.
+- **The corruption around it devours everything, overwhelming, not destructive:** black, red and purple smoke and fog, mysterious,
+  "beautiful darkness", sci-fi and alien; galaxy vibes welcome as long as it still reads evil, iniquitous.
+- **Outside the walls is vast open Earth:** trees, untended grass, hazards (poisonous things, animals, water, creatures tied to their
+  environment), wandering neutral and hostile mobs, rare wandering NPCs (most live in a main area; recruit them to fight with you, a later
+  patch). Calm patches of forest to build a chill base in; a random creature at night now and then.
+- **Everything scales:** if you are not constantly raising your stats, skill, guns and gear, the dark becomes stronger than you. Only
+  building means you can build but cannot kill what comes, and it blows up your stuff. Respawn and death mechanics. Everything you do has
+  a stated value: why you do it, which stat it raises, which skill it speeds up, mastery that makes the task faster. No hand-holding:
+  "yo, you died, get better."
+- **Co-op:** smooth, up to four, balanced around him. The bots learn how each player plays (a one-to-one "me database"): after about five
+  hours, build a copy of him, see what it learned, breed it with his original, then keep playing; baseline bots of him at stages of the
+  game. The same for Dalton or anyone. A bot can be a better you than you, and the data shows what you avoid and why.
+- **The fun loop is hordes:** inside the Rift, an alien console nobody understands; touch it and waves of enemies come (a nod to Diablo).
+  That is the infinite mode, tied into the lore: every zone has its own infinite mode, using the tools of that era.
+- **Eras by scale:** Earth starts primitive-modern (scavenge what is around you: an assault rifle, a fire axe), scaling over time into a
+  futuristic world, with Cyberpunk 2077 logic deciding which assets exist and why.
+- **His ask:** a skeleton of the main three things of each thing; categorize everything into the fewest categories possible without losing
+  the game's quality.

@@ -1,16 +1,21 @@
-# The skeleton (his rule, 2026-10-19: build the whole game rough first, then he says yes or no)
+# The skeleton: the fewest categories (his ask, 2026-10-19: "the main three things of each thing")
 
-Every stage of the finished game, playable end to end in its roughest honest form, before any stage gets polished. Each stage is a gray-box
-of the right size, with its real rule, a placeholder look, and a one-line goal on screen. The robot player (`sim/autoplay.cjs`) plays the
-whole skeleton every version and reports how far it got; he plays it and says yes or no per stage. A stage is polished only after its yes.
+Three pillars, three things each. Everything in the game belongs to exactly one box; anything that fits none waits. Eras are not a fourth
+pillar: they are the scale every box climbs (primitive-modern Earth, then up to the futuristic world).
 
-| # | Stage | What exists today | Skeleton job |
+| Pillar | 1 | 2 | 3 |
 | --- | --- | --- | --- |
-| 1 | Menu to the Moon camp (era 3, pistol and shotgun) | built, guided (9 steps) | trim the guide to era 3 guns |
-| 2 | The first Moon night | built | keep |
-| 3 | The drop to Earth (era 4, a taste) | the lander, 150 s, a ring of tower boxes | **the Maze:** black once-white walls, gray fog outside, green uncorrupted pockets, Earth's own day and night |
-| 4 | Back to the Moon tutorial: plan, build, defend | pieces exist (relays, lamps, the truck bay) | one guided pass through planning, building and defending |
-| 5 | Earth base camp: the real game | not built | a placeholder camp inside the Maze, the loop: go out, bring back, build, hold the night |
-| 6 | The endless part: it scales forever on true numbers | the Director, the learned friend, the camp economy | one curve per system the simulators tune, shown on the Simulator page |
+| **THE WORLD** (where) | **The Community**: the walled camp, its people, the board | **The Rift**: the corrupted dimension in the wall; inside, the alien console and its endless waves (the infinite mode) | **The Wilds**: open Earth outside the walls; calm patches to build in, hazards, creatures, zones that get harder the farther out |
+| **YOU** (what you do) | **Fight**: guns and melee by era | **Build**: bases and machines from what you find | **Survive**: gather, hazards, death and respawn; every action names the stat or skill it raises |
+| **THE DARK** (what pushes back) | **Creatures**: neutral and hostile mobs by zone | **Hordes**: the Rift's waves and night surges | **Adaptation**: the dark scales with you, and outgrows whoever only does one thing |
 
-Order: stage 3's Maze and Earth lighting first (he asked, and every later stage happens on Earth), then 5, then 4, then trims.
+**Under it all, the engine (not a pillar, the reason the game exists):** it records how each player plays, builds a bot of them, breeds and
+races the bots, and uses the true numbers to pick the mathematically best version of every system; he says yes or no to what he sees.
+
+## Build order (each one playable rough before anything is polished; the robot player runs the whole chain every version)
+1. The Community (exists, on the Moon; moves to Earth inside the walls built in v160).
+2. The Rift: the opening in one wall, the corruption around it, the console, one endless wave mode.
+3. The Wilds: one calm forest patch and one hazardous zone outside the walls.
+4. YOU: one stat per action (fight, build, survive), death and respawn.
+5. THE DARK's adaptation: the dark scales against how you have been playing.
+6. The engine: bot-you from his recorded play (core/habits.js and the learned friend already exist).
