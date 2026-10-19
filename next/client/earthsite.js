@@ -1,7 +1,7 @@
 // The lander and the landing site (PLAN-SPACE.md step 3: gray boxes first; real models come after the robots and his hands say the trip is right).
 // The pad on the Moon and the site on Earth each get a lander; Earth gets a dead city of broken towers around the site.
 import * as THREE from 'three';
-import { PAD, EARTH } from '../core/game.js?v=26';
+import { PAD, EARTH, TOWERS } from '../core/game.js?v=27';
 
 function lander(scene, x, z, y) {
   const g = new THREE.Group(), hull = new THREE.MeshStandardMaterial({ color: 0x2a2e38, roughness: 0.55, metalness: 0.5 }), line = new THREE.MeshBasicMaterial({ color: 0x39e6ff });
@@ -17,12 +17,8 @@ function lander(scene, x, z, y) {
 export function buildSites(scene, land) {
   lander(scene, PAD.x, PAD.z, land(PAD.x, PAD.z));
   lander(scene, EARTH.x, EARTH.z, land(EARTH.x, EARTH.z));
-  // the dead city: broken towers in a ring around the site, one draw call
-  let q = 33; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647, N = 60;
-  const towers = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.92, metalness: 0.1 }), N), m = new THREE.Matrix4(), e = new THREE.Euler(), s = new THREE.Vector3(), pos = new THREE.Vector3(), qt = new THREE.Quaternion();
-  for (let i = 0; i < N; i++) {
-    const a = rnd() * Math.PI * 2, r = 16 + rnd() * 80, x = EARTH.x + Math.cos(a) * r, z = EARTH.z + Math.sin(a) * r, w = 3 + rnd() * 7, d = 3 + rnd() * 7, h = 3 + rnd() * rnd() * 30;
-    s.set(w, h, d); e.set((rnd() - 0.5) * 0.12, rnd() * Math.PI, (rnd() - 0.5) * 0.12); qt.setFromEuler(e); pos.set(x, land(x, z) + h / 2 - 0.4, z); m.compose(pos, qt, s); towers.setMatrixAt(i, m);
-  }
+  // the dead city: broken towers in a ring around the site, one draw call (their places come from the core, so they are solid for everyone)
+  const towers = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.92, metalness: 0.1 }), TOWERS.length), m = new THREE.Matrix4(), e = new THREE.Euler(), s = new THREE.Vector3(), pos = new THREE.Vector3(), qt = new THREE.Quaternion();
+  TOWERS.forEach((t, i) => { s.set(t.w, t.h, t.d); e.set(t.tx, t.ry, t.tz); qt.setFromEuler(e); pos.set(t.x, land(t.x, t.z) + t.h / 2 - 0.4, t.z); m.compose(pos, qt, s); towers.setMatrixAt(i, m); });
   scene.add(towers);
 }

@@ -1,21 +1,21 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=26';
-import { Ambience } from './ambience.js?v=26';
-import { Camp, BOARD } from './camp.js?v=26';
-import { Guide } from './guide.js?v=26';
-import { buildSites } from './earthsite.js?v=26';
-import { Truck } from './truck.js?v=26';
-import { HudLook } from './hudlook.js?v=26';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=26';
-import { sound, GUNS } from '../../src/combat.js?v=26';
-import { FX } from '../../src/fx.js?v=26';
+import * as C from '../core/game.js?v=27';
+import { Ambience } from './ambience.js?v=27';
+import { Camp, BOARD } from './camp.js?v=27';
+import { Guide } from './guide.js?v=27';
+import { buildSites } from './earthsite.js?v=27';
+import { Truck } from './truck.js?v=27';
+import { HudLook } from './hudlook.js?v=27';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=27';
+import { sound, GUNS } from '../../src/combat.js?v=27';
+import { FX } from '../../src/fx.js?v=27';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 26;   // (this copy's version; ./version.json says the newest)
+const BUILD = 27;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -272,6 +272,7 @@ function move(dt) {
   vel.x += (wx * top - vel.x) * Math.min(1, acc * dt); vel.y += (wz * top - vel.y) * Math.min(1, acc * dt);
   const nx = me.x + vel.x * dt, nz = me.z + vel.y * dt, rise = g.land(nx, nz) - g.land(me.x, me.z);
   if (rise / Math.max(0.001, Math.hypot(vel.x, vel.y) * dt) < 1.4 || !onGround) { me.x = nx; me.z = nz; }   // (slopes steeper than about 55 degrees stop you)
+  [me.x, me.z] = C.pushOut(me.x, me.z);   /* (Earth's towers are solid) */
   { const r = Math.hypot(me.x, me.z), a = Math.atan2(me.z, me.x), gate = Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2))) < 0.1;   /* (the camp wall at 21 m: solid except the gate) */
     if (!gate && Math.abs(r - 21) < 0.7) { const to = r < 21 ? 20.3 : 21.7; me.x *= to / r; me.z *= to / r; } }
   if (keys.Space && onGround) { vy = 6.2; onGround = false; }

@@ -23,6 +23,16 @@ function valueNoise(r) {
 export const PAD = { x: 11, z: -13 };   // (the lander's pad inside the camp wall)
 export const EARTH = { x: 0, z: 6000, stay: 150, light: 9, reach: 16, cells: 10 };   // (the landing site: the lander waits 150 s, its lamp holds 9 m)
 export const onEarth = p => p.z > 3000;
+// the dead city around the landing site: the same towers on every screen (drawn by the client, walked into by everyone)
+export const TOWERS = (() => { let q = 33; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647, out = [];
+  for (let i = 0; i < 60; i++) { const a = rnd() * Math.PI * 2, r = 16 + rnd() * 80, w = 3 + rnd() * 7, d = 3 + rnd() * 7, h = 3 + rnd() * rnd() * 30, tx = (rnd() - 0.5) * 0.12, ry = rnd() * Math.PI, tz = (rnd() - 0.5) * 0.12;
+    out.push({ x: EARTH.x + Math.cos(a) * r, z: EARTH.z + Math.sin(a) * r, w, d, h, tx, ry, tz }); } return out; })();
+export function pushOut(x, z, rad = 0.4) {   // (moves a point out of any tower it is inside: the towers are solid)
+  if (z < 3000) return [x, z];
+  for (const t of TOWERS) { const dx = x - t.x, dz = z - t.z; if (dx * dx + dz * dz > 120) continue; const c = Math.cos(t.ry), s = Math.sin(t.ry), lx = dx * c - dz * s, lz = dx * s + dz * c, hx = t.w / 2 + rad, hz = t.d / 2 + rad;
+    if (Math.abs(lx) < hx && Math.abs(lz) < hz) { let nx = lx, nz = lz; if (hx - Math.abs(lx) < hz - Math.abs(lz)) nx = Math.sign(lx || 1) * hx; else nz = Math.sign(lz || 1) * hz; x = t.x + nx * c + nz * s; z = t.z - nx * s + nz * c; } }
+  return [x, z];
+}
 // the truck: built at the bay in camp from parts found on Earth, fitted in an order that makes sense (his example, 2026-10-19). Weight slows you.
 export const PARTS = { frame: { kg: 60, n: 1, after: [] }, axle: { kg: 25, n: 2, after: ['frame'] }, engine: { kg: 45, n: 1, after: ['frame'] }, wheel: { kg: 18, n: 4, after: ['axle'] }, battery: { kg: 15, n: 1, after: ['engine'] }, cab: { kg: 40, n: 1, after: ['frame', 'engine'] } };
 export const PART_ORDER = ['frame', 'axle', 'engine', 'wheel', 'battery', 'cab'], BAY = { x: 5, z: 12 }, MAX_LOAD = 140;   // (the bay sits by the workshop, between the gate and the bench)
@@ -204,6 +214,7 @@ export function drop(g, p) {
     for (let i = 0; i < EARTH.cells; i++) { const a = r() * Math.PI * 2, d = 14 + r() * 50; g.motes.push({ id: g.nextId++, x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d, v: 8, t: 1e9, cell: true }); } }
   if (g.earth && !g.earth.parts) { g.earth.parts = true; const r = stream(g.seed, 'parts-' + g.earth.n), lack = PART_ORDER.flatMap(k => Array(Math.max(0, PARTS[k].n - fitted(g, k) - (g.stash[k] || 0))).fill(k)), pool = lack.length ? lack : PART_ORDER;
     for (let i = 0; i < 3; i++) { const a = r() * Math.PI * 2, d = 22 + r() * 48; g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
+  for (const q of [...g.motes, ...g.parts]) if (onEarth(q)) [q.x, q.z] = pushOut(q.x, q.z, 1);   // (nothing lies inside a tower)
   p.x = EARTH.x + 1.5; p.z = EARTH.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'drop', p.id]); return true;
 }
 export function rise(g, p) {
