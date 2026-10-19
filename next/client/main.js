@@ -1,31 +1,32 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=125';
-import { Ambience } from './ambience.js?v=125';
-import { Camp, BOARD } from './camp.js?v=125';
-import { Guide } from './guide.js?v=125';
-import { buildSites } from './earthsite.js?v=125';
-import { Truck } from './truck.js?v=125';
-import { ShipView } from './shipview.js?v=125';
-import { Wrist } from './wrist.js?v=125';
-import { FireCore } from './firecore.js?v=125';
+import * as C from '../core/game.js?v=126';
+import { Ambience } from './ambience.js?v=126';
+import { Camp, BOARD } from './camp.js?v=126';
+import { Guide } from './guide.js?v=126';
+import { buildSites } from './earthsite.js?v=126';
+import { Truck } from './truck.js?v=126';
+import { ShipView } from './shipview.js?v=126';
+import { Wrist } from './wrist.js?v=126';
+import { FireCore } from './firecore.js?v=126';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=125';
-import { FriendVoice } from './friendvoice.js?v=125';
-import { crewFrom } from '../core/habits.js?v=125';
-import { HudLook } from './hudlook.js?v=125';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=125';
-import { sound, GUNS } from '../../src/combat.js?v=125';
-import { FX } from '../../src/fx.js?v=125';
+import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
+import { think as friendThink } from './friend.js?v=126';
+import { FriendVoice } from './friendvoice.js?v=126';
+import { crewFrom } from '../core/habits.js?v=126';
+import { HudLook } from './hudlook.js?v=126';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=126';
+import { sound, GUNS } from '../../src/combat.js?v=126';
+import { FX } from '../../src/fx.js?v=126';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 125;   // (this copy's version; ./version.json says the newest)
+const BUILD = 126;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -35,7 +36,21 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'hi
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(78, innerWidth / innerHeight, 0.05, 900);
-const composer = new EffectComposer(renderer), bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.5, 0.82); composer.addPass(new RenderPass(scene, camera)); composer.addPass(bloom); composer.addPass(new OutputPass());
+const composer = new EffectComposer(renderer), bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.5, 0.82); composer.addPass(new RenderPass(scene, camera)); composer.addPass(bloom);
+// the grade (LOOK.md change 1: Cyberpunk 2077 vibes inside his palette). One pass over the world only (the HUD is page, not picture): warm hues
+// rotate to red and pink so orange and yellow cannot appear on any model, shadows lean violet, fine grain lives in the dark, the colors split only
+// at the outer edge of the lens, and a light vignette. All math, no texture: three reads a pixel.
+const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uT: { value: 0 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uT; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main(){ vec2 d = vUv - 0.5; float r = length(d) * 1.414, ca = smoothstep(0.7, 1.0, r) * 0.004;
+      vec3 c = vec3(texture2D(tDiffuse, vUv - d * ca).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv + d * ca).b);
+      float mx = max(c.r, max(c.g, c.b)), w = clamp((min(c.r, c.g) - c.b) / (mx + 1e-4), 0.0, 1.0) * step(c.g, c.r * 1.15);
+      c.g = mix(c.g, c.b, w * 0.8); c.b += w * 0.22 * c.r;
+      float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c += vec3(0.010, 0.0, 0.024) * (1.0 - smoothstep(0.0, 0.12, l));
+      c += (h(vUv * 917.0 + fract(uT) * 37.0) - 0.5) * 0.018 * (1.0 - smoothstep(0.0, 0.35, l));
+      c *= 1.0 - 0.18 * smoothstep(0.55, 1.15, r); gl_FragColor = vec4(max(c, 0.0), 1.0); }` });
+composer.addPass(grade); composer.addPass(new OutputPass());
 const softDot = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();   // (round, soft points: embers and motes were square specks)
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
 scene.add(new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09));   // (barely any moonlight: the dark is dark, the light is yours)
@@ -178,7 +193,7 @@ function drawHollow(dt) {
     }
     { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
       for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
-      const w = (1 - v.sol) * 0.1, t = performance.now() / 1000 + k.id; v.o.scale.set(v.base * (1 + w * Math.sin(t * 11)), v.base * (1 + w * Math.sin(t * 7.3)), v.base * (1 + w * Math.cos(t * 9.1))); }
+      const w = (1 - v.sol) * 0.035, t = performance.now() / 1000 + k.id, br = 1 + w * Math.sin(t * 1.3); v.o.scale.set(v.base * br, v.base * br, v.base * br); }   /* (smoke breathes slowly; it used to shake on three axes at once, which read as a glitch, his note 2026-10-19) */
     if (v.eyes.length) {   /* (the masks show intent, never in words, GAMEDEV-TRICKS.md 13: the pinpoint eyes flare as it closes to striking range, and the watcher's brighten while nobody looks at it, because that is when it moves) */
       const K = C.KINDS[k.kind], reach = (K && K.reach) || 1.2; let d = 1e9; for (const p of g.players) if (!p.ember) d = Math.min(d, Math.hypot(p.x - k.x, p.z - k.z));
       const tell = Math.max(0, Math.min(1, 1 - (d - reach) / (reach * 1.6))) + (k.kind === 'watcher' && !C.lookedAt(g, k) && d < 30 ? 0.5 : 0); v.tell = (v.tell || 0) + (tell - (v.tell || 0)) * Math.min(1, dt * 8);
@@ -236,9 +251,9 @@ const farMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMat
 farMesh.geometry.setAttribute('position', new THREE.BufferAttribute(farPos, 3)); farMesh.geometry.setAttribute('color', new THREE.BufferAttribute(farCol, 3)); farMesh.frustumCulled = false; scene.add(farMesh);
 function farLights(dt) { if (!me) return; farSeed.forEach((f, i) => { f.a += f.s * dt; farPos.set([me.x + Math.cos(f.a) * f.r, f.h, me.z + Math.sin(f.a) * f.r], i * 3); }); farMesh.geometry.attributes.position.needsUpdate = true; }
 // motes of light: a few hundred points in one draw call; they drift toward you when you walk close
-const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ map: softDot, color: 0xe0c8ff, size: 0.5, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ map: softDot, color: 0xff9ae6, size: 0.13, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));   /* (the light you gather: small sharp sparks near the ground, never big glowing balls, his note 2026-10-19) */
 motes.geometry.setAttribute('position', new THREE.BufferAttribute(motePos, 3)); motes.frustumCulled = false; scene.add(motes);
-function drawMotes() { let i = 0; for (const m of g.motes) { if (i >= MOTES) break; motePos.set([m.x, g.land(m.x, m.z) + 0.6, m.z], i * 3); i++; } for (; i < MOTES; i++) motePos[i * 3 + 1] = -999; motes.geometry.attributes.position.needsUpdate = true; }
+function drawMotes() { let i = 0; for (const m of g.motes) { if (i >= MOTES) break; motePos.set([m.x, g.land(m.x, m.z) + 0.25, m.z], i * 3); i++; } for (; i < MOTES; i++) motePos[i * 3 + 1] = -999; motes.geometry.attributes.position.needsUpdate = true; }
 
 // ---------------------------------------------------------------- what you hold: the gun in its own pass (never through a wall)
 const vscene = new THREE.Scene(), vcam = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.01, 10), view = new THREE.Group(); vcam.add(view); vscene.add(vcam);
@@ -420,7 +435,7 @@ function frame(now) {
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { growFire(); sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
-  drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
+  drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
@@ -712,4 +727,4 @@ function drawJoinAgain() { const c = SET.lastJoin; if (c && c.length === CODE_LE
 function readInvite() { const c = cleanCode((location.hash.match(/join=([A-Za-z]+)/) || [])[1]); if (c.length === CODE_LEN && mode === 'menu') { $('code').value = c; $('menuNote').textContent = `Your friend's room ${c} is filled in: type your name, then click JOIN.`; } }
 readInvite(); drawJoinAgain(); addEventListener('hashchange', readInvite);
 requestAnimationFrame(frame);
-window.lastfire2 = { get camp() { return camp; }, get ship() { return ship; }, get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)
+window.lastfire2 = { get camp() { return camp; }, get ship() { return ship; }, grade, get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)

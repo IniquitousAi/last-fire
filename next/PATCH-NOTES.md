@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v126** A film grade over the world only (violet shadows, orange and yellow turned to red or pink, grain, lens edge; LOOK.md change 1); ground light is small sparks, not orbs; masks breathe instead of shaking.
 - **v125** Behind you it moves, in front it strikes (robots, 32 seeds: every crew in the flow band, perfect crew 0.06 falls, inside the noise).
 - **v124** The breach shows before it pours: violet smoke and a red compass bracket 2.5 s before the flood comes through the weakest gap (robots: 146 of 146 warned, 93% on the weakest light). sim/breach.mjs.
 - **v123** The masks' eyes flare before they strike (and the watcher's while unwatched); camp props instanced: about 102 to 73 draw calls a frame.
