@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 // node sim/drop.mjs [--tune]: robots ride the lander down to Earth, gather the light cells, fight what comes, and try to make the lander
 // before it leaves. Measures, per crew style and crew size: how many come back, how much light they bring, how tense it was.
 // --tune tries Earth's pressure settings and keeps the one closest to the pass lines (all of them reasoned, from the night's flow band):
@@ -44,7 +45,9 @@ function measure(n = 1) {
 }
 const miss = o => Math.max(0, 0.95 - o.perfect.back) + Math.max(0, 0.7 - o.careful.back) + Math.max(0, o.careful.back - 0.9) + Math.max(0, 0.4 - o.greedy.back) + Math.max(0, o.greedy.back - 0.7)
   + Object.values(o).reduce((a, x) => a + Math.max(0, 0.25 - x.tense) + Math.max(0, x.tense - 0.7), 0) + (o.greedy.light <= o.careful.light ? 0.3 : 0);
-if (process.argv.includes('--sites')) { for (const site of ['city', 'depot', 'reservoir']) { globalThis.__site = site; const rs = SEEDS.map(seed => { const r = trip('careful', seed, 1); const f = (globalThis.__lastGame.sites || {})[site] || { parts: 0, cells: 0 }; return f; }); const m = k => (rs.reduce((a, x) => a + x[k], 0) / rs.length).toFixed(1); console.log(site.padEnd(10), 'careful robot, 20 trips: parts found a trip', m('parts'), ' cells found a trip', m('cells')); } }
+const MAIN = import.meta.url === pathToFileURL(process.argv[1] || '').href;   // (imported by another sim: no report)
+if (!MAIN) {}
+else if (process.argv.includes('--sites')) { for (const site of ['city', 'depot', 'reservoir']) { globalThis.__site = site; const rs = SEEDS.map(seed => { const r = trip('careful', seed, 1); const f = (globalThis.__lastGame.sites || {})[site] || { parts: 0, cells: 0 }; return f; }); const m = k => (rs.reduce((a, x) => a + x[k], 0) / rs.length).toFixed(1); console.log(site.padEnd(10), 'careful robot, 20 trips: parts found a trip', m('parts'), ' cells found a trip', m('cells')); } }
 else if (process.argv.includes('--flare')) { console.log('no flares:  ', JSON.stringify(measure(1))); globalThis.__flare = true; console.log('with flares:', JSON.stringify(measure(1))); }
 else if (process.argv.includes('--tune')) {
   const t0 = Date.now(), tried = [];
