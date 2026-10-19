@@ -23,7 +23,8 @@
  },
  "notes": {
   "4": "A learned friend joins every solo world; the menu says PLAY (no 'alone'); robot run on the pad through dusk: friend within 35 m 45 of 45 s, speaks, no 'alone' text.",
-  "3": "Every checklist item names B, C or A; bump.py refuses to ship without --serves; SPINE-LOG.md keeps what each version served; the in-game checklist shows it."
+  "3": "Every checklist item names B, C or A; bump.py refuses to ship without --serves; SPINE-LOG.md keeps what each version served; the in-game checklist shows it.",
+  "5": "The Simulator page opens with WHY IS THIS NOT GOOD: 13 systems, one number each, its bar, GOOD or NOT GOOD with the reason; sim/why.mjs builds it from the robots' result files."
  },
  "3": {
   "built": {
@@ -40,6 +41,24 @@
   },
   "played": {
    "proof": "playtests/checklist/test-listshot.txt#PASS  the in-game checklist shows what every item serves",
+   "at": "2026-10-19"
+  }
+ },
+ "5": {
+  "built": {
+   "proof": "sim/why.mjs#every system has a number",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-why.txt#PASS  every system has a number",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/checklist/why-table.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/checklist/test-whyshot.txt#PASS  the Simulator page shows a number for every system",
    "at": "2026-10-19"
   }
  }

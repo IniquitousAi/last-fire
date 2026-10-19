@@ -1,0 +1,109 @@
+{
+ "at": "2026-10-19 16:12 UTC",
+ "rows": [
+  {
+   "name": "The basics a player expects",
+   "what": "aim, fire, reload, menus, the pad, nothing bobs",
+   "shown": "11 of 11",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The nights feel tense, never hopeless",
+   "what": "a perfect crew with the director on",
+   "shown": "danger close 54% of the night, 0 falls",
+   "bar": "25% to 70%, no falls",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "Light is the rule",
+   "what": "how much the light rule changes play against a control",
+   "shown": "tension 0.403 to 0.511 (+0.11)",
+   "bar": "the rule moves tension by 0.05 or more",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The flood warns before it pours",
+   "what": "breaches seen 2 s ahead",
+   "shown": "100% warned",
+   "bar": "95% or more",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The ship flies true",
+   "what": "hover overshoot on a hard drop",
+   "shown": "2% overshoot",
+   "bar": "5% or less",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The camp keeps its own rules",
+   "what": "his nine camp rules",
+   "shown": "9 of 9",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The lore is rules",
+   "what": "every lore line has a mechanic and the board tells the truth",
+   "shown": "49 of 49",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The Rift",
+   "what": "the gate, the console, endless waves, the way out",
+   "shown": "9 of 9",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "Solo is never lonely",
+   "what": "the learned friend at your fire",
+   "shown": "6 of 6",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "Every feature says what it serves",
+   "what": "B, C or A on every item and version",
+   "shown": "4 of 4",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "Far sounds have a cause",
+   "what": "no sound without a cause, no repeats",
+   "shown": "13 of 13",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The checklist shows its proof",
+   "what": "the in-game checklist",
+   "shown": "2 of 2",
+   "bar": "all pass",
+   "good": true,
+   "why": ""
+  },
+  {
+   "name": "The checklist",
+   "what": "every idea he gave, five proven marks each",
+   "shown": "30 of 69 done",
+   "bar": "all done",
+   "good": false,
+   "why": "39 ideas still miss a proven mark"
+  }
+ ]
+}

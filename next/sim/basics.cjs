@@ -33,4 +33,5 @@ const { chromium } = require(process.env.PLAYWRIGHT || 'C:/Users/danie/AppData/L
   check('the pause menu has a visible way back to play', await p.evaluate(() => { const r = document.getElementById('resume'); return !!(r && r.offsetParent); }), 'BACK TO THE DARK key');
   check('no errors in the page', errs.length === 0, errs.slice(0, 2).join(' | ') || 'none');
   const fails = res.filter(r => !r.pass).length; console.log(`\n${res.length - fails} of ${res.length} basics pass${fails ? '; FAIL blocks the ship' : ''}`);
+  require('fs').writeFileSync(require('path').join(__dirname, '..', 'playtests', 'checklist', 'test-basics.txt'), res.map(r => `${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  (${r.saw})`).join(String.fromCharCode(10)) + `${String.fromCharCode(10).repeat(2)}${res.length - fails} of ${res.length} pass  (basics)${String.fromCharCode(10)}`);   /* (the Simulator's 'why' table reads it) */
   await b.close(); process.exit(fails ? 1 : 0); })().catch(e => { console.log('FAIL', e.message); process.exit(1); });

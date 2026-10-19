@@ -122,14 +122,26 @@
    "task": "The Simulator page answers 'why is this not good' with a number for every system",
    "where": "AUDIT-2026-10-19.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "sim/why.mjs#every system has a number",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "playtests/checklist/test-why.txt#PASS  every system has a number",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/checklist/why-table.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/checklist/test-whyshot.txt#PASS  the Simulator page shows a number for every system",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -865,7 +877,10 @@
      "proof": "playtests/lanes/C/earth-sign-day.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "n/a: nothing to press (it is seen and walked past, never used)",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "playtests/lanes/C/immersion_run.json#mirror realm sign",
      "at": "2026-10-19"
@@ -1386,7 +1401,10 @@
      "proof": "playtests/lanes/C/hud-1000x900.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "n/a: nothing to press (it is seen and walked past, never used)",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "playtests/lanes/C/immersion_run.json#hud share",
      "at": "2026-10-19"
