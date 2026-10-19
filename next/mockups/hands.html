@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hands</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
+<style>
+  :root { --ink: #eef0f8; --meta: #a3a6bb; --violet: #7b5cff; }
+  html, body { margin: 0; height: 100%; background: #05060a; color: var(--ink); font: 400 17px "Barlow Condensed", sans-serif; overflow: hidden; }
+  canvas { position: fixed; display: block; }
+  .keys { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 10px; z-index: 5; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 32px); }
+  .keys button { font: 400 19px "Barlow Condensed", sans-serif; letter-spacing: .14em; color: #fff; background: #0c0d14; border: 1px solid #2a2c40; padding: 8px 18px 6px; cursor: pointer; transition: transform .12s, background .12s; }
+  .keys button:hover { transform: translateY(-2px); } .keys button.on { background: #2a1458; border-color: var(--violet); }
+  .bar { position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%); z-index: 5; display: flex; gap: 12px; align-items: center; color: var(--meta); letter-spacing: .1em; }
+  .bar input { width: 320px; max-width: 50vw; accent-color: var(--violet); }
+  .note { position: fixed; left: 16px; top: 14px; z-index: 5; color: var(--meta); font-size: 15px; line-height: 1.3; }
+  .note b { color: var(--ink); font-weight: 500; font-size: 22px; letter-spacing: .1em; display: block; }
+  .dot { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #ff4fd8; border-radius: 50%; z-index: 4; opacity: .7; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="dot"></div>
+<div class="note"><b>HANDS</b><span id="info">loading</span></div>
+<div class="bar">PROGRESS <input id="prog" type="range" min="-0.01" max="1" step="0.005" value="-0.01"><span id="pv">idle</span></div>
+<div class="keys">
+  <button data-g="pistol">PISTOL</button><button data-g="ar" class="on">AR</button><button data-g="shotgun">SHOTGUN</button><button data-g="lmg">LMG</button>
+  <button id="bReload">RELOAD</button><button id="bAim">AIM</button><button id="bFire">FIRE</button><button id="bWalk">WALK</button>
+</div>
+<script type="importmap">{ "imports": { "three": "../../vendor/three.module.js" } }</script>
+<script type="module">
+// The self-test for next/client/hands.js: the same held-gun pass as the game (camera, lights, gun placement copied from main.js),
+// with the hands on it. RELOAD plays the real reload time; the slider scrubs it; AIM eases into the sights like the game does.
+import * as THREE from 'three';
+import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
+import { GUNS } from '../../src/combat.js';
+import { Hands } from '../client/hands.js';
+
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
+const vscene = new THREE.Scene(), vcam = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.01, 10), view = new THREE.Group(); vcam.add(view); vscene.add(vcam);
+vscene.background = new THREE.Color(0x262938);   /* (a mid slate, so near-black arms read as shapes; the game has the world behind them) */
+const here = +(new URLSearchParams(location.search).get("light") ?? 1), vhemi = new THREE.HemisphereLight(0xc8d4f0, 0x1a1c26, 0.35 + 2 * here); vscene.add(vhemi); const vsun = new THREE.DirectionalLight(0xffffff, 0.25 + here); vsun.position.set(0.6, 1, 0.8); vscene.add(vsun);
+/* (always a 16:9 picture, like his monitor, letterboxed in whatever window this is opened in) */
+function fit() { const w = Math.min(innerWidth, innerHeight * 16 / 9), h = w * 9 / 16; renderer.setSize(w, h); const c = renderer.domElement; c.style.width = w + 'px'; c.style.height = h + 'px'; c.style.left = (innerWidth - w) / 2 + 'px'; c.style.top = (innerHeight - h) / 2 + 'px'; vcam.aspect = 16 / 9; vcam.updateProjectionMatrix(); }
+fit(); addEventListener('resize', fit);
+
+/* (debug views: ?side=1 looks at the arms from outside; ?ui=0 hides the buttons for clean pictures) */
+const Q = new URLSearchParams(location.search), side = new THREE.PerspectiveCamera(40, 16 / 9, 0.01, 20);
+{ const v = (Q.get('side') || '1,0.1,-0.3').split(',').map(Number); side.position.set(...(v.length === 3 ? v : [1, 0.1, -0.3])); side.lookAt(...(Q.get('at') || '0.02,-0.2,-0.35').split(',').map(Number)); }
+if (Q.get('ui') === '0') document.querySelectorAll('.keys,.bar,.note,.dot').forEach(e => e.style.display = 'none');
+const models = {}, held = {}, loader = new GLTFLoader();
+await Promise.all(['pistol', 'ar', 'shotgun', 'lmg'].map(k => loader.loadAsync('../../assets/m/' + k + '.glb').then(r => { models[k] = r; })));
+function prepGun(k) { const src = models[k]; if (!src) return; const inner = src.scene.clone(), holder = new THREE.Group(); inner.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); if (/Wood/.test(o.material.name)) o.material.color.setHex(0x1d1f25); if (/Metal/.test(o.material.name)) { o.material.metalness = 0.25; o.material.color.multiplyScalar(1.35); } } });
+  inner.rotation.y = Math.PI / 2; holder.add(inner); let b = new THREE.Box3().setFromObject(holder), s = b.getSize(new THREE.Vector3()); inner.scale.multiplyScalar(({ pistol: 0.24, ar: 0.82, shotgun: 0.86, lmg: 0.86 })[k] / s.z); b = new THREE.Box3().setFromObject(holder); const c = b.getCenter(new THREE.Vector3()); inner.position.sub(c);
+  b = new THREE.Box3().setFromObject(holder); holder.userData = { len: b.max.z - b.min.z, top: b.max.y, muzzle: new THREE.Vector3(0, b.max.y * 0.35, b.min.z) }; holder.visible = false; view.add(holder); held[k] = holder; }
+for (const k of ['pistol', 'ar', 'shotgun', 'lmg']) prepGun(k);
+
+const hands = new Hands(THREE, vcam);
+if (Q.get('bright')) hands.meshes.slice(0, 2).forEach(m => m.material.color.setScalar(+Q.get('bright')));   /* (debug: lighter arms to read their shapes) */
+let gunKey = 'ar', ads = 0, aim = false, kick = 0, reloadT = 0, scrub = -1, walking = false;
+const gunLen = k => GUNS[k].reload;
+function setGun(k) { gunKey = k; reloadT = 0; scrub = -1; document.getElementById('prog').value = -0.01; hands.attach(held[k], k); document.querySelectorAll('[data-g]').forEach(b => b.classList.toggle('on', b.dataset.g === k)); }
+setGun('ar');
+document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => setGun(b.dataset.g));
+document.getElementById('bReload').onclick = () => { scrub = -1; document.getElementById('prog').value = -0.01; reloadT = gunLen(gunKey); };
+document.getElementById('bAim').onclick = e => { aim = !aim; e.target.classList.toggle('on', aim); };
+document.getElementById('bFire').onclick = () => { kick = 1; };
+document.getElementById('bWalk').onclick = e => { walking = !walking; e.target.classList.toggle('on', walking); };
+document.getElementById('prog').oninput = e => { scrub = +e.target.value; reloadT = 0; };
+/* (debug: frame one bone of the arms from a direction, gun shown or hidden; used to check the grips up close) */
+window.look = (bi, d, dist = 0.22, hideGun = false) => { const b = hands.bones[bi]; b.updateWorldMatrix(true, false); const p = new THREE.Vector3().setFromMatrixPosition(b.matrixWorld); side.position.copy(p).addScaledVector(new THREE.Vector3(...d).normalize(), dist); side.lookAt(p); for (const k in held) held[k].children[0].visible = !hideGun; Q.set('side', '1'); };
+window.ctl = { setGun, setP: v => { scrub = v; reloadT = 0; }, setAds: v => { ads = v; aim = v > 0.5; }, hands, held, side, vcam };
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!window.ctl.freezeAds) ads += ((aim ? 1 : 0) - ads) * Math.min(1, dt * 12);
+  if (reloadT > 0) reloadT = Math.max(0, reloadT - dt); kick += -kick * Math.min(1, dt * 10);
+  const p = reloadT > 0 ? 1 - reloadT / gunLen(gunKey) : scrub;
+  for (const k in held) held[k].visible = false; const gm = held[gunKey];
+  /* the same placement as main.js, line for line, except the old reload dip (r) is off: the hands present the gun now (?oldr=1 brings it back) */
+  gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = p >= 0 && Q.get('oldr') ? Math.sin(Math.PI * Math.min(1, p)) : 0;
+  gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45);
+  hands.update(dt, { reloading: p, ads, kick, moving: walking ? 1 : 0, gun: gunKey });
+  vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
+  document.getElementById('pv').textContent = p >= 0 ? p.toFixed(2) : 'idle';
+  document.getElementById('info').textContent = `${GUNS[gunKey].name}: reload ${GUNS[gunKey].reload}s. Hands: ${hands.tris} triangles, ${hands.meshes.length} draw calls.`;
+  renderer.render(vscene, window.ctl.cam || (Q.get('side') ? side : vcam)); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
