@@ -1,0 +1,30 @@
+{
+ "port": 8103,
+ "label": "after",
+ "fps": {
+  "outside the walls": 38.8,
+  "green patch": 33.9,
+  "hazard bog": 28.1,
+  "north road": 25.9
+ },
+ "at": "2026-10-19T16:36:37.999Z",
+ "forestOn": [
+  24,
+  23.9,
+  27.7
+ ],
+ "forestOff": [
+  25.6,
+  26.5,
+  46.9
+ ],
+ "forest": [
+  "baked 8 variants, 5784 triangles [deadpine0:h39 r0.55 sc0.46 foot0.25m tris768 far104; deadpine1:h50 r1.05 sc0.36 foot0.38m tris960 far104; deadpine2:h65 r1.27 sc0.28 foot0.35m tris696 far104; deadpine3:h50 r1.05 sc0.36 foot0.38m tris960 far104; bare0:h50 r1.05 sc0.22 foot0.23m tris336 far104; bare1:h39 r0.55 sc0.28 foot0.15m tris336 far104; live0:h51 r1.05 sc0.28 foot0.29m tris960 far104; live1:h39 r0.55 sc0.36 foot0.20m tris768 far104], 179 ms"
+ ],
+ "errs": [
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "console: THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,3",
+  "console: THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,3",
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ]
+}
