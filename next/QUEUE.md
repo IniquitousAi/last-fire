@@ -112,3 +112,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 53, THE CAMP'S BOOKS on the Simulator page.
 - Item 54, the fire grows visibly: a ring of light rolls to its new edge, and a low hum rises with each level (v106).
 - Item 55, the loss goes on the board: site odds drop by exactly what trips lost, with a pink footnote (v107).
+- Items 56 and 57, first pass: the ship flies (hover physics: drop test 4% bob, settled 3.15 s; robot pilot lands 300 m away in 8.1 s, 2.2 m off) with the HELMET HUD he picked (v109). Still open: the generated model (TRELLIS.2 retrying every 30 min: the free quota ran out), shared in co-op, flying the drop to Earth.
