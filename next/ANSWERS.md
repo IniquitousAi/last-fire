@@ -190,3 +190,8 @@ His point while answering (about the dev paradox): "the more I play a non-polish
   futuristic world, with Cyberpunk 2077 logic deciding which assets exist and why.
 - **His ask:** a skeleton of the main three things of each thing; categorize everything into the fewest categories possible without losing
   the game's quality.
+
+## The zero-checklist run (his words and picks, 2026-10-19 about 10:25)
+- His complaint at v163 (Earth): the flare does nothing and looks like a floating glowing blob; nothing is explained; the floor blinds him; the enemies are holograms whose pathing makes no sense with the physics; no depth or immersion in shooting them, so take them out until they are reworked; walls and lights float; the lighting makes no sense, "we need some dev lighting", not a white light on every scene.
+- His order: up to five helpers, the cheapest fastest that make sense; knock out the whole checklist to zero; reply for the final time only when the checklist is zero, the inbox is empty, and the game looks AAA and plays perfectly. Ask only when super unsure; otherwise do not stop.
+- Picks: big items (mirror realm, eras, Godot port, the daemon) reach zero as rough playable versions; enemies come back as real rigged models with real movement, only once they pass screenshots; dev light is the default, the moody night one click away in the dev menu.
