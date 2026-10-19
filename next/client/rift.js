@@ -17,9 +17,9 @@ float lfEdge(vec2 p) { vec2 i = floor(p), f = fract(p); float d1 = 8.0, d2 = 8.0
   for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec2 g = vec2(float(x), float(y)), o = lfH2(i + g); float d = length(g + o - f); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
   return d2 - d1; }
 float lfCrack(vec3 w) { vec2 q = w.xz + (vec2(gn(vec3(w.xz * 0.21, 1.0)), gn(vec3(w.xz * 0.21, 4.0))) - 0.5) * 2.4 + (vec2(gn(vec3(w.xz * 1.6, 2.0)), gn(vec3(w.xz * 1.6, 8.0))) - 0.5) * 0.35;   /* (warped twice: wandering, then jagged) */
-  float e1 = lfEdge(q * 0.16), e2 = lfEdge(q * 0.55 + 7.3), a1 = fwidth(e1) * 1.2 + 0.002, a2 = fwidth(e2) * 1.2 + 0.004, wv = 0.004 + 0.016 * gn(vec3(w.xz * 0.35, 3.0));
+  float e1 = lfEdge(q * 0.16), e2 = lfEdge(q * 0.55 + 7.3), a1 = fwidth(e1) * 1.2 + 0.002, a2 = fwidth(e2) * 1.2 + 0.004, wv = 0.003 + 0.007 * gn(vec3(w.xz * 0.35, 3.0));
   float alive = smoothstep(0.22, 0.42, gn(vec3(w.xz * 0.06, 5.0)));   /* (not every crack burns: the network breaks up) */
-  float big = (1.0 - smoothstep(wv, wv + a1, e1)) * alive + (1.0 - smoothstep(0.0, 0.07, e1)) * 0.18 * alive;   /* (a thin hot core, a faint warmth around it) */
+  float big = (1.0 - smoothstep(wv, wv + a1, e1)) * alive + (1.0 - smoothstep(0.0, 0.045, e1)) * 0.14 * alive;   /* (a thin hot core, a faint warmth around it) */
   float small = (1.0 - smoothstep(0.02, 0.02 + a2, e2)) * smoothstep(0.5, 0.72, gn(vec3(w.xz * 0.09, 6.0)));
   return max(big, small * 0.6); }
 `;
