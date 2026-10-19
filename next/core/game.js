@@ -279,14 +279,19 @@ function spawnEarth(g, dt) {
   const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = g.rSpawn() * Math.PI * 2, r = 26 + g.rSpawn() * 12, x = who.x + Math.cos(a) * r, z = who.z + Math.sin(a) * r, grow = Math.max(0, g.night - 1);
   g.hollow.push({ id: g.nextId++, kind, earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
 }
+// the horde is a flood, light is the dam (INNOVATION.md, hordes): the dimmest of 16 directions around the fire, judged by the light 8 to 20 m out
+export function dimmestGap(g) { const f = g.fire; let best = 0, low = Infinity;
+  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; let L = 0; for (const r of [8, 14, 20]) L += lightAt(g, f.x + Math.cos(a) * r, f.z + Math.sin(a) * r, true); if (L < low) { low = L; best = a; } }
+  return best; }
 function spawn(g, dt, ph) {
   if (ph !== 'night' && ph !== 'dusk') return;
   const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + g.players.length * 3), T = g.tactic;
   g.spawnT = (g.spawnT || 0) - dt; if (g.spawnT > 0 || g.hollow.length >= want) return;
   const into = (g.clock - NIGHT_AT) / (DAWN_AT - NIGHT_AT), rush = into > T.rushAt;
-  g.spawnT = rush ? 0.5 : 1.6;
+  g.spawnT = rush ? (g.flood !== false ? 0.35 : 0.5) : 1.6;   // (a flood pours faster than a scatter: tuned by sim/flood.mjs)
   const pool = ['walker', 'walker', 'walker', ...g.fire.woke, ...(night >= 3 ? ['runner'] : []), ...(night >= 2 ? ['watcher'] : [])];
-  const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = T.probe + (g.rSpawn() - 0.5) * (rush ? Math.PI * 2 : T.spread), r = tideRadius(g) + 4;
+  if (rush && g.flood !== false && !((g.gapT = (g.gapT || 0) - dt) > 0)) { g.gapT = 5; const was = g.gap; g.gap = dimmestGap(g); if (was === undefined || Math.abs(Math.atan2(Math.sin(g.gap - was), Math.cos(g.gap - was))) > 0.6) g.log.push([+g.t.toFixed(2), 'flood', +g.gap.toFixed(2)]); }   // (late in the night the horde floods: it finds the weakest part of your light and pours in there)
+  const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = rush && g.flood !== false && g.gap !== undefined ? g.gap + (g.rSpawn() - 0.5) * 0.5 : T.probe + (g.rSpawn() - 0.5) * (rush ? Math.PI * 2 : T.spread), r = tideRadius(g) + 4;
   const x = g.fire.x + Math.cos(a) * r, z = g.fire.z + Math.sin(a) * r, grow = night - 1;
   g.hollow.push({ id: g.nextId++, kind, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
 }
