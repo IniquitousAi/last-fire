@@ -1,21 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=30';
-import { Ambience } from './ambience.js?v=30';
-import { Camp, BOARD } from './camp.js?v=30';
-import { Guide } from './guide.js?v=30';
-import { buildSites } from './earthsite.js?v=30';
-import { Truck } from './truck.js?v=30';
-import { HudLook } from './hudlook.js?v=30';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=30';
-import { sound, GUNS } from '../../src/combat.js?v=30';
-import { FX } from '../../src/fx.js?v=30';
+import * as C from '../core/game.js?v=35';
+import { Ambience } from './ambience.js?v=35';
+import { Camp, BOARD } from './camp.js?v=35';
+import { Guide } from './guide.js?v=35';
+import { buildSites } from './earthsite.js?v=35';
+import { Truck } from './truck.js?v=35';
+import { Wrist } from './wrist.js?v=35';
+import { HudLook } from './hudlook.js?v=35';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=35';
+import { sound, GUNS } from '../../src/combat.js?v=35';
+import { FX } from '../../src/fx.js?v=35';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 30;   // (this copy's version; ./version.json says the newest)
+const BUILD = 35;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -224,7 +225,7 @@ $('room').addEventListener('click', e => { const b = e.target.closest('button');
   if (b.id === 'lockRoom') { net.lock(!net.locked); drawPause(); } });
 
 // ---------------------------------------------------------------- actions
-let msgT = 0, duskSnap = null, god = false; function say(t, s = 3) { $('msg').textContent = t; msgT = s; }
+let msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); }   // (messages come from the wrist screen, never as text on the glass: his rule 85)
 const look = () => new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw, 0, 'YXZ'));
 function switchGun(k) { if (k === gunKey) return; gunKey = k; reloadT = 0; }
 function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; reloadT = G.reload; sound.magOut(); setTimeout(() => sound.magIn(), G.reload * 700); }
@@ -330,7 +331,7 @@ function frame(now) {
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); wrist.update(dt); if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
