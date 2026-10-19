@@ -93,3 +93,11 @@ Extracted: the camp is a living economy of dues, chores and optional jobs; soft 
 - Always-on world: not needed. His words: "my friends always go to sleep before me anyways. So me turning my PC off doesn't matter for them or for me."
 - Correction (his, 2026-10-18 about 23:50): "no, this negates the daemon talk about using my uniqueness of my daemon". Skipping the always-on world was only about hosting. The daemon stays the dark's mind: it learns from recorded nights and certifies tactics whenever his PC is on (12+ hours most days), and the next session gets the result; Dalton's worlds feed it too (piece 4b). The learning never needed a live world.
 - His correction (2026-10-18 about 23:55), to "time spent on plumbing instead of the game, which is the thing you actually want to play": "not necessarily, i want to build simulators to perfect the game". He is the builder of the machine that perfects the game. Consequence: the rules engine (core/) stays ours, deterministic and headless, because simulators run it by the thousands; drawing comes from a proven engine (three.js, Godot later), since simulators never need it.
+
+## The 20 lore questions (one at a time, each from the last answer; started 2026-10-19 about 00:35)
+
+| # | Question | His answer |
+| --- | --- | --- |
+| 1 | When the world went dark, what actually happened? | Nobody knows. The game never says; every survivor has a theory, and all of them could be wrong. |
+
+His point while answering (about the dev paradox): "the more I play a non-polished game, the more I don't like it. But I have to build it non-polished as a dev. So it's a paradox." The way out (Era 1's own answer): robots play the rough dev copy; his copy only moves forward when the checks pass; build thin complete slices (one whole night, polished end to end), never wide rough layers.
