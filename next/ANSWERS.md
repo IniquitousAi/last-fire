@@ -100,5 +100,6 @@ Extracted: the camp is a living economy of dues, chores and optional jobs; soft 
 | --- | --- | --- |
 | 1 | When the world went dark, what actually happened? | Nobody knows. The game never says; every survivor has a theory, and all of them could be wrong. |
 | 2 | Since nobody knows, what should the game make you most want to find out? | What is past the dark: the pull is outward, what is out there and how far it goes. |
+| 3 | Has anyone ever come back from out past the dark? | No one, ever. Everyone who went past the light is gone; that is why nobody knows. |
 
 His point while answering (about the dev paradox): "the more I play a non-polished game, the more I don't like it. But I have to build it non-polished as a dev. So it's a paradox." The way out (Era 1's own answer): robots play the rough dev copy; his copy only moves forward when the checks pass; build thin complete slices (one whole night, polished end to end), never wide rough layers.
