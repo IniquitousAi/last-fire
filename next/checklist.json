@@ -50,9 +50,15 @@
    "task": "Near things photo-real (scans), far things strange: compare camp and sky shots",
    "where": "ANSWERS.md, the look",
    "checks": {
-    "built": null,
+    "built": {
+     "proof": "next/client/camp.js#yard",
+     "at": "2026-10-19"
+    },
     "tested": null,
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/camp-sheet.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
@@ -150,10 +156,22 @@
    "task": "No block shapes left in view anywhere in the camp or on Earth (screenshot sweep)",
    "where": "piece 1: smooth endless land",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
+    "built": {
+     "proof": "next/client/ruins.js#buildRuins",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_models.mjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/ruin-probe.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "n/a: nothing to press",
+     "at": "2026-10-19"
+    },
     "played": null
    },
    "spine": "A"
@@ -185,11 +203,23 @@
    "task": "Every gun, item and character is a real model (pistol, shotgun, LMG, tents still kit)",
    "where": "Quaternius and Kenney, assets/CREDITS.txt",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "next/client/main.js#prepGun",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_models.mjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/guns-sheet.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
+    "played": {
+     "proof": "next/sim/basics.cjs#the mouse wheel cycles guns both ways",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -202,13 +232,19 @@
      "proof": "client/main.js#no step bob",
      "at": "2026-10-19"
     },
-    "tested": null,
+    "tested": {
+     "proof": "next/sim/lane_d_nobob.mjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/basics.cjs#nothing bobs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -221,7 +257,10 @@
      "proof": "src/combat.js#dest",
      "at": "2026-10-19"
     },
-    "tested": null,
+    "tested": {
+     "proof": "next/sim/lane_d_shots3d.cjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -236,11 +275,23 @@
    "task": "Sights dead center on every gun, steady",
    "where": "guns drawn in their own pass",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "next/client/fprig.js#FpRig",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_sights.cjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/ar-ads-sky.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_sights.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -458,11 +509,26 @@
    "task": "Mirrors, lenses and prisms that bend light (piece 5)",
    "where": "piece 5",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "built": {
+     "proof": "next/core/optics.js#beams",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_optics.mjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/optics-mirror.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "next/sim/lane_d_optics_play.cjs",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "next/sim/lane_d_optics_play.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1206,11 +1272,26 @@
    "task": "Wrist screen and tech grow by era",
    "where": "lore 8",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "built": {
+     "proof": "next/client/wrist.js#draw",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "next/sim/lane_d_wrist.cjs",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "next/playtests/lanes/D/wrist-era2.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "n/a: nothing to press",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "next/sim/lane_d_wrist.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
