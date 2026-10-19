@@ -2,17 +2,18 @@
 // sign: a cheerful face and an official line that reads one way by day and another at night. Walk up to one and the wrist says what the
 // ordinary hour here has become. Unlit and a hair under the bloom threshold, like the board: no glow, no halo.
 import * as THREE from 'three';
+import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { EARTH, WALLS } from '../core/game.js?v=170';
 import { SIGNS, signLine, mirrorDay } from '../core/mirror.js?v=170';
 
 export class MirrorSigns {
   constructor(scene, land) {
-    this.signs = []; this.land = land;
+    this.signs = []; this.land = land; const stand = new GLTFLoader().loadAsync('../assets/kit/signpost.glb').catch(() => null);
     [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([dx, dz], i) => {   // (outside each gate: north, east, south, west, beside the road a little)
       const x = EARTH.x + dx * (WALLS.half + 7) + dz * 7, z = EARTH.z + dz * (WALLS.half + 7) - dx * 7, y = land(x, z), c = document.createElement('canvas'); c.width = 512; c.height = 320;
       const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-      const board = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: tex, color: 0xc4c4c4, side: THREE.DoubleSide })), post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.4, 0.12), new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.7 }));
-      board.position.set(x, y + 2.5, z); board.rotation.y = Math.atan2(dx, dz) + Math.PI; post.position.set(x, y + 1.2, z); scene.add(board, post);
+      const board = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: tex, color: 0xc4c4c4, side: THREE.DoubleSide }));
+      board.position.set(x, y + 2.5, z); board.rotation.y = Math.atan2(dx, dz) + Math.PI; scene.add(board); stand.then(r => { if (!r) return; const o = r.scene.clone(), b = new THREE.Box3().setFromObject(o), k = 2.4 / (b.max.y - b.min.y); o.scale.setScalar(k); o.position.set(x - (b.min.x + b.max.x) / 2 * k, y - b.min.y * k, z - (b.min.z + b.max.z) / 2 * k); scene.add(o); });   // (the sign's post is the real Kenney signpost, not a code box)
       this.signs.push({ i, x, z, c, tex, key: '' });
     });
   }
