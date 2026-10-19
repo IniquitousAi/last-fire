@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=49';
-import { Ambience } from './ambience.js?v=49';
-import { Camp, BOARD } from './camp.js?v=49';
-import { Guide } from './guide.js?v=49';
-import { buildSites } from './earthsite.js?v=49';
-import { Truck } from './truck.js?v=49';
-import { Wrist } from './wrist.js?v=49';
-import { think as friendThink } from './friend.js?v=49';
-import { FriendVoice } from './friendvoice.js?v=49';
-import { crewFrom } from '../core/habits.js?v=49';
-import { HudLook } from './hudlook.js?v=49';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=49';
-import { sound, GUNS } from '../../src/combat.js?v=49';
-import { FX } from '../../src/fx.js?v=49';
+import * as C from '../core/game.js?v=50';
+import { Ambience } from './ambience.js?v=50';
+import { Camp, BOARD } from './camp.js?v=50';
+import { Guide } from './guide.js?v=50';
+import { buildSites } from './earthsite.js?v=50';
+import { Truck } from './truck.js?v=50';
+import { Wrist } from './wrist.js?v=50';
+import { think as friendThink } from './friend.js?v=50';
+import { FriendVoice } from './friendvoice.js?v=50';
+import { crewFrom } from '../core/habits.js?v=50';
+import { HudLook } from './hudlook.js?v=50';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=50';
+import { sound, GUNS } from '../../src/combat.js?v=50';
+import { FX } from '../../src/fx.js?v=50';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 49;   // (this copy's version; ./version.json says the newest)
+const BUILD = 50;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -265,6 +265,9 @@ function tryGrow() {   // (growing the fire: your choice, and tonight the dark a
   if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }
 function trip(k) { sound.buy(); if (isHost()) { if (k === 'drop') C.drop(g, me); else C.rise(g, me); } else net.send({ t: 'build', k, x: 0, z: 0 }); }
 const atPad = () => !C.onEarth(me) && Math.hypot(me.x - C.PAD.x, me.z - C.PAD.z) < 4, atSite = () => C.onEarth(me) && Math.hypot(me.x - C.EARTH.x, me.z - C.EARTH.z) < 4;
+const STORE = { x: 15.8, z: -2.5 }, atStore = () => !C.onEarth(me) && Math.hypot(me.x - STORE.x, me.z - STORE.z) < 4;   // (the camp's store, behind the metal walls: the ammo lives there)
+const shortAmmo = () => Object.keys(ammo).some(k => ammo[k].res < GUNS[k].reserve);
+function resupply() { for (const k in ammo) ammo[k].res = GUNS[k].reserve; sound.magIn(); say('Topped up from the camp store. Every gun full.', 3); }
 const atBay = () => !C.onEarth(me) && Math.hypot(me.x - C.BAY.x, me.z - C.BAY.z) < 5;
 function fitPart() { if (isHost()) { const k = C.fit(g, me); if (k) { sound.buy(); say(`The ${k} is on. ${C.truckDone(g) ? 'The truck is whole.' : ''}`, 3); } } else net.send({ t: 'build', k: 'fit', x: 0, z: 0 }); }
 function bayLine() { const k = C.PART_ORDER.find(k => C.canFit(g, k)); if (k) return `F  ·  FIT THE ${k.toUpperCase()} (${g.stash[k]} in the stash)`; if (C.truckDone(g)) return 'The truck is whole. (driving it comes next)';
@@ -273,7 +276,7 @@ const nearCar = () => g.car && (C.seatOf(g, me.id) >= 0 || Math.hypot(me.x - g.c
 function carLine() { const c = g.car, kg = C.storeKg(c); if (C.seatOf(g, me.id) >= 0) return `F  ·  GET OUT   ·   ${Math.round(Math.abs(c.v) * 3.6)} km/h   ·   load ${kg} of ${C.CAR.store} kg`;
   return (me.pack || []).length ? `F  ·  LOAD YOUR PACK INTO THE TRUCK (${kg} of ${C.CAR.store} kg)` : c.seats.length >= C.CAR.seats ? 'The truck is full.' : `F  ·  GET IN${c.seats.length ? '' : ' AND DRIVE (W, S, A, D)'}`; }
 function useCar() { if (isHost()) { const r = C.useCar(g, me); if (r === 'stowed') { sound.drop(); say('Loaded into the truck.', 2); } else if (r === 'full') say('The truck is full.', 2); } else net.send({ t: 'build', k: 'car', x: 0, z: 0 }); }
-function act() { if (me.ember) return; if (nearCar()) return useCar(); if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
+function act() { if (me.ember) return; if (nearCar()) return useCar(); if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); if (atStore() && shortAmmo()) return resupply(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
 $('prompt').addEventListener('click', () => act()); $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
 function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
@@ -319,8 +322,8 @@ function hud() {
   $('hpBar').style.width = Math.max(0, me.hp) + '%';
   const am = ammo[gunKey]; txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
-  txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (the lander waits 150 s down there)'}` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
-  { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
+  txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (the lander waits 150 s down there)'}` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
+  { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : atStore() ? [STORE.x, g.land(STORE.x, STORE.z) + 2.6, STORE.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
     let tx = innerWidth / 2, ty = innerHeight * 0.6;   // (the tag hangs over the thing it belongs to; off screen, it waits low in the middle)
     if (at) { _v.set(...at).project(camera); if (_v.z < 1 && Math.abs(_v.x) < 0.95 && Math.abs(_v.y) < 0.95) { tx = (_v.x * 0.5 + 0.5) * innerWidth; ty = (-_v.y * 0.5 + 0.5) * innerHeight; } }
     const tf = `translate(${tx.toFixed(0)}px, ${ty.toFixed(0)}px) translate(-50%, -100%)`; if ($('prompt').style.transform !== tf) $('prompt').style.transform = tf; }
