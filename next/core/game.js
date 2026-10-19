@@ -177,6 +177,8 @@ export function clampTactic(t) {
 }
 
 // ---------------------------------------------------------------- a game
+export const darkScale = n => n <= 4 ? Math.max(0, n - 1) : 3 + (n - 4) * 0.1;   // (how much stronger the dark is on night n: climbs to night 4, then nearly flat, so a perfect crew holds all 12 nights; swept with sim/why_falls12.mjs, the first cap tried (8) fell on 6 of 32 seeds)
+export const darkCount = n => n <= 6 ? n * 2 : 12 + (n - 6) * 0.5;   // (how many it sends: the same flattening)
 export function newGame(seed, tactic = BASE_TACTIC) {
   const C = 0;   // (the first fire stands at the world's middle; the world runs on forever from it)
   return { seed, land: makeLand(seed), t: 0, clock: 0.3, night: 1, tactic: clampTactic(tactic), rSpawn: stream(seed, 'spawn'), rAim: stream(seed, 'aim'), rMote: stream(seed, 'mote'),
@@ -456,7 +458,7 @@ function spawnEarth(g, dt) {
   const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
   g.spawnE = (g.spawnE || 0) - dt; if (g.spawnE > 0 || g.hollow.filter(k => k.earth).length >= want) return; g.spawnE = EARTH_DARK.every;
   const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'watcher', 'giant'] : into > 30 ? ['walker', 'walker', 'runner', 'watcher'] : ['walker', 'walker', 'runner'];
-  const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = g.rSpawn() * Math.PI * 2, r = 26 + g.rSpawn() * 12, x = who.x + Math.cos(a) * r, z = who.z + Math.sin(a) * r, grow = Math.max(0, g.night - 1);
+  const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = g.rSpawn() * Math.PI * 2, r = 26 + g.rSpawn() * 12, x = who.x + Math.cos(a) * r, z = who.z + Math.sin(a) * r, grow = darkScale(g.night);
   g.hollow.push({ id: g.nextId++, kind, earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
 }
 // the horde is a flood, light is the dam (INNOVATION.md, hordes): the dimmest of 16 directions around the fire, judged by the light 8 to 20 m out
@@ -479,7 +481,7 @@ function director(g, dt) {
 function spawn(g, dt, ph) {
   if (DARK.off) { if (g.hollow.length) g.hollow = []; return; }
   if (ph !== 'night' && ph !== 'dusk') return; director(g, dt); if (g.relaxT > 0) return;   /* (a breath after a peak) */
-  const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + Math.round(3 * Math.pow(g.players.length, 1.5))), T = g.tactic;
+  const night = g.night, want = Math.min(MAX_HOLLOW, 4 + darkCount(night) + Math.round(3 * Math.pow(g.players.length, 1.5))), T = g.tactic;
   g.spawnT = (g.spawnT || 0) - dt; if (g.spawnT > 0 || g.hollow.length >= want) return;
   const into = (g.clock - NIGHT_AT) / (DAWN_AT - NIGHT_AT), rush = into > T.rushAt;
   g.spawnT = rush ? (g.flood !== false ? 0.35 : 0.5) : 1.6;   // (a flood pours faster than a scatter: tuned by sim/flood.mjs)
@@ -488,7 +490,7 @@ function spawn(g, dt, ph) {
   if (rush && g.flood !== false && !((g.gapT = (g.gapT || 0) - dt) > 0)) { g.gapT = 5; const was = g.gapNext !== undefined ? g.gapNext : g.gap, gap = dimmestGap(g); if (was === undefined || Math.abs(Math.atan2(Math.sin(gap - was), Math.cos(gap - was))) > 0.6) { g.gapNext = gap; g.gapAt = g.t + FLOOD_WARN; g.log.push([+g.t.toFixed(2), 'flood-warn', +gap.toFixed(2)]); } }
   if (g.gapNext !== undefined && g.t >= g.gapAt) { g.gap = g.gapNext; g.gapNext = undefined; const now = dimmestGap(g); g.log.push([+g.t.toFixed(2), 'flood', +g.gap.toFixed(2), +Math.abs(Math.atan2(Math.sin(now - g.gap), Math.cos(now - g.gap))).toFixed(2)]);   /* (the last number: how far the dimmest gap has moved since the warning, for sim/breach.mjs) */ evidence(g, 'mind', 1.05); }   /* (the breach shows before it pours, INNOVATION.md 5A: the new gap is marked FLOOD_WARN seconds before the dark is sent through it) */   // (late in the night the horde floods: it finds the weakest part of your light and pours in there)
   const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = rush && g.flood !== false && g.gap !== undefined ? g.gap + (g.rSpawn() - 0.5) * 0.5 : T.probe + (g.rSpawn() - 0.5) * (rush ? Math.PI * 2 : T.spread), r = tideRadius(g) + 4;
-  const x = g.fire.x + Math.cos(a) * r, z = g.fire.z + Math.sin(a) * r, grow = night - 1;
+  const x = g.fire.x + Math.cos(a) * r, z = g.fire.z + Math.sin(a) * r, grow = darkScale(night);
   g.hollow.push({ id: g.nextId++, kind, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
 }
 export function lookedAt(g, k) {   // (someone on its side of the sky faces it, within about 35 degrees, closer than 45 m)

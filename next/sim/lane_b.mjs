@@ -49,7 +49,8 @@ sec('perfect', () => {
   for (let seed = 1; seed <= 32; seed++) { const r = certPlay(C.BASE_TACTIC, PERFECT, seed, 12); falls += r.falls; nights += r.history.length; fallNights += r.history.filter(h => h.falls > 0).length; if (!r.falls) cleanSeeds++; else bad.push(seed); }
   console.log(`32 seeds x 12 nights: ${falls} falls in ${fallNights} of ${nights} nights; fall-free seeds ${cleanSeeds} of 32 (falls on seeds ${bad.join(',') || 'none'})`);
   check('perfect crew: at least 24 of 32 seeds fall-free over 12 nights, and 97% of nights', cleanSeeds >= 24 && fallNights / nights <= 0.03, `${cleanSeeds}/32 seeds, ${(100 - 100 * fallNights / nights).toFixed(1)}% of nights clean`);
-  check('STRICT: zero falls on every seed (known gap if FAIL, not counted in the exit code)', falls === 0, `${falls} falls`, true);
+  check('STRICT: a perfect crew holds 12 of 12 nights on all 32 seeds (zero falls)', falls === 0, `${falls} falls`);
+  { let hf = 0; for (let seed = 101; seed <= 132; seed++) hf += certPlay(C.BASE_TACTIC, PERFECT, seed, 12).falls; check('holdout seeds 101 to 132 (never tuned on): at most 3 falls', hf <= 3, `${hf} falls`); }
 });
 
 // item 17: GROW is a choice and the dark answers it
