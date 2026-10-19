@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none'">
+<title>The Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
+<style>
+  :root { --ink: #eef0f8; --meta: #a3a6bb; --neon: #ff4fd8; --violet: #7b5cff; --pink: #ff6fb1; --red: #ff3b5c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--ink); font: 400 17px/1.35 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 30px 40px; }
+  h1 { margin: 0; font: 400 52px/1 "Barlow Condensed", sans-serif; letter-spacing: .3em; }
+  .tag { color: var(--meta); margin: 8px 0 26px; }
+  .test { position: relative; padding: 18px 22px 16px; margin: 0 0 18px; background: repeating-linear-gradient(0deg, rgba(255,79,216,.03) 0 1px, transparent 1px 4px), rgba(3,6,12,.9); }
+  .test::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#7b5cff,#7b5cff) left top / 22px 1.5px no-repeat, linear-gradient(#7b5cff,#7b5cff) left top / 1.5px 22px no-repeat, linear-gradient(#ff6fb1,#ff6fb1) right bottom / 22px 1.5px no-repeat, linear-gradient(#ff6fb1,#ff6fb1) right bottom / 1.5px 22px no-repeat; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .head b { font: 500 24px "Barlow Condensed", sans-serif; letter-spacing: .12em; }
+  .head small { display: block; color: var(--meta); font-size: 15px; letter-spacing: .02em; }
+  button { font: 500 17px "Barlow Condensed", sans-serif; letter-spacing: .14em; color: #fff; background: #0e0f17; border: 1px solid #000; box-shadow: 0 0 0 1px #2c2f4a inset; padding: 9px 16px 8px; cursor: pointer; white-space: nowrap; }
+  button:hover { box-shadow: 0 0 0 1px var(--neon) inset; } button:disabled { opacity: .5; cursor: default; }
+  .bar { height: 3px; background: #ffffff12; margin: 12px 0 8px; } .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--violet), var(--neon)); }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; } td, th { text-align: left; padding: 5px 8px; border-bottom: 1px solid #ffffff10; } th { color: var(--meta); font-weight: 400; letter-spacing: .1em; font-size: 14px; }
+  td.n { font-variant-numeric: tabular-nums; } .pass { color: var(--neon); } .fail { color: var(--red); } .say { color: var(--meta); margin-top: 8px; font-size: 15px; }
+  a { color: var(--pink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>THE SIMULATOR</h1>
+  <p class="tag">Robots play Last Fire so you don't have to guess. Click a test and watch it run, seed by seed, with the same rules the game uses. <a href="./">Back to the game</a></p>
+  <div id="tests"></div>
+</main>
+<script type="module" src="./simpage.js"></script>
+</body>
+</html>

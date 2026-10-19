@@ -4,7 +4,7 @@
 import { newGame, addPlayer, step, stream, drop, onEarth, PAD, EARTH, PART_ORDER, PARTS } from '../core/game.js';
 import { think, STYLES } from './drop.mjs';
 const need = () => PART_ORDER.reduce((a, k) => a + PARTS[k].n, 0);
-function campaign(site, seed, style = 'careful') {
+export function campaign(site, seed, style = 'careful') {
   const stash = {}; let trips = 0, have = 0;
   while (have < need() && trips < 40) {
     trips++; const g = newGame(seed * 100 + trips), S = STYLES[style], r = stream(seed * 100 + trips, 'tb'); g.clock = 0.3; g.stash = { ...stash };
@@ -14,4 +14,4 @@ function campaign(site, seed, style = 'careful') {
   }
   return trips;
 }
-for (const site of ['depot', 'city', 'reservoir']) { const ts = [1, 2, 3, 4, 5, 6, 7, 8].map(s => campaign(site, s)); ts.sort((a, b) => a - b); console.log(site.padEnd(10), 'trips to a whole truck, 8 careful players:', ts.join(' '), ' median', ts[4]); }
+if (typeof process !== 'undefined' && process.argv && (process.argv[1] || '').endsWith('truckbuild.mjs')) for (const site of ['depot', 'city', 'reservoir']) { const ts = [1, 2, 3, 4, 5, 6, 7, 8].map(s => campaign(site, s)); ts.sort((a, b) => a - b); console.log(site.padEnd(10), 'trips to a whole truck, 8 careful players:', ts.join(' '), ' median', ts[4]); }
