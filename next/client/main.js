@@ -34,7 +34,7 @@ import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
 const BUILD = 163;   // (this copy's version; ./version.json says the newest)
-const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
+const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true, moveEras: false };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -398,7 +398,7 @@ function drawPause() {
 $('sSens').oninput = e => { SET.sens = +e.target.value; $('vSens').textContent = SET.sens.toFixed(2); save(); };
 $('sFov').oninput = e => { SET.fov = +e.target.value; $('vFov').textContent = SET.fov; save(); };
 $('sAds').oninput = e => { SET.adsSens = +e.target.value; $('vAds').textContent = Math.round(SET.adsSens * 100) + '%'; save(); };
-const OPTS = [['aimToggle', 'AIM', 'TOGGLE', 'HOLD'], ['sprintToggle', 'SPRINT', 'TOGGLE', 'HOLD'], ['invertY', 'LOOK', 'INVERTED', 'NORMAL'], ['autoReload', 'AUTO RELOAD', 'ON', 'OFF'], ['cross', 'CROSSHAIR', 'ON', 'OFF']];
+const OPTS = [['aimToggle', 'AIM', 'TOGGLE', 'HOLD'], ['sprintToggle', 'SPRINT', 'TOGGLE', 'HOLD'], ['invertY', 'LOOK', 'INVERTED', 'NORMAL'], ['autoReload', 'AUTO RELOAD', 'ON', 'OFF'], ['cross', 'CROSSHAIR', 'ON', 'OFF'], ['moveEras', 'MOVES', 'UNLOCK BY FIRE LEVEL', 'ALL ON']];
 function drawOpts() { $('opts').innerHTML = OPTS.map(([k, n, on, off]) => `<button class="key" data-o="${k}">${n} <b>${SET[k] ? on : off}</b></button>`).join('') + '<button class="key" data-o="reset">RESET <b>ALL</b></button>'; $('cross').style.display = SET.cross ? '' : 'none';
   $('sFov').value = SET.fov; $('vFov').textContent = SET.fov; $('sAds').value = SET.adsSens; $('vAds').textContent = Math.round(SET.adsSens * 100) + '%'; }
 $('opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.o === 'reset') { Object.assign(SET, DEFAULTS); sound.setVolume(SET.vol); $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); } else SET[b.dataset.o] = !SET[b.dataset.o]; aimOn = sprintOn = false; save(); drawOpts(); });
@@ -414,6 +414,7 @@ function padStep(dt) { const gp = [...(navigator.getGamepads ? navigator.getGame
   const ax = i => { const v = gp.axes[i] || 0, a = Math.abs(v); return a < PAD.dead ? 0 : Math.sign(v) * ((a - PAD.dead) / (1 - PAD.dead)); }, bt = i => !!(gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5));
   const now = gp.buttons.map((_, i) => bt(i)), edge = i => now[i] && !padPrev[i], up = i => !now[i] && padPrev[i];
   if (!padOn && (now.some(Boolean) || Math.abs(ax(0)) + Math.abs(ax(1)) + Math.abs(ax(2)) + Math.abs(ax(3)) > 0)) { padOn = true; if (document.pointerLockElement) document.exitPointerLock(); }
+  if (edge(8) && mode === 'play') { if (panel === 'tab') closeTab(); else if (!panel) toggleTab(); }   /* (Back or View on the pad is Tab: feedback with a picture; TALK takes your voice, SEND TO CLAUDE sends) */
   if (edge(9) && mode === 'play') { if (panel === 'pause') $('resume').click(); else if (!panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } }
   if (mode === 'play' && !panel && me) { padMove.f = -ax(1); padMove.s = ax(0);
     let lx = ax(2), ly = ax(3); const m = Math.hypot(lx, ly); if (m > 0) { const c = Math.pow(Math.min(1, m), PAD.curve) / m; lx *= c; ly *= c; }   /* (a curved stick: fine aim near the middle, fast turns at the edge) */
@@ -443,7 +444,7 @@ $('room').addEventListener('click', e => { const b = e.target.closest('button');
   if (b.id === 'lockRoom') { net.lock(!net.locked); drawPause(); } });
 
 // ---------------------------------------------------------------- actions
-let lastFall = '', msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); }   // (messages come from the wrist screen, never as text on the glass: his UI rule)
+let lastFall = '', msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); (window.__said = window.__said || []).push(String(t)); if (window.__said.length > 60) window.__said.shift(); }   // (messages come from the wrist screen, never as text on the glass: his UI rule)
 const look = () => new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw, 0, 'YXZ'));
 function switchGun(k) { if (k === gunKey || !held[k]) return; gunKey = k; reloadT = 0; aimOn = false; railC = 0; hands.attach(k === 'rail' ? null : held[k], k); }
 // practice (INNOVATION.md idea 8): each gun's reload gets faster the more you do it, on a curve that flattens (the power law of practice);
@@ -551,16 +552,17 @@ let exo = { left: 0, pt: 0, used: false, n: 0, reset: 0, cd: 0, burst: 0, slam: 
 const torch = new THREE.SpotLight(0xe8ebff, 0, 22, 0.3, 0.45, 1.6); torch.position.set(0.15, -0.1, 0); torch.target.position.set(0, -0.05, -1); camera.add(torch, torch.target); if (!camera.parent) scene.add(camera); let torchSaid = false;
 addEventListener('keydown', e => { if (e.code !== 'KeyV' || e.repeat || mode !== 'play' || !me || panel) return; me.torch = !me.torch; torch.intensity = me.torch ? 40 : 0; sound.click && sound.click();
   if (me.torch && !torchSaid) { torchSaid = true; say('Flashlight on. What it touches, you can shoot. They can see it too.', 4); } });
+const mvSay = {}; const mvOk = k => { if (!SET.moveEras || C.moveOn(g, k)) return true; const t = performance.now(); if (t - (mvSay[k] || -1e9) > 2500) { mvSay[k] = t; say(`${C.MOVE_NAMES[k] || k} unlocks when the fire reaches level ${C.MOVES[k]}.`, 3); } return false; };   /* (movement that grows: with MOVES set to UNLOCK BY FIRE LEVEL, the slide comes at fire 1, the dodge at 2, the boost jump at 3, the slam at 4; dev keeps all on) */
 let tac = 0, tacLeft = 1, lastShift = -9, crouch = false, slideT = 0, slideDir = [0, 0], readyT = 0, eyeH = 1.62, jumps = 0, groundT = 0, mvSprint = false;
 addEventListener('keydown', e => { if (e.repeat || mode !== 'play' || !me || panel || me.ember) return;
-  if (e.code === 'Space' && !onGround && coyote <= 0 && !exo.used && !exo.slam) { exo.used = true; exo.left = EXO.pushes; exo.pt = 0; kick = Math.min(1, kick + 0.25); }   /* (the boost jump) */
+  if (e.code === 'Space' && !onGround && coyote <= 0 && !exo.used && !exo.slam && mvOk('boost')) { exo.used = true; exo.left = EXO.pushes; exo.pt = 0; kick = Math.min(1, kick + 0.25); }   /* (the boost jump) */
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { const sd = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), fd = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
-    if ((sd || fd < 0 || (!onGround && fd)) && ads < 0.5 && exo.cd <= 0 && exo.n < EXO.dodges) { const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * fd + cosY * sd, wz = -cosY * fd - sinY * sd; const L = Math.hypot(wx, wz) || 1;
+    if ((sd || fd < 0 || (!onGround && fd)) && ads < 0.5 && exo.cd <= 0 && exo.n < EXO.dodges && mvOk('dodge')) { const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * fd + cosY * sd, wz = -cosY * fd - sinY * sd; const L = Math.hypot(wx, wz) || 1;
       let mx = vel.x + wx / L * EXO.steer, mz = vel.y + wz / L * EXO.steer; const M = Math.hypot(mx, mz) || 1; vel.x = mx / M * EXO.dodge; vel.y = mz / M * EXO.dodge; vy = (Math.max(0, vy) + EXO.hop) * 0.7; onGround = false;
       exo.n++; exo.reset = EXO.window; exo.cd = EXO.gap; exo.burst = 0.35; kick = Math.min(1, kick + 0.2); return; }   /* (the boost dodge: a hard shove sideways or back, a small hop) */
     const t = performance.now() / 1000; if (t - lastShift < 0.3 && tacLeft > 0 && keys.KeyW && onGround) { tac = MW.tacTime; tacLeft--; crouch = false; } lastShift = t; }
-  if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !onGround) { if (me.y - g.land(me.x, me.z) >= EXO.slamH && !exo.slam) { exo.slam = true; exo.st = 0; } return; }   /* (the boost slam, from 3 m up) */
-  if (e.code === 'KeyC' || e.code === 'ControlLeft') { if (mvSprint && onGround) { const L = Math.hypot(vel.x, vel.y) || 1; slideT = MW.slideT; slideDir = [vel.x / L, vel.y / L]; crouch = true; tac = 0; } else crouch = !crouch; } });   /* (aim and sprint as toggles, when he picks that in the pause menu) */
+  if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !onGround) { if (me.y - g.land(me.x, me.z) >= EXO.slamH && !exo.slam && mvOk('slam')) { exo.slam = true; exo.st = 0; } return; }   /* (the boost slam, from 3 m up) */
+  if (e.code === 'KeyC' || e.code === 'ControlLeft') { if (mvSprint && onGround && mvOk('slide')) { const L = Math.hypot(vel.x, vel.y) || 1; slideT = MW.slideT; slideDir = [vel.x / L, vel.y / L]; crouch = true; tac = 0; } else crouch = !crouch; } });   /* (aim and sprint as toggles, when he picks that in the pause menu) */
 const vel = new THREE.Vector2(); let vy = 0, onGround = true, coyote = 0, jumpBuf = 0;   /* (GAMEDEV-TRICKS.md 22: a jump still works 0.15 s after a ledge, and a press 0.15 s before landing counts) */
 function move(dt) {
   if (me.ember) { tacLeft = 1; crouch = false; slideT = 0; return; } if (ship && ship.on) { vel.x = vel.y = 0; vy = 0; onGround = true; return; }   /* (flying: the ship moves you) */
@@ -695,6 +697,7 @@ const DEV = [
   ['RESTART THE NIGHT', 'back to this dusk, as it was', () => { if (!duskSnap) return 'No dusk yet tonight. SKIP TO DUSK first.'; reloadWorld(JSON.parse(duskSnap)); return 'Back to dusk.'; }],
   ['SKIP TO DUSK', 'the dark starts rolling in', () => { g.clock = C.DUSK_AT - 0.002; return 'Dusk in a moment.'; }],
   ['SKIP TO DAWN', 'end the night now', () => { g.clock = 0.969; return 'Dawn in a moment.'; }],
+  ['EVERY ITEM', 'every gun full, every truck part in the stash, +500 light, every move open', () => { for (const k of C.PART_ORDER) { g.stash[k] = Math.max(g.stash[k] || 0, C.PARTS[k].n); (g.learned = g.learned || {})[k] = 1; } for (const k in ammo) { ammo[k].res = GUNS[k].reserve; ammo[k].mag = GUNS[k].mag; } me.carried += 500; SET.moveEras = false; save(); return 'Everything is yours: guns full, parts in the stash, 500 light, every move open.'; }],
   ['+100 LIGHT', 'in your hands, to build or bank', () => { me.carried += 100; return '+100 light carried.'; }],
   ['WAKE A GIANT', 'one walks out of the dark, 25 m away', () => { if (C.phase(g.clock) === 'day' || C.phase(g.clock) === 'dawn') g.clock = C.NIGHT_AT + 0.01; const K = C.KINDS.giant, x = me.x + Math.sin(me.yaw) * -25, z = me.z + Math.cos(me.yaw) * -25; g.hollow.push({ id: g.nextId++, kind: 'giant', x, z, y: g.land(x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0, dead: false, speed: K.speed }); return 'A giant is coming. Back away and keep shooting.'; }],
   ['GOD MODE', 'nothing hurts you (again to turn off)', () => { god = !god; return god ? 'God mode ON.' : 'God mode OFF.'; }],
@@ -712,8 +715,8 @@ $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidde
   catch (e) { $('listBody').textContent = 'The checklist could not load.'; } };
 $('listBack').onclick = () => { $('list').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 function reloadWorld(d) {   // (the world as it was at dusk; everyone here now stays, back at the fire)
-  const keepers = g.players.map(p => ({ id: p.id, name: p.name, gun: p.gun })), w = C.loadWorld(d); if (!w) return;
-  g = w; g.ready = true; for (const k of keepers) { const p = C.addPlayer(g, k.id, k.name); p.gun = k.gun; if (k.id === myId) me = p; }
+  const keepers = g.players.map(p => ({ id: p.id, name: p.name, gun: p.gun, bot: p.bot, style: p.style, homeX: p.homeX, homeZ: p.homeZ })), w = C.loadWorld(d); if (!w) return;
+  g = w; g.ready = true; for (const k of keepers) { const p = C.addPlayer(g, k.id, k.name); p.gun = k.gun; if (k.bot) { p.bot = true; p.style = k.style; p.homeX = k.homeX; p.homeZ = k.homeZ; p.r = C.stream(g.seed, 'friend-' + k.id); } if (k.id === myId) me = p; }   /* (a learned friend stays through a restart) */
   for (const [, v] of seen) scene.remove(v.o); seen.clear(); for (const [, o] of nodeObjs) scene.remove(o); nodeObjs.clear(); marksDrawn = -1;
   for (const p of g.players) p.tp = (p.tp || 0) + 1;   // (friends snap back to the fire too)
 }

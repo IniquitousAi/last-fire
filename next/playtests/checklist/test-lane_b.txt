@@ -1,0 +1,51 @@
+
+== saves
+PASS  save is plain text that loads  (762 bytes)
+PASS  seed, night, clock kept  (seed 777 night 4 clock 0.4)
+PASS  builds kept (2 nodes, same spots)  (relay@14,lamp@22)
+PASS  marks kept (2)  (2 marks)
+PASS  light left lying out there kept (2 motes)  (2 motes)
+PASS  fire level, light, stash kept  (level 2 light 500)
+PASS  what a player carried is kept by name  (Dan carried 17)
+PASS  a broken save is refused, never crashes  (null)
+PASS  hostile save fields dropped  (cleaned)
+
+== lostnight
+PASS  one down, night goes on  (clock 0.7)
+PASS  everyone down: night ends (clock jumps to dawn), counted as lost  (clock 0.97 lost 1)
+PASS  their light spilled as motes on the ground  (13 motes (8+5 expected))
+PASS  and carried light is zero  (both 0)
+PASS  nothing resets: fire level, banked light, stash, builds, night number  (level 3 light 400 night 1)
+PASS  both are back up (revived at the fire), dark cleared  (revived)
+PASS  the world keeps running after the lost night  (night 2)
+
+== perfect
+32 seeds x 12 nights: 5 falls in 3 of 382 nights; fall-free seeds 29 of 32 (falls on seeds 25,26,29)
+PASS  perfect crew: at least 28 of 32 seeds fall-free over 12 nights, and 99% of nights  (29/32 seeds, 99.2% of nights clean)
+GAP   STRICT: zero falls on every seed (known gap if FAIL, not counted in the exit code)  (5 falls)
+
+== grow
+PASS  no light banked: cannot grow  (light 0)
+PASS  too far from the fire: cannot grow  (far)
+PASS  standing at it with the light: grows, spends the light  (light 70 -> 10)
+PASS  the circle gets bigger  (9 m -> 11.5 m)
+PASS  the dark answers: level 0 wakes nothing extra, level 1 a runner, level 3 a giant  (0:[] 1:[runner] 3:[giant])
+PASS  the top level cannot be grown past  (level 5 stays)
+
+== friend
+11: roam 6.3/18.8 -> 6.5/20.3  aim 0.72/0.51 -> 0.76/0.43
+22: roam 6.5/20.8 -> 8.1/25.7  aim 0.72/0.51 -> 0.72/0.38
+33: roam 6.5/21.4 -> 8.2/23.9  aim 0.67/0.46 -> 0.62/0.38
+PASS  the friend keeps the two players apart (bold roams wider, careful aims better) in every seed  (ordering kept)
+PASS  roam within 35% of the recorded player, aim within 0.15  (worst roam off 26%, worst aim off 0.12)
+
+== moves
+PASS  jump, sprint and crouch are there from the start (level 0)  (jump,sprint,crouch)
+PASS  each fire level only adds moves, never takes one away  (0:3 1:4 2:5 3:6 4:7)
+PASS  by level 4 all seven moves are open, and the next-to-unlock names the right one on the way  (next at 0: slide, at 2: boost)
+PASS  growing the fire is what unlocks them (five GROWs: 3 to 7 moves)  (4,5,6,7,7)
+
+== core
+PASS  4 files in core/ import only each other and touch no browser, three.js, clock or Math.random  (camp.js game.js habits.js ship.js)
+
+all passed

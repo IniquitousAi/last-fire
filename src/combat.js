@@ -2,6 +2,8 @@
 // And the sound: every shot is three layers (the crack, the body, the thump) with a valley echo; the other player's shots come from where
 // they stand (left, right, near, far), so you hear Dalton's gun and he hears yours.
 import * as THREE from 'three';
+import { pickFresh } from '../next/client/fresh.js';   // (no clip twice in a row: footsteps, hits and kills each pick a variant that is not one of the last two)
+const heard = {};
 
 // ap = armor piercing, 0 to 1 (how much of a blow gets through a plate, and how fast it wears the plate); rpm = rounds a minute; head = the headshot multiplier; spread in radians (aiming cuts it to a third); recoil kicks the view up
 // snd: [crack pitch, body length in seconds, loudness, low thump Hz]
@@ -89,7 +91,7 @@ export const sound = {
     tone(d, thump * 1.6 * j, thump * 0.4, 0.16 + len * 0.3, vol * 0.8);
     if (!pos) play(buf.rattle, d, { rate: 2.2, gain: 0.08, type: 'bandpass', freq: 3200, q: 3, at: 0.05 });   // (the action cycling, close to your ear)
   },
-  hit(head) { const d = dest(null); tone(d, head ? 2400 : 1700, head ? 2200 : 1500, 0.05, 0.09, 'square'); },
+  hit(head) { const d = dest(null), v = pickFresh([0.94, 1, 1.07, 1.13], heard, head ? 'hitH' : 'hit'); tone(d, (head ? 2400 : 1700) * v, (head ? 2200 : 1500) * v, 0.05, 0.09, 'square'); },
   plate() { const d = dest(null); tone(d, 3100, 2600, 0.07, 0.06, 'triangle'); tone(d, 4700, 4300, 0.05, 0.03, 'sine'); },   // (a round off armor: a hard ping, not the soft hit tick)
   shatter() { const d = dest(null); play(buf.rattle, d, { rate: 0.9, gain: 0.5, type: 'highpass', freq: 2500 }); tone(d, 1900, 700, 0.18, 0.07, 'triangle'); },
   swing() { const d = dest(null); play(buf.body, d, { rate: 2.2, gain: 0.35, type: 'bandpass', freq: 1400, q: 1.5 }); },   // (the knife cutting air)
@@ -98,11 +100,11 @@ export const sound = {
   whir(level) {   // (the minigun's barrels: a rising hum while they spin, silent when they stop)
     if (!ac && level <= 0) return; const a = ctx(); if (!whirO) { whirO = a.createOscillator(); whirO.type = 'sawtooth'; whirG = a.createGain(); whirG.gain.value = 0; const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; whirO.connect(f).connect(whirG).connect(out); whirO.start(); }
     whirO.frequency.setTargetAtTime(40 + level * 160, a.currentTime, 0.05); whirG.gain.setTargetAtTime(level > 0.01 ? 0.05 + level * 0.06 : 0, a.currentTime, 0.06); },
-  kill() { const d = dest(null); tone(d, 900, 300, 0.12, 0.08, 'triangle'); },
+  kill() { const d = dest(null), v = pickFresh([0.9, 1, 1.12], heard, 'kill'); tone(d, 900 * v, 300 * v, 0.12, 0.08, 'triangle'); },
   click() { const d = dest(null); play(buf.rattle, d, { rate: 3, gain: 0.25, type: 'bandpass', freq: 2600, q: 4 }); },
   magOut() { const d = dest(null); play(buf.rattle, d, { rate: 1.4, gain: 0.35, type: 'bandpass', freq: 1500, q: 2 }); },
   magIn() { const d = dest(null); play(buf.rattle, d, { rate: 1.8, gain: 0.45, type: 'bandpass', freq: 1900, q: 2 }); tone(d, 500, 380, 0.05, 0.05, 'square', 0.05); },
-  step(run, surf = 0, load = 0) { const d = dest(null), S = [[0.62, 520], [1.05, 2200], [0.86, 1300]][surf] || [0.7, 700], r = S[0] * (0.9 + Math.random() * 0.2) * (1 - load * 0.12);   // (surf: 0 Moon dust, soft and low; 1 the camp's metal plates, bright; 2 Earth's concrete, hard. load: carrying light, heavier)
+  step(run, surf = 0, load = 0) { const d = dest(null), S = [[0.62, 520], [1.05, 2200], [0.86, 1300]][surf] || [0.7, 700], r = S[0] * pickFresh([0.9, 0.97, 1.03, 1.1], heard, 'step' + surf) * (0.98 + Math.random() * 0.04) * (1 - load * 0.12);   // (surf: 0 Moon dust, soft and low; 1 the camp's metal plates, bright; 2 Earth's concrete, hard. load: carrying light, heavier)
     play(buf.step, d, { rate: r, gain: (run ? 0.22 : 0.13) * (1 + load * 0.3), type: 'lowpass', freq: S[1] }); if (surf === 1) tone(d, 900 + Math.random() * 300, 700, 0.05, 0.025); },
   breath(g, inhale) { const d = dest(null); play(buf.breath, d, { rate: inhale ? 1.15 : 0.85, gain: g, type: 'bandpass', freq: inhale ? 1400 : 900, q: 0.7 }); },   // (your own breath: air through a filter, in higher than out)
   heart(g) { const d = dest(null); tone(d, 62, 40, 0.11, g); tone(d, 55, 36, 0.1, g * 0.7, 'sine', 0.19); },   // (lub-dub: two low thumps)

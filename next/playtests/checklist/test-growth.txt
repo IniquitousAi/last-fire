@@ -1,0 +1,9 @@
+robots bank per night: casual crew 180, grinder crew 183 (a night is 5 minutes; income measured, not guessed)
+curve now (FIRE_TAIL {"ratio":1.3,"decay":0.95}): level costs 0, 60, 180, 400, 750, 1200, 1560, 2005, 2548, 3203, 3986, 4911 ...
+days to level 5: casual 15, grinder 4; level at day 100: casual 10, grinder 16; at day 365: casual 16, grinder 24
+PASS  each step costs a smaller multiple of the last (the curve flattens) and never stops growing  (1.30 1.29 1.27 1.26 1.24 1.23)
+PASS  casual crew (1 night a day) reaches level 5 in 8 to 40 days  (15 days)
+PASS  grinder crew (4 nights a day) reaches level 5 in 2 to 14 days  (4 days)
+PASS  at day 100 the grinder is ahead but at most twice the casual level (both fine)  (casual 10, grinder 16)
+PASS  the casual keeps growing past day 100 (there is no wall)  (day 365: casual 16, grinder 24)
+PASS  the table part is untouched: levels 0 to 5 cost what the game says  (0,60,180,400,750,1200)
