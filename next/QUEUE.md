@@ -5,6 +5,16 @@ the bottleneck: what he will see first and most. Every finished task adds one ne
 03:18). Temp rule (his words, about 03:13): "never ask, just build nonstop with logic and truth as ur fuel"; a download still needs his yes.
 Item numbers are kept forever (other files cite them); done items move to the Done list with their version.
 
+## SAVED FOR LATER, IMPOSSIBLE TO FORGET (his words, 2026-10-19: "plug these in somewhere where we won't forget... dummy proof")
+Checked bookmarks (2026-10-19), each with the moment it gets used. Before any work on particles, enemy AI or models, read this block.
+- **three.quarks** (github.com/Alchemist0823/three.quarks, MIT, 1,070 stars, updated 2026-05): particles and VFX for three.js. Use it
+  the next time Last Fire needs fire, sparks, smoke, muzzle flash or the dark's motes, instead of hand-built particles.
+- **yuka** (github.com/Mugen87/yuka, MIT, 1,403 stars, updated 2026-10): game AI for JavaScript (steering, pathfinding, goals, fuzzy
+  logic). Use it the next time the Hollow or camp people need smarter movement, before writing steering by hand (taste 96: people must
+  read as people).
+- **TripoSR** (github.com/VAST-AI-Research/TripoSR, MIT, 7,120 stars): one picture to a 3D model. Use it the next time a prop or
+  creature model is needed and no free model fits; its raw output is a starting point, never the final (taste 12).
+
 ## JOB ONE (his words, 2026-10-19 about 09:00): an AI plays the whole game, tutorial to end game
 "If you can progress through the game as an AI, then we're building a decent game. So I just need you to progress to the end game.
 But keep in mind, I really want visuals to be AAA... AAA visuals, but DevOps performance." Also: "not enough immersion... not enough
