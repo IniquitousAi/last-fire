@@ -3,11 +3,11 @@
 import * as THREE from 'three';
 
 export const CHUNK = 16, HEIGHT = 48, SIZE = 160;   // (the world is SIZE x SIZE blocks, HEIGHT tall)
-export const B = { AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, LOG: 4, LEAVES: 5, PLANKS: 6, SAND: 7, WATER: 8, COBBLE: 9 };
-export const NAMES = { 1: 'Grass', 2: 'Dirt', 3: 'Stone', 4: 'Log', 5: 'Leaves', 6: 'Planks', 7: 'Sand', 9: 'Cobblestone' };
-const COLOR = { 1: [0.29, 0.55, 0.24], 2: [0.42, 0.31, 0.22], 3: [0.47, 0.48, 0.52], 4: [0.36, 0.25, 0.16], 5: [0.18, 0.42, 0.2], 6: [0.66, 0.5, 0.32], 7: [0.82, 0.76, 0.55], 8: [0.18, 0.36, 0.6], 9: [0.4, 0.41, 0.44] };
-export const HARD = { 1: 0.5, 2: 0.5, 3: 1.6, 4: 1.0, 5: 0.2, 6: 0.8, 7: 0.4, 9: 1.8 };   // (seconds to break by hand)
-export const DROP = { 1: B.DIRT, 2: B.DIRT, 3: B.COBBLE, 4: B.PLANKS, 5: 0, 6: B.PLANKS, 7: B.SAND, 9: B.COBBLE };
+export const B = { AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, LOG: 4, LEAVES: 5, PLANKS: 6, SAND: 7, WATER: 8, COBBLE: 9, CONCRETE: 10, ASPHALT: 11, STEEL: 12 };
+export const NAMES = { 1: 'Dead grass', 2: 'Gravel', 3: 'Rock', 4: 'Burnt log', 5: 'Pine needles', 6: 'Planks', 7: 'Ash', 9: 'Rubble', 10: 'Concrete', 11: 'Asphalt', 12: 'Steel' };
+const COLOR = { 1: [0.33, 0.37, 0.39], 2: [0.24, 0.25, 0.28], 3: [0.40, 0.42, 0.47], 4: [0.10, 0.10, 0.12], 5: [0.07, 0.11, 0.13], 6: [0.40, 0.38, 0.42], 7: [0.62, 0.65, 0.70], 8: [0.03, 0.05, 0.09], 9: [0.46, 0.47, 0.51], 10: [0.55, 0.56, 0.59], 11: [0.10, 0.10, 0.12], 12: [0.26, 0.29, 0.36] };   // (a cold, burnt-out country at night: no toy greens, no browns)
+export const HARD = { 1: 0.5, 2: 0.5, 3: 1.6, 4: 1.0, 5: 0.2, 6: 0.8, 7: 0.4, 9: 1.8, 10: 2.6, 11: 1.4, 12: Infinity };   // (steel never breaks)   // (seconds to break by hand)
+export const DROP = { 1: B.DIRT, 2: B.DIRT, 3: B.COBBLE, 4: B.PLANKS, 5: 0, 6: B.PLANKS, 7: B.SAND, 9: B.COBBLE, 10: B.COBBLE, 11: B.COBBLE, 12: 0 };
 
 // seeded value noise, so every player builds the same world from the host's seed
 function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -47,17 +47,51 @@ export class World {
       for (let y = 0; y < Math.min(h, HEIGHT); y++) this.data[this.idx(x, y, z)] = y < h - 4 ? B.STONE : y < h - 1 ? B.DIRT : (h <= SEA + 1 ? B.SAND : B.GRASS);
       for (let y = h; y <= SEA; y++) this.data[this.idx(x, y, z)] = B.WATER;
     }
-    for (let i = 0; i < 260; i++) {   // trees
+    for (let i = 0; i < 170; i++) {   // dead pines: tall burnt trunks, a few dark needle clusters near the top
       const x = 4 + Math.floor(r() * (SIZE - 8)), z = 4 + Math.floor(r() * (SIZE - 8)), y = this.height(x, z);
-      if (this.get(x, y - 1, z) !== B.GRASS) continue;
-      const t = 4 + Math.floor(r() * 3);
+      if (this.get(x, y - 1, z) !== B.GRASS || Math.hypot(x - 80, z - 80) < 16) continue;
+      const t = 6 + Math.floor(r() * 4);
       for (let k = 0; k < t; k++) this.data[this.idx(x, y + k, z)] = B.LOG;
-      for (let dy = t - 2; dy <= t + 1; dy++) for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
-        if (Math.abs(dx) + Math.abs(dz) + Math.max(0, dy - t) > 3 || (dx === 0 && dz === 0 && dy < t)) continue;
+      for (let dy = t - 3; dy <= t; dy++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        if ((dx || dz) && r() < 0.45) continue;
         const X = x + dx, Y = y + dy, Z = z + dz; if (this.get(X, Y, Z) === B.AIR && Y < HEIGHT) this.data[this.idx(X, Y, Z)] = B.LEAVES;
       }
     }
+    this.ruins(r);
     for (let cz = 0; cz < SIZE / CHUNK; cz++) for (let cx = 0; cx < SIZE / CHUNK; cx++) this.dirty.add(cx + ',' + cz);
+  }
+  put(x, y, z, b) { if (x >= 0 && z >= 0 && x < SIZE && z < SIZE && y > 0 && y < HEIGHT) this.data[this.idx(x, y, z)] = b; }
+  clearUp(x, y, z) { for (let k = y; k < HEIGHT; k++) this.put(x, k, z, B.AIR); }
+  // what is left of people: two roads through the valley, a walled outpost where they meet (the base), house shells, a radio mast
+  ruins(r) {
+    const C = 80, base = Math.max(14, this.height(C, C));
+    for (let z = C - 12; z <= C + 12; z++) for (let x = C - 12; x <= C + 12; x++) {   // the outpost: a flat concrete yard, walls with four gates and broken gaps
+      const d = Math.max(Math.abs(x - C), Math.abs(z - C)); if (d > 12) continue;
+      for (let y = 1; y < base; y++) if (this.get(x, y, z) === B.AIR || this.get(x, y, z) === B.WATER) this.put(x, y, z, B.STONE);
+      this.clearUp(x, base, z); this.put(x, base - 1, z, d <= 11 ? B.CONCRETE : B.STONE);
+      if (d === 11) { const gate = Math.min(Math.abs(x - C), Math.abs(z - C)) <= 1, broke = r() < 0.18;
+        if (!gate) for (let k = 0; k < (broke ? 1 : 3); k++) this.put(x, base + k, z, B.CONCRETE); }
+    }
+    for (const axis of [0, 1]) for (let a = 2; a < SIZE - 2; a++) for (let w = -1; w <= 1; w++) {   // the roads, laid on the land
+      const x = axis ? a : C + w, z = axis ? C + w : a; if (Math.max(Math.abs(x - C), Math.abs(z - C)) <= 12) continue;
+      const h = this.height(x, z); if (this.get(x, h - 1, z) === B.WATER || h - 1 <= 12) continue;
+      this.clearUp(x, h, z); if (r() > 0.06) this.put(x, h - 1, z, B.ASPHALT);
+    }
+    for (let i = 0, made = 0; i < 60 && made < 8; i++) {   // house shells: 7 by 9 rooms, a window each side, part of the roof fallen in
+      const x0 = 12 + Math.floor(r() * (SIZE - 32)), z0 = 12 + Math.floor(r() * (SIZE - 32)); if (Math.hypot(x0 - C, z0 - C) < 24) continue;
+      const hs = []; for (let x = x0; x < x0 + 7; x++) for (let z = z0; z < z0 + 9; z++) hs.push(this.height(x, z));
+      const lo = Math.min(...hs), hi = Math.max(...hs); if (hi - lo > 2 || lo <= 13) continue; made++;
+      for (let x = x0; x < x0 + 7; x++) for (let z = z0; z < z0 + 9; z++) {
+        for (let y = lo - 1; y < hi + 1; y++) this.put(x, y, z, B.CONCRETE); this.clearUp(x, hi + 1, z);
+        const edge = x === x0 || x === x0 + 6 || z === z0 || z === z0 + 8, door = z === z0 && x === x0 + 3, win = (x === x0 || x === x0 + 6) && z === z0 + 4;
+        if (edge) for (let k = 1; k <= 4; k++) if (!(door && k <= 2) && !(win && k === 2) && !(k === 4 && r() < 0.35)) this.put(x, hi + k, z, B.CONCRETE);
+        if (!edge && r() < 0.45) this.put(x, hi + 4, z, B.PLANKS);
+      }
+    }
+    const mx = C + 22, mz = C - 18, mh = this.height(mx, mz);   // the radio mast: steel, the one tall thing (its red light is drawn by the game)
+    for (let k = 0; k < 26; k++) this.put(mx, mh + k, mz, B.STEEL);
+    for (let k = 0; k < 24; k += 4) for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) this.put(mx + dx, mh + k, mz + dz, B.STEEL);
+    this.mast = [mx + 0.5, mh + 26.5, mz + 0.5];
   }
   solid(x, y, z) { const b = this.get(Math.floor(x), Math.floor(y), Math.floor(z)); return b !== B.AIR && b !== B.WATER; }
 
