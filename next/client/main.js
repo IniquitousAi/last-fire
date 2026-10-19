@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=113';
-import { Ambience } from './ambience.js?v=113';
-import { Camp, BOARD } from './camp.js?v=113';
-import { Guide } from './guide.js?v=113';
-import { buildSites } from './earthsite.js?v=113';
-import { Truck } from './truck.js?v=113';
-import { ShipView } from './shipview.js?v=113';
-import { Wrist } from './wrist.js?v=113';
-import { FireCore } from './firecore.js?v=113';
+import * as C from '../core/game.js?v=114';
+import { Ambience } from './ambience.js?v=114';
+import { Camp, BOARD } from './camp.js?v=114';
+import { Guide } from './guide.js?v=114';
+import { buildSites } from './earthsite.js?v=114';
+import { Truck } from './truck.js?v=114';
+import { ShipView } from './shipview.js?v=114';
+import { Wrist } from './wrist.js?v=114';
+import { FireCore } from './firecore.js?v=114';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=113';
-import { FriendVoice } from './friendvoice.js?v=113';
-import { crewFrom } from '../core/habits.js?v=113';
-import { HudLook } from './hudlook.js?v=113';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=113';
-import { sound, GUNS } from '../../src/combat.js?v=113';
-import { FX } from '../../src/fx.js?v=113';
+import { think as friendThink } from './friend.js?v=114';
+import { FriendVoice } from './friendvoice.js?v=114';
+import { crewFrom } from '../core/habits.js?v=114';
+import { HudLook } from './hudlook.js?v=114';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=114';
+import { sound, GUNS } from '../../src/combat.js?v=114';
+import { FX } from '../../src/fx.js?v=114';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 113;   // (this copy's version; ./version.json says the newest)
+const BUILD = 114;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -64,8 +64,18 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
       vec3 d = normalize(vD); float up = clamp(d.y, -0.2, 1.0);
       vec3 col = mix(vec3(0.006, 0.008, 0.02), vec3(0.0, 0.0, 0.004), up);
       float neb = fbm(d * 2.6 + vec3(0.0, uT * 0.004, 0.0)), band = exp(-pow((d.y - 0.25 + 0.3 * d.x) * 2.6, 2.0));
-      col += band * (vec3(0.05, 0.03, 0.14) * smoothstep(0.35, 0.8, neb) + vec3(0.0, 0.05, 0.09) * smoothstep(0.5, 0.9, fbm(d * 5.0 + 3.0)) + vec3(0.09, 0.01, 0.06) * smoothstep(0.62, 0.95, fbm(d * 3.3 - 7.0)));
-      float st = h(floor(d * 420.0)); col += vec3(0.85, 0.9, 1.0) * step(0.9975, st) * (0.5 + 0.5 * h(floor(d * 420.0) + 7.0)) * smoothstep(0.0, 0.45, d.y);
+      float lane = 1.0 - 0.75 * exp(-pow((d.y - 0.25 + 0.3 * d.x) * 9.0, 2.0)) * smoothstep(0.35, 0.7, fbm(d * 7.0 + 3.0));   /* (a dark dust lane through the band, like the Visualizer's galaxy) */
+      col += band * lane * (vec3(0.05, 0.03, 0.14) * smoothstep(0.35, 0.8, neb) + vec3(0.02, 0.025, 0.12) * smoothstep(0.5, 0.9, fbm(d * 5.0 + 3.0)) + vec3(0.09, 0.01, 0.06) * smoothstep(0.62, 0.95, fbm(d * 3.3 - 7.0)));
+      /* stars the Visualizer's way (his reference, 2026-10-19): round points set off-center in their cells, never whole squares. A dense faint dust
+         thicker in the band, mid stars that twinkle, and rare near ones with a thin four-point glint. White, some violet or pink, never cyan. */
+      float sky = smoothstep(0.0, 0.45, d.y); vec3 fg = d * 420.0, fid = floor(fg); float fr = h(fid);
+      float stars = smoothstep(0.972 - 0.03 * band, 0.985, fr) * smoothstep(0.55, 0.0, length(fract(fg) - 0.5)) * 0.75 * (0.6 + band);
+      vec3 mg = d * 170.0, mid = floor(mg); float mr = h(mid); vec3 mo = vec3(h(mid + 3.3), h(mid + 5.7), h(mid + 9.1)) - 0.5;
+      float midS = smoothstep(0.982, 0.986, mr) * smoothstep(0.32, 0.0, length(fract(mg) - 0.5 - mo * 0.5)) * (0.6 + 0.4 * sin(uT * (2.0 + mr * 5.0) + mr * 80.0));
+      vec3 ng = d * 38.0, nid = floor(ng); float nr = h(nid); vec3 nf = fract(ng) - 0.5;
+      float nearS = step(0.988, nr) * (exp(-dot(nf, nf) * 1400.0) + 0.22 * exp(-abs(nf.x) * 110.0 - abs(nf.y) * 12.0) + 0.22 * exp(-abs(nf.y) * 110.0 - abs(nf.x) * 12.0));
+      vec3 tint = mix(vec3(1.0, 0.94, 1.0), mix(vec3(0.72, 0.66, 1.0), vec3(1.0, 0.62, 0.86), step(0.5, h(mid + 2.0))), step(0.7, h(mid + 1.0)));
+      col += (vec3(0.92, 0.9, 1.0) * stars + tint * midS * 1.6 + vec3(1.0, 0.95, 1.0) * nearS * 1.3) * sky;
       col = mix(uFog, col, smoothstep(-0.03, 0.24, d.y));   /* (the horizon is the fog's own color, so far ground and sky are one haze: no seam where the stars stop, his note 2026-10-19) */
       // Earth, seen from the Moon: blue where it is still itself, black where the dark has taken it, thin violet where the two meet (PLAN-SPACE.md)
       vec3 E = normalize(vec3(0.6, 0.22, -0.78)); float R = 0.13, a = acos(clamp(dot(d, E), -1.0, 1.0));
@@ -75,12 +85,11 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
         vec3 N = normalize(q.x * t1 + q.y * t2 - sqrt(1.0 - r2) * E); float sp = uT * 0.008, cs = cos(sp), sn = sin(sp); vec3 P = vec3(N.x * cs - N.z * sn, N.y, N.x * sn + N.z * cs);
         vec3 L = normalize(t1 * 0.85 + t2 * 0.25 - E * 0.35); float lit = max(dot(N, L), 0.0);
         float land = smoothstep(0.5, 0.58, fbm(P * 2.2)), dark = smoothstep(0.43, 0.48, fbm(P * 1.5 + vec3(0.0, uT * 0.003, 0.0)));
-        vec3 surf = mix(vec3(0.04, 0.16, 0.48), vec3(0.16, 0.24, 0.3), land) * (0.06 + lit * 1.2) + vec3(0.25, 0.4, 0.6) * pow(lit, 6.0) * (1.0 - land) * 0.4;
-        surf += vec3(0.7, 0.85, 1.0) * step(0.986, h(floor(P * 90.0))) * land * (1.0 - smoothstep(0.0, 0.25, lit)) * 0.8;   /* (the last cities, on the night side) */
+        vec3 surf = mix(vec3(0.03, 0.07, 0.46), vec3(0.13, 0.1, 0.26), land) * (0.06 + lit * 1.15);   /* (deep blue seas, violet land; no shine: matte, like a planet seen from far) */
         float edge = exp(-pow((fbm(P * 1.5 + vec3(0.0, uT * 0.003, 0.0)) - 0.455) * 70.0, 2.0)) * (0.6 + 0.4 * sin(uT * 0.7 + P.x * 30.0));
         col = mix(surf, vec3(0.0), dark) + vec3(0.55, 0.18, 0.85) * edge * 0.55;
       }
-      col += vec3(0.3, 0.75, 1.0) * exp(-pow((a - R) * 260.0, 2.0)) * 0.55;   // (a hair of atmosphere at the edge)
+      col += vec3(0.38, 0.26, 1.0) * exp(-pow((a - R) * 260.0, 2.0)) * 0.5;   // (a hair of atmosphere at the edge: blue violet, never cyan)
       gl_FragColor = vec4(col, 1.0);
     }` }));
 scene.add(sky);
@@ -392,7 +401,7 @@ function hud() {
 let last = performance.now(), fpsN = 0, fpsT = 0;
 function frame(now) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 34, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
+  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }

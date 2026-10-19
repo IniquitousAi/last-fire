@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v114** Real stars (round points, twinkle, rare glints, a dust lane), Earth without shine or cyan, the home view above the hills.
 - **v113** The Director: build up, peak, a 6 s breath (robots, 32 seeds: reckless falls 4.66 to 3.28, every crew in the flow band, steady crews keep 96% of their fights).
 - **v112** Home screen: no seam where the stars stopped (the sky fades into the far haze), Earth sits clear of the menu, neon outlines and brighter words. Shots near an enemy bend to it a little; the dark's reach is 12% shorter than its claws look. Correction to v111: on 32 robot seeds its effect is inside the noise.
 - **v111** Two quiet mercies: the last quarter of your light is worth more than it looks, and no single hit drops you from healthy.
