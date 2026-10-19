@@ -21,7 +21,7 @@ The three drafts (the why, not the what):
 - **B. Every shape is its own creature.** Earth's dark is a whole ecology of separate things that evolved to look like what we fear.
 - **C. They were us.** The shapes are what Earth's people became when the dark took them; the Moon is who got out.
 
-Recommended: **A**. It is the only one where the enemy, the daemon and the truth labels are the same idea, and it never needs explaining in text.
+Recommended: **A**. **He picked A (2026-10-19).** It is the only one where the enemy, the daemon and the truth labels are the same idea, and it never needs explaining in text.
 
 A first roster from real phenomena (each one a role in combat, not just a look):
 

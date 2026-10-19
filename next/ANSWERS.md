@@ -136,3 +136,8 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 
 ## His reference mix (2026-10-19 about 02:30)
 "maze runner +destiny 2 + cyberpunk+ 7 days to die+ icarus+ halo 2+ sons of the forest 2 +gears of war+ divergent+ diablo 3 but only the lore". Taken as feelings, never mechanics (his rule: no copied mechanics): Maze Runner and Divergent (a community, a system that sorts and judges you, the walls), Destiny 2 and Halo 2 (sci-fi awe, mythic scale, the feel of the guns), Cyberpunk (neon over grime), 7 Days to Die, Icarus and Sons of the Forest 2 (grounded survival, building, the night coming), Gears of War (weight, cover, brutal impact), Diablo 3's lore only (light against dark, the frame).
+
+## The space start (2026-10-19 about 02:35)
+- His idea: the Moon is the safe base; Earth is consumed by darkness and dangerous; many scary enemy types; never zombies or anything overused; nobody is sure if they are demons, aliens or just the dark, "in the form of something that we think is our imagination". Simulate the simulatable, judge taste after. Free assets only.
+- Theme picked: **One thing, many masks** (recommended): the dark is one mind wearing the shapes our brains are built to see (shadow figures, faces in patterns), and it learns new ones from you; the codex labels every guess.
+- The plan: PLAN-SPACE.md.

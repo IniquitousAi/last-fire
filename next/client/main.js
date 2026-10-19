@@ -1,19 +1,19 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=21';
-import { Ambience } from './ambience.js?v=21';
-import { Camp, BOARD } from './camp.js?v=21';
-import { Guide } from './guide.js?v=21';
-import { HudLook } from './hudlook.js?v=21';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=21';
-import { sound, GUNS } from '../../src/combat.js?v=21';
-import { FX } from '../../src/fx.js?v=21';
+import * as C from '../core/game.js?v=22';
+import { Ambience } from './ambience.js?v=22';
+import { Camp, BOARD } from './camp.js?v=22';
+import { Guide } from './guide.js?v=22';
+import { HudLook } from './hudlook.js?v=22';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=22';
+import { sound, GUNS } from '../../src/combat.js?v=22';
+import { FX } from '../../src/fx.js?v=22';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 21;   // (this copy's version; ./version.json says the newest)
+const BUILD = 22;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -37,8 +37,19 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
       float neb = fbm(d * 2.6 + vec3(0.0, uT * 0.004, 0.0)), band = exp(-pow((d.y - 0.25 + 0.3 * d.x) * 2.6, 2.0));
       col += band * (vec3(0.05, 0.03, 0.14) * smoothstep(0.35, 0.8, neb) + vec3(0.0, 0.05, 0.09) * smoothstep(0.5, 0.9, fbm(d * 5.0 + 3.0)) + vec3(0.09, 0.01, 0.06) * smoothstep(0.62, 0.95, fbm(d * 3.3 - 7.0)));
       float st = h(floor(d * 420.0)); col += vec3(0.85, 0.9, 1.0) * step(0.9975, st) * (0.5 + 0.5 * h(floor(d * 420.0) + 7.0)) * smoothstep(-0.05, 0.2, d.y);
-      vec3 eye = normalize(vec3(0.6, 0.18, -0.78)); float a = acos(clamp(dot(d, eye), -1.0, 1.0));   // (the thing past the dark: a black disc in a thin ring of light, low in the sky)
-      col = mix(col, vec3(0.0), smoothstep(0.105, 0.1, a)); col += vec3(0.45, 0.55, 1.0) * exp(-pow((a - 0.108) * 160.0, 2.0)) * 0.9 + vec3(0.6, 0.2, 0.8) * exp(-pow((a - 0.13) * 40.0, 2.0)) * 0.12;
+      // Earth, seen from the Moon: blue where it is still itself, black where the dark has taken it, thin violet where the two meet (PLAN-SPACE.md)
+      vec3 E = normalize(vec3(0.6, 0.22, -0.78)); float R = 0.13, a = acos(clamp(dot(d, E), -1.0, 1.0));
+      vec3 t1 = normalize(cross(E, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, E); vec2 q = vec2(dot(d, t1), dot(d, t2)) / sin(R); float r2 = dot(q, q);
+      if (r2 < 1.0) {
+        vec3 N = normalize(q.x * t1 + q.y * t2 - sqrt(1.0 - r2) * E); float sp = uT * 0.008, cs = cos(sp), sn = sin(sp); vec3 P = vec3(N.x * cs - N.z * sn, N.y, N.x * sn + N.z * cs);
+        vec3 L = normalize(t1 * 0.85 + t2 * 0.25 - E * 0.35); float lit = max(dot(N, L), 0.0);
+        float land = smoothstep(0.5, 0.58, fbm(P * 2.2)), dark = smoothstep(0.43, 0.48, fbm(P * 1.5 + vec3(0.0, uT * 0.003, 0.0)));
+        vec3 surf = mix(vec3(0.04, 0.16, 0.48), vec3(0.16, 0.24, 0.3), land) * (0.06 + lit * 1.2) + vec3(0.25, 0.4, 0.6) * pow(lit, 6.0) * (1.0 - land) * 0.4;
+        surf += vec3(0.7, 0.85, 1.0) * step(0.986, h(floor(P * 90.0))) * land * (1.0 - smoothstep(0.0, 0.25, lit)) * 0.8;   /* (the last cities, on the night side) */
+        float edge = exp(-pow((fbm(P * 1.5 + vec3(0.0, uT * 0.003, 0.0)) - 0.455) * 70.0, 2.0)) * (0.6 + 0.4 * sin(uT * 0.7 + P.x * 30.0));
+        col = mix(surf, vec3(0.0), dark) + vec3(0.55, 0.18, 0.85) * edge * 0.55;
+      }
+      col += vec3(0.3, 0.75, 1.0) * exp(-pow((a - R) * 260.0, 2.0)) * 0.55;   // (a hair of atmosphere at the edge)
       gl_FragColor = vec4(col, 1.0);
     }` }));
 scene.add(sky);
