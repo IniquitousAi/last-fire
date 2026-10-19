@@ -57,7 +57,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-50. **What credit buys** (from item 49: careful players build big credit, +477 to +616 in a week, with nothing to spend it on): credit should matter, logically: first pick of the parts at the bay, or the camp names something after you. (added when item 49 finished)
+
+51. **The Simulator page for Last Fire** (his love: watching robots train; 'always ask how simulators can be used in fun ways'): one page that runs the game's sims (light rule, flood, drop, truck build, economy, faithful friend) and shows their live numbers as a show, robots learning on screen. (added when item 50 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -97,3 +98,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 47, the camp economy live: dues, standing, lamps refused and flares priced when behind, board lines (v99).
 - Item 48, solo hours feed the camp pool, dues first (v100, v101).
 - Item 49, the economy made fair in real nights by robot crews (v102).
+- Item 50, honor lamps for credit (v103).
