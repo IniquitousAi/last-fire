@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=5';
-import { Hollow } from './hollow.js?v=5';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=5';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=5';
-import { FX } from './fx.js?v=5';
-import { gunsReady, gunModel } from './guns.js?v=5';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=6';
+import { Hollow, KINDS } from './hollow.js?v=6';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=6';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=6';
+import { FX } from './fx.js?v=6';
+import { modelsReady, model, gunModel } from './models.js?v=6';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -50,10 +50,10 @@ float vn(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
 let world = null, hollow = new Hollow(scene), fx = new FX(scene), net = null, mode = 'menu', seed = 0, panel = null;
 const me = { pid: 0, name: '', x: 80, y: 30, z: 80, vy: 0, yaw: 0, pitch: 0, hp: 100, stamina: 100, hunger: 100, dead: false, down: false, isPlayer: true, onGround: false, points: 500, perks: new Set(), guns: ['pistol', null], ammo: { pistol: { mag: 8, res: 64 } }, kills: 0, heads: 0 };
 const others = new Map();   // (player number -> what we know of that friend)
-const inv = { pickaxe: 1, torch: 1, planks: 6, cobble: 0, dirt: 0, sand: 0, berries: 3, campfire: 1, lantern: 0 };
-const SLOTS = ['gun1', 'gun2', 'pickaxe', 'torch', 'planks', 'cobble', 'campfire', 'lantern', 'berries'];
-const SLOT_NAME = { pickaxe: 'Pickaxe', torch: 'Torch', planks: 'Planks', cobble: 'Stone', campfire: 'Campfire', lantern: 'Lantern', berries: 'Berries' };
-const SAYS = { pickaxe: 'Breaks blocks twice as fast. Hold left click on a block.', torch: 'Light in your hand: the Hollow keep off it. Others see it too.', planks: 'Build walls (right click), or feed a fire (right click the fire).', cobble: 'Build stronger walls (right click).', campfire: 'A big light. Burns 4 minutes, feed it planks. A big fire calls them from far off.', lantern: 'A small light that burns 10 minutes and never calls them.', berries: 'Eat (right click or E): food back, a little health.' };
+const inv = { pickaxe: 1, torch: 1, planks: 6, cobble: 0, dirt: 0, sand: 0, berries: 3, campfire: 1, lantern: 0, turret: 0 };
+const SLOTS = ['gun1', 'gun2', 'pickaxe', 'torch', 'planks', 'cobble', 'campfire', 'lantern', 'turret', 'berries'];   // (keys 1 to 9, then 0)
+const SLOT_NAME = { turret: 'Sentry', pickaxe: 'Pickaxe', torch: 'Flashlight', planks: 'Planks', cobble: 'Stone', campfire: 'Campfire', lantern: 'Lantern', berries: 'Berries' };
+const SAYS = { pickaxe: 'Breaks blocks twice as fast. Hold left click on a block.', torch: 'A beam that burns them: anything you shine it on slows down and smolders. The Hollow keep off its glow.', turret: 'A sentry: place it (right click) and it shoots the Hollow on its own, 300 rounds. Buy them at the base.', planks: 'Build walls (right click), or feed a fire (right click the fire).', cobble: 'Build stronger walls (right click).', campfire: 'A big light. Burns 4 minutes, feed it planks. A big fire calls them from far off.', lantern: 'A small light that burns 10 minutes and never calls them.', berries: 'Eat (right click or E): food back, a little health.' };
 const gunIn = s => s === 'gun1' ? me.guns[0] : s === 'gun2' ? me.guns[1] : null;   // (two guns at a time, CoD's rule)
 let stations = [], reloadT = 0, ads = 0, hitT = 0, prompt = null, reviveT = 0, roundShown = 0, roundEndShown = 0, shotReady = true, switchT = 0, lastSlot = -1, sprintB = 0;
 let slot = 0, clock = 0.25, day = 1, fires = [], lastSpawn = 0, mining = null, shotCd = 0, msgT = 0, mouseDown = [false, false, false], stepD = 0, kick = 0, flinch = 0, swayX = 0, swayY = 0, dmgT = 0, groanT = 0, frameN = 0;
@@ -61,25 +61,24 @@ const buffs = { double: 0, oneshot: 0 }, drops = []; let dropId = 1;
 const keys = {};
 const firePool = Array.from({ length: 6 }, () => { const l = new THREE.PointLight(0x8fb4ff, 0, 14, 1.6); scene.add(l); return l; });   // (six real fire lights at most: the nearest six)
 const fireMeshes = new THREE.Group(); scene.add(fireMeshes);
-const torchLight = new THREE.PointLight(0xa6c4ff, 0, 9, 1.8); scene.add(torchLight);
+const torchLight = new THREE.PointLight(0xa6c4ff, 0, 7, 1.8); scene.add(torchLight);
+const beam = new THREE.SpotLight(0xe4ecff, 0, 34, 0.38, 0.5, 1.4); camera.add(beam); beam.position.set(0.12, -0.1, 0); beam.target.position.set(0, 0, -1); camera.add(beam.target);   // (the flashlight: always in the scene, off until held)
 const muzzleLight = new THREE.PointLight(0xdfe6ff, 0, 10, 2); scene.add(muzzleLight);   // (one light for every muzzle flash: always in the scene, so nothing recompiles)
-const view = new THREE.Group(); camera.add(view); scene.add(camera);
-const tools = buildTools(), heldGuns = {}; let mastLamp = null;
+scene.add(camera);
+// what you hold is drawn in its own pass after the world (a gun never pokes into a wall), lit to match where you stand
+const vscene = new THREE.Scene(), vhemi = new THREE.HemisphereLight(0xc8d4f0, 0x1a1c26, 1), vsun = new THREE.DirectionalLight(0xffffff, 0.7); vsun.position.set(0.6, 1, 0.8); vscene.add(vhemi, vsun);
+const vmuzzle = new THREE.PointLight(0xdfe6ff, 0, 2, 2); vmuzzle.position.set(0.1, -0.05, -0.6); vscene.add(vmuzzle);
+const vcam = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.01, 10), view = new THREE.Group(); vcam.add(view); vscene.add(vcam);
+const held = {}; let mastLamp = null, modelsOk = false;
 const flashTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, '#ffffff'); r.addColorStop(0.25, '#dfe8ff'); r.addColorStop(1, 'rgba(120,150,255,0)'); g.fillStyle = r;
   g.beginPath(); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, rr = i % 2 ? 9 : 32; g.lineTo(32 + Math.cos(a) * rr, 32 + Math.sin(a) * rr); } g.fill(); return new THREE.CanvasTexture(c); })();
 const flashMat = new THREE.SpriteMaterial({ map: flashTex, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true });
-gunsReady.then(() => { for (const k of Object.keys(GUNS)) { const m = gunModel(k); if (!m) continue; const f = new THREE.Sprite(flashMat); f.scale.setScalar(0.16); f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; m.visible = false; m.traverse(o => { o.renderOrder = 10; }); view.add(m); heldGuns[k] = m; } });
+const HAND = { campfire: 0.3, turret: 0.28, lantern: 0.6, planks: 0.8, cobble: 0.8, berries: 0.95, pickaxe: 0.62, torch: 1.7, knife: 1 };   // (how big each item sits in the hand)
+modelsReady.then(() => { modelsOk = true;
+  for (const k of [...Object.keys(GUNS), ...Object.keys(HAND)]) { if (held[k]) continue; const m = model(k === 'torch' ? 'flashlight' : k); if (!m) continue; m.visible = false;
+    if (GUNS[k] && !GUNS[k].melee) { const f = new THREE.Sprite(flashMat); f.scale.setScalar(k === 'minigun' ? 0.3 : 0.18); f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; }
+    else m.scale.setScalar(HAND[k] || 1); view.add(m); held[k] = m; } });
 
-function buildTools() {   // the tools in your hand (the guns are real models, loaded above)
-  const steel = new THREE.MeshStandardMaterial({ color: 0x5a5e68, metalness: 0.7, roughness: 0.4 }), grip = new THREE.MeshStandardMaterial({ color: 0x1b1c22, roughness: 0.8 });
-  const pick = new THREE.Group(); pick.add(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.5), grip)); const ph = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.05, 0.05), steel); ph.position.z = -0.24; pick.add(ph);
-  const torch = new THREE.Group(); torch.add(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.4, 6), grip));
-  const flame = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 7), new THREE.MeshBasicMaterial({ color: 0x9fd8ff })); flame.position.y = 0.26; torch.add(flame);
-  const block = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshStandardMaterial({ color: 0x55545c, roughness: 0.9 }));
-  const out = { pickaxe: pick, torch, block };
-  for (const o of Object.values(out)) { o.position.set(0.3, -0.28, -0.5); o.visible = false; view.add(o); }
-  return out;
-}
 function figure() {   // a friend: dark gear, a cyan visor line so you can tell them from the Hollow, and their gun in hand
   const g = new THREE.Group(), cloth = new THREE.MeshStandardMaterial({ color: 0x2a2e38, roughness: 0.85 }), gear = new THREE.MeshStandardMaterial({ color: 0x15171d, roughness: 0.6 });
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.95, 4, 8), cloth); body.position.y = 0.88; body.castShadow = true;
@@ -97,7 +96,8 @@ addEventListener('keydown', e => {
   if (e.code === 'Tab') { e.preventDefault(); if (mode === 'play' && world && world.ready) togglePanel('inv'); return; }
   keys[e.code] = true;
   if (mode !== 'play' || panel) return;
-  const n = parseInt(e.key); if (n >= 1 && n <= SLOTS.length) slot = n - 1;
+  const n = parseInt(e.key); if (n >= 1 && n <= 9) slot = n - 1; if (e.key === '0') slot = 9;
+  if (e.code === 'KeyV') melee();
   if (e.code === 'KeyQ') { const g = SLOTS[slot] === 'gun1' ? 1 : 0; if (me.guns[g]) slot = g; }   // (Q swaps guns)
   if (e.code === 'KeyC') craft('campfire');
   if (e.code === 'KeyE') eat();
@@ -109,7 +109,7 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouseDow
 addEventListener('wheel', e => { if (mode === 'play' && !panel) slot = (slot + (e.deltaY > 0 ? 1 : -1) + SLOTS.length) % SLOTS.length; });
 renderer.domElement.addEventListener('click', () => { if (mode === 'play' && !panel && !locked()) lockMouse(); });
 addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * SET.sens * (1 - ads * 0.35); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k)); swayX += e.movementX * 0.00006; swayY += e.movementY * 0.00006; });
-addEventListener('mousedown', e => { if (locked()) { mouseDown[e.button] = true; if (e.button === 2 && !gunIn(SLOTS[slot])) use(); if (e.button === 0) shotReady = true; } });
+addEventListener('mousedown', e => { if (locked()) { mouseDown[e.button] = true; if (e.button === 2 && !gunIn(SLOTS[slot])) use(); if (e.button === 0) shotReady = true; if (e.button === 1) { e.preventDefault(); melee(); } } });
 addEventListener('mouseup', e => { mouseDown[e.button] = false; if (e.button === 0) mining = null; });
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) togglePanel('pause'); });
@@ -133,6 +133,7 @@ function use() {   // right click: place what you hold, feed a fire, or eat
   if (Math.abs(x + 0.5 - me.x) < 0.8 && Math.abs(z + 0.5 - me.z) < 0.8 && y >= Math.floor(me.y) - 0.1 && y <= me.y + 1.8) return;   // (not inside yourself)
   if (it === 'campfire' && inv.campfire > 0) { inv.campfire--; placeFire(x + 0.5, y, z + 0.5, 240, true, false); return; }
   if (it === 'lantern' && inv.lantern > 0) { inv.lantern--; placeFire(x + 0.5, y, z + 0.5, 600, true, true); return; }
+  if (it === 'turret' && inv.turret > 0) { inv.turret--; if (!net || net.host) addTurret(x + 0.5, y, z + 0.5, me.pid); else net.send({ t: 'turret', p: [x + 0.5, y, z + 0.5] }); say('Sentry placed: 300 rounds, it picks its own targets.'); return; }
   const blockOf = { planks: B.PLANKS, cobble: B.COBBLE };
   if (blockOf[it] && inv[it] > 0) { inv[it]--; editBlock(x, y, z, blockOf[it]); }
 }
@@ -140,14 +141,16 @@ function editBlock(x, y, z, b) { world.set(x, y, z, b); }   // (sent on by world
 function quietSet(x, y, z, b) { world.quiet = true; world.set(x, y, z, b); world.quiet = false; }   // (a change that came over the network is not sent back out)
 function placeFire(x, y, z, fuel, send, small = false) { const f = { x, y, z, fuel, r: small ? 5 : 8, big: false, small: !!small }; fires.push(f); if (!small && !stations.length) placeStations(f); if (send && net) net.send({ t: 'fire', f: [x, y, z, fuel, small ? 1 : 0] }); }
 function addFuel(i, s, send = true) { fires[i].fuel = Math.min(900, fires[i].fuel + s); if (send && net) net.send({ t: 'feed', i, s }); }
-function muzzleWorld() { const g = heldGuns[gunIn(SLOTS[slot])]; if (!g) return eye(); view.updateMatrixWorld(true); return g.localToWorld(g.userData.muzzle.clone()); }
+function muzzleWorld() { const g = held[gunIn(SLOTS[slot])]; if (!g) return eye(); vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); return camera.localToWorld(g.localToWorld(g.userData.muzzle.clone())); }
 function shoot() {
-  const key = gunIn(SLOTS[slot]); if (!key || shotCd > 0 || reloadT > 0 || me.down || switchT > 0) return;
+  const key = gunIn(SLOTS[slot]); if (!key || shotCd > 0 || reloadT > 0 || me.down || switchT > 0 || meleeT > 0) return;
   const G = GUNS[key], am = me.ammo[key];
+  if (G.spin && spin < G.spin) return;   // (the minigun's barrels have to come up to speed)
   if (!G.auto && !shotReady) return; shotReady = false;
   if (am.mag <= 0) { sound.click(); if (am.res > 0) reload(); shotCd = 0.25; return; }
   am.mag--; shotCd = 60 / G.rpm; sound.shot(key);
-  const gm = heldGuns[key]; if (gm && gm.userData.flash) { gm.userData.flash.visible = true; gm.userData.flash.material.rotation = Math.random() * 6; setTimeout(() => gm.userData.flash.visible = false, 40); }
+  vmuzzle.intensity = 3; setTimeout(() => vmuzzle.intensity = 0, 45);
+  const gm = held[key]; if (gm && gm.userData.flash) { gm.userData.flash.visible = true; gm.userData.flash.material.rotation = Math.random() * 6; setTimeout(() => gm.userData.flash.visible = false, 40); }
   const o = eye(), m0 = muzzleWorld(); muzzleLight.position.copy(m0); muzzleLight.intensity = 7; setTimeout(() => muzzleLight.intensity = 0, 50);
   const spread = G.spread * (ads > 0.5 ? 0.3 : 1) * (me.onGround ? 1 : 2), pellets = [], ends = [];
   for (let i = 0; i < (G.pellets || 1); i++) {
@@ -164,19 +167,62 @@ function shoot() {
   me.pitch = Math.min(1.55, me.pitch + G.recoil * 0.4 * (ads > 0.5 ? 0.6 : 1)); me.yaw += (Math.random() - 0.5) * G.recoil * 0.3;   // (some of the kick stays: you pull the gun down, like the real thing)
   if (am.mag > 0 && am.mag <= Math.ceil(G.mag * 0.25)) sound.low();
 }
+// melee: V or the middle mouse button. A knife lunge that lands a third of the way in; it finds plate gaps (half armor piercing)
+const MELEE = 0.42; let meleeT = 0, meleeHit = false, spin = 0, testAim = false;   // (testAim: the automated test's right mouse button)
+function melee() {
+  if (meleeT > 0 || me.down || me.dead || panel) return; meleeT = MELEE; meleeHit = false; reloadT = 0; sound.swing();
+}
+function meleeStrike() {
+  const o = eye(); let best = null;
+  for (const yo of [0, 0.12, -0.12]) { const d = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw + yo, 0, 'YXZ')), w = world.ray(o, d, 2.6), max = w ? w.dist : 2.6, h = hollow.hit(o, d, max); if (h && (!best || h.t < best.h.t)) best = { h, d, max }; }
+  if (!best) { const w = world.ray(o, lookDir(), 2.4); if (w) { fx.spark(o.clone().addScaledVector(lookDir(), w.dist)); sound.thud(); } return; }
+  const end = o.clone().addScaledVector(best.d, best.h.t); fx.ichor(end, false); sound.stab();
+  if (!net || net.host) { const r = applyShot(o, best.d, best.max, 'knife', me.pid); if (r) award(r); }
+  else net.send({ t: 'shot', g: 'knife', o: [o.x, o.y, o.z], p: [[+best.d.x.toFixed(4), +best.d.y.toFixed(4), +best.d.z.toFixed(4)]] });
+}
+// sentries: the host aims and fires them; everyone sees them turn and hears them from where they stand
+const turrets = [], turretMeshes = new Map(); let turretId = 1;
+function addTurret(x, y, z, owner) { if (turrets.length >= 8) return; turrets.push({ id: turretId++, x, y, z, yaw: 0, ammo: 300, cd: 0, look: 0, target: null, owner }); }
+function stepTurrets(dt) {   // (host only)
+  for (const T of turrets) {
+    if (T.ammo <= 0) continue; T.cd -= dt; T.look -= dt;
+    if (T.look <= 0) { T.look = 0.25; T.target = null; let bd = 20 * 20;   // (a new target four times a second: the nearest Hollow it can see within 20 m)
+      for (const k of hollow.z) { const dx = k.x - T.x, dz = k.z - T.z, d2 = dx * dx + dz * dz; if (d2 > bd) continue; const o = _o.set(T.x, T.y + 0.9, T.z), dir = _d.set(dx, k.y + 1.3 - (T.y + 0.9), dz).normalize(), w = world.ray(o, dir, Math.sqrt(d2)); if (w) continue; bd = d2; T.target = k; } }
+    const k = T.target; if (!k || !hollow.z.includes(k)) continue;
+    const want = Math.atan2(k.x - T.x, k.z - T.z); let dy = want - T.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); T.yaw += Math.max(-dt * 5, Math.min(dt * 5, dy));
+    if (Math.abs(dy) < 0.2 && T.cd <= 0) {
+      T.cd = 0.12; T.ammo--; const o = new THREE.Vector3(T.x, T.y + 0.9, T.z), aim = new THREE.Vector3(k.x, k.y + 1.3, k.z), d = aim.clone().sub(o).normalize(); d.x += (Math.random() - 0.5) * 0.04; d.y += (Math.random() - 0.5) * 0.04; d.normalize();
+      const r = applyShot(o, d, o.distanceTo(aim) + 1, 'sentry', T.owner); const end = o.clone().addScaledVector(d, o.distanceTo(aim));
+      fx.tracer(o, end); if (r) fx.ichor(end, false); sound.shot('sentry', o);
+      if (net) net.send({ t: 'tb', i: T.id, e: [+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)] });
+      if (r && r.kill) { if (T.owner === me.pid) award({ ...r, tur: true }); else if (net) net.sendTo(T.owner, { t: 'pts', r: [{ ...r, tur: true }] }); }
+      if (T.ammo === 0) { if (T.owner === me.pid) say('Your sentry is out of rounds.'); else if (net) net.sendTo(T.owner, { t: 'boon', k: 'empty', by: T.owner }); }
+    }
+  }
+  for (let i = turrets.length - 1; i >= 0; i--) if (turrets[i].ammo <= 0 && (turrets[i].gone = (turrets[i].gone || 0) + dt) > 8) turrets.splice(i, 1);   // (an empty sentry stands 8 seconds, then is gone)
+}
+const _o = new THREE.Vector3(), _d = new THREE.Vector3();
+function drawTurrets() {
+  if (!modelsOk) return; const seen = new Set();
+  for (const T of turrets) { seen.add(T.id); let m = turretMeshes.get(T.id); if (!m) { m = model('turret'); if (!m) return; m.traverse(o => { if (/Top/.test(o.name)) m.userData.top = o; }); scene.add(m); turretMeshes.set(T.id, m); }
+    m.position.set(T.x, T.y, T.z); if (m.userData.top) m.userData.top.rotation.y = T.yaw; else m.rotation.y = T.yaw; }
+  for (const [id, m] of turretMeshes) if (!seen.has(id)) { scene.remove(m); turretMeshes.delete(id); }
+}
 function reload() {
   const key = gunIn(SLOTS[slot]); if (!key || reloadT > 0) return; const G = GUNS[key], am = me.ammo[key];
   if (am.mag >= G.mag || am.res <= 0) return; reloadT = G.reload * (me.perks.has('quick') ? 0.5 : 1); me.reloadOf = reloadT; sound.magOut(); setTimeout(() => sound.magIn(), reloadT * 700);
 }
 function finishReload() { const key = gunIn(SLOTS[slot]); if (!key) return; const G = GUNS[key], am = me.ammo[key], n = Math.min(G.mag - am.mag, am.res); am.mag += n; am.res -= n; }
+const SPECIAL = { sentry: { dmg: 26, head: 1.5, ap: 0.35 } };   // (the sentry's rounds: not a gun anyone holds)
 function applyShot(o, d, max, key, shooter) {   // the host's word on a shot: what it hit, whether it killed; a kill may leave a drop
   const h = hollow.hit(o, d, max); if (!h) return null;
-  const head = h.mult > 1, G = GUNS[key], hr = buffs.oneshot > 0 ? (h.k.hp = 0, { armor: false, broke: false }) : hollow.damage(h.k, h.part, G.dmg * (head ? G.head : 1), G.ap); h.k.x += d.x * 0.25; h.k.z += d.z * 0.25;
+  const head = h.mult > 1, G = GUNS[key] || SPECIAL[key], hr = buffs.oneshot > 0 ? (h.k.hp = 0, { armor: false, broke: false }) : hollow.damage(h.k, h.part, G.dmg * (head ? G.head : 1), G.ap); h.k.x += d.x * 0.25; h.k.z += d.z * 0.25;
   const kill = h.k.hp <= 0;
   if (kill) { if (Math.random() < 1 / 40 && drops.length < 3) spawnDrop(h.k.x, h.k.y, h.k.z); killFeed(shooter, head, h.k.kind); if (net) net.send({ t: 'kf', w: shooter, h: head, k: h.k.kind }); }
   return { head, kill, armor: hr.armor, broke: hr.broke };
 }
 function award(r) {   // points the CoD way, a hit marker and its tick
+  if (r.tur) { const n = (r.head ? 50 : 30) * (buffs.double > 0 ? 2 : 1); me.points += n; me.kills++; floatPoints('+' + n + ' sentry'); return; }   // (a sentry kill pays half: it did the aiming)
   const n = (POINTS.hit + (r.broke ? 20 : 0) + (r.kill ? (r.head ? POINTS.head : POINTS.kill) : 0)) * (buffs.double > 0 ? 2 : 1);   // (breaking a plate pays 20: progress you can see and hear)
   me.points += n; hitT = r.kill ? 0.25 : 0.12; $('hit').className = r.kill ? (r.head ? 'head' : 'kill') : r.armor ? 'armor' : 'on'; r.kill ? sound.kill() : r.broke ? sound.shatter() : r.armor ? sound.plate() : sound.hit(r.head);
   if (r.kill) { me.kills++; if (r.head) me.heads++; }
@@ -190,6 +236,7 @@ function killFeed(pid, head, kind) {
 }
 function interact() {   // F: buy what you look at
   if (!prompt || !prompt.station) return; const st = prompt.station.userData;
+  if (st.kind === 'kit') { if (inv.turret >= 2) return say('You can carry 2 sentries.'); if (me.points < st.price) return say('Not enough points.'); me.points -= st.price; inv.turret++; slot = SLOTS.indexOf('turret'); sound.buy(); return say('Bought a sentry. Right click to place it.'); }
   if (st.kind === 'gun') {
     const owned = me.guns.indexOf(st.key);
     if (owned >= 0) { const cost = Math.floor(st.price / 2); if (me.points < cost) return say('Not enough points.'); me.points -= cost; me.ammo[st.key].res = GUNS[st.key].reserve; sound.buy(); say(`Ammo for the ${GUNS[st.key].name}.`); return; }
@@ -202,7 +249,7 @@ function interact() {   // F: buy what you look at
 }
 function placeStations(f) {   // the base: wall-buys and perk machines in a ring round the first fire (the same for every player: built from the fire)
   if (stations.length || !world) return;
-  const ring = [['gun', 'smg'], ['gun', 'shotgun'], ['gun', 'rifle'], ['perk', 'iron'], ['gun', 'lmg'], ['perk', 'quick'], ['perk', 'fleet']];
+  const ring = [['gun', 'smg'], ['gun', 'shotgun'], ['gun', 'ar'], ['perk', 'iron'], ['gun', 'rifle'], ['kit', 'turret'], ['gun', 'lmg'], ['perk', 'quick'], ['gun', 'minigun'], ['perk', 'fleet']];
   ring.forEach(([kind, key], i) => { const a = i / ring.length * Math.PI * 2, x = f.x + Math.cos(a) * 6, z = f.z + Math.sin(a) * 6, y = world.height(Math.floor(x), Math.floor(z));
     const st = makeStation(kind, key, x, y, z, Math.atan2(f.x - x, f.z - z)); scene.add(st); stations.push(st); });
 }
@@ -234,6 +281,7 @@ function takeDrop(id, pid) {   // (host only: checks the player really stands on
   removeDrop(id); if (net) net.send({ t: 'gone', id }); boon(d.k, pid); if (net) net.send({ t: 'boon', k: d.k, by: pid });
 }
 function boon(k, by) {
+  if (k === 'empty') return say('Your sentry is out of rounds.');
   if (!DROPS[k]) return; sound.drop(); say(`${nameOf(by) === 'You' ? 'You' : nameOf(by)} got ${DROPS[k].name}: ${DROPS[k].says}.`, 4);
   if (k === 'resupply') for (const g of me.guns) if (g) me.ammo[g] = { mag: GUNS[g].mag, res: GUNS[g].reserve };
   if (k === 'double') buffs.double = 30;
@@ -266,7 +314,7 @@ function move(dt) {
   if (me.down) { me.bleed -= dt; if (me.bleed <= 0) { me.down = false; me.hp = 1; hurt(me, 999); } }
   const fleet = me.perks.has('fleet'), f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
   const sprint = (keys.ShiftLeft || keys.ShiftRight) && f > 0 && me.stamina > 1 && me.onGround && !me.down && ads < 0.5 && reloadT <= 0;
-  const speed = me.down ? 0.8 : (sprint ? (fleet ? 8.4 : 7.2) : (fleet ? 5 : 4.4)) * (1 - ads * 0.35);
+  const speed = me.down ? 0.8 : (sprint ? (fleet ? 8.4 : 7.2) : (fleet ? 5 : 4.4)) * (1 - ads * 0.35) * (gunIn(SLOTS[slot]) === 'minigun' ? 0.72 : 1);   // (the minigun is heavy)
   const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw);
   let vx = (-sinY * f + cosY * s), vz = (-cosY * f - sinY * s); const len = Math.hypot(vx, vz) || 1; vx = vx / len * speed * dt; vz = vz / len * speed * dt;
   if (sprint) me.stamina = Math.max(0, me.stamina - (fleet ? 7 : 14) * dt); else me.stamina = Math.min(100, me.stamina + 9 * dt);
@@ -302,16 +350,23 @@ function respawn() { me.down = false; const f = fires.find(q => q.fuel > 0 && !q
 const flameGeo = new THREE.ConeGeometry(0.28, 0.7, 8), logGeo = new THREE.BoxGeometry(0.7, 0.14, 0.14), flameMat = new THREE.MeshBasicMaterial({ color: 0x9fd8ff }), logMat = new THREE.MeshStandardMaterial({ color: 0x15151a, roughness: 1 });
 const postGeo = new THREE.BoxGeometry(0.08, 0.7, 0.08), lampGeo = new THREE.BoxGeometry(0.2, 0.24, 0.2), lampMat = new THREE.MeshBasicMaterial({ color: 0xa8c8ff }), postMat = new THREE.MeshStandardMaterial({ color: 0x3a3e48, metalness: 0.6, roughness: 0.5 });
 function drawFires(t, dt) {
-  while (fireMeshes.children.length < fires.length) {
+  while (modelsOk && fireMeshes.children.length < fires.length) {   // (each fire a stone pit with a flame; each lantern the real lantern on a steel post)
     const f = fires[fireMeshes.children.length], g = new THREE.Group();
-    if (f.small) { const p = new THREE.Mesh(postGeo, postMat); p.position.y = 0.35; const l = new THREE.Mesh(lampGeo, lampMat); l.position.y = 0.8; g.add(p, l); }
-    else { const l1 = new THREE.Mesh(logGeo, logMat), l2 = new THREE.Mesh(logGeo, logMat); l2.rotation.y = Math.PI / 2; const fl = new THREE.Mesh(flameGeo, flameMat); fl.position.y = 0.4; g.add(l1, l2, fl); }
+    if (f.small) { const p = new THREE.Mesh(postGeo, postMat); p.position.y = 0.35; const l = model('lantern') || new THREE.Mesh(lampGeo, lampMat); l.position.y = 0.62; g.add(p, l); }
+    else { const pit = model('campfire') || new THREE.Group(); const fl = new THREE.Mesh(flameGeo, flameMat); fl.position.y = 0.4; g.add(pit, fl); }
     fireMeshes.add(g);
   }
   for (const f of fires) { f.fuel = Math.max(0, f.fuel - dt); f.r = f.fuel > 0 ? (f.small ? 5 : 8 + Math.min(4, f.fuel / 120)) : 0; f.big = !f.small && f.fuel > 300; }
-  fires.forEach((f, i) => { const g = fireMeshes.children[i]; g.position.set(f.x, f.y + 0.07, f.z); const fl = g.children[f.small ? 1 : 2]; fl.visible = f.fuel > 0; if (!f.small) fl.scale.setScalar((0.8 + Math.sin(t * 13 + i) * 0.08) * Math.min(1.4, 0.6 + f.fuel / 300)); });
+  fires.forEach((f, i) => { const g = fireMeshes.children[i]; if (!g) return; g.position.set(f.x, f.y + 0.07, f.z); const fl = g.children[1]; if (f.small) { fl.traverse(o => { if (o.material && o.material.emissive) o.material.emissiveIntensity = f.fuel > 0 ? 0.6 : 0; }); } else fl.visible = f.fuel > 0; if (!f.small) fl.scale.setScalar((0.8 + Math.sin(t * 13 + i) * 0.08) * Math.min(1.4, 0.6 + f.fuel / 300)); });
   const near = fires.map((f, i) => [i, (f.x - me.x) ** 2 + (f.z - me.z) ** 2]).filter(([i]) => fires[i].fuel > 0).sort((a, b) => a[1] - b[1]).slice(0, firePool.length);
   firePool.forEach((l, j) => { const n = near[j]; if (!n) { l.intensity = 0; return; } const f = fires[n[0]]; l.position.set(f.x, f.y + 0.8, f.z); l.distance = f.r * 1.7; l.intensity = (f.small ? 4 : 9) * (0.9 + Math.sin(t * 11 + j) * 0.07 + Math.sin(t * 23 + j) * 0.04); });
+}
+function beams(dt) {   // (host: a held flashlight's cone, 14 m and about 20 degrees either side, burns 7 a second and halves their speed; the Giant does not care)
+  const holders = [...(SLOTS[slot] === 'torch' && !me.dead ? [me] : []), ...[...others.values()].filter(p => p.torch && !p.dead)];
+  for (const k of hollow.z) k.slow = 0;
+  for (const p of holders) { const fx2 = -Math.sin(p.yaw) * Math.cos(p.pitch), fy = Math.sin(p.pitch), fz = -Math.cos(p.yaw) * Math.cos(p.pitch);
+    for (const k of hollow.z) { if (k.kind === 'warden') continue; const dx = k.x - p.x, dy = k.y + 1.2 - (p.y + 1.6), dz = k.z - p.z, d = Math.hypot(dx, dy, dz); if (d > 14 || d < 0.1) continue;
+      if ((dx * fx2 + dy * fy + dz * fz) / d > 0.94) { k.hp -= dt * 7; k.slow = 1; } } }
 }
 function lights() {
   const L = fires.filter(f => f.fuel > 0).map(f => ({ x: f.x, y: f.y, z: f.z, r: f.r, big: f.big }));
@@ -355,13 +410,13 @@ function onNet(m, from) {
     if (H) net.relay(m, from); return;
   }
   if (m.t === 'shot' && H) {   // (a friend's shot: the host traces it through its own world, so a wall stops it and the damage is the gun's, never the message's)
-    const p = others.get(from); if (!p || p.dead || p.down || !GUNS[m.g] || !Array.isArray(m.o) || !Array.isArray(m.p) || !near(p, m.o[0], m.o[1], m.o[2], 3.5)) return;
+    const p = others.get(from); if (!p || p.dead || p.down || !GUNS[m.g] || (GUNS[m.g].melee && !bucket(p, 'knifeB', 3, 3)) || !Array.isArray(m.o) || !Array.isArray(m.p) || !near(p, m.o[0], m.o[1], m.o[2], 3.5)) return;
     const n = Math.min(m.p.length, GUNS[m.g].pellets || 1); if (!bucket(p, 'ammoB', 22, 30, n)) return;
     const o = new THREE.Vector3(m.o[0], m.o[1], m.o[2]), out = [];
-    for (const d of m.p.slice(0, n)) { if (!Array.isArray(d) || d.length !== 3 || !d.every(fin)) continue; const v = new THREE.Vector3(...d); if (v.lengthSq() < 0.5) continue; v.normalize(); const w = world.ray(o, v, 80), r = applyShot(o, v, w ? w.dist : 80, m.g, from); if (r) out.push(r); }
+    for (const d of m.p.slice(0, n)) { if (!Array.isArray(d) || d.length !== 3 || !d.every(fin)) continue; const v = new THREE.Vector3(...d); if (v.lengthSq() < 0.5) continue; v.normalize(); const range = GUNS[m.g].melee ? 2.6 : 80, w = world.ray(o, v, range), r = applyShot(o, v, w ? w.dist : range, m.g, from); if (r) out.push(r); }
     if (out.length) net.sendTo(from, { t: 'pts', r: out }); return;
   }
-  if (m.t === 'pts' && !H && from === 0) { for (const r of (Array.isArray(m.r) ? m.r.slice(0, 8) : [])) if (r && typeof r === 'object') award({ head: !!r.head, kill: !!r.kill, armor: !!r.armor, broke: !!r.broke }); return; }
+  if (m.t === 'pts' && !H && from === 0) { for (const r of (Array.isArray(m.r) ? m.r.slice(0, 8) : [])) if (r && typeof r === 'object') award({ head: !!r.head, kill: !!r.kill, armor: !!r.armor, broke: !!r.broke, tur: !!r.tur }); return; }
   if (m.t === 'kf') { if (H && from !== 0) return; if (Number.isInteger(m.w) && m.w !== me.pid) killFeed(m.w, !!m.h, String(m.k)); return; }
   if (m.t === 'e') {
     if (!ints(m.e, 4)) return; const [x, y, z, b] = m.e;
@@ -381,19 +436,21 @@ function onNet(m, from) {
     else if (from === 0 || Number.isInteger(m.from)) revived(from);
     return;
   }
-  if (m.t === 's' && !H && from === 0) { hollow.unpack(m.h); if (fin(m.c)) clock = m.c; if (Number.isInteger(m.d)) day = m.d; if (Array.isArray(m.f)) fires.forEach((f, i) => { if (fin(m.f[i])) f.fuel = m.f[i]; }); return; }
+  if (m.t === 's' && !H && from === 0) { if (Array.isArray(m.tu)) { turrets.length = 0; for (const q of m.tu.slice(0, 8)) if (Array.isArray(q) && q.every(fin)) turrets.push({ id: q[0], x: q[1], y: q[2], z: q[3], yaw: q[4], ammo: q[5] }); } hollow.unpack(m.h); if (fin(m.c)) clock = m.c; if (Number.isInteger(m.d)) day = m.d; if (Array.isArray(m.f)) fires.forEach((f, i) => { if (fin(m.f[i])) f.fuel = m.f[i]; }); return; }
   if (m.t === 'hurt' && !H && from === 0) { if (fin(m.n)) hurt(me, Math.min(200, m.n), Array.isArray(m.a) ? { x: m.a[0], z: m.a[1] } : null); return; }
   if (m.t === 'drop' && !H && from === 0) { const d = m.d; if (Array.isArray(d) && d.every(fin) && DROP_KEYS[d[1]]) { const q = { id: d[0], k: DROP_KEYS[d[1]], x: d[2], y: d[3], z: d[4] }; drops.push(q); showDrop(q); } return; }
   if (m.t === 'gone' && !H && from === 0) { removeDrop(m.id); return; }
+  if (m.t === 'turret' && H) { const p = others.get(from); if (p && Array.isArray(m.p) && near(p, m.p[0], m.p[1] + 1, m.p[2], 9) && bucket(p, 'turrets', 0.05, 2)) addTurret(m.p[0], m.p[1], m.p[2], from); return; }
+  if (m.t === 'tb' && !H && from === 0) { const T = turrets.find(q => q.id === m.i); if (T && Array.isArray(m.e) && m.e.every(fin)) { const o = new THREE.Vector3(T.x, T.y + 0.9, T.z); fx.tracer(o, new THREE.Vector3(...m.e)); sound.shot('sentry', o); } return; }
   if (m.t === 'take' && H) { if (Number.isInteger(m.id)) takeDrop(m.id, from); return; }
-  if (m.t === 'boon' && !H && from === 0) { if (DROPS[m.k]) boon(m.k, Number.isInteger(m.by) ? m.by : 0); return; }
+  if (m.t === 'boon' && !H && from === 0) { if (DROPS[m.k] || m.k === 'empty') boon(m.k, Number.isInteger(m.by) ? m.by : 0); return; }
 }
 function revived(by) { if (!me.down) return; me.down = false; me.hp = 50; say(`${nameOf(by)} revived you.`); }
 let sendT = 0, stateT = 0;
 function sync(dt) {
   if (!net || !net.live) return; sendT += dt; stateT += dt;
   if (sendT >= 1 / 15) { sendT = 0; net.send({ t: 'p', x: +me.x.toFixed(2), y: +me.y.toFixed(2), z: +me.z.toFixed(2), yaw: +me.yaw.toFixed(3), pi: +me.pitch.toFixed(2), dead: me.dead, down: me.down, torch: SLOTS[slot] === 'torch', g: gunIn(SLOTS[slot]) || '', n: me.name, pt: me.points }); }
-  if (net.host && stateT >= 1 / 12) { stateT = 0; net.send({ t: 's', h: hollow.pack(), c: +clock.toFixed(5), d: day, f: fires.map(f => Math.round(f.fuel)) }); }
+  if (net.host && stateT >= 1 / 12) { stateT = 0; net.send({ t: 's', h: hollow.pack(), c: +clock.toFixed(5), d: day, f: fires.map(f => Math.round(f.fuel)), tu: turrets.map(T => [T.id, T.x, T.y, T.z, +T.yaw.toFixed(2), T.ammo]) }); }
 }
 
 // ---------------------------------------------------------------- the frame
@@ -409,9 +466,11 @@ function frame(now) {
   if (!panel || panel === 'inv') move(dt);   // (keys move you even when the browser has not given the game the mouse)
   if (lastSlot !== slot) { if (lastSlot >= 0 && gunIn(SLOTS[slot])) switchT = 0.32; lastSlot = slot; reloadT = 0; mining = null; }
   switchT = Math.max(0, switchT - dt);
-  if (locked() && mouseDown[0] && !panel) { if (gunIn(SLOTS[slot])) shoot(); else mine(dt); }
+  if (meleeT > 0) { meleeT -= dt; if (!meleeHit && meleeT < MELEE * 0.62) { meleeHit = true; meleeStrike(); } }
+  const gkNow = gunIn(SLOTS[slot]); spin = gkNow === 'minigun' && locked() && (mouseDown[0] || mouseDown[2]) && reloadT <= 0 ? Math.min(GUNS.minigun.spin, spin + dt) : Math.max(0, spin - dt * 1.5); sound.whir(spin / GUNS.minigun.spin);
+  if (locked() && mouseDown[0] && !panel) { if (gkNow) shoot(); else if (meleeT <= 0) mine(dt); }
   if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; finishReload(); }
-  ads += ((mouseDown[2] && gunIn(SLOTS[slot]) && reloadT <= 0 && !me.down && switchT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);   // (aiming down the sights: right mouse)
+  ads += (((mouseDown[2] || testAim) && gunIn(SLOTS[slot]) && reloadT <= 0 && !me.down && switchT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);   // (aiming down the sights: right mouse)
   const fov = SET.fov - 22 * ads + 6 * sprintB; if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
   for (const k in buffs) buffs[k] = Math.max(0, buffs[k] - dt);
   if (clock > NIGHT_AT && roundShown !== day) { roundShown = day; sound.round(); bigText('ROUND ' + day, 3.2); }
@@ -429,12 +488,14 @@ function frame(now) {
       hollow.spawn(world, pl[Math.floor(Math.random() * pl.length)] || me, long ? 1.4 : 1, day, (day <= 10 ? 150 + 50 * (day - 1) : 600 * Math.pow(1.1, day - 10)) * (long ? 1.3 : 1));   // (tougher each round, CoD's curve)
     }
     hollow.step(dt, world, [me, ...others.values()], lights(), L, hurt, fires, (i, a) => { fires[i].fuel = Math.max(0, fires[i].fuel - a); });
+    beams(dt); stepTurrets(dt);
   } else hollow.glide(dt);
   hollow.draw(dt); drawFires(t, dt); fx.update(dt);
   if ((groanT -= dt) <= 0 && hollow.z.length) { groanT = 0.9 + Math.random() * 1.2; const k = hollow.z[Math.floor(Math.random() * hollow.z.length)]; if (Math.hypot(k.x - me.x, k.z - me.z) < 30) sound.groan(_v.set(k.x, k.y + 1.8, k.z), k.kind === 'warden'); }
   for (const d of drops) { const g = dropMeshes.get(d.id); if (g) g.rotation.y = t * 1.6; if (!d.asked && !me.dead && Math.hypot(d.x - me.x, d.z - me.z) < 1.3) { if (!net || net.host) takeDrop(d.id, me.pid); else { d.asked = true; net.send({ t: 'take', id: d.id }); } } }
   if (!net || net.host) for (const d of [...drops]) if ((d.t -= dt) <= 0) { removeDrop(d.id); if (net) net.send({ t: 'gone', id: d.id }); }
-  const tl = SLOTS[slot] === 'torch' && !me.dead; torchLight.intensity = tl ? 4 * (0.92 + Math.sin(t * 17) * 0.06) : 0; torchLight.position.set(me.x, me.y + 1.5, me.z);
+  const tl = SLOTS[slot] === 'torch' && !me.dead && !me.down; torchLight.intensity = tl ? 1.4 : 0; torchLight.position.set(me.x, me.y + 1.5, me.z); beam.intensity = tl ? 60 : 0;
+  drawTurrets();
   drawFriends(dt);
   if (mastLamp) mastLamp.visible = (t % 1.6) < 0.25;
   // the camera: no bob (his rule). Recoil and a flinch kick it and settle smoothly.
@@ -446,18 +507,27 @@ function frame(now) {
   sync(dt); hud(L, dt);
   if (L > 0.02 && frameN % 2 === 0) renderer.shadowMap.needsUpdate = true;   // (shadows every other frame, and none at night: the sun is down)
   renderer.render(scene, camera);
+  // the second pass: what you hold, over the world, lit by the daylight and the fires near you
+  const here = Hollow.lightAt(lights(), me.x, me.y + 1, me.z); vhemi.intensity = 0.55 + 1.7 * L + 1.8 * here; vsun.intensity = 0.4 + 1.3 * L;
+  vcam.fov = 54 - 8 * ads; vcam.aspect = camera.aspect; vcam.updateProjectionMatrix(); renderer.autoClear = false; renderer.clearDepth(); renderer.render(vscene, vcam); renderer.autoClear = true;
   const ms = performance.now() - t0; msWorst = Math.max(msWorst, ms);
   fpsN++; fpsT += dt; if (fpsT > 0.5) { $('fps').textContent = SET.fps ? `${Math.round(fpsN / fpsT)} fps  ${msWorst.toFixed(1)} ms` : ''; fpsN = 0; fpsT = 0; msWorst = 0; }
 }
-function drawHeld(dt) {   // what you hold: the gun sits low right, comes up to the eye when aiming, dips to reload, drops while sprinting, lags a hair behind the mouse
-  for (const o of Object.values(tools)) o.visible = false; for (const o of Object.values(heldGuns)) o.visible = false;
-  const held = SLOTS[slot], gk = gunIn(held), vm = gk ? heldGuns[gk] : tools[['pickaxe', 'torch'].includes(held) ? held : 'block'];
-  if (!vm || me.dead || me.down || (!gk && held.startsWith('gun'))) return; vm.visible = true;
+function drawHeld(dt) {   // what you hold: low right at the hip; aiming brings the sight dead center, steady; reload dips it, sprint drops it, the mouse drags it a hair
+  for (const o of Object.values(held)) o.visible = false;
+  const it = SLOTS[slot], gk = gunIn(it), key = meleeT > 0 ? 'knife' : gk || (it.startsWith('gun') ? null : it), vm = key && held[key];
+  if (!vm || me.dead || me.down) return; vm.visible = true;
   swayX += -swayX * Math.min(1, dt * 9); swayY += -swayY * Math.min(1, dt * 9);
+  const u = vm.userData, a = ads * ads * (3 - 2 * ads), still = 1 - a * 0.85;   // (eased, and almost no sway while aiming: a clear, steady sight picture)
+  if (meleeT > 0) { const q = 1 - meleeT / MELEE, w = Math.sin(Math.min(1, q * 1.6) * Math.PI); vm.position.set(0.22 - w * 0.3, -0.16 + w * 0.06, -0.32 - w * 0.22); vm.rotation.set(-0.1 - w * 0.25, 0.5 - w * 1.2, -0.4 * w); return; }
   const r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / (me.reloadOf || 1))) : 0, sw = switchT > 0 ? switchT / 0.32 : 0;
-  const len = gk ? vm.userData.length : 0.3;
-  vm.position.set((0.2 - 0.2 * ads) - swayX, (-0.2 + 0.135 * ads) + swayY - r * 0.12 - sw * 0.25 - sprintB * 0.05, -0.3 - len * 0.35 + kick * 0.05 * (1 - ads * 0.5));
-  vm.rotation.set(-r * 0.35 + sprintB * -0.3 + kick * 0.06 + (mining && !gk ? Math.sin(performance.now() / 55) * 0.4 : 0), sprintB * 0.7, r * 0.5);
+  if (gk) {
+    const hip = [0.15, -0.15, -0.16 - u.len * 0.42], aim = [0, -u.top - 0.006, -0.3 - u.len * 0.5];   // (aimed: the sight's top edge on the center line, the back of the gun a forearm away)
+    vm.position.set(hip[0] + (aim[0] - hip[0]) * a - swayX * still, hip[1] + (aim[1] - hip[1]) * a + swayY * still - r * 0.1 - sw * 0.25 - sprintB * 0.04, hip[2] + (aim[2] - hip[2]) * a + kick * 0.035 * (1 - a * 0.6));
+    vm.rotation.set(-r * 0.3 - sprintB * 0.25 + kick * 0.05 * (1 - a * 0.7), sprintB * 0.65 + (1 - a) * 0.04, r * 0.45);
+  } else {
+    vm.position.set(0.26 - swayX, -0.27 + swayY - sw * 0.25, -0.5); vm.rotation.set(mining ? Math.sin(performance.now() / 55) * 0.45 : 0, it === 'pickaxe' ? 0.4 : 0.25, 0);
+  }
 }
 function drawFriends(dt) {
   const f = Math.min(1, dt * 12);
@@ -508,7 +578,7 @@ function hud(L, dt) {
   if (last$.slots !== sig) { last$.slots = sig; $('slots').innerHTML = SLOTS.map((s, i) => { const g = s.startsWith('gun') ? gunIn(s) : null, n = s.startsWith('gun') || ['pickaxe', 'torch'].includes(s) ? '' : inv[s]; return `<div class="slot${i === slot ? ' on' : ''}${n === 0 ? ' none' : ''}" data-i="${i}"><b>${i + 1}</b><span>${s.startsWith('gun') ? (g ? GUNS[g].name : 'empty') : SLOT_NAME[s]}</span><i>${n}</i></div>`; }).join(''); }
   const gk = gunIn(SLOTS[slot]), am = gk && me.ammo[gk];
   html('ammo', gk ? `<b class="${am.mag <= Math.ceil(GUNS[gk].mag * 0.25) ? 'low' : ''}">${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gk].name}</small>` : '');
-  txt('warn', gk && reloadT <= 0 ? (am.mag === 0 && am.res === 0 ? 'NO AMMO' : am.mag <= Math.ceil(GUNS[gk].mag * 0.25) && am.res > 0 ? 'RELOAD (R)' : '') : reloadT > 0 ? 'RELOADING' : '');
+  txt('warn', gk === 'minigun' && spin < GUNS.minigun.spin && spin > 0 ? 'SPINNING UP' : gk && reloadT <= 0 ? (am.mag === 0 && am.res === 0 ? 'NO AMMO' : am.mag <= Math.ceil(GUNS[gk].mag * 0.25) && am.res > 0 ? 'RELOAD (R)' : '') : reloadT > 0 ? 'RELOADING' : '');
   txt('prompt', prompt ? prompt.text : (me.down ? `Down: ${Math.ceil(me.bleed)} s until you bleed out` : ''));
   txt('perks', [...me.perks].map(k => PERKS[k].name).join('   '));
   txt('round', String(day));
@@ -601,4 +671,4 @@ $('solo').onclick = () => { myName(); start(Math.floor(Math.random() * 1e9), tru
 $('host').onclick = () => { myName(); const code = roomCode(); net = new Net(onNet, s => say(s, 6)); net.hostGame(code); start(Math.floor(Math.random() * 1e9), true); say(`Room ${code} is open. Esc, then COPY INVITE, and paste it to your friends.`, 12); };
 $('join').onclick = () => { myName(); const code = cleanCode($('code').value); if (code.length !== CODE_LEN) { $('menuNote').textContent = `Room codes are ${CODE_LEN} letters.`; return; } net = new Net(onNet, s => { $('menuNote').textContent = s; if (mode === 'play') say(s, 6); }); net.joinGame(code); sound.wake(); $('menuNote').textContent = `Joining room ${code}...`; };
 requestAnimationFrame(frame);
-window.lastfire = { get world() { return world; }, got, me, hollow, stations, others, renderer, get net() { return net; }, drops, buffs, shoot: () => { shotReady = true; shotCd = 0; switchT = 0; shoot(); }, get prompt() { return prompt; }, interact, togglePanel, get panel() { return panel; }, get slot() { return slot; }, set slot(v) { slot = v; }, inv, aimAt: k => { const dx = k.x - me.x, dz = k.z - me.z, dy = k.y + 1.4 - (me.y + 1.62); me.yaw = Math.atan2(-dx, -dz); me.pitch = Math.atan2(dy, Math.hypot(dx, dz)); } };   // (a handle for the automated test; nothing in play uses it)
+window.lastfire = { set aim(v) { testAim = v; }, turrets, held, melee, get spin() { return spin; }, addTurret, get world() { return world; }, got, me, hollow, stations, others, renderer, get net() { return net; }, drops, buffs, shoot: () => { shotReady = true; shotCd = 0; switchT = 0; shoot(); }, get prompt() { return prompt; }, interact, togglePanel, get panel() { return panel; }, get slot() { return slot; }, set slot(v) { slot = v; }, inv, aimAt: k => { const dx = k.x - me.x, dz = k.z - me.z, dy = k.y + 1.4 - (me.y + 1.62); me.yaw = Math.atan2(-dx, -dz); me.pitch = Math.atan2(dy, Math.hypot(dx, dz)); } };   // (a handle for the automated test; nothing in play uses it)

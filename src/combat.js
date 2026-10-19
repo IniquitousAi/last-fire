@@ -10,7 +10,11 @@ export const GUNS = {
   smg:     { name: 'MP-5',    ap: 0.15, dmg: 32,  head: 2.0, rpm: 780, auto: true,  mag: 30, reserve: 180, reload: 2.1, spread: 0.022, recoil: 0.011, price: 1000, snd: [1.35, 0.16, 0.65, 170] },
   shotgun: { name: 'Olympia', ap: 0.35, dmg: 34,  head: 1.6, rpm: 80,  auto: false, mag: 2,  reserve: 40,  reload: 2.6, spread: 0.075, recoil: 0.085, price: 1250, snd: [0.6, 0.5, 1.0, 70], pellets: 8 },
   rifle:   { name: 'M14',     ap: 0.7, dmg: 120, head: 3.0, rpm: 300, auto: false, mag: 8,  reserve: 96,  reload: 2.3, spread: 0.004, recoil: 0.045, price: 1500, snd: [0.85, 0.38, 1.0, 95] },
+  ar:      { name: 'M4',      ap: 0.3, dmg: 48,  head: 2.2, rpm: 720, auto: true,  mag: 30, reserve: 210, reload: 2.2, spread: 0.014, recoil: 0.013, price: 1750, snd: [1.0, 0.24, 0.85, 120] },
   lmg:     { name: 'RPK',     ap: 0.4, dmg: 55,  head: 2.0, rpm: 600, auto: true,  mag: 45, reserve: 270, reload: 3.4, spread: 0.03,  recoil: 0.016, price: 3500, snd: [0.8, 0.3, 0.9, 100] },
+  minigun: { name: 'Minigun', ap: 0.45, dmg: 42,  head: 1.8, rpm: 1500, auto: true, mag: 150, reserve: 450, reload: 4.6, spread: 0.045, recoil: 0.006, price: 5000, spin: 0.55, snd: [1.2, 0.12, 0.75, 130] },   // (spins up for half a second before it fires; you walk slower carrying it)
+  knife:   { name: 'Knife',   ap: 0.5, dmg: 150, head: 1.5, rpm: 140, auto: false, mag: 1, reserve: 0, reload: 0, spread: 0, recoil: 0, price: 0, melee: true, snd: [1, 0.1, 0.4, 200] },
+  sentry:  { name: 'Sentry', ap: 0.35, dmg: 26, head: 1.5, rpm: 500, auto: true, mag: 300, reserve: 0, reload: 0, spread: 0.04, recoil: 0, price: 2500, hidden: true, snd: [1.25, 0.14, 0.45, 160] },
 };
 export const PERKS = {
   iron:  { name: 'Iron Will',   price: 2500, says: 'take 2.5 times the hits' },
@@ -28,7 +32,7 @@ export const DROPS = {
 };
 
 // ---------------------------------------------------------------- sound
-let ac = null, out = null, wet = null, volume = 0.8;
+let ac = null, out = null, wet = null, volume = 0.8, whirO = null, whirG = null;
 const buf = {};
 function ctx() {
   if (!ac) {
@@ -86,6 +90,12 @@ export const sound = {
   hit(head) { const d = dest(null); tone(d, head ? 2400 : 1700, head ? 2200 : 1500, 0.05, 0.09, 'square'); },
   plate() { const d = dest(null); tone(d, 3100, 2600, 0.07, 0.06, 'triangle'); tone(d, 4700, 4300, 0.05, 0.03, 'sine'); },   // (a round off armor: a hard ping, not the soft hit tick)
   shatter() { const d = dest(null); play(buf.rattle, d, { rate: 0.9, gain: 0.5, type: 'highpass', freq: 2500 }); tone(d, 1900, 700, 0.18, 0.07, 'triangle'); },
+  swing() { const d = dest(null); play(buf.body, d, { rate: 2.2, gain: 0.35, type: 'bandpass', freq: 1400, q: 1.5 }); },   // (the knife cutting air)
+  stab() { const d = dest(null); tone(d, 160, 60, 0.12, 0.35); play(buf.step, d, { rate: 1.2, gain: 0.4, type: 'lowpass', freq: 900 }); },
+  thud() { const d = dest(null); play(buf.step, d, { rate: 0.8, gain: 0.35, type: 'lowpass', freq: 600 }); },
+  whir(level) {   // (the minigun's barrels: a rising hum while they spin, silent when they stop)
+    if (!ac && level <= 0) return; const a = ctx(); if (!whirO) { whirO = a.createOscillator(); whirO.type = 'sawtooth'; whirG = a.createGain(); whirG.gain.value = 0; const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; whirO.connect(f).connect(whirG).connect(out); whirO.start(); }
+    whirO.frequency.setTargetAtTime(40 + level * 160, a.currentTime, 0.05); whirG.gain.setTargetAtTime(level > 0.01 ? 0.05 + level * 0.06 : 0, a.currentTime, 0.06); },
   kill() { const d = dest(null); tone(d, 900, 300, 0.12, 0.08, 'triangle'); },
   click() { const d = dest(null); play(buf.rattle, d, { rate: 3, gain: 0.25, type: 'bandpass', freq: 2600, q: 4 }); },
   magOut() { const d = dest(null); play(buf.rattle, d, { rate: 1.4, gain: 0.35, type: 'bandpass', freq: 1500, q: 2 }); },
@@ -113,12 +123,12 @@ function signTexture(lines, color) {   // (drawn once on a canvas)
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 export function makeStation(kind, key, x, y, z, yaw) {
-  const isGun = kind === 'gun', item = isGun ? GUNS[key] : PERKS[key], color = isGun ? '#39e6ff' : '#ff6fb1';
+  const isGun = kind === 'gun' || kind === 'kit', item = kind === 'kit' ? { name: 'Sentry', price: 2500 } : isGun ? GUNS[key] : PERKS[key], color = kind === 'kit' ? '#b9a8ff' : isGun ? '#39e6ff' : '#ff6fb1';
   const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = yaw;
   const post = new THREE.Mesh(new THREE.BoxGeometry(isGun ? 1.6 : 1.1, isGun ? 1.0 : 2.0, 0.3), new THREE.MeshStandardMaterial({ color: isGun ? 0x2a2b33 : 0x1d1424, roughness: 0.7, metalness: 0.3 }));
   post.position.y = isGun ? 1.4 : 1.0; post.castShadow = true; post.receiveShadow = true;
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(isGun ? 1.5 : 1.0, isGun ? 0.75 : 0.5), new THREE.MeshBasicMaterial({ map: signTexture([item.name, String(item.price)], color) }));
   sign.position.set(0, isGun ? 1.4 : 1.5, 0.16); g.add(post, sign);
-  g.userData = { kind, key, price: item.price, label: isGun ? `${item.name} for ${item.price} (ammo ${Math.floor(item.price / 2)})` : `${item.name} for ${item.price}: ${item.says}` };
+  g.userData = { kind, key, price: item.price, label: kind === 'kit' ? `a Sentry for ${item.price}: it shoots on its own (carry 2)` : isGun ? `${item.name} for ${item.price} (ammo ${Math.floor(item.price / 2)})` : `${item.name} for ${item.price}: ${item.says}` };
   return g;
 }

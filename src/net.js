@@ -6,7 +6,7 @@
 const PREFIX = 'lastfire-v2-';
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // (no I or O: nothing to misread)
 export const CODE_LEN = 6, MAX_PLAYERS = 4;
-const KINDS = new Set(['hello', 'p', 'e', 'fire', 'feed', 'shot', 'bang', 'pts', 'revive', 's', 'hurt', 'drop', 'gone', 'take', 'boon', 'kf', 'bye']);
+const KINDS = new Set(['hello', 'p', 'e', 'fire', 'feed', 'shot', 'bang', 'pts', 'revive', 's', 'hurt', 'drop', 'gone', 'take', 'boon', 'kf', 'bye', 'turret', 'tb']);
 const MAX_BYTES = 400000;   // (the host's opening message carries the world's edits; nothing else comes near this)
 
 export function roomCode() { const r = new Uint32Array(CODE_LEN); crypto.getRandomValues(r); return Array.from(r, v => LETTERS[v % LETTERS.length]).join(''); }
