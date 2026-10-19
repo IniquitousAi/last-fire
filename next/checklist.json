@@ -612,11 +612,20 @@
    "task": "With friends it is a hangout; alone it is survival: both full games",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/game.js#Math.pow(g.players.length, 1.5)",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/modes.mjs#a hangout of 4 is a full game",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": null,
-    "played": null
+    "played": {
+     "proof": "sim/modes.mjs#for (const n of [1, 2, 4])",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -1332,11 +1341,23 @@
    "task": "Small details and depth everywhere you look up close",
    "where": "research next",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/details.js#Details",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/wilds_test.mjs#boot prints along 5 real paths",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/details-tally.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/wilds_run.json#earth gate",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -1373,14 +1394,23 @@
    "task": "Robots try to break every rule",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "sim/fuzz.mjs#RULES",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/fuzz.mjs#no rule broken",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/fuzz.mjs#random actions",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },

@@ -2,3 +2,4 @@
 - v165 serves C,B: A learned friend keeps the camp with you in every solo game; the menu says PLAY; build keys never wrap; the checklist and dev pages are solid; every checklist item says what it serves
 - v166 serves A,C: Far sky grows stranger, rare dry lines on the wrist, smiling signs at Earth's gates, the morning after says what last night changed, fog thickens at dusk, build keys show only when you can afford one
 - v167 serves A,B,C: The Rift: the north gate opens into another dimension and its console starts waves that never stop; corruption cracks the ground red and violet; red glyphs on the wall; the board shows the honest number and the council's softer one
+- v168 serves A: Earth's night is cold slate with fog lying against the walls, the walls are slate with red glyphs, the Wilds have their rules (a green patch, a spore bog that costs light), the Simulator says why anything is not good
