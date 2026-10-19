@@ -1,0 +1,19 @@
+{
+ "8": {"seen": {"proof": "next/playtests/lanes/D/guns-sheet.png", "at": "2026-10-19"}},
+ "9": {"tested": {"proof": "next/sim/basics.cjs#nothing bobs", "at": "2026-10-19"}},
+ "11": {"seen": {"proof": "next/playtests/lanes/D/guns-sheet.png", "at": "2026-10-19"}},
+ "2": {"seen": {"proof": "next/playtests/lanes/D/sweep-sheet.png", "at": "2026-10-19"}},
+ "notes": {
+  "1": "Not done: no side-by-side against reference games.",
+  "2": "Camp shot shows scan rocks and metal near, planet and sky far. Seen only; far-strange is rough.",
+  "5": "Not done (Simulator page numbers per system).",
+  "6": "Camp boxes replaced with real models (camp.js: Poly Haven street_lamp_02 for the board post, gate posts and hanging-lamp poles, Kenney signpost for the theory wall, the CC0 lantern for the bunk lamps). Still code boxes: Earth towers and walls (earthsite.js, textured concrete slabs by design), the lamp-post box in main.js ~286, wrist band. No suitable CC0 ruin model got downloaded.",
+  "8": "Pistol, shotgun, LMG, AR, rifle are real Quaternius/Blender glb already (assets/m, assets/fp, CREDITS.txt). All four guns screenshotted hip and ADS. Tents/kit are Kenney. No new downloads, so no new CREDITS lines.",
+  "9": "Basics gate: body height range 0.002 m over 1 s walking. Creature bob not tested.",
+  "10": "Not worked on.",
+  "11": "ADS shots: AR red dot, pistol front sight, shotgun and LMG sights sit on screen center. Read by eye only; no pixel test or sight-steadiness test.",
+  "23": "Not done.",
+  "54": "Not done.",
+  "56": "Not done."
+ }
+}

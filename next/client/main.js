@@ -332,7 +332,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
-if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, scene, renderer, composer, info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
+if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, scene, renderer, composer, gun: k => switchGun(k), aim: v => { aimOn = v; }, info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
 // a relay or the truck's cab warm them back in about 3 s. The drift moves your real aim, so where the sight sits is where the round goes.

@@ -50,9 +50,9 @@ export class Camp {
       for (const [pp, lift] of [[form, 0.004], [real, 0.006]]) { ray.set(new THREE.Vector3(pp.position.x, pp.position.y + 3, pp.position.z), down); const hit = ray.intersectObject(o, true)[0]; if (hit) pp.position.y = hit.point.y + lift; } });
     // the board: a dark panel on a post at the edge of the fire's light, redrawn only when what it shows changes
     this.bc = document.createElement('canvas'); this.bc.width = 768; this.bc.height = 480; this.btex = new THREE.CanvasTexture(this.bc); this.btex.colorSpace = THREE.SRGBColorSpace;
-    const by = land(BOARD.x, BOARD.z); const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.2, 0.16), new THREE.MeshStandardMaterial({ color: 0x2b2f38, roughness: 0.7 })); post.position.set(BOARD.x, by + 1.1, BOARD.z);
+    const by = land(BOARD.x, BOARD.z); 
     this.board = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.25), new THREE.MeshBasicMaterial({ map: this.btex, color: 0xc4c4c4 }));   /* (a hair under the bloom threshold: no halo behind its big numbers, his rule) */ this.board.position.set(BOARD.x, by + 2.7, BOARD.z); this.board.rotation.y = Math.atan2(-BOARD.x, -BOARD.z);
-    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(post, this.board, glow);
+    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(this.board, glow);
     // the CHECK key: shown only when you stand at the board (click it, or press C)
     this.btn = Object.assign(document.createElement('button'), { className: 'bk', innerHTML: 'CHECK THE REAL ODDS<small>(the board shows what the council approved)</small>' });
     Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '55%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
@@ -85,7 +85,7 @@ export class Camp {
     // the wall of theories by the hut: every survivor's guess at what the dark is, with odds that what you find moves; none ever reads 'checked'
     this.tc = document.createElement('canvas'); this.tc.width = 768; this.tc.height = 512; this.ttex = new THREE.CanvasTexture(this.tc); this.ttex.colorSpace = THREE.SRGBColorSpace;
     const tx = -7, tz = 13.5, ty = land(tx, tz), wall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.73), new THREE.MeshBasicMaterial({ map: this.ttex, color: 0xc4c4c4 }));
-    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); const legs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x15171d })); legs.position.set(tx, ty + 0.6, tz); this.scene.add(wall, legs); this.tdrawn = '';
+    wall.position.set(tx, ty + 2.1, tz); wall.rotation.y = Math.atan2(-tx, -tz); this.scene.add(wall); this.tdrawn = '';
   }
   // the honest numbers, from what really happened (labels say how sure)
   odds() {
@@ -265,6 +265,8 @@ export class Camp {
         o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; if (m.s.y * k > 1) this.solids.push([x, z, hx, hz, cs, sn, m.s.y * k]); }   /* (anything taller than a meter is solid: the camera never walks inside a wall) */
       this.scene.add(o); if (batch.has(url)) mine.push(o); return o; });
     const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
+    const putH = (url, x, z, h, ry = 0) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(), k = h / m.s.y; o.scale.setScalar(k); o.position.set(x - m.c.x * k, land(x, z) - m.y0 * k, z - m.c.z * k); o.rotation.y = ry; this.scene.add(o); return o; });   /* (a real scan stood to a given height: poles and posts are Poly Haven street lamps, not code boxes, 2026-10-19) */
+    const LAMPPOST = 'ph/street_lamp_02/street_lamp_02_1k.gltf';
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
     const poleG = new THREE.BoxGeometry(0.12, 3, 0.12), poleM = new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 }), bulbG = new THREE.BoxGeometry(0.26, 0.3, 0.26), bulbM = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xe0d8ff, emissiveIntensity: 0.55 });   /* (was 1.4: up close it blew out to a white blob in his eyes, 2026-10-19) */   /* (the three hanging lamps share one pole and one bulb) */
     const FEN = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_double', POST = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_post', BAR = 'ph/Barrel_01/Barrel_01_1k.gltf', CRATE = 'ph/old_military_crate/old_military_crate_1k.gltf', PH = n => `ph/${n}/${n}_1k.gltf`;   // (Poly Haven photo scans, CC0: the Kenney toy kit and the code boxes looked like a placeholder up close, his eyes 2026-10-19)
@@ -279,8 +281,7 @@ export class Camp {
         const x = Math.cos(a) * R, z = Math.sin(a) * R; put(FEN, x, z, SEG, -a - Math.PI / 2 + along, 0.02);
         const b = (i + 0.5) / n * Math.PI * 2; if (Math.abs(Math.atan2(Math.sin(b - GATE), Math.cos(b - GATE))) > 0.12 - 0.5 / n * Math.PI * 2) put(POST, Math.cos(b) * R, Math.sin(b) * R, 0.15, 0, 0.02); } });
     const gx = Math.cos(GATE) * R, gz = Math.sin(GATE) * R;
-    for (const s of [-1, 1]) { const x = gx + s * 2.2, z = gz, post = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.4, 0.22), new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6, metalness: 0.3 })); post.position.set(x, land(x, z) + 1.7, z);
-      this.scene.add(post); get(PH('security_light')).then(m => { if (!m) return; const o = m.scene.clone(), k = 0.5 / Math.max(m.s.x, m.s.z); o.scale.setScalar(k); o.position.set(x, land(x, z) + 3.4 - m.y0 * k, z); o.rotation.y = face(x, z); this.scene.add(o); }); }
+    for (const s of [-1, 1]) { const x = gx + s * 2.2, z = gz; putH(LAMPPOST, x, z, 3.4); get(PH('security_light')).then(m => { if (!m) return; const o = m.scene.clone(), k = 0.5 / Math.max(m.s.x, m.s.z); o.scale.setScalar(k); o.position.set(x, land(x, z) + 3.4 - m.y0 * k, z); o.rotation.y = face(x, z); this.scene.add(o); }); }
     for (const s of [-1, 1]) put(PH('concrete_road_barrier'), gx + s * 3.6, gz + 1.6, 1.6, Math.PI / 2 + s * 0.15);   // (barriers flank the gate outside)   // (the gate heads glow white-violet: they read cyan, his rule is no cyan)
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
@@ -288,7 +289,9 @@ export class Camp {
       const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z)).then(cloth);
       const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2);
       const lx = bx - Math.sin(a) * 0.8, lz = bz + Math.cos(a) * 0.8;   /* (the bunk lantern stands on the ground beside the bedroll: it hung in the air half a meter up) */
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.16), new THREE.MeshStandardMaterial({ color: 0x07070c, emissive: 0xb9a8ff, emissiveIntensity: 0 })); lamp.position.set(lx, land(lx, lz) + 0.12, lz); this.scene.add(lamp); (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (no real light per bunk: 5 more lights would cost every surface; the lamp's own glow is the receipt)
+      const lamp = { material: {} }; { let ei = 0; const mats = []; Object.defineProperty(lamp.material, 'emissiveIntensity', { get: () => ei, set: v => { ei = v; for (const m of mats) m.emissiveIntensity = v; } });
+        L.loadAsync('../assets/m/lantern.glb').then(r => { const o = r.scene.clone(), bb = new THREE.Box3().setFromObject(o), k = 0.3 / (bb.max.y - bb.min.y); o.scale.setScalar(k); o.position.set(lx - (bb.min.x + bb.max.x) / 2 * k, land(lx, lz) - bb.min.y * k, lz - (bb.min.z + bb.max.z) / 2 * k);
+          o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0xb9a8ff); q.material.emissiveIntensity = ei; mats.push(q.material); } }); this.scene.add(o); }).catch(() => {}); } (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (the bunk lantern is the real CC0 lantern model, its glow driven by the dues like before)
     // the workshop: a bench, planks, barrels and a chest by the wall
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }
@@ -308,12 +311,12 @@ export class Camp {
     { const [x, z] = W(237, 9.4); put(PH('barrel_stove'), x, z, 0.6, 0); }
     // three hanging lamps: the tents, the workshop, the store (each lit corner reads as a place, not a floor)
     for (const [deg, r] of [[237, 10.5], [36, 13], [-9, 14]]) { const [x, z] = W(deg, r), y = land(x, z), l = new THREE.PointLight(0xcfe0ff, 9, 13, 1.4); l.position.set(x, y + 2.8, z);
-      const pole = new THREE.Mesh(poleG, poleM); pole.position.set(x, y + 1.5, z);
-      this.scene.add(l); mine.push(pole); put(PH('security_light'), x, z, 0.42, deg * Math.PI / 180, -2.92); }
+      this.scene.add(l); putH(LAMPPOST, x, z, 3.1); put(PH('security_light'), x, z, 0.42, deg * Math.PI / 180, -2.92); }
     // outside: stones and rubble in the dark, so the land is somewhere and not a floor
     let q = 7; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = 24 + rnd() * 50, x = Math.cos(a) * r, z = Math.sin(a) * r; put('kit/stone.glb', x, z, 0.5 + rnd() * rnd() * 2.6, rnd() * 6.3, 0, true); }
     for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, r = 4 + rnd() * 15, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.hypot(x - HUT.x, z - HUT.z) < 5 || Math.hypot(x - BOARD.x, z - BOARD.z) < 3 || r < 5) continue; put('kit/stone.glb', x, z, 0.25 + rnd() * 0.35, rnd() * 6.3, 0, true); }
+    putH(LAMPPOST, BOARD.x, BOARD.z - 0.1, 2.5); putH('kit/signpost.glb', -7, 13.3, 1.5);   // (the board's post and the theory wall's stand: real models)
     fenceP.then(() => Promise.all(pend)).then(fold);
   }
   speak(role, line, sec) { this.voice = { role, line: line.replace(/[<>&]/g, ''), until: performance.now() + sec * 1000 }; }
