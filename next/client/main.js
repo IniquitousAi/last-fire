@@ -1,15 +1,15 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=5';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=5';
+import * as C from '../core/game.js?v=6';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=6';
 import { sound, GUNS } from '../../src/combat.js?v=11';
 import { FX } from '../../src/fx.js?v=11';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 5;   // (this copy's version; ./version.json says the newest)
+const BUILD = 6;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -369,7 +369,7 @@ function onNet(m, from) {
   }
   // a friend's side: only the host's word counts
   if (from !== 0) { if (m.t === 'bang' && GUNS[m.g] && [m.x, m.y, m.z].every(fin)) heardShot(m); return; }
-  if (m.t === 'hello') { if (!fin(m.seed)) return; net.me = m.you; begin(m.seed, m.you).then(() => {}); for (const n of m.nodes || []) if (Array.isArray(n) && C.NODE[n[1]]) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false }); C.linkNetwork(g); if (Array.isArray(m.fire)) [g.fire.level, g.fire.light, g.fire.fuel] = m.fire; g.clock = m.clock; g.night = m.night; return; }
+  if (m.t === 'hello') { if (!fin(m.seed)) return; net.me = m.you; SET.lastJoin = net.code; save(); begin(m.seed, m.you).then(() => {}); for (const n of m.nodes || []) if (Array.isArray(n) && C.NODE[n[1]]) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false }); C.linkNetwork(g); if (Array.isArray(m.fire)) [g.fire.level, g.fire.light, g.fire.fuel] = m.fire; g.clock = m.clock; g.night = m.night; return; }
   if (!g) return;
   if (m.t === 's') applyState(m);
   if (m.t === 'ev' && Array.isArray(m.e)) for (const e of m.e.slice(0, 20)) if (Array.isArray(e)) inbox.push(e);
@@ -451,12 +451,15 @@ function drawWorlds() {
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   $('worlds').innerHTML = list.map(w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`).join('');
 }
-$('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); startWorld(pendingWorld); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); } else startWorld(pendingWorld); });
+$('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
 let pendingWorld = null; drawWorlds(); setTimeout(() => { if (mode === 'menu') resume(); }, 50); setTimeout(flushQueue, 5000);
 $('solo').onclick = () => { myName(); sound.wake(); startWorld(null); };
-$('host').onclick = () => { myName(); sound.wake(); const code = roomCode(); net = new Net(onNet, t => say(t, 5)); net.hostGame(code); startWorld(null); say(`Room ${code} is open. Esc, then COPY INVITE.`, 10); };
+function crewCode() { if (!SET.crew) { SET.crew = roomCode(); save(); } return SET.crew; }   // (made once, kept forever in this browser: the link never changes)
+function openRoom(t0 = 0) { const code = crewCode(); net = new Net(onNet, t => { if (/taken/.test(t) && t0 < 8) { setTimeout(() => { try { net.peer.destroy(); } catch (e) {} openRoom(t0 + 1); }, 3000); return; } say(t, 5); }); net.hostGame(code); }   // (just after a reload the old room can linger a few seconds: try again)
+$('host').onclick = () => { myName(); sound.wake(); openRoom(); startWorld(worlds()[0] ? worlds()[0].id : null); say(`Your crew's room ${crewCode()} is open. Your link never changes: Esc, then COPY INVITE once and pin it.`, 10); };
 $('join').onclick = () => { myName(); sound.wake(); const code = cleanCode($('code').value); if (code.length !== CODE_LEN) { $('menuNote').textContent = `Room codes are ${CODE_LEN} letters.`; return; } net = new Net(onNet, t => { $('menuNote').textContent = t; if (mode === 'play') say(t, 5); }); net.joinGame(code); $('menuNote').textContent = `Joining room ${code}...`; };
+function drawJoinAgain() { const c = SET.lastJoin; if (c && c.length === CODE_LEN && !$('code').value) { $('code').value = c; $('menuNote').textContent = 'Your crew room is filled in: click JOIN.'; } }
 function readInvite() { const c = cleanCode((location.hash.match(/join=([A-Za-z]+)/) || [])[1]); if (c.length === CODE_LEN && mode === 'menu') { $('code').value = c; $('menuNote').textContent = `Your friend's room ${c} is filled in: type your name, then click JOIN.`; } }
-readInvite(); addEventListener('hashchange', readInvite);
+readInvite(); drawJoinAgain(); addEventListener('hashchange', readInvite);
 requestAnimationFrame(frame);
 window.lastfire2 = { get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)

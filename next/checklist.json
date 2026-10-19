@@ -225,6 +225,16 @@
    "s": "in",
    "idea": "A feel beats a number",
    "where": "taste rule 80"
+  },
+  {
+   "s": "in",
+   "idea": "One permanent link per crew",
+   "where": "your room code is made once and kept; friends' browsers remember it (one click JOIN)"
+  },
+  {
+   "s": "later",
+   "idea": "Plan: max the browser game with the crew until the feedback runs out, then Godot, then Steam",
+   "where": "the rules (core/) are already separate, so the move is a port, not a rewrite"
   }
  ]
 }
