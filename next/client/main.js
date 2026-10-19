@@ -1,16 +1,16 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=12';
-import { Camp } from './camp.js?v=12';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=12';
-import { sound, GUNS } from '../../src/combat.js?v=12';
-import { FX } from '../../src/fx.js?v=12';
+import * as C from '../core/game.js?v=13';
+import { Camp } from './camp.js?v=13';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=13';
+import { sound, GUNS } from '../../src/combat.js?v=13';
+import { FX } from '../../src/fx.js?v=13';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 12;   // (this copy's version; ./version.json says the newest)
+const BUILD = 13;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -413,7 +413,7 @@ function drawFriends(dt) {
   if (!isHost()) for (const k of g.hollow) if (k.tx !== undefined) { k.x += (k.tx - k.x) * f; k.y += (k.ty - k.y) * f; k.z += (k.tz - k.z) * f; let d = k.tyaw - k.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); k.yaw += d * f; }
   for (const p of g.players) {
     if (p === me) continue; live.add(p.id); let v = friendViews.get(p.id);
-    if (!v && models.soldier) { const o = skClone(models.soldier.scene), b = new THREE.Box3().setFromObject(o); o.scale.setScalar(1.8 / b.getSize(new THREE.Vector3()).y); const mix = new THREE.AnimationMixer(o), A = n => { const c = models.soldier.animations.find(a => a.name.endsWith('|' + n) || a.name === n); return c ? mix.clipAction(c) : null; };
+    if (!v && models.soldier) { models.soldier.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(models.soldier.scene), o = skClone(models.soldier.scene); o.scale.setScalar(1.8 / b.getSize(new THREE.Vector3()).y); const mix = new THREE.AnimationMixer(o), A = n => { const c = models.soldier.animations.find(a => a.name.endsWith('|' + n) || a.name === n); return c ? mix.clipAction(c) : null; };
       v = { o, mix, run: A('Run'), idle: A('Idle_Gun'), mark: Object.assign(document.createElement('div'), { className: 'mark' }), px: p.x, pz: p.z }; v.idle?.play(); scene.add(o); $('hud').append(v.mark); friendViews.set(p.id, v); }
     if (!v) continue;
     if (p.tx !== undefined) { p.x += (p.tx - p.x) * f; p.y += (p.ty - p.y) * f; p.z += (p.tz - p.z) * f; }
@@ -465,4 +465,4 @@ function drawJoinAgain() { const c = SET.lastJoin; if (c && c.length === CODE_LE
 function readInvite() { const c = cleanCode((location.hash.match(/join=([A-Za-z]+)/) || [])[1]); if (c.length === CODE_LEN && mode === 'menu') { $('code').value = c; $('menuNote').textContent = `Your friend's room ${c} is filled in: type your name, then click JOIN.`; } }
 readInvite(); drawJoinAgain(); addEventListener('hashchange', readInvite);
 requestAnimationFrame(frame);
-window.lastfire2 = { get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)
+window.lastfire2 = { get camp() { return camp; }, get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)

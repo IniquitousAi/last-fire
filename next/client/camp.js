@@ -40,7 +40,7 @@ export class Camp {
     this.people = []; this.heard = new Set();
     const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75 }, { role: 'the Night worker', url: 'c/soldier.glb', x: -5, z: -2.6, anim: 'Idle_Gun', h: 1.8 }, { role: 'a Council member', url: 'c/survivor.glb', x: -10.8, z: 7.2, anim: 'Idle', h: 1.7 }];
     for (const P of PEOPLE) L.loadAsync('../assets/' + P.url).then(r => {
-      const o = skClone(r.scene), b = new THREE.Box3().setFromObject(o); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y); o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
+      r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), o = skClone(r.scene); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y);   /* (measured on the original: a copy of an animated model measures wrong) */ o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
       o.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); m.castShadow = false; } });
       const lamp = new THREE.PointLight(0xcfe0ff, 5, 6, 1.5); lamp.position.set(P.x + 0.6, land(P.x, P.z) + 1.4, P.z + 0.4); scene.add(lamp);   // (each person keeps a small lantern: you see who is talking)
       const mix = new THREE.AnimationMixer(o), clip = r.animations.find(a => a.name.endsWith('|' + P.anim) || a.name.endsWith(P.anim)); if (clip) mix.clipAction(clip).play();
