@@ -18,7 +18,6 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 7. **Simulated real people.** Use everything learned about him (the chat logs, the Twin's data, Rim, Jev) to simulate real people: after Dalton or he plays a lot, play with someone who plays exactly like Dalton and says some of the same things; or work out from how someone plays how they probably talk. Always ask how the simulators can be used in fun ways. (2026-10-19; it builds on the learned friend in ANSWERS.md and the habits recorder in core/habits.js)
 
-12. **Take it apart to learn it** (idea 7): strip dead machines on Earth; the blueprint stays reasoned until your rebuilt one runs.
 
 
 
@@ -52,7 +51,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-44. **Lines that fit the moment** (from item 43: your words play at random moments): let a typed line carry an optional moment word (kill, dusk, hurt, bank, fell) so it plays when that happens. (added when item 43 finished)
+
+45. **Take it apart to learn it** (INNOVATION.md idea 7, building): dead machines on Earth you strip for parts; a part you took apart yourself shows its fit order as checked, the rest as reasoned. (added when item 44 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -86,3 +86,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 41, the learned friend is faithful by a record-to-record round trip (v90, v91).
 - Item 42, the carried-load habit, used once measured (v92).
 - Item 43, YOUR WORDS for your learned copy (v93).
+- Item 44, lines that fit the moment (v94).
