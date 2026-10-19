@@ -66,7 +66,10 @@
      "proof": "next/client/camp.js#yard",
      "at": "2026-10-19"
     },
-    "tested": null,
+    "tested": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    },
     "seen": {
      "proof": "next/playtests/lanes/D/camp-sheet.png",
      "at": "2026-10-19"
@@ -75,7 +78,10 @@
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -184,7 +190,10 @@
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -233,7 +242,10 @@
      "proof": "next/playtests/lanes/D/guns-sheet.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "next/sim/basics.cjs#the mouse wheel cycles guns both ways",
      "at": "2026-10-19"
@@ -254,7 +266,10 @@
      "proof": "next/sim/lane_d_nobob.mjs",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/walk-strip.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
@@ -279,12 +294,18 @@
      "proof": "next/sim/lane_d_shots3d.cjs",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/friend-tracer.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -305,7 +326,10 @@
      "proof": "next/playtests/lanes/D/ar-ads-sky.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "next/sim/lane_d_sights.cjs",
      "at": "2026-10-19"
