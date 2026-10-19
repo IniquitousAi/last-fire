@@ -3,6 +3,7 @@
 // reasoned (worked out from what really happened), guess (no proof yet). None of them is decoration.
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
+import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 };
 function paper(lines, w = 512, h = 360) {   // (a sheet of paper as a texture: lines are [text, size, color])
@@ -35,6 +36,15 @@ export class Camp {
     this.btn = Object.assign(document.createElement('button'), { className: 'bk', innerHTML: 'CHECK THE REAL ODDS<small>(the board shows what the council approved)</small>' });
     Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '64%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
     this.btn.onclick = () => this.check(); addEventListener('keydown', e => { if (e.code === 'KeyC' && this.near) this.check(); });
+    // camp people: each speaks from what really happened, one line at a time, never repeating while a fresh one is left (IMMERSION.md)
+    this.people = []; this.heard = new Set();
+    const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75 }, { role: 'the Night worker', url: 'c/soldier.glb', x: -5, z: -2.6, anim: 'Idle_Gun', h: 1.8 }, { role: 'a Council member', url: 'c/survivor.glb', x: -10.8, z: 7.2, anim: 'Idle', h: 1.7 }];
+    for (const P of PEOPLE) L.loadAsync('../assets/' + P.url).then(r => {
+      const o = skClone(r.scene), b = new THREE.Box3().setFromObject(o); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y); o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
+      o.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.multiplyScalar(0.55); m.castShadow = false; } });   // (dimmed: only the fire lights them)
+      const mix = new THREE.AnimationMixer(o), clip = r.animations.find(a => a.name.endsWith('|' + P.anim) || a.name.endsWith(P.anim)); if (clip) mix.clipAction(clip).play();
+      const tag = Object.assign(document.createElement('div'), { className: 'mark' }); tag.style.maxWidth = '420px'; tag.style.whiteSpace = 'normal'; tag.style.color = '#eef0f8'; tag.hidden = true; document.getElementById('hud').append(tag);
+      scene.add(o); this.people.push({ ...P, o, mix, tag, line: '', lineT: 0 }); }).catch(() => {});
   }
   // the honest numbers, from what really happened (labels say how sure)
   odds() {
@@ -52,6 +62,26 @@ export class Camp {
     if (y.tense < 0.2) return 'nothing happened last night. statistically suspicious.';
     return 'everyone came back. this has been noted, in triplicate.';
   }
+  lines(role) {   // (every line is written from the live world: the night, the board, the fire, yesterday's record)
+    const g = this.ctx.g(), me = this.ctx.me(), o = this.odds(), y = g.history[g.history.length - 1], out = [];
+    if (role === 'the Clerk') {
+      if (me.carried > 0) out.push(`You're carrying ${Math.floor(me.carried)} light. The fire is right there. I'm only saying.`);
+      out.push(`Night ${g.night}. The board says ${o.council}%. The board says a lot of things.`);
+      if (y && y.falls > 0) out.push('Form 9-C is for when someone stops being anywhere. We are out of 9-C.');
+      if (this.checkedNight === g.night) out.push('You checked the real odds. Nobody checks. Huh.');
+      out.push("I don't make the quotas. I laminate them.");
+    } else if (role === 'the Night worker') {
+      out.push(g.fire.level ? `Fire's at level ${g.fire.level}. Something out there noticed. It always does.` : 'Fire is small. The dark is not. That is the whole job description.');
+      if ((g.marks || []).some(m => m.k === 'wreck')) out.push('A relay went dark out there. I filed it under expected.');
+      if (y && y.tense < 0.2) out.push("Quiet night. I don't trust it either.");
+      out.push('Light the edge, keep your back to the fire. Not the other way around.');
+    } else {
+      out.push(`Survival today is ${o.council}%. Officially. We round with compassion.`);
+      out.push('The real number upsets people. Upset people do not feed fires.');
+      if (this.checkedNight === g.night) out.push("You went and looked, didn't you. Of course you did. You signed those for years.");
+    }
+    return out;
+  }
   check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; this.ctx.say('The real odds. Nobody else came to check.', 4); }
   draw() {
     const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote()].join('|'); if (key === this.drawn) return; this.drawn = key;
@@ -66,6 +96,14 @@ export class Camp {
   update() {
     const me = this.ctx.me(); if (!me) return; this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
     this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
+    const cam = this.ctx.camera(), v = new THREE.Vector3();
+    for (const P of this.people) {
+      P.mix.update(1 / 60); const d = Math.hypot(me.x - P.o.position.x, me.z - P.o.position.z);
+      if (d < 4.5 && (P.lineT -= 1 / 60) <= 0) { const all = this.lines(P.role), fresh = all.filter(l => !this.heard.has(l)); P.line = (fresh.length ? fresh : all)[0]; this.heard.add(P.line); P.lineT = 9; }
+      if (d >= 6) P.lineT = 0;
+      v.set(P.o.position.x, P.o.position.y + P.h + 0.45, P.o.position.z).project(cam); const vis = d < 6 && v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
+      P.tag.hidden = !vis; if (vis) { P.tag.style.transform = `translate(${(v.x * 0.5 + 0.5) * innerWidth}px, ${(-v.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -100%)`; const t = `${P.role}: ${P.line}`; if (P.tag.textContent !== t) P.tag.textContent = t; }
+    }
   }
   // a new world starts you at your old desk, facing the two papers
   static startAt(me, land) { me.x = HUT.x + 0.3; me.z = HUT.z + 0.5; me.y = land(me.x, me.z); me.yaw = Math.atan2(-((HUT.x - 0.6) - me.x), -((HUT.z - 0.9) - me.z)); me.pitch = -0.72; }
