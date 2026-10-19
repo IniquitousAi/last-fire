@@ -186,7 +186,7 @@ groundMat.onBeforeCompile = sh => { sh.uniforms.uRock = uRock; sh.uniforms.uDark
       totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.0;   /* (rare mineral glints: the stars, underfoot) */`);
 };
 // the look: dev light by default (his pick, 2026-10-19 10:27: plain readable light first); ?look=3 is the cinematic night, ?look=0 the old look
-C.DARK.off = !/[?&]enemies(&|=|$)/.test(location.search);   // (enemies out until rebuilt as real models, his call 2026-10-19; ?enemies brings the old ones back)
+C.DARK.off = /[?&]noenemies(&|=|$)/.test(location.search);   // (the dark is back, 2026-10-19: rebuilt from his sheet with Hunyuan3D-2, real steering and limits, at most 10% of the frame rate; ?noenemies hides it)
 const lookFx = applyLook(+(new URLSearchParams(location.search).get('look') ?? 4), { THREE, renderer, scene, camera, composer, renderPass, bloom, grade, groundMat });
 const uRT = { value: 0 }; riftGround(groundMat, uRT); let riftView = null, fogBank = null;   // (the Rift's corruption in the ground: client/rift.js)
 function buildTile(tx, tz, res = RES) {
