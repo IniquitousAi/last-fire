@@ -268,7 +268,7 @@ export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
 // past 15% of its health a shape flinches 0.2 s, past 30% it staggers 0.4 s, past 40% it goes down for 2.5 s. The giant is tough: double the bars.
 export const REACT = { window: 0.25, bars: [[0.4, 3, 2.5], [0.3, 2, 0.4], [0.15, 1, 0.2]] };
 function react(g, k, dmg) { if (k.kind === 'shard') return; if (!(k.rw > g.t - REACT.window)) { k.rw = g.t; k.racc = 0; } k.racc += dmg; const f = k.racc / k.max / (k.kind === 'giant' ? 2 : 1);
-  for (const [bar, r, t] of REACT.bars) if (f >= bar) { if (r > (k.rt > 0 ? k.r : 0)) { k.r = r; k.rt = t; } break; } }
+  for (const [bar, r, t] of REACT.bars) if (f >= bar) { if (r > (k.rt > 0 ? k.r : 0)) { k.r = r; k.rt = t; if (r >= 2) k.sp = -(r > 2 ? 3.2 : 1.6); } break; } }   /* (a stagger shoves the body back along the way it faces, a blow it feels) */
 export function damage(g, k, part, dmg, ap, by) {
   const key = part ? 'sb' : 'sh'; let res; react(g, k, dmg);
   if (k[key] > 0) { const through = dmg * (0.25 + 0.75 * ap); k[key] -= dmg * (0.6 + ap);
@@ -486,10 +486,53 @@ export function lookedAt(g, k) {   // (someone on its side of the sky faces it, 
     if ((-Math.sin(p.yaw || 0) * dx - Math.cos(p.yaw || 0) * dz) / d > 0.82) return true; }
   return false;
 }
+// How a body moves (his words, v163: the enemies' "pathing and alignment don't make sense with the physics"): a creature has a heading it can only
+// turn so fast, a speed it can only gain so fast, and a body that cannot stand in a wall. The brain above still decides where it wants to go; this
+// turns that wish into a step a body could take. turn rad/s, acc m/s^2 (stopping is twice as quick), rad: body radius in m.
+export const MOVE = { walker: { turn: 4.2, acc: 9, rad: 0.5 }, runner: { turn: 7, acc: 18, rad: 0.45 }, face: { turn: 8, acc: 22, rad: 0.45 }, watcher: { turn: 5, acc: 14, rad: 0.5 }, giant: { turn: 2, acc: 4, rad: 1.15 }, shard: { turn: 9, acc: 12, rad: 0.5 } };
+const angDiff = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
+export function solidAt(x, z, rad) {   // (is a body of this radius inside a tower (Earth) or a camp piece (the Moon)?)
+  const list = z > 3000 ? TOWERS : OCC; for (const t of list) { const dx = x - t.x, dz = z - t.z; if (dx * dx + dz * dz > 120) continue; const c = Math.cos(t.ry), s = Math.sin(t.ry), lx = dx * c - dz * s, lz = dx * s + dz * c; if (Math.abs(lx) < t.w / 2 + rad && Math.abs(lz) < t.d / 2 + rad) return true; }
+  return false;
+}
+export function pushBody(x, z, rad) {   // (out of any solid box, the shortest way: pushOut for the Earth's towers, the same for the Moon's camp pieces)
+  if (z > 3000) return pushOut(x, z, rad);
+  for (const t of OCC) { const dx = x - t.x, dz = z - t.z; if (dx * dx + dz * dz > 120) continue; const c = Math.cos(t.ry), s = Math.sin(t.ry), lx = dx * c - dz * s, lz = dx * s + dz * c, hx = t.w / 2 + rad, hz = t.d / 2 + rad;
+    if (Math.abs(lx) < hx && Math.abs(lz) < hz) { let nx = lx, nz = lz; if (hx - Math.abs(lx) < hz - Math.abs(lz)) nx = Math.sign(lx || 1) * hx; else nz = Math.sign(lz || 1) * hz; x = t.x + nx * c + nz * s; z = t.z - nx * s + nz * c; } }
+  return [x, z];
+}
+const DOORS = [[0, -1], [0, 1], [-1, 0], [1, 0]];   // (the wall's four gates, as the outward direction of each from the landing site)
+const inYard = (x, z) => Math.abs(x - EARTH.x) < WALLS.half && Math.abs(z - EARTH.z) < WALLS.half;
+function doorWish(k, gx, gz) {   // (a goal across the wall: go to the gate's mouth, through it, then on; returns a point to walk to, or null)
+  if (k.z < 3000 || inYard(k.x, k.z) === inYard(gx, gz)) { k.door = undefined; return null; }
+  const A = WALLS.half, at = (n, s, l) => [EARTH.x + n[0] * (A + s) + n[1] * l, EARTH.z + n[1] * (A + s) + n[0] * l];   // (s along the gate's way out from the wall line, l sideways)
+  if (k.door === undefined) { let best = Infinity; DOORS.forEach((n, i) => { const e = at(n, 5.5, 0), b = at(n, -5.5, 0), c = Math.hypot(k.x - e[0], k.z - e[1]) + 11 + Math.hypot(gx - b[0], gz - b[1]); if (c < best) { best = c; k.door = i; } }); }
+  const n = DOORS[k.door], rel = [k.x - EARTH.x, k.z - EARTH.z], s = rel[0] * n[0] + rel[1] * n[1] - A, l = rel[0] * n[1] + rel[1] * n[0], out = inYard(k.x, k.z) ? -1 : 1;   // (out: which side of the wall it stands on, along the gate's way)
+  if (Math.abs(l) < 2.5 && Math.abs(s) < 5.5) return at(n, -out * 7, 0);   // (in the doorway: straight through)
+  return at(n, out * 5.5, 0);   // (outside it: to the mouth first)
+}
+function bodyStep(g, k, dt) {   // (the wish k made this frame, as one physical step)
+  const M = MOVE[k.kind]; if (!M || k.kind === 'shard') return;
+  const wx = k.x - k.x0, wz = k.z - k.z0; k.x = k.x0; k.z = k.z0;   // (what the brain asked for: take it back, then move the body as a body)
+  if (k.still) { k.sp = 0; return; }
+  let ws = Math.hypot(wx, wz) / dt, wh = ws > 0.05 ? Math.atan2(wx, wz) : null;
+  if (k.hd === undefined) k.hd = wh !== null ? wh : (k.yaw || 0);
+  if (wh !== null && k.gx !== undefined) { const w = doorWish(k, k.gx, k.gz); if (w) wh = Math.atan2(w[0] - k.x, w[1] - k.z); }
+  if (wh !== null) {   // (steer round what stands in the way: the first free heading near the wish, the same side it chose last time)
+    const L = Math.max(1.6, Math.abs(k.sp || 0) * 0.5 + M.rad + 0.9), side = k.side || 1;
+    for (const off of [0, 0.5 * side, -0.5 * side, 1.0 * side, -1.0 * side, 1.5 * side, -1.5 * side]) { const h = wh + off; if (!solidAt(k.x + Math.sin(h) * L, k.z + Math.cos(h) * L, M.rad * 0.8)) { if (off !== 0) { k.side = Math.sign(off); ws *= 0.75; } wh = h; break; } }
+  }
+  const aim = wh !== null ? wh : (k.yaw !== k.yaw0 ? k.yaw : k.hd);   // (stopped to strike: it turns to face what it strikes)
+  const err = angDiff(k.hd, aim); k.hd += Math.max(-M.turn * dt, Math.min(M.turn * dt, err)); k.hd = Math.atan2(Math.sin(k.hd), Math.cos(k.hd));
+  const ae = Math.abs(angDiff(k.hd, aim)), want = wh === null ? 0 : ws * (ae < 0.6 ? 1 : Math.max(0.15, 1 - (ae - 0.6)));   // (a body cannot run sideways: facing the wrong way, it slows to turn)
+  const sp = k.sp || 0, dv = (want > sp ? M.acc : M.acc * 2) * dt; k.sp = sp + Math.max(-dv, Math.min(dv, want - sp));
+  [k.x, k.z] = pushBody(k.x + Math.sin(k.hd) * k.sp * dt, k.z + Math.cos(k.hd) * k.sp * dt, M.rad);
+  k.yaw = k.hd;
+}
 function moveHollow(g, dt, ph) {
   const T = g.tactic, f = g.fire; if (g.noises) { for (const n of g.noises) n.t -= dt; g.noises = g.noises.filter(n => n.t > 0); }
   for (const k of g.hollow) {
-    const K = KINDS[k.kind];
+    const K = KINDS[k.kind]; k.x0 = k.x; k.z0 = k.z; k.yaw0 = k.yaw; k.gx = undefined;
     if (!k.earth && (ph === 'day' || ph === 'dawn')) { k.hp -= dt * 60; if (k.hp <= 0) k.dead = true; continue; }
     if (k.rt > 0) { k.rt -= dt; if (k.rt <= 0) k.r = 0; else continue; }   /* (flinched, staggered or down: it does nothing until it recovers) */   // (light of day unmakes them: no motes, they were never yours)
     let tx, tz, target = null;
@@ -511,11 +554,11 @@ function moveHollow(g, dt, ph) {
         const df = Math.hypot(fl.x - k.x, fl.z - k.z); if (df < FLARE.r) { k.hp -= dt * FLARE.burn * (1 - df / FLARE.r); if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; } } } }   /* (it burns what it pulls in: a trap, not a gathering) */
     if (target) { if (sees(g, k, target)) k.alert = SENSE.alert; k.on = target.id; k.lx = target.x; k.lz = target.z; }
     if (!target && !node && g.noises) { let nb = Infinity; for (const n of g.noises) { const dn = Math.hypot(n.x - k.x, n.z - k.z); if (!!n.earth === !!k.earth && dn < n.r && dn < nb) { nb = dn; k.lx = n.x; k.lz = n.z; k.alert = SENSE.alert; k.on = -1; } } }   /* (a shot it heard: it goes to look) */
-    if (!target && !node && k.alert > 0 && k.lx !== undefined) { const dl = Math.hypot(k.lx - k.x, k.lz - k.z); if (dl > 1) { k.x += (k.lx - k.x) / dl * k.speed * dt; k.z += (k.lz - k.z) / dl * k.speed * dt; k.yaw = Math.atan2(k.lx - k.x, k.lz - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (it goes where it last sensed you, or where the noise was) */
+    if (!target && !node && k.alert > 0 && k.lx !== undefined) { const dl = Math.hypot(k.lx - k.x, k.lz - k.z); if (dl > 1) { k.gx = k.lx; k.gz = k.lz; k.x += (k.lx - k.x) / dl * k.speed * dt; k.z += (k.lz - k.z) / dl * k.speed * dt; k.yaw = Math.atan2(k.lx - k.x, k.lz - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (it goes where it last sensed you, or where the noise was) */
     if (!target && !node && !k.earth) { const df = Math.hypot(f.x - k.x, f.z - k.z); if (df > 6) { const sp = k.speed * SENSE.drift * dt; k.x += (f.x - k.x) / df * sp; k.z += (f.z - k.z) / df * sp; k.yaw = Math.atan2(f.x - k.x, f.z - k.z); } k.y = heightAt(g.land, k.x, k.z); continue; }   /* (sensing nothing, it drifts toward the camp's light, slower than a hunt: the light is what draws the dark) */
     if (!target && !node) continue;
-    if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if (node.flare) continue; if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
-    tx = target.x; tz = target.z;
+    if (!target) { tx = node.x; tz = node.z; k.gx = tx; k.gz = tz; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if (node.flare) continue; if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
+    tx = target.x; tz = target.z; k.gx = tx; k.gz = tz;
     let dx = tx - k.x, dz = tz - k.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
     const ahead = lightAt(g, k.x + dx * 1.5, k.z + dz * 1.5), here = lightAt(g, k.x, k.z);
     if (k.kind !== 'giant' && !k.staged) { if (here > 0.15) k.hp -= dt * 50 * here; if (ahead > 0.25 && d > K.reach) { const side = k.id % 2 ? 1 : -1; [dx, dz] = [dx * 0.25 + dz * side, dz * 0.25 - dx * side]; } }   // (light burns them, so they circle its edge; the giant walks in)
@@ -527,12 +570,13 @@ function moveHollow(g, dt, ph) {
     else { k.x += dx * k.speed * dt; k.z += dz * k.speed * dt; }
     k.y = heightAt(g.land, k.x, k.z);
   }
+  for (const k of g.hollow) if (!k.dead) bodyStep(g, k, dt);
   // bodies keep their room (his eyes, 2026-10-19: they clipped through him and stuck to him, and through each other): a shape never stands
   // inside a person or inside another shape; it is pushed out to touching, the giant's body wider. Positions only: who it hunts is unchanged.
   const R = k => k.kind === 'giant' ? 1.15 : 0.55, live = g.hollow.filter(k => !k.dead && !(K_WATCH(k) && k.still));
   for (const k of live) { for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz), min = R(k) + 0.4; if (d < min) { const u = d > 1e-4 ? 1 / d : 0; k.x = p.x + (u ? dx * u : 1) * min; k.z = p.z + (u ? dz * u : 0) * min; } } }
   for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) { const a = live[i], b = live[j], dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), min = R(a) + R(b); if (d < min && d > 1e-4) { const push = (min - d) / 2 / d; a.x -= dx * push; a.z -= dz * push; b.x += dx * push; b.z += dz * push; } }
-  for (const k of live) k.y = heightAt(g.land, k.x, k.z);
+  for (const k of live) { if (k.kind !== 'shard') [k.x, k.z] = pushBody(k.x, k.z, MOVE[k.kind].rad); k.y = heightAt(g.land, k.x, k.z); }
   g.hollow = g.hollow.filter(k => !k.dead); g.nodes = g.nodes.filter(n => n.hp > 0);
 }
 const K_WATCH = k => KINDS[k.kind] && KINDS[k.kind].watched;

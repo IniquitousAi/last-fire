@@ -10,3 +10,5 @@ assets/c/wraith.glb, clawed.glb, shard.glb, soldier.glb      Quaternius (quatern
 assets/c/survivor.glb                                         Quaternius (quaternius.com), via poly.pizza, CC0 (model 9kF7eTDbhO)
 
 vendor/ez-tree/: ez-tree 1.1.0 by Daniel Greenheck (dgreenheck), MIT license (vendor/ez-tree/LICENSE), procedural trees for three.js; npm @dgreenheck/ez-tree via jsdelivr, added 2026-10-19 at Daniel's yes.
+assets/m/dark/thornwalker.glb, skitter.glb, hunched.glb, goliath.glb   our own work (next/tools/blender/dark_creatures.py, built in Blender 5.2 from code, rigged and animated by script): the Hollow bodies. No outside model used; nothing to credit.
+next/ref/creature-front.png, creature-side.png   his reference cutouts (his Grok sheet). Picture-to-3D on Hugging Face (TRELLIS, TRELLIS.2) was tried 2026-10-19 and refused: free quota spent.
