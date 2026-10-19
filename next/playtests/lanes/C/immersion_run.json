@@ -1,52 +1,51 @@
 {
- "at": "2026-10-19T15:45:35.288Z",
+ "at": "2026-10-19T16:17:27.065Z",
  "steps": [
   {
    "name": "hud share 1000x900 (day, camp)",
-   "pct": 3.11,
+   "pct": 3.1,
    "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
   },
   {
    "name": "hud share 1000x900 (night, camp)",
-   "pct": 3.09,
+   "pct": 3.08,
    "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
   },
   {
    "name": "hud share 1920x908 (day, camp)",
-   "pct": 1.61,
+   "pct": 1.6,
    "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
   },
   {
    "name": "hud share 1000x900 (carrying light: build keys shown)",
-   "pct": 5.07,
+   "pct": 5.45,
    "seen": "cross,B,SMALL,SPAN,DIV,bk,fps,big,I"
   },
   {
    "name": "fog density through the day (Moon)",
-   "0.3": 0.012,
-   "0.5": 0.012,
-   "0.57": 0.0131,
-   "0.6": 0.0163,
-   "0.7": 0.0174,
-   "0.99": 0.0134
+   "0.3": 0.0064,
+   "0.5": 0.0064,
+   "0.57": 0.007,
+   "0.6": 0.0087,
+   "0.7": 0.0093,
+   "0.99": 0.0071
   },
   {
    "name": "camp people lines (no repeats)",
-   "heard": 4,
-   "distinct": 4,
+   "heard": 3,
+   "distinct": 3,
    "lines": [
-    "The Clerk: That's your form. The council says ninety-two. The board by the fire says something else. Go look.",
-    "A Council member: Survival today is 92%. Officially. We round with compassion.",
+    "A Council member: Survival today is 88%. Officially. We round with compassion.",
     "A Council member: The real number upsets people. Upset people do not feed fires.",
-    "The Clerk: I don't make the quotas. I laminate them."
+    "The Clerk: Night 1. The board says 88%. The board says a lot of things."
    ]
   },
   {
    "name": "awareness moment",
-   "after_s": 27.4,
+   "after_s": 26.4,
    "got": [
     "aware:still",
-    "Nothing is happening to you. You are watching it not happen."
+    "You noticed you stopped. Now you are noticing the noticing."
    ]
   },
   {
@@ -67,7 +66,7 @@
   {
    "name": "far land spires drawn at 480 m out",
    "spires": 48,
-   "fog": 0.0342
+   "fog": 0.0096
   },
   {
    "name": "errors",
