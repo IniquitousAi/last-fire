@@ -9,3 +9,4 @@
 - v172 serves A: A forest of black pines outside the walls, a green patch that survived, a spore bog that costs light
 - v173 serves B,C: Saves hold after a reload, your room code is kept, the pad's Back button sends feedback, sounds never repeat back to back, the dev menu lists every item
 - v174 serves B: Item 52: the night rules run the same in the browser and headless
+- v175 serves B: A perfect crew holds 12 nights, the fire grows past level 5, camp murmur and wind, creature sizes fixed

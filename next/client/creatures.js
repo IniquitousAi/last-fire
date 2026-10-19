@@ -23,7 +23,7 @@ export class Creatures {
 
   make(k) {
     const B = BODY[k.kind], src = this.models[B.model]; if (!src) return null;
-    const o = skClone(src.scene), mats = [], veins = [], lods = [], cache = new Map(), hitU = { value: new THREE.Vector4(0, 0, 0, 0) };   // (hitU: where the last shot landed, in the world, and how hot it still is: the veins there flash crimson) o.scale.set(B.s * (B.sx || 1), B.s, B.s * (B.sx || 1));
+    const o = skClone(src.scene), mats = [], veins = [], lods = [], cache = new Map(), hitU = { value: new THREE.Vector4(0, 0, 0, 0) };   /* (hitU: where the last shot landed, in the world, and how hot it still is: the veins there flash crimson) */ o.scale.set(B.s * (B.sx || 1), B.s, B.s * (B.sx || 1));
     o.traverse(q => { if (!q.isMesh) return; q.castShadow = false; q.receiveShadow = false;
       const L = /LOD(\d)/.exec(q.name); if (L) lods[+L[1]] = q;
       // frustum culling stays on: the bind-pose sphere is grown once so swinging tendrils never pop out at the screen's edge

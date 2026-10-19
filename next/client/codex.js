@@ -1,14 +1,14 @@
 // The CODEX: one honest place (in the pause menu) where a player can read what play never says out loud. Four lists, plain words, from the
 // game's own tables, never retyped: what each rule is and why it is in the world (core/reasons.js), what each era teaches (core/lessons.js), the
 // feel check beside each number (core/feel.js), and what checked, reasoned and guess mean (core/knowledge.js). Steel-thin lines on black, no glow.
-import * as G from '../core/game.js?v=172';
-import { SHIP } from '../core/ship.js?v=172';
-import { CAMP } from '../core/camp.js?v=172';
-import { REASONS } from '../core/reasons.js?v=172';
-import { ERAS } from '../core/lessons.js?v=172';
-import { PLACED } from '../core/placed.js?v=172';
-import { FEEL } from '../core/feel.js?v=172';
-import { LABELS, NEED } from '../core/knowledge.js?v=172';
+import * as G from '../core/game.js?v=175';
+import { SHIP } from '../core/ship.js?v=175';
+import { CAMP } from '../core/camp.js?v=175';
+import { REASONS } from '../core/reasons.js?v=175';
+import { ERAS } from '../core/lessons.js?v=175';
+import { PLACED } from '../core/placed.js?v=175';
+import { FEEL } from '../core/feel.js?v=175';
+import { LABELS, NEED } from '../core/knowledge.js?v=175';
 
 const TABLES = { KINDS: G.KINDS, NODE: G.NODE, PARTS: G.PARTS, CAR: G.CAR, CAMP, FIRE_COST: G.FIRE_COST, SLAM: G.SLAM, TORCH: G.TORCH, FLARE: G.FLARE, SENSE: G.SENSE, TRACER: G.TRACER, PULL: G.PULL, REACT: G.REACT,
   DIRECTOR: G.DIRECTOR, FLOOD_WARN: { FLOOD_WARN: G.FLOOD_WARN }, EARTH_DARK: G.EARTH_DARK, DUES: G.DUES, SOLID_AT: { SOLID_AT: G.SOLID_AT }, WALLS: G.WALLS, EARTH: G.EARTH, SHIP };

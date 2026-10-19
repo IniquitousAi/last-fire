@@ -1,7 +1,7 @@
 // Small details up close (core/details.js): worn boot prints along the paths people walk, a scorch ring that grows with the fire, and tally scratches
 // on the board post, one per night survived. All flat decals on the ground or the post: no glow, nothing floating, sunk a hair into the ground.
 import * as THREE from 'three';
-import { bootPrints, scorchRadius, tallyOf, SPOTS } from '../core/details.js?v=174';
+import { bootPrints, scorchRadius, tallyOf, SPOTS } from '../core/details.js?v=175';
 
 const printTex = () => { const c = document.createElement('canvas'); c.width = 64; c.height = 128; const x = c.getContext('2d'); x.fillStyle = '#fff';
   x.beginPath(); x.ellipse(32, 38, 17, 30, 0, 0, 7); x.fill(); x.beginPath(); x.ellipse(32, 98, 14, 20, 0, 0, 7); x.fill();   // (a sole and a heel, two blobs with a gap: the shape of a boot print)

@@ -5,7 +5,7 @@ PASS  the mouse wheel cycles guns both ways  (30/ 210 M4 -> 2/ 40 Olympia -> 30/
 PASS  holding fire is full auto on the M4 (about 12 a second)  (12 rounds in 1 s)
 PASS  R reloads  (30/ 198 M4)
 PASS  the pistol is semi-auto (one shot per click while held)  (1 rounds in 0.9 s held)
-PASS  nothing bobs (walking keeps the view level on flat ground)  (body height range 0.015 m over 1 s)
+PASS  nothing bobs (walking keeps the view level on flat ground)  (body height range 0.049 m over 1 s)
 PASS  Esc opens the pause menu  (open)
 PASS  the pause menu has a visible way back to play  (BACK TO THE DARK key)
 PASS  no errors in the page  (none)

@@ -462,7 +462,10 @@
      "proof": "playtests/checklist/test-director.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/B/16-night-12.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
@@ -626,7 +629,10 @@
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/B/daemon-run.txt",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -671,12 +677,18 @@
      "proof": "sim/growth.mjs",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/B/24-fire-level-8.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#late night and a fire past level 5",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -1785,12 +1797,18 @@
      "proof": "sim/fresh_test.mjs",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/B/audio-spectrogram.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/audio_run.cjs#no clip twice in a row",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -1835,12 +1853,18 @@
      "proof": "playtests/checklist/test-farsound_test.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/B/audio-spectrogram.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/audio_run.cjs#the wind is far in the light",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
