@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=133';
-import { Ambience } from './ambience.js?v=133';
-import { Camp, BOARD } from './camp.js?v=133';
-import { Guide } from './guide.js?v=133';
-import { buildSites } from './earthsite.js?v=133';
-import { Truck } from './truck.js?v=133';
-import { ShipView } from './shipview.js?v=133';
-import { Crew } from './crew.js?v=133';
-import { Hands } from './hands.js?v=133';
-import { Wrist } from './wrist.js?v=133';
-import { FireCore } from './firecore.js?v=133';
+import * as C from '../core/game.js?v=134';
+import { Ambience } from './ambience.js?v=134';
+import { Camp, BOARD } from './camp.js?v=134';
+import { Guide } from './guide.js?v=134';
+import { buildSites } from './earthsite.js?v=134';
+import { Truck } from './truck.js?v=134';
+import { ShipView } from './shipview.js?v=134';
+import { Crew } from './crew.js?v=134';
+import { Hands } from './hands.js?v=134';
+import { Wrist } from './wrist.js?v=134';
+import { FireCore } from './firecore.js?v=134';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=133';
-import { FriendVoice } from './friendvoice.js?v=133';
-import { crewFrom } from '../core/habits.js?v=133';
-import { HudLook } from './hudlook.js?v=133';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=133';
-import { sound, GUNS } from '../../src/combat.js?v=133';
-import { FX } from '../../src/fx.js?v=133';
+import { think as friendThink } from './friend.js?v=134';
+import { FriendVoice } from './friendvoice.js?v=134';
+import { crewFrom } from '../core/habits.js?v=134';
+import { HudLook } from './hudlook.js?v=134';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=134';
+import { sound, GUNS } from '../../src/combat.js?v=134';
+import { FX } from '../../src/fx.js?v=134';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 133;   // (this copy's version; ./version.json says the newest)
+const BUILD = 134;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -569,7 +569,7 @@ $('fbSend').onclick = async () => {
 };
 // ---------------------------------------------------------------- updates: a pop-up when a newer version is out; yes puts you right back where you were
 let updSeen = 0;
-async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || '').slice(0, 200); $('upd').hidden = false; } } catch (e) {} }
+async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || ''); $('upd').hidden = false; } } catch (e) {} }
 setInterval(checkUpdate, 60000); setTimeout(checkUpdate, 8000);
 (async () => {   // (the menu says which version this is; an old copy from the browser's cache swaps itself for the new one)
   $('ver').innerHTML = `<b>VERSION ${BUILD}</b>`;
@@ -618,7 +618,7 @@ function onNet(m, from) {
   }
   // a friend's side: only the host's word counts
   if (from !== 0) { if (m.t === 'bang' && GUNS[m.g] && [m.x, m.y, m.z].every(fin)) heardShot(m); return; }
-  if (m.t === 'hello') { if (!fin(m.seed)) return; net.me = m.you; SET.lastJoin = net.code; save(); begin(m.seed, m.you).then(() => {}); for (const n of m.nodes || []) if (Array.isArray(n) && C.NODE[n[1]]) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false }); C.linkNetwork(g); if (Array.isArray(m.fire)) [g.fire.level, g.fire.light, g.fire.fuel] = m.fire; g.clock = m.clock; g.night = m.night; return; }
+  if (m.t === 'hello') { if (!fin(m.seed)) return; net.me = m.you; document.body.classList.add('friend'); SET.lastJoin = net.code; save(); begin(m.seed, m.you).then(() => {}); for (const n of m.nodes || []) if (Array.isArray(n) && C.NODE[n[1]]) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false }); C.linkNetwork(g); if (Array.isArray(m.fire)) [g.fire.level, g.fire.light, g.fire.fuel] = m.fire; g.clock = m.clock; g.night = m.night; return; }
   if (!g) return;
   if (m.t === 's') applyState(m);
   if (m.t === 'ev' && Array.isArray(m.e)) for (const e of m.e.slice(0, 20)) if (Array.isArray(e)) inbox.push(e);

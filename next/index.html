@@ -55,6 +55,7 @@
   .ck { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid #ffffff12; font-size: 16px; } .ck b { font-weight: 500; letter-spacing: .1em; font-size: 14px; } .ck small { display: block; color: var(--meta); font-size: 14px; }
   .ck .done { color: var(--neon); } .ck .in { color: var(--violet); } .ck .next { color: var(--pink); } .ck .later { color: var(--meta); } .ck .talk { color: var(--red); }
   #dev .key { margin: 0; }
+  body.friend #openDev, body.friend #openList, body.friend #fps { display: none; }   /* (a friend in your room never sees your dev tools) */
   #fps { position: fixed; left: 18px; top: 70px; font-size: 13px; color: var(--meta); }
   #hurt { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 50%, #b0002280 100%); opacity: 0; transition: opacity .15s; }
   /* the home screen: BOOT, his pick of three (2026-10-19): the visor powering on over the live sky and Earth */
@@ -132,6 +133,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=133"></script>
+<script type="module" src="./client/main.js?v=134"></script>
 </body>
 </html>

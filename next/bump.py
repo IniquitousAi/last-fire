@@ -23,5 +23,5 @@ s = re.sub(r"(\.js)\?v=\d+'", rf"\1?v={new}'", s); main.write_text(s, encoding='
 for f in (HERE / 'client').glob('*.js'):   # (every module's own imports carry the same version, so a reload never mixes old and new)
     if f.name != 'main.js': t = f.read_text(encoding='utf-8'); f.write_text(re.sub(r"(\.js)\?v=\d+'", rf"\1?v={new}'", t), encoding='utf-8')
 idx = HERE / 'index.html'; idx.write_text(re.sub(r'main\.js\?v=\d+', f'main.js?v={new}', idx.read_text(encoding='utf-8')), encoding='utf-8')
-(HERE / 'version.json').write_text(json.dumps({'v': new, 'notes': note[:200]}), encoding='utf-8')
+(HERE / 'version.json').write_text(json.dumps({'v': new, 'notes': note}), encoding='utf-8')
 print(f'version {old} -> {new}: {note}')

@@ -9,21 +9,23 @@ export class Wrist {
     // the band and its emitter: a dark strip, a hair of magenta where the light comes out
     const band = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.02, 0.055), new THREE.MeshStandardMaterial({ color: 0x0b0d13, roughness: 0.4, metalness: 0.7 })); band.position.set(0, -0.062, 0.02);
     const lip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.003, 0.004), new THREE.MeshBasicMaterial({ color: 0xff4fd8 })); lip.position.set(0, -0.051, 0.048);
-    this.holo = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.09), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.holo = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.09), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true, opacity: 0, depthWrite: false }));
     this.holo.position.set(0, 0, 0); this.root.add(band, lip, this.holo); this.root.visible = false;
     this.text = ''; this.t = 0; this.hold = 0; this.open = 0;
   }
-  draw(text, head = 'INCOMING') {
+  draw(text, head = 'INCOMING') {   /* (the box hugs its words and sits on the band; nothing is ever cut: long lines step the type down until every word fits) */
     const g = this.c.getContext('2d'), W = 1024, H = 384; g.clearRect(0, 0, W, H);
-    g.fillStyle = 'rgba(8,24,40,0.55)'; g.fillRect(0, 0, W, H);
+    let size = 50, lines = [];
+    for (; size >= 30; size -= 4) { g.font = `400 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; lines = []; let line = '';
+      for (const w of String(text).split(' ')) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > W - 72 && line) { lines.push(line); line = w; } else line = t; } if (line) lines.push(line);
+      if (74 + lines.length * (size + 12) + 22 <= H) break; }
+    const lh = size + 12, h = Math.min(H, 74 + lines.length * lh + 22), y0 = H - h;
+    g.fillStyle = 'rgba(5,5,9,0.86)'; g.fillRect(0, y0, W, h);   /* (near black, solid enough that a bright lamp behind never washes the words out) */
     g.strokeStyle = '#ff4fd8'; g.lineWidth = 3; const k = 34;   // (corner marks only: the frame is implied, never a box)
-    for (const [x, y, dx, dy] of [[4, 4, 1, 1], [W - 4, 4, -1, 1], [4, H - 4, 1, -1], [W - 4, H - 4, -1, -1]]) { g.beginPath(); g.moveTo(x, y + dy * k); g.lineTo(x, y); g.lineTo(x + dx * k, y); g.stroke(); }
-    g.fillStyle = '#ff4fd8'; g.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText('WRIST  ·  ' + head.toUpperCase(), 36, 52);
-    g.fillStyle = '#eef0f8'; g.font = '400 50px "Barlow Condensed", "Arial Narrow", sans-serif';
-    const words = String(text).split(' '), lines = []; let line = '';
-    for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > W - 72 && line) { lines.push(line); line = w; } else line = t; } if (line) lines.push(line);
-    lines.slice(0, 4).forEach((l, i) => g.fillText(l, 36, 118 + i * 62));
-    g.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H; y += 4) g.fillRect(0, y, W, 1);   // (scanlines: it is light in the air, not paint)
+    for (const [x, y, dx, dy] of [[4, y0 + 4, 1, 1], [W - 4, y0 + 4, -1, 1], [4, H - 4, 1, -1], [W - 4, H - 4, -1, -1]]) { g.beginPath(); g.moveTo(x, y + dy * k); g.lineTo(x, y); g.lineTo(x + dx * k, y); g.stroke(); }
+    g.fillStyle = '#ff4fd8'; g.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText('WRIST  ·  ' + head.toUpperCase(), 36, y0 + 52);
+    g.fillStyle = '#eef0f8'; g.font = `400 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+    lines.forEach((l, i) => g.fillText(l, 36, y0 + 74 + size * 0.9 + i * lh));
     this.tex.needsUpdate = true;
   }
   say(text, sec = 3, head) { if (!text) return; if (text !== this.text) { this.text = text; this.draw(text, head); if (this.open < 0.5) this.open = 0; } this.hold = Math.max(1.6, sec); }

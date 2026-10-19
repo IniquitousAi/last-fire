@@ -55,7 +55,7 @@ export class Camp {
     const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(post, this.board, glow);
     // the CHECK key: shown only when you stand at the board (click it, or press C)
     this.btn = Object.assign(document.createElement('button'), { className: 'bk', innerHTML: 'CHECK THE REAL ODDS<small>(the board shows what the council approved)</small>' });
-    Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '64%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
+    Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '55%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
     this.btn.onclick = () => this.check(); addEventListener('keydown', e => { if (e.code === 'KeyC' && this.near) this.check(); });
     // camp people: each speaks from what really happened, one line at a time, never repeating while a fresh one is left (IMMERSION.md)
     this.people = []; this.heard = new Set();
