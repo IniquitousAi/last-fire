@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=106';
-import { Ambience } from './ambience.js?v=106';
-import { Camp, BOARD } from './camp.js?v=106';
-import { Guide } from './guide.js?v=106';
-import { buildSites } from './earthsite.js?v=106';
-import { Truck } from './truck.js?v=106';
-import { Wrist } from './wrist.js?v=106';
-import { FireCore } from './firecore.js?v=106';
+import * as C from '../core/game.js?v=107';
+import { Ambience } from './ambience.js?v=107';
+import { Camp, BOARD } from './camp.js?v=107';
+import { Guide } from './guide.js?v=107';
+import { buildSites } from './earthsite.js?v=107';
+import { Truck } from './truck.js?v=107';
+import { Wrist } from './wrist.js?v=107';
+import { FireCore } from './firecore.js?v=107';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=106';
-import { FriendVoice } from './friendvoice.js?v=106';
-import { crewFrom } from '../core/habits.js?v=106';
-import { HudLook } from './hudlook.js?v=106';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=106';
-import { sound, GUNS } from '../../src/combat.js?v=106';
-import { FX } from '../../src/fx.js?v=106';
+import { think as friendThink } from './friend.js?v=107';
+import { FriendVoice } from './friendvoice.js?v=107';
+import { crewFrom } from '../core/habits.js?v=107';
+import { HudLook } from './hudlook.js?v=107';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=107';
+import { sound, GUNS } from '../../src/combat.js?v=107';
+import { FX } from '../../src/fx.js?v=107';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 106;   // (this copy's version; ./version.json says the newest)
+const BUILD = 107;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -302,7 +302,7 @@ function tryGrow() {   // (growing the fire: your choice, and tonight the dark a
 function trip(k) { sound.buy(); const site = SET.site || 'city'; if (isHost()) { if (k === 'drop') C.drop(g, me, site); else C.rise(g, me); } else net.send({ t: 'build', k, x: 0, z: 0, s: site }); }
 function siteRow() {   // (pick the site by its odds: what your own record says each district holds; a guess until 3 trips, checked after 10)
   return `<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">land at (click one):${Object.entries(C.SITES).map(([k, S]) => { const o = C.siteOdds(g, k), on = (SET.site || 'city') === k;
-    return `<span style="display:block"><b class="site" data-s="${k}" style="cursor:pointer;font-weight:500;color:${on ? '#ff4fd8' : '#eef0f8'}">${on ? '> ' : ''}${S.name}</b>  <small style="color:#a3a6bb">${o.parts.toFixed(1)} parts, ${o.cells.toFixed(1)} cells (${o.label}${o.trips ? ', ' + o.trips + ' trips' : ''})</small></span>`; }).join('')}</span>`; }
+    return `<span style="display:block"><b class="site" data-s="${k}" style="cursor:pointer;font-weight:500;color:${on ? '#ff4fd8' : '#eef0f8'}">${on ? '> ' : ''}${S.name}</b>  <small style="color:#a3a6bb">${o.parts.toFixed(1)} parts, ${o.cells.toFixed(1)} cells (${o.label}${o.trips ? ', ' + o.trips + ' trips' : ''})</small>${o.lost && (o.lost.falls || o.lost.left) ? `<small style="display:block;color:#ff6fb1">after what it cost: ${o.lost.falls.toFixed(1)} falls a trip${o.lost.left ? ', ' + o.lost.left.toFixed(1) + ' left behind' : ''}, ${o.lost.cells.toFixed(1)} cells and ${o.lost.parts.toFixed(1)} parts gone</small>` : ''}</span>`; }).join('')}</span>`; }
 const atPad = () => !C.onEarth(me) && Math.hypot(me.x - C.PAD.x, me.z - C.PAD.z) < 4, atSite = () => C.onEarth(me) && Math.hypot(me.x - C.EARTH.x, me.z - C.EARTH.z) < 4;
 const STORE = { x: 15.8, z: -2.5 }, atStore = () => !C.onEarth(me) && Math.hypot(me.x - STORE.x, me.z - STORE.z) < 4;   // (the camp's store, behind the metal walls: the ammo lives there)
 const shortAmmo = () => Object.keys(ammo).some(k => ammo[k].res < GUNS[k].reserve);

@@ -303,6 +303,7 @@ export function hurt(g, p, n, from) {
   if (p.ember) return; p.hp -= n; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
     for (const k of p.pack || []) g.parts.push({ id: g.nextId++, kind: k, x: p.x + (Math.random() - 0.5) * 2, z: p.z + (Math.random() - 0.5) * 2 }); p.pack = [];
+    if (g.earth && onEarth(p)) { const L = g.earth.lost = g.earth.lost || { falls: 0, cells: 0, parts: 0 }; L.falls++; L.cells += p.carried / 8; }
     p.ember = true; p.hp = 0; g.stats.falls++; g.rec.falls++; if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) e.held = null; p.carrying = null; }
     for (let i = 0; i < Math.ceil(p.carried / 5); i++) g.motes.push({ id: g.nextId++, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2, v: 5, t: 60 });
     const killer = g.hollow.filter(k => !k.dead && k.kind === from).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];   // (your Ember shows how you fell, INNOVATION.md: the last 10 s and what came for you)
@@ -318,7 +319,8 @@ export function hurt(g, p, n, from) {
 // record turns the posted odds from a guess into reasoned (3 trips) into checked (10 trips)
 export const SITES = { city: { name: 'THE CITY', parts: 3, cells: 10, dir: 0, est: [0.3, 2.1] }, depot: { name: 'THE DEPOT', parts: 6, cells: 5, dir: Math.PI * 0.5, est: [2.3, 1.0] }, reservoir: { name: 'THE RESERVOIR', parts: 1, cells: 16, dir: Math.PI, est: [0.1, 3.0] } };   // (est: parts and cells a trip for a careful player, from sim/drop.mjs --sites, 20 robot trips each)
 export function siteOdds(g, k) { const r = (g.sites || {})[k], S = SITES[k]; if (!r || r.trips < 3) return { parts: S.est[0], cells: S.est[1], label: 'guess: robots', trips: r ? r.trips : 0 };
-  return { parts: r.parts / r.trips, cells: r.cells / r.trips, label: r.trips >= 10 ? 'checked' : 'reasoned', trips: r.trips }; }
+  const n = r.trips, lc = (r.lostCells || 0) / n, lp = (r.lostParts || 0) / n;   // (the loss goes on the board, INNOVATION.md 13B: the odds drop by exactly what was lost, and the footnote names it)
+  return { parts: r.parts / n - lp, cells: r.cells / n - lc, label: n >= 10 ? 'checked' : 'reasoned', trips: n, lost: { cells: lc, parts: lp, falls: (r.falls || 0) / n, left: (r.left || 0) / n } }; }
 export function drop(g, p, site) {
   if (!p || p.ember || onEarth(p) || Math.hypot(p.x - PAD.x, p.z - PAD.z) > 4) return false;
   if (!g.earth) { const S = SITES[site] ? site : 'city'; g.earth = { t: EARTH.stay, n: (g.trips = (g.trips || 0) + 1), site: S, found: { parts: 0, cells: 0 } }; const r = stream(g.seed, 'earth-' + g.earth.n);
@@ -336,10 +338,11 @@ export function rise(g, p) {
   p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'rise', p.id]);
   if (!g.players.some(onEarth)) endTrip(g); return true;
 }
-function endTrip(g) { if (g.earth && g.earth.found) { const k = g.earth.site, r = (g.sites = g.sites || {})[k] = (g.sites[k] || { trips: 0, parts: 0, cells: 0 }); r.trips++; r.parts += g.earth.found.parts; r.cells += g.earth.found.cells; } if (g.car) { for (const k of g.car.store) g.stash[k] = (g.stash[k] || 0) + 1; g.car = null; } g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
+function endTrip(g) { if (g.earth && g.earth.found) { const k = g.earth.site, r = (g.sites = g.sites || {})[k] = (g.sites[k] || { trips: 0, parts: 0, cells: 0 }); r.trips++; r.parts += g.earth.found.parts; r.cells += g.earth.found.cells; const L = g.earth.lost; if (L) { r.lostCells = (r.lostCells || 0) + L.cells; r.lostParts = (r.lostParts || 0) + L.parts; r.falls = (r.falls || 0) + L.falls; r.left = (r.left || 0) + (L.left || 0); } } if (g.car) { for (const k of g.car.store) g.stash[k] = (g.stash[k] || 0) + 1; g.car = null; } g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
 function tripClock(g, dt) {
   if (!g.earth) return; g.earth.t -= dt; if (g.earth.t > 0) return;
   for (const p of g.players) if (onEarth(p)) {   // (left behind: the lander is gone; whatever brings you back up, the light you carried stays down there)
+    { const L = g.earth.lost = g.earth.lost || { falls: 0, cells: 0, parts: 0 }; L.cells += (p.carried || 0) / 8; L.parts += (p.pack || []).length; L.left = (L.left || 0) + 1; }
     if (p.ember) { const e = g.embers.find(q => q.of === p.id); if (e) e.x = 1e9; } p.ember = false; p.carrying = null; p.carried = 0; p.pack = []; p.hp = 25;
     p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'stranded', p.id]); }
   g.embers = g.embers.filter(e => e.x < 1e8); endTrip(g);
