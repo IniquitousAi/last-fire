@@ -30,11 +30,14 @@ export function summarize(rec, night) {
 }
 
 // the crew as robots: each player's habits averaged over their recorded nights (newer nights count double)
+// the record is what came out of play; a robot's dials are what goes in. CAL turns one into the other (fitted by sim/faithful.mjs --fit so a
+// learned friend's own record lands on the source's: the round trip that makes 'you cannot tell it is not him' true)
+export const CAL = { roam: 1.8, aim: 1.45, pull: 0.45 };   // (best of 60 by sim/faithful.mjs --fit: mean round-trip error 7% over roam, together, aim)
 export function crewFrom(history) {
   const acc = {};
   history.forEach((h, i) => { const w = i >= history.length - 3 ? 2 : 1; for (const [name, p] of Object.entries(h.players || {})) { const a = acc[name] ||= { w: 0, roam: 0, farShare: 0, together: 0, bankAt: 0, aim: 0, blind: new Array(SECTORS).fill(0) };
     a.w += w; a.roam += p.roam * w; a.farShare += p.farShare * w; a.together += p.together * w; a.bankAt += p.bankAt * w; a.aim += p.aim * w; a.blind[p.blind] += w; } });
-  return Object.entries(acc).map(([name, a]) => ({ name, roam: a.roam / a.w, greed: Math.max(5, a.roam / a.w * (0.6 + a.farShare / a.w)), bankAt: a.bankAt / a.w, aim: Math.max(0.2, Math.min(0.95, a.aim / a.w)), together: a.together / a.w, blind: a.blind.indexOf(Math.max(...a.blind)) }));
+  return Object.entries(acc).map(([name, a]) => ({ name, roam: a.roam / a.w * CAL.roam, greed: Math.max(5, a.roam / a.w * (0.6 + a.farShare / a.w)), bankAt: a.bankAt / a.w, aim: Math.max(0.2, Math.min(0.95, a.aim / a.w * CAL.aim)), together: a.together / a.w, blind: a.blind.indexOf(Math.max(...a.blind)) }));
 }
 
 // too comfortable: the last two nights were calm (under the tense band) and nobody fell. Only then does the dark go learn.

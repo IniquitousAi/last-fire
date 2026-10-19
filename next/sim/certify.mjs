@@ -4,7 +4,7 @@
 // 3. Certify, the daemon's way: three runs in a row on fresh nights, each fair (a perfect crew never falls), each in the flow band
 //    (25 to 70% of moments tense, about one fall a night), and better than the dark it would replace by more than twice the noise.
 import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, BASE_TACTIC, clampTactic, stream, shotBy, canGrow, grow, FIRE_COST, fired } from '../core/game.js';
-import { crewFrom, summarize, SECTORS } from '../core/habits.js';
+import { crewFrom, summarize, SECTORS, CAL } from '../core/habits.js';
 
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
 const PERFECT = { name: 'perfect', roam: 12, greed: 8, bankAt: 12, aim: 0.95, together: 1, blind: -1 };
@@ -14,7 +14,7 @@ function think(g, p, r, dt) {   // (one robot plays one person's habits: where t
   let tx = p.homeX, tz = p.homeZ; const ember = g.embers.find(e => !e.held && Math.hypot(e.x - p.x, e.z - p.z) < 40);
   if (p.carrying || p.carried >= S.bankAt) { tx = f.x; tz = f.z; } else if (ember) { tx = ember.x; tz = ember.z; }
   else { const m = g.motes.filter(m => Math.hypot(m.x - p.x, m.z - p.z) < S.greed).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (m) { tx = m.x; tz = m.z; } }
-  if (S.together > 0.5) { const mates = g.players.filter(q => q !== p && !q.ember); if (mates.length) { const cx = mates.reduce((s, q) => s + q.x, 0) / mates.length, cz = mates.reduce((s, q) => s + q.z, 0) / mates.length; tx = tx * 0.5 + cx * 0.5; tz = tz * 0.5 + cz * 0.5; } }
+  if (S.together > 0) { const mates = g.players.filter(q => q !== p && !q.ember); if (mates.length) { const cx = mates.reduce((s, q) => s + q.x, 0) / mates.length, cz = mates.reduce((s, q) => s + q.z, 0) / mates.length, w = Math.min(1, S.together) * CAL.pull; tx = tx * (1 - w) + cx * w; tz = tz * (1 - w) + cz * w; } }   // (sticking with others is a dial, not a switch: a 0.56 player is pulled about halfway, never glued)
   const giant = g.hollow.find(k => k.kind === 'giant' && Math.hypot(k.x - p.x, k.z - p.z) < 7); if (giant && S.aim > 0.5) { tx = p.x + (p.x - giant.x) * 2; tz = p.z + (p.z - giant.z) * 2; }   // (a skilled player backs away from a giant and keeps shooting)
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); if (d > 0.5) { const sp = Math.min(d, 4.4 * dt); p.x += dx / d * sp; p.z += dz / d * sp; }
   if (canGrow(g) && g.fire.level < g.night - 1 && g.clock < 0.5) grow(g, p);   // (robots grow the fire by day, at most one level per night survived)
@@ -42,7 +42,9 @@ export function faithful(crew, seed = 4242) {
   const h = play(BASE_TACTIC, crew, seed).history, mine = crewFrom(h), bad = [];
   for (const real of crew) { const m = mine.find(q => q.name === real.name); if (!m) { bad.push(real.name + ': no record'); continue; }
     if (Math.abs(m.roam - real.roam) > Math.max(5, real.roam * 0.35)) bad.push(`${real.name}: roams ${m.roam.toFixed(0)} m, really ${real.roam.toFixed(0)} m`);
-    if (Math.abs(m.together - real.together) > 0.25) bad.push(`${real.name}: together ${m.together.toFixed(2)}, really ${real.together.toFixed(2)}`); }
+    if (Math.abs(m.together - real.together) > 0.25) bad.push(`${real.name}: together ${m.together.toFixed(2)}, really ${real.together.toFixed(2)}`);
+    if (Math.abs(m.aim - real.aim) > 0.15) bad.push(`${real.name}: hits ${Math.round(m.aim * 100)}%, really ${Math.round(real.aim * 100)}%`);   // (his misses: the learned friend must miss like him, INNOVATION.md idea 10)
+    if (Math.abs(m.bankAt - real.bankAt) > Math.max(4, real.bankAt * 0.35)) bad.push(`${real.name}: banks at ${m.bankAt.toFixed(0)}, really ${real.bankAt.toFixed(0)}`); }   // (his overloads: how much he carries before he banks)
   return { ok: bad.length === 0, bad };
 }
 function judge(tactic, crew, seeds) {

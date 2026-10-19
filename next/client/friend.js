@@ -1,14 +1,14 @@
 // The learned friend (his ask, 2026-10-19: play with someone who feels exactly like Dalton, or like you): the same faithful robot the
 // certifier uses (sim/certify.mjs), playing one person's recorded habits (core/habits.js crewFrom). It keeps the camp; it never takes the lander.
-import { hitRay, damage, heightAt, KINDS, shotBy, canGrow, grow, fired } from '../core/game.js?v=89';
-import { SECTORS } from '../core/habits.js?v=89';
+import { hitRay, damage, heightAt, KINDS, shotBy, canGrow, grow, fired } from '../core/game.js?v=90';
+import { SECTORS, CAL } from '../core/habits.js?v=90';
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
 export function think(g, p, r, dt) {   // (one robot plays one person's habits: where they roam, when they bank, how they aim, the way they never look)
   const S = p.style; if (p.ember) return; const f = g.fire;
   let tx = p.homeX, tz = p.homeZ; const ember = g.embers.find(e => !e.held && Math.hypot(e.x - p.x, e.z - p.z) < 40);
   if (p.carrying || p.carried >= S.bankAt) { tx = f.x; tz = f.z; } else if (ember) { tx = ember.x; tz = ember.z; }
   else { const m = g.motes.filter(m => Math.hypot(m.x - p.x, m.z - p.z) < S.greed).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (m) { tx = m.x; tz = m.z; } }
-  if (S.together > 0.5) { const mates = g.players.filter(q => q !== p && !q.ember); if (mates.length) { const cx = mates.reduce((s, q) => s + q.x, 0) / mates.length, cz = mates.reduce((s, q) => s + q.z, 0) / mates.length; tx = tx * 0.5 + cx * 0.5; tz = tz * 0.5 + cz * 0.5; } }
+  if (S.together > 0) { const mates = g.players.filter(q => q !== p && !q.ember); if (mates.length) { const cx = mates.reduce((s, q) => s + q.x, 0) / mates.length, cz = mates.reduce((s, q) => s + q.z, 0) / mates.length, w = Math.min(1, S.together) * CAL.pull; tx = tx * (1 - w) + cx * w; tz = tz * (1 - w) + cz * w; } }   // (sticking with others is a dial, not a switch: a 0.56 player is pulled about halfway, never glued)
   const giant = g.hollow.find(k => k.kind === 'giant' && Math.hypot(k.x - p.x, k.z - p.z) < 7); if (giant && S.aim > 0.5) { tx = p.x + (p.x - giant.x) * 2; tz = p.z + (p.z - giant.z) * 2; }   // (a skilled player backs away from a giant and keeps shooting)
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); if (d > 0.5) { const sp = Math.min(d, 4.4 * dt); p.x += dx / d * sp; p.z += dz / d * sp; }
   if (canGrow(g) && g.fire.level < g.night - 1 && g.clock < 0.5) grow(g, p);   // (robots grow the fire by day, at most one level per night survived)
