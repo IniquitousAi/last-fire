@@ -1,0 +1,6 @@
+{
+  "notes": {
+    "enemies": "Lane E, enemy rework (no checklist items). Core: MOVE table, bodyStep (heading turn limit, acceleration limit, wall and tower collision via pushBody, steering round obstacles, Earth gate routing, stagger shove) in core/game.js. Client: client/creatures.js (our own rigged Blender creatures, walk/run speed matched to measured ground speed, attack/hit/down/death clips, Earth spawner pods). Robot test: next/sim/enemies.mjs (15 of 15). DARK.off left ON as told; ?enemies shows them. Screenshots in next/playtests/lanes/E/.",
+    "balance": "sim/drop.mjs after the change: perfect solo tense 0.28, greedy 0.38 (flow band 0.25 to 0.70): Earth got easier because bodies now turn and accelerate instead of sliding straight at you. EARTH_DARK may want a retune."
+  }
+}

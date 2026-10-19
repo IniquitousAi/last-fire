@@ -30,7 +30,7 @@ import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=164'
 import { sound, GUNS } from '../../src/combat.js?v=164';
 import { FX } from '../../src/fx.js?v=164';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
+import { Creatures } from './creatures.js?v=164';
 
 const $ = id => document.getElementById(id);
 const BUILD = 164;   // (this copy's version; ./version.json says the newest)
@@ -206,14 +206,10 @@ function updateTiles() {   // (two tiles a frame at most, nearest first; tiles p
 // ---------------------------------------------------------------- models (every one CC0: assets/CREDITS.txt)
 const loader = new GLTFLoader(), models = {};
 const load = (k, url) => loader.loadAsync('../assets/' + url).then(r => { models[k] = r; }).catch(e => console.warn('model', k, e));
-const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('mutant', 'zombie/mutant.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), ...(/[?&]nofp(&|$)/.test(location.search) ? [] : [load('fp_rifle', 'fp/rifle_fp.glb')]),   /* (the Blender rifle and arms are the default since v155, his rule: the newest rig is never behind a switch) */ load('fp_rail', 'fp/sniper_fp.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
-const MASK_RIM = { walker: 'vec3(0.62, 0.38, 1.0)', runner: 'vec3(1.0, 0.25, 0.65)', watcher: 'vec3(0.85, 0.85, 1.0)', face: 'vec3(1.0, 0.3, 0.85)', giant: 'vec3(1.0, 0.18, 0.25)' };
-function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
-  root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; const m = o.material = o.material.clone(); if (/Eye_White|Secondary/.test(m.name)) { m.color.setHex(0x030305); m.emissive = new THREE.Color(0); m.emissiveIntensity = 0; }   /* (no cartoon eyeballs or grins: black, so the face reads as a hollow) */ else if (/Eye_Black/.test(m.name)) { m.color.setHex(eyes); m.emissive = new THREE.Color(eyes); m.emissiveIntensity = 3; }   /* (only the pupils burn: pinpoint eyes, like the stars) */ else { m.color.setHex(0x07070c); m.emissive = new THREE.Color(0x0a0c18); m.emissiveIntensity = 0.3; m.roughness = 0.9; if (MASK_RIM[kind]) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '', RIM_COLOR: MASK_RIM[kind] }; m.needsUpdate = true; } } /* (a faint cold rim so a shape reads against the dark) */ });
-}
+const ready = Promise.all([load('thorn', 'm/dark/thornwalker.glb'), load('skitter', 'm/dark/skitter.glb'), load('hunch', 'm/dark/hunched.glb'), load('goliath', 'm/dark/goliath.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), ...(/[?&]nofp(&|$)/.test(location.search) ? [] : [load('fp_rifle', 'fp/rifle_fp.glb')]),   /* (the Blender rifle and arms are the default since v155, his rule: the newest rig is never behind a switch) */ load('fp_rail', 'fp/sniper_fp.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
-const seen = new Map();
+const seen = new Map(); const creatures = new Creatures({ scene, models, fx, sound, C });
 // the Kiroshi scan (Cyberpunk 2077, his north star, 2026-10-19): middle mouse or Z pings the dark; every shape within 30 m shows as a violet outline
 // for 2 s, 8 s between scans. Seeing is not hitting: out of the light they stay smoke
 const SCAN = { r: 30, t: 2, cd: 8, color: 0x8a5cff }; let scanCd = 0;
@@ -234,43 +230,7 @@ const smartTarget = () => smart.t >= SMART.lock ? g.hollow.find(k => k.id === sm
 addEventListener('mouseup', e => { if (e.button === 3 || e.button === 4) e.preventDefault(); });   // (the back side button must not take the browser back a page)
 function sandy() { if (!g || !me || me.ember) return; if (net) return say('Slow time works alone only: with friends the world is shared.', 3); if (sandyCd > 0) return say(`Slow time recharging: ${Math.ceil(sandyCd)} s.`, 2);
   sandyT = SANDY.t; sandyCd = SANDY.cd + SANDY.t; kick = Math.min(1, kick + 0.3); say('Slow time: 6 s.', 2); }
-const LOOK = { walker: ['mutant', 1.75, 0xb48cff], runner: ['mutant', 1.55, 0xff4fa0], giant: ['mutant', 3.0, 0xff2b40],   /* (the baseline zombie, his ask 2026-10-19: Mixamo's Mutant via mohsenheydari/three-fps, drawn as shadow like the rest) */
-  watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
-function drawHollow(dt) {
-  const alive = new Set();
-  for (const k of g.hollow) {
-    alive.add(k.id); let v = seen.get(k.id);
-    if (!v) {
-      if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.map = null; q.material.color.setHex(0x120c1e); q.material.emissive = new THREE.Color(0x8a5cff); q.material.emissiveIntensity = 0.3;   /* (violet: it read as a cyan orb in the sky, his banned color, 2026-10-19) */ } }); v = { o }; }
-      else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; if (!src.box) { src.scene.updateMatrixWorld(true); src.box = new THREE.Box3().setFromObject(src.scene); }   /* (measured on the original: a copy of an animated model measures wrong, the camp people's old bug) */
-        const o = skClone(src.scene); darken(o, eyes, k.kind); const b = src.box, s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
-        if (k.kind === 'runner' && mk !== 'mutant') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.35, sc * 0.75, sc * 1.6); }   // (the runner: low and long, built to close distance)
-        if (k.kind === 'face') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.5, sc * 1.2, sc * 0.45); }   // (the face: flat and wide, the way it came out of the wall)
-        if (k.kind === 'watcher') { const sc = size * 1.6 / s.y; o.scale.set(sc * 0.6, sc, sc * 0.6);   // (the tall one: stretched thin, a wide-brimmed hat, nothing else you can name)
-          const hatM = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 1 }), brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.03, 24), hatM), crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.42, 20), hatM);
-          const hat = new THREE.Group(); crown.position.y = 0.22; hat.add(brim, crown); hat.scale.set(1 / (sc * 0.6), 1 / sc, 1 / (sc * 0.6)); hat.position.y = b.max.y - 0.05 * s.y; o.add(hat); }
-        const mix = new THREE.AnimationMixer(o), A = n => { const c = src.animations.find(a => a.name.endsWith(n)); return c ? mix.clipAction(c) : null; }; const Z = mk === 'mutant'; v = { o, mix, fly: A(Z ? (k.kind === 'runner' ? 'run' : 'walk') : 'Fast_Flying'), idle: A(Z ? 'idle' : 'Flying_Idle'), hit: A(Z ? 'punch' : 'Punch'), death: A(Z ? 'die' : 'Death') }; (v.fly || v.idle)?.play(); }
-      if (k.kind === 'face') { const at = new THREE.Vector3(k.x, k.y + 1.2, k.z); fx.burst(at, 28, [0.55, 0.57, 0.66], 5, 0.7); if (sound.shatter) sound.shatter(at); }   // (it tears out of the wall: concrete dust and a crack)
-      v.mats = []; v.eyes = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); if (/Eye_Black/.test(q.material.name)) v.eyes.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
-      scene.add(v.o); seen.set(k.id, v);
-    }
-    { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
-      for (const m of v.mats) { m.opacity = 0.88 + 0.12 * v.sol; m.depthWrite = true; }   /* (in the dark a solid black silhouette, in light fully there; at 16% only the rim showed, read as see-through glitter, and the edge of the light made it flash: his eyes 2026-10-19, taste rule 102. Shots still pass through it in the dark: the rule is unchanged) */
-      if (v.tag > 0) v.tag -= dt; if (smart.id === k.id && smart.t >= SMART.lock) v.scan = Math.max(v.scan || 0, 0.45);   /* (a locked shape keeps its outline, in pink) */
-      if (v.scan > 0 || v.scanned) { v.scan = Math.max(0, (v.scan || 0) - dt); const a = Math.min(1, v.scan / 0.4);   /* (the scan outline: a violet edge that fades out over its last 0.4 s) */
-        for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); m.userData.i0 = m.emissiveIntensity; } if (v.scan > 0) { m.emissive.setHex(smart.id === k.id && smart.t >= SMART.lock ? SMART.color : SCAN.color); m.emissiveIntensity = 0.9 * a; m.opacity = Math.max(m.opacity, 0.35 + 0.5 * a); } else { m.emissive.setHex(m.userData.e0); m.emissiveIntensity = m.userData.i0; } }
-        v.scanned = v.scan > 0; }
-      const w = (1 - v.sol) * 0.035, t = performance.now() / 1000 + k.id, br = 1 + w * Math.sin(t * 1.3); v.o.scale.set(v.base * br, v.base * br, v.base * br); }   /* (smoke breathes slowly; it used to shake on three axes at once, which read as a glitch, his note 2026-10-19) */
-    if (v.eyes.length) {   /* (the masks show intent, never in words, GAMEDEV-TRICKS.md 13: the pinpoint eyes flare as it closes to striking range, and the watcher's brighten while nobody looks at it, because that is when it moves) */
-      const K = C.KINDS[k.kind], reach = (K && K.reach) || 1.2; let d = 1e9; for (const p of g.players) if (!p.ember) d = Math.min(d, Math.hypot(p.x - k.x, p.z - k.z));
-      const tell = Math.max(0, Math.min(1, 1 - (d - reach) / (reach * 1.6))) + (k.kind === 'watcher' && !C.lookedAt(g, k) && d < 30 ? 0.5 : 0); v.tell = (v.tell || 0) + (tell - (v.tell || 0)) * Math.min(1, dt * 8);
-      for (const m of v.eyes) m.emissiveIntensity = 3 + 4 * v.tell; }
-    const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;
-    { const want = k.rt > 0 ? [0, 0.18, 0.4, 1.35][k.r || 0] : 0; v.lean = (v.lean || 0) + (want - (v.lean || 0)) * Math.min(1, dt * (want > (v.lean || 0) ? 30 : 5)); v.o.rotation.order = 'YXZ'; v.o.rotation.x = -v.lean; if (k.r === 3 && k.rt > 0) v.o.position.y -= v.lean * 0.35; }   /* (the hit reaction you see: a snap back, a reel, or down on its back; it rises slowly) */   // (no bob: they hold their height; the animation does the moving)
-    if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix && hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k))) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));   // (seen, it freezes mid-motion)
-  }
-  for (const [id, v] of seen) if (!alive.has(id)) { scene.remove(v.o); seen.delete(id); }
-}
+function drawHollow(dt) { creatures.draw(g, dt, { seen, hitStop, smart, SMART, SCAN, camera, g }); }   // (the bodies: client/creatures.js; their rules: core moveHollow and bodyStep)
 
 // ---------------------------------------------------------------- the fire and the network's nodes
 const fireLight = new THREE.PointLight(0x9fc0ff, 0, 30, 1.6); scene.add(fireLight);
@@ -921,7 +881,7 @@ async function begin(seed, id, saved = null) {
       g.hollow.push({ id: g.nextId++, kind: 'walker', x, z, y: g.land(x, z), yaw: 0, hp: K.hp, max: K.hp, sh: 0, sb: 0, cd: 0, dead: false, speed: 1.1, staged: true }); } });
   setTimeout(() => guide.start(), 1200); setTimeout(shareLines, 1500);   // (your own words go to whoever hosts, for your learned copy)
   mode = 'play'; $('menu').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
-  await ready; prepGun('pistol'); prepGun('ar'); prepGun('shotgun'); prepGun('lmg'); { const r = new THREE.Group(); r.userData = { len: 1, top: 0, muzzle: new THREE.Vector3(0.03, -0.04, -0.9) }; r.visible = false; view.add(r); held.rail = r; }   /* (the rail's slot: its look is the Blender rig, drawn by railRig) */ hands.attach(held[gunKey], gunKey);
+  await ready; if (!C.DARK.off) creatures.warm(renderer, camera); prepGun('pistol'); prepGun('ar'); prepGun('shotgun'); prepGun('lmg'); { const r = new THREE.Group(); r.userData = { len: 1, top: 0, muzzle: new THREE.Vector3(0.03, -0.04, -0.9) }; r.visible = false; view.add(r); held.rail = r; }   /* (the rail's slot: its look is the Blender rig, drawn by railRig) */ hands.attach(held[gunKey], gunKey);
 }
 // ---------------------------------------------------------------- your worlds: saved in this browser, every 20 seconds and when you leave
 const WKEY = 'lastfire2-worlds'; let worldId = null;
