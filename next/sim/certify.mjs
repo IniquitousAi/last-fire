@@ -23,7 +23,7 @@ function think(g, p, r, dt) {   // (one robot plays one person's habits: where t
   const out = Math.atan2(-(p.x - f.x), -(p.z - f.z)) + Math.PI; p.yaw = out;
   p.cd = (p.cd || 0) - dt; if (p.cd > 0) return;
   const sectorOf = (x, z) => { const a = ((Math.atan2(-(x - p.x), -(z - p.z)) + Math.PI * 4) % (Math.PI * 2)); return Math.floor(a / (Math.PI * 2) * SECTORS) % SECTORS; };
-  const k = g.hollow.filter(k => { const dd = Math.hypot(k.x - p.x, k.z - p.z); return dd < 30 && (S.blind < 0 || sectorOf(k.x, k.z) !== S.blind || dd < 7); }).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return;
+  const k = g.hollow.filter(k => { const dd = Math.hypot(k.x - p.x, k.z - p.z); return dd < 30 && (S.blind < 0 || sectorOf(k.x, k.z) !== S.blind || dd < 7); }).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), chance = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < chance * 0.35;
   if (r() > chance) { shotBy(g, p, false); return; }
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], ox = p.x, oy = p.y + 1.6, oz = p.z, vx = k.x - ox, vy = k.y + hy - oy, vz = k.z - oz, L = Math.hypot(vx, vy, vz);

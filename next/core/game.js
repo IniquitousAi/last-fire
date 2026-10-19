@@ -87,6 +87,7 @@ export const KINDS = {
   walker: { hp: 120, shell: [40, 0], grow: [12, 15], speed: 2.4, bite: 14, wait: 1.0, reach: 1.2, hits: [[2.2, 0.26, 0, 2.5], [1.4, 0.4, 1, 1]], motes: 2 },
   runner: { hp: 70, shell: [20, 30], grow: [6, 8], speed: 5.6, bite: 8, wait: 0.6, reach: 1.1, hits: [[0.95, 0.24, 0, 2.5], [0.85, 0.42, 1, 1]], motes: 1 },
   shard: { hp: 100, shell: [0, 60], grow: [0, 15], speed: 3.4, bite: 0, wait: 1, reach: 1.6, hits: [[2.6, 0.55, 1, 1]], motes: 3 },   // (it floats to the fire and drinks its light)
+  watcher: { hp: 160, shell: [0, 0], grow: [0, 0], speed: 4.6, bite: 30, wait: 1.4, reach: 1.4, hits: [[2.6, 0.22, 0, 3], [1.6, 0.35, 1, 1]], motes: 4, watched: true },   // (the tall one in the hat: it only moves while nobody is looking at it)
   giant: { hp: 900, shell: [150, 250], grow: [40, 60], speed: 1.3, bite: 34, wait: 1.6, reach: 1.9, hits: [[2.85, 0.32, 0, 2], [2.0, 0.72, 1, 1]], motes: 12 },
 };
 // what each fire level wakes in the dark that night: the player chooses when to provoke it, by feeding the fire
@@ -261,7 +262,7 @@ function spawnEarth(g, dt) {
   if (!g.earth) return; const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
   const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
   g.spawnE = (g.spawnE || 0) - dt; if (g.spawnE > 0 || g.hollow.filter(k => k.earth).length >= want) return; g.spawnE = EARTH_DARK.every;
-  const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'giant'] : ['walker', 'walker', 'runner'];
+  const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'watcher', 'giant'] : into > 30 ? ['walker', 'walker', 'runner', 'watcher'] : ['walker', 'walker', 'runner'];
   const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = g.rSpawn() * Math.PI * 2, r = 26 + g.rSpawn() * 12, x = who.x + Math.cos(a) * r, z = who.z + Math.sin(a) * r, grow = Math.max(0, g.night - 1);
   g.hollow.push({ id: g.nextId++, kind, earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
 }
@@ -271,10 +272,15 @@ function spawn(g, dt, ph) {
   g.spawnT = (g.spawnT || 0) - dt; if (g.spawnT > 0 || g.hollow.length >= want) return;
   const into = (g.clock - NIGHT_AT) / (DAWN_AT - NIGHT_AT), rush = into > T.rushAt;
   g.spawnT = rush ? 0.5 : 1.6;
-  const pool = ['walker', 'walker', 'walker', ...g.fire.woke, ...(night >= 3 ? ['runner'] : [])];
+  const pool = ['walker', 'walker', 'walker', ...g.fire.woke, ...(night >= 3 ? ['runner'] : []), ...(night >= 2 ? ['watcher'] : [])];
   const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = T.probe + (g.rSpawn() - 0.5) * (rush ? Math.PI * 2 : T.spread), r = tideRadius(g) + 4;
   const x = g.fire.x + Math.cos(a) * r, z = g.fire.z + Math.sin(a) * r, grow = night - 1;
   g.hollow.push({ id: g.nextId++, kind, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
+}
+export function lookedAt(g, k) {   // (someone on its side of the sky faces it, within about 35 degrees, closer than 45 m)
+  for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz); if (d > 45 || d < 0.1) continue;
+    if ((-Math.sin(p.yaw || 0) * dx - Math.cos(p.yaw || 0) * dz) / d > 0.82) return true; }
+  return false;
 }
 function moveHollow(g, dt, ph) {
   const T = g.tactic, f = g.fire;
@@ -302,6 +308,7 @@ function moveHollow(g, dt, ph) {
     const ahead = lightAt(g, k.x + dx * 1.5, k.z + dz * 1.5), here = lightAt(g, k.x, k.z);
     if (k.kind !== 'giant') { if (here > 0.15) k.hp -= dt * 50 * here; if (ahead > 0.25 && d > K.reach) { const side = k.id % 2 ? 1 : -1; [dx, dz] = [dx * 0.25 + dz * side, dz * 0.25 - dx * side]; } }   // (light burns them, so they circle its edge; the giant walks in)
     if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; }
+    if (K.watched && (k.still = lookedAt(g, k))) { k.y = heightAt(g.land, k.x, k.z); continue; }   // (seen: it holds perfectly still, wherever it was caught)
     k.yaw = Math.atan2(dx, dz);
     if (d < K.reach) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind); k.cd = K.wait; } }
     else { k.x += dx * k.speed * dt; k.z += dz * k.speed * dt; }

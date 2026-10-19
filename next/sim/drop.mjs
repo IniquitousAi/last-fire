@@ -19,7 +19,7 @@ function think(g, p, S, r, dt) {
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); if (d > 0.3) { const sp = Math.min(d, 4.4 * speedOf(p) * dt); p.x += dx / d * sp; p.z += dz / d * sp; } p.y = heightAt(g.land, p.x, p.z);
   if (goHome && Math.hypot(p.x - EARTH.x, p.z - EARTH.z) < 3.5) { const brought = p.carried; if (rise(g, p)) { p.home = true; p.brought = brought; } return; }
   p.cd = (p.cd || 0) - dt; if (p.cd > 0) return;
-  const k = g.hollow.filter(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return;
+  const k = g.hollow.filter(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), hc = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < hc * 0.35; if (r() > hc) return;
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], oy = p.y + 1.6, vx = k.x - p.x, vy = k.y + hy - oy, vz = k.z - p.z, L = Math.hypot(vx, vy, vz);
   const h = hitRay(g, p.x, oy, p.z, vx / L, vy / L, vz / L, 31); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);

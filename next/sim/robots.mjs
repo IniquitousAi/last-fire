@@ -23,7 +23,7 @@ function think(g, p, S, r, dt) {   // (one robot: shoot the nearest Hollow it ca
   if (Math.hypot(p.x - f.x, p.z - f.z) > S.roam && !p.carrying && p.carried < S.bankAt && !ember) { const a = Math.atan2(p.z - f.z, p.x - f.x); p.x = f.x + Math.cos(a) * S.roam; p.z = f.z + Math.sin(a) * S.roam; }
   p.y = heightAt(g.land, p.x, p.z);
   p.cd = (p.cd || 0) - dt; if (p.cd > 0) return;
-  const k = g.hollow.filter(k => Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return;
+  const k = g.hollow.filter(k => Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), hitChance = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < hitChance * 0.35; if (r() > hitChance) return;   // (harder to hit the farther it is)
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], ox = p.x, oy = p.y + 1.6, oz = p.z, vx = k.x - ox, vy = k.y + hy - oy, vz = k.z - oz, L = Math.hypot(vx, vy, vz);
   const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
