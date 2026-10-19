@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=79';
-import { Ambience } from './ambience.js?v=79';
-import { Camp, BOARD } from './camp.js?v=79';
-import { Guide } from './guide.js?v=79';
-import { buildSites } from './earthsite.js?v=79';
-import { Truck } from './truck.js?v=79';
-import { Wrist } from './wrist.js?v=79';
-import { FireCore } from './firecore.js?v=79';
+import * as C from '../core/game.js?v=80';
+import { Ambience } from './ambience.js?v=80';
+import { Camp, BOARD } from './camp.js?v=80';
+import { Guide } from './guide.js?v=80';
+import { buildSites } from './earthsite.js?v=80';
+import { Truck } from './truck.js?v=80';
+import { Wrist } from './wrist.js?v=80';
+import { FireCore } from './firecore.js?v=80';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=79';
-import { FriendVoice } from './friendvoice.js?v=79';
-import { crewFrom } from '../core/habits.js?v=79';
-import { HudLook } from './hudlook.js?v=79';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=79';
-import { sound, GUNS } from '../../src/combat.js?v=79';
-import { FX } from '../../src/fx.js?v=79';
+import { think as friendThink } from './friend.js?v=80';
+import { FriendVoice } from './friendvoice.js?v=80';
+import { crewFrom } from '../core/habits.js?v=80';
+import { HudLook } from './hudlook.js?v=80';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=80';
+import { sound, GUNS } from '../../src/combat.js?v=80';
+import { FX } from '../../src/fx.js?v=80';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 79;   // (this copy's version; ./version.json says the newest)
+const BUILD = 80;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -235,7 +235,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
 addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
-  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
+  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
@@ -308,8 +308,8 @@ function fitPart() { if (isHost()) { const k = C.fit(g, me); if (k) { sound.buy(
 function bayLine() { const k = C.PART_ORDER.find(k => C.canFit(g, k)); if (k) return `F  ·  FIT THE ${k.toUpperCase()} (${g.stash[k]} in the stash)`; if (C.truckDone(g)) return 'The truck is whole. (driving it comes next)';
   const need = C.PART_ORDER.find(k => C.fitted(g, k) < C.PARTS[k].n); const blocked = C.PARTS[need].after.find(a => C.fitted(g, a) < C.PARTS[a].n); return `THE TRUCK: needs ${blocked ? `the ${blocked} before the ${need}` : `a ${need}`} (find parts on Earth)`; }
 const nearCar = () => g.car && (C.seatOf(g, me.id) >= 0 || Math.hypot(me.x - g.car.x, me.z - g.car.z) < 3.8);
-function carLine() { const c = g.car, kg = C.storeKg(c); if (C.seatOf(g, me.id) >= 0) return `F  ·  GET OUT   ·   ${Math.round(Math.abs(c.v) * 3.6)} km/h   ·   load ${kg} of ${C.CAR.store} kg`;
-  return (me.pack || []).length ? `F  ·  LOAD YOUR PACK INTO THE TRUCK (${kg} of ${C.CAR.store} kg)` : c.seats.length >= C.CAR.seats ? 'The truck is full.' : `F  ·  GET IN${c.seats.length ? '' : ' AND DRIVE (W, S, A, D)'}`; }
+function carLine() { const c = g.car, kg = C.storeKg(c); const mySeat = C.seatOf(g, me.id); if (mySeat >= 0) return `F  ·  GET OUT   ·   ${['DRIVING', 'ROOF LAMP', 'MOUNTED GUN', 'MOUNTED GUN'][mySeat]}   ·   ${Math.round(Math.abs(c.v) * 3.6)} km/h   ·   load ${kg} of ${C.CAR.store} kg<span style="display:block;margin-top:4px;font-size:14px"><b class="seatnext" style="cursor:pointer;color:#ff4fd8;font-weight:500">X  ·  NEXT SEAT</b></span>`;
+  return (me.pack || []).length ? `F  ·  LOAD YOUR PACK INTO THE TRUCK (${kg} of ${C.CAR.store} kg)` : !c.seats.includes(null) ? 'The truck is full.' : `F  ·  GET IN${c.seats[0] === null ? ' AND DRIVE (W, S, A, D)' : ''}`; }
 function useCar() { if (isHost()) { const r = C.useCar(g, me); if (r === 'stowed') { sound.drop(); say('Loaded into the truck.', 2); } else if (r === 'full') say('The truck is full.', 2); } else net.send({ t: 'build', k: 'car', x: 0, z: 0 }); }
 function friendSign() {   // (the world keeps your friends: walk past what someone else built, or where they fell, and it says so)
   const mine = n => !n || n === SET.name, node = g.nodes.find(n => !mine(n.who) && Math.hypot(me.x - n.x, me.z - n.z) < 2.2);
@@ -317,7 +317,7 @@ function friendSign() {   // (the world keeps your friends: walk past what someo
   const m = g.marks.find(m => m.k === 'fall' && !mine(m.who) && Math.hypot(me.x - m.x, me.z - m.z) < 1.6); return m ? `${m.who} fell here  ·  night ${m.n}` : '';
 }
 function act() { if (me.ember) return; if (nearCar()) return useCar(); if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); if (atStore() && shortAmmo()) return resupply(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
-$('prompt').addEventListener('click', e => { const b = e.target.closest('.bet'); if (b && atPad()) { stake = +b.dataset.p / 100; say(`Staked: you said ${b.dataset.p}% you come back. The board keeps score.`, 4); trip('drop'); return; } act(); });
+$('prompt').addEventListener('click', e => { if (e.target.closest('.seatnext')) return nextSeat(); const b = e.target.closest('.bet'); if (b && atPad()) { stake = +b.dataset.p / 100; say(`Staked: you said ${b.dataset.p}% you come back. The board keeps score.`, 4); trip('drop'); return; } act(); });
 // staking your own odds (INNOVATION.md idea 4): a guess before a trip, scored by what happened; the board shows how true your guesses run
 let stake = null; function settleStake(back) { if (stake === null) return; SET.stakes = [...(SET.stakes || []), [stake, back ? 1 : 0]].slice(-200); save(); stake = null; }
 const stakeScore = () => { const st = SET.stakes || []; return st.length ? { n: st.length, brier: st.reduce((a, [p, o]) => a + (p - o) ** 2, 0) / st.length, back: st.filter(x => x[1]).length } : null; }; $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
@@ -333,6 +333,7 @@ function tryBuild() { const K = C.NODE[buildPick]; if (me.carried < K.cost) retu
 function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'carries light on, ' + K.reach + ' m' : 'shines wide, carries nothing'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: pulls the hunt and burns it, ${C.FLARE.life} s</small></button>`; }
 $('build').addEventListener('click', e => { const b = e.target.closest('.bk'); if (!b) return; if (b.dataset.k === 'flare') return throwFlare(); pickBuild(buildPick === b.dataset.k ? null : b.dataset.k); });
 function flareSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t <= C.FLARE.reach; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z) + 0.1) return [x, z]; } return [o.x + d.x * 12, o.z + d.z * 12]; }   // (where you aim, on the ground, up to 16 m)
+function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const j = C.nextSeat(g, me); if (j >= 0) say(['You take the wheel.', 'You take the roof lamp. Look where it should shine.', 'You take the mounted gun.', 'You take the mounted gun.'][j], 2); } else net.send({ t: 'build', k: 'seat', x: 0, z: 0 }); }
 function throwFlare() { if (me.ember) return; if (me.carried < C.FLARE.cost) return say(`A flare costs ${C.FLARE.cost} light. You carry ${Math.floor(me.carried)}.`, 2); const [x, z] = flareSpot(); sound.buy(); if (isHost()) C.throwFlare(g, me, x, z); else net.send({ t: 'build', k: 'flare', x: +x.toFixed(2), z: +z.toFixed(2) }); }
 
 // ---------------------------------------------------------------- moving: grounded but sharp (fast to start and stop, real weight on slopes)
@@ -524,7 +525,7 @@ function onNet(m, from) {
       dirs.forEach((d, n) => { const L = Math.hypot(d[0], d[1], d[2]); if (L < 0.5) return; if (n === 0) C.fired(g, p, m.o[0], m.o[2], d[0] / L, d[2] / L); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 80);
         if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } }); return;
     }
-    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else if (m.k === 'flare' && fin(m.x) && fin(m.z)) C.throwFlare(g, p, m.x, m.z); else build(p, m.k, m.x, m.z); return; }
+    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else if (m.k === 'seat') C.nextSeat(g, p); else if (m.k === 'flare' && fin(m.x) && fin(m.z)) C.throwFlare(g, p, m.x, m.z); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; heardShot(m); net.relay(m, from); return; }
     return;
   }
@@ -568,7 +569,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
   if (m.th && typeof m.th === 'object' && Object.keys(C.THEORIES).every(k => fin(m.th[k]))) { g.theories = {}; for (const k of Object.keys(C.THEORIES)) g.theories[k] = Math.max(0, Math.min(0.85, m.th[k])); }
   if (m.du && typeof m.du === 'object') { const d = {}; for (const [k, v] of Object.entries(m.du).slice(0, 32)) if (k.length <= 24 && fin(v)) d[k] = v; g.dues = d; }
   if (Array.isArray(m.cl) && Array.isArray(m.cl[0])) { g.lost = m.cl[0].filter(w => C.CAMP_OUT.includes(w)); g.out = C.CAMP_OUT.includes(m.cl[1]) ? { who: m.cl[1] } : null; }
-  if (m.car === 0) g.car = null; else if (Array.isArray(m.car) && m.car.slice(0, 4).every(fin) && Array.isArray(m.car[4]) && Array.isArray(m.car[5])) { const [x, z, yaw, v, seats, store] = m.car; g.car = { x, z, yaw, v, seats: seats.filter(fin).slice(0, 4), store: store.filter(k => C.PARTS[k]).slice(0, 40) }; }
+  if (m.car === 0) g.car = null; else if (Array.isArray(m.car) && m.car.slice(0, 4).every(fin) && Array.isArray(m.car[4]) && Array.isArray(m.car[5])) { const [x, z, yaw, v, seats, store] = m.car; g.car = { x, z, yaw, v, seats: [0, 1, 2, 3].map(i => fin(seats[i]) ? seats[i] : null), store: store.filter(k => C.PARTS[k]).slice(0, 40) }; }
   if (Array.isArray(m.pt)) g.parts = m.pt.filter(a => Array.isArray(a) && C.PARTS[a[1]] && fin(a[0]) && fin(a[2]) && fin(a[3])).slice(0, 60).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3] }));
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of C.PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; if (m.st) g.stash = cnt(m.st); if (m.tr) g.truck = cnt(m.tr);
   if (Array.isArray(m.pk)) for (const a of m.pk) if (Array.isArray(a) && a[0] === myId && Array.isArray(a[1])) me.pack = a[1].filter(k => C.PARTS[k]).slice(0, 12);
