@@ -101,7 +101,7 @@ const lines = [];
   await at(2.4, -1.4, 5, -4, 0.28); await shot('board-learning');
   const learn1 = await LORE('darkLearning'); check('The dark learns only after two calm nights with no falls', !learn0 && learn1, `before: ${learn0}, after two calm nights: ${learn1}`);
   // ---- dawn: last night's dry line, then the real odds on the wrist for someone who has checked
-  await E(() => { lastfire2.g.clock = 0.9995; }); await p.waitForTimeout(2200); const wt2 = await E(() => lastfire2.wrist.text); await shot('wrist-night-news');
+  await E(() => { lastfire2.g.clock = 0.9995; }); await p.waitForTimeout(2200); const wt2 = await E(() => __said.filter(t => /^Last night:/.test(t)).pop() || ''); await shot('wrist-night-news');
   await p.waitForTimeout(500); await shot('wrist-dawn-odds');
   const n2 = await E(() => lastfire2.g.night); check('The night rolls over and the news comes, with the real odds because you checked', n2 > before.n && /^Last night: .+Real odds today: \d+%\. The board says \d+%\./.test(wt2), `night ${before.n} to ${n2}; wrist: ${wt2}`);
   const ctl = await E(() => { const mk = col => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.fillStyle = col; x.fillRect(0, 0, 64, 64); return c.toDataURL().split(',')[1]; }; return [mk('#ff8a00'), mk('#00e5ff'), mk('#ffd400'), mk('#ff4fd8')]; });

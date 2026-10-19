@@ -1,0 +1,7 @@
+PASS  The loading bar shows real progress while the world builds  (5 readings, 0,29,33,41,78%, last: building the ground, 11 tiles left)
+PASS  The dial needle follows the clock  (rotate(270.0))
+PASS  Low health cracks the visor  (opacity 0.818)
+PASS  The cracks fade as you heal  (opacity 0)
+PASS  The crosshair is two chevrons and a dot  (4:2 paths:circles (each drawn twice, dark edge under white))
+PASS  On the compass the fire (ours) is blue and the dark (pings, breach) is red  (rgb(59, 107, 255) | rgb(255, 59, 92) | rgb(238, 240, 248))
+PASS  No page errors  (none)
