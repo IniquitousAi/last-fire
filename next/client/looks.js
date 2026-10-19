@@ -48,10 +48,10 @@ export function applyLook(n, ctx) {
       if (gM > 0.001) { rk += textureGrad(uDark, gU2, d2x, d2y).rgb * 1.3 * gM; gNR += textureGrad(uRN, gU2, d2x, d2y) * gM; }
       vec3 gTN = vec3(gNR.xy * 2.0 - 1.0, 0.0); gTN.z = sqrt(max(0.0, 1.0 - dot(gTN.xy, gTN.xy))); float gRg = gNR.b;
       float gWet = ${R.wet ? 'smoothstep(0.5, 0.62, gn(vW * 0.21))' : '0.0'};`);
-    f = f.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(clamp(gRg * 1.05, 0.35, 1.0), 0.08, gWet);');
+    f = f.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(clamp(gRg * 1.05, 0.6, 1.0), 0.28, gWet);   /* (was 0.35 and 0.08: the bumpy stone under a lamp glittered into a bright patch at spawn, his eyes 2026-10-19) */');
     f = f.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
       vec3 gWN = normalize((vec4(normal, 0.0) * viewMatrix).xyz); vec3 gT = vec3(gTN.xy * (1.0 - 0.85 * gWet), gTN.z);   /* (a puddle is flat: its stone relief fades) */
-      vec3 gN2 = normalize(vec3(gWN.x + gT.x * 1.2, gWN.y * abs(gT.z), gWN.z + gT.y * 1.2));   /* (whiteout blend: tangent +x, bitangent +z, the way the texture is laid) */ normal = normalize((viewMatrix * vec4(gN2, 0.0)).xyz);
+      vec3 gN2 = normalize(vec3(gWN.x + gT.x * 0.9, gWN.y * abs(gT.z), gWN.z + gT.y * 0.9));   /* (whiteout blend: tangent +x, bitangent +z, the way the texture is laid) */ normal = normalize((viewMatrix * vec4(gN2, 0.0)).xyz);
       vec3 gLd = normalize(vec3(uLights[0].x - vW.x, 2.2, uLights[0].y - vW.z));
       float gRel = clamp((0.3 + 0.7 * max(dot(gN2, gLd), 0.0)) / (0.3 + 0.7 * max(dot(gWN, gLd), 0.05)), 0.4, 1.8);   /* (the camp's light is painted on as glow; this lets the stone's relief shade it) */`);
     f = f.replace('min(L, 1.4) * 0.8;', 'min(L, 1.4) * 0.8 * gRel;');

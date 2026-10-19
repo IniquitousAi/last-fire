@@ -1,37 +1,37 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=156';
-import { Ambience } from './ambience.js?v=156';
-import { Camp, BOARD } from './camp.js?v=156';
-import { Guide } from './guide.js?v=156';
-import { buildSites } from './earthsite.js?v=156';
-import { Truck } from './truck.js?v=156';
-import { ShipView } from './shipview.js?v=156';
-import { Crew } from './crew.js?v=156';
-import { Hands } from './hands.js?v=156';
-import { FpRig } from './fprig.js?v=156';
-import { farStep } from './farsound.js?v=156';
-import { Wrist } from './wrist.js?v=156';
-import { FireCore } from './firecore.js?v=156';
+import * as C from '../core/game.js?v=157';
+import { Ambience } from './ambience.js?v=157';
+import { Camp, BOARD } from './camp.js?v=157';
+import { Guide } from './guide.js?v=157';
+import { buildSites } from './earthsite.js?v=157';
+import { Truck } from './truck.js?v=157';
+import { ShipView } from './shipview.js?v=157';
+import { Crew } from './crew.js?v=157';
+import { Hands } from './hands.js?v=157';
+import { FpRig } from './fprig.js?v=157';
+import { farStep } from './farsound.js?v=157';
+import { Wrist } from './wrist.js?v=157';
+import { FireCore } from './firecore.js?v=157';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=156';
-import { FriendVoice } from './friendvoice.js?v=156';
-import { crewFrom } from '../core/habits.js?v=156';
-import { HudLook } from './hudlook.js?v=156';
-import { applyLook } from './looks.js?v=156';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=156';
-import { sound, GUNS } from '../../src/combat.js?v=156';
-import { FX } from '../../src/fx.js?v=156';
+import { think as friendThink } from './friend.js?v=157';
+import { FriendVoice } from './friendvoice.js?v=157';
+import { crewFrom } from '../core/habits.js?v=157';
+import { HudLook } from './hudlook.js?v=157';
+import { applyLook } from './looks.js?v=157';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=157';
+import { sound, GUNS } from '../../src/combat.js?v=157';
+import { FX } from '../../src/fx.js?v=157';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 156;   // (this copy's version; ./version.json says the newest)
+const BUILD = 157;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -172,7 +172,7 @@ groundMat.onBeforeCompile = sh => { sh.uniforms.uRock = uRock; sh.uniforms.uDark
       totalEmissiveRadiance += vec3(0.85, 0.42, 1.0) * wet * min(st, 1.4) * 0.55 + vec3(0.06, 0.05, 0.1) * wet * min(L, 1.0);
       float far = smoothstep(55.0, 140.0, length(vW.xz - cameraPosition.xz)); float vein = smoothstep(0.82, 0.97, gn(vW * 0.09 + vec3(0.0, 0.0, 0.0))) * smoothstep(0.35, 0.8, gn(vW * 0.031));
       vec3 hue = mix(vec3(0.48, 0.30, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */
-      totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.9;   /* (rare mineral glints: the stars, underfoot) */`);
+      totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.0;   /* (rare mineral glints: the stars, underfoot) */`);
 };
 // the look: his pick, 2026-10-19, is look 3, the cinematic night (client/looks.js); ?look=0 is the old look, ?look=1 or 2 the others
 const lookFx = applyLook(+(new URLSearchParams(location.search).get('look') ?? 3), { THREE, renderer, scene, camera, composer, renderPass, bloom, grade, groundMat });
