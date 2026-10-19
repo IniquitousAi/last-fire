@@ -1,0 +1,6 @@
+seed 11 Careful  roam 6.3 -> 6.5   together 0.53 -> 0.28   aim 0.72 -> 0.76   carries 1.0 -> 0.0 light out past the circle
+seed 11 Bold     roam 18.8 -> 20.3   together 0.53 -> 0.28   aim 0.51 -> 0.43   carries 4.3 -> 2.0 light out past the circle
+seed 22 Careful  roam 6.5 -> 8.1   together 0.42 -> 0.24   aim 0.72 -> 0.72   carries 4.3 -> 2.5 light out past the circle
+seed 22 Bold     roam 20.8 -> 25.7   together 0.42 -> 0.24   aim 0.51 -> 0.38   carries 7.2 -> 3.4 light out past the circle
+seed 33 Careful  roam 6.5 -> 8.2   together 0.48 -> 0.27   aim 0.67 -> 0.62   carries 2.5 -> 0.0 light out past the circle
+seed 33 Bold     roam 21.4 -> 23.9   together 0.48 -> 0.27   aim 0.46 -> 0.38   carries 9.1 -> 6.1 light out past the circle

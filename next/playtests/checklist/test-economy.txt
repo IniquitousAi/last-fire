@@ -1,0 +1,28 @@
+seed 1
+  day 1 Daniel+Dalton Daniel 58 (0 days behind)  Dalton 48 (0)  pool peak 0, at dawn 0
+  day 2 Daniel        Daniel 363 (0 days behind)  Dalton 18 (0)  pool peak 335, at dawn 0
+  day 3 Daniel        Daniel 513 (0 days behind)  Dalton 18 (0)  pool peak 180, at dawn 180
+  day 4 Daniel        Daniel 585 (0 days behind)  Dalton 18 (0)  pool peak 282, at dawn 282
+  day 5 Daniel+Dalton Daniel 633 (0 days behind)  Dalton 105 (0)  pool peak 282, at dawn 0
+  day 6 Daniel+Dalton Daniel 611 (0 days behind)  Dalton 83 (0)  pool peak 0, at dawn 0
+  day 7 Daniel+Dalton Daniel 727 (0 days behind)  Dalton 121 (0)  pool peak 0, at dawn 0
+  rules: soloist at most a day behind (the new day's share lands at dawn) PASS; pool reaches the fire PASS; the returning friend within a day PASS
+seed 2
+  day 1 Daniel+Dalton Daniel 6 (0 days behind)  Dalton 28 (0)  pool peak 0, at dawn 0
+  day 2 Daniel        Daniel 290 (0 days behind)  Dalton -2 (0.07)  pool peak 314, at dawn 0
+  day 3 Daniel        Daniel 500 (0 days behind)  Dalton -2 (0.07)  pool peak 240, at dawn 240
+  day 4 Daniel        Daniel 662 (0 days behind)  Dalton -2 (0.07)  pool peak 431, at dawn 431
+  day 5 Daniel+Dalton Daniel 741 (0 days behind)  Dalton 53 (0)  pool peak 431, at dawn 0
+  day 6 Daniel+Dalton Daniel 751 (0 days behind)  Dalton 41 (0)  pool peak 0, at dawn 0
+  day 7 Daniel+Dalton Daniel 747 (0 days behind)  Dalton 49 (0)  pool peak 0, at dawn 0
+  rules: soloist at most a day behind (the new day's share lands at dawn) PASS; pool reaches the fire PASS; the returning friend within a day PASS
+seed 3
+  day 1 Daniel+Dalton Daniel 12 (0 days behind)  Dalton 16 (0)  pool peak 0, at dawn 0
+  day 2 Daniel        Daniel 234 (0 days behind)  Dalton -14 (0.47)  pool peak 252, at dawn 0
+  day 3 Daniel        Daniel 426 (0 days behind)  Dalton -14 (0.47)  pool peak 223, at dawn 223
+  day 4 Daniel        Daniel 419 (0 days behind)  Dalton -14 (0.47)  pool peak 246, at dawn 246
+  day 5 Daniel+Dalton Daniel 505 (0 days behind)  Dalton 38 (0)  pool peak 246, at dawn 0
+  day 6 Daniel+Dalton Daniel 487 (0 days behind)  Dalton 24 (0)  pool peak 0, at dawn 0
+  day 7 Daniel+Dalton Daniel 459 (0 days behind)  Dalton 45 (0)  pool peak 0, at dawn 0
+  rules: soloist at most a day behind (the new day's share lands at dawn) PASS; pool reaches the fire PASS; the returning friend within a day PASS
+banked a day per player: 149 68 155 50 108 49  dues per person now 30

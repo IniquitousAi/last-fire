@@ -1,0 +1,1 @@
+breaches: 144; warned 2 s or more ahead: 100.0%; still the weakest light when it pours: 95.1%  PASS  (21.4 s)

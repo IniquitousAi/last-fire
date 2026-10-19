@@ -1,0 +1,6 @@
+mean of 8 seeds, 3 nights each (falls = times someone fell; tense = share of night moments with danger close; flow band 0.25 to 0.70)
+careful  control {"falls":0,"kills":249,"tense":0.403}  rule {"falls":0,"kills":242,"tense":0.511}
+greedy   control {"falls":1.5,"kills":82,"tense":0.383}  rule {"falls":1.13,"kills":48,"tense":0.291}
+split    control {"falls":2.75,"kills":128,"tense":0.461}  rule {"falls":2.13,"kills":88,"tense":0.443}
+perfect  control {"falls":0,"kills":271,"tense":0.275}  rule {"falls":0,"kills":253,"tense":0.442}
+(11.1 s)

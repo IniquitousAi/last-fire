@@ -1,0 +1,10 @@
+as written: 9 of 9
+  PASS  A free rider pays at least 1.5x a contributor: 3.00x
+  PASS  A free rider gets no more lanterns: none
+  PASS  The lone wolf back after 21 days pays normal prices: 1.00x
+  PASS  The lone wolf may still have lanterns: yes
+  PASS  The grinder (about 3x a friend hours) is at most 25% ahead of that friend: 8% ahead
+  PASS  The grinder (about 12x the casual hours) is at most 75% ahead of the casual: 74% ahead
+  PASS  Tiny payments earn exactly what one big one does: gap 0
+  PASS  Dues cannot be paid with the camp's light: they cannot
+  PASS  Morale with one free rider stays above half: 0.80

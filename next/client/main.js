@@ -1,37 +1,37 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=155';
-import { Ambience } from './ambience.js?v=155';
-import { Camp, BOARD } from './camp.js?v=155';
-import { Guide } from './guide.js?v=155';
-import { buildSites } from './earthsite.js?v=155';
-import { Truck } from './truck.js?v=155';
-import { ShipView } from './shipview.js?v=155';
-import { Crew } from './crew.js?v=155';
-import { Hands } from './hands.js?v=155';
-import { FpRig } from './fprig.js?v=155';
-import { farStep } from './farsound.js?v=155';
-import { Wrist } from './wrist.js?v=155';
-import { FireCore } from './firecore.js?v=155';
+import * as C from '../core/game.js?v=156';
+import { Ambience } from './ambience.js?v=156';
+import { Camp, BOARD } from './camp.js?v=156';
+import { Guide } from './guide.js?v=156';
+import { buildSites } from './earthsite.js?v=156';
+import { Truck } from './truck.js?v=156';
+import { ShipView } from './shipview.js?v=156';
+import { Crew } from './crew.js?v=156';
+import { Hands } from './hands.js?v=156';
+import { FpRig } from './fprig.js?v=156';
+import { farStep } from './farsound.js?v=156';
+import { Wrist } from './wrist.js?v=156';
+import { FireCore } from './firecore.js?v=156';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=155';
-import { FriendVoice } from './friendvoice.js?v=155';
-import { crewFrom } from '../core/habits.js?v=155';
-import { HudLook } from './hudlook.js?v=155';
-import { applyLook } from './looks.js?v=155';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=155';
-import { sound, GUNS } from '../../src/combat.js?v=155';
-import { FX } from '../../src/fx.js?v=155';
+import { think as friendThink } from './friend.js?v=156';
+import { FriendVoice } from './friendvoice.js?v=156';
+import { crewFrom } from '../core/habits.js?v=156';
+import { HudLook } from './hudlook.js?v=156';
+import { applyLook } from './looks.js?v=156';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=156';
+import { sound, GUNS } from '../../src/combat.js?v=156';
+import { FX } from '../../src/fx.js?v=156';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 155;   // (this copy's version; ./version.json says the newest)
+const BUILD = 156;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -625,7 +625,7 @@ function frame(now) {
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
   { const dx = me.x - (frame.px ?? me.x), dz = me.z - (frame.pz ?? me.z), d = Math.hypot(dx, dz); frame.px = me.x; frame.pz = me.z;   // (your own footsteps, IMMERSION.md item 1: one every 1.75 m walking, 2.5 m sprinting; the view dips with each)
     if (onGround && !me.ember && !(ship && ship.on) && C.seatOf(g, me.id) < 0 && d < 1) { const L = mvSprint ? 2.5 : 1.75; frame.sd = (frame.sd || 0) + d; if (TEST) window.__dist = (window.__dist || 0) + d / L; if (frame.sd >= L) { frame.sd -= L; sound.step(mvSprint, C.onEarth(me) ? 2 : Math.hypot(me.x - g.fire.x, me.z - g.fire.z) < 22 ? 1 : 0, Math.min(1, (me.carried || 0) / 60)); frame.steps = (frame.steps || 0) + 1; if (TEST) window.__steps = frame.steps; } frame.bob = Math.sin(frame.sd / L * Math.PI) * (mvSprint ? 0.022 : 0.012) * (1 - ads); } else frame.bob = (frame.bob || 0) * 0.85; }
-  camera.position.set(me.x, me.y + eyeH - (frame.bob || 0), me.z);
+  camera.position.set(me.x, me.y + eyeH, me.z);   // (no step bob on the camera: his rule, nothing bobs; the footsteps stay as sound)
   { const live = !me.ember && !(ship && ship.on);   // (IMMERSION.md item 2: your breath after a sprint, 14 to 40 a minute; a heartbeat only when badly hurt or the dark is close, 70 + 70 x a minute)
     frame.puff = Math.max(0, Math.min(1, (frame.puff || 0) + (mvSprint ? dt / 6 : -dt / 10)));
     if (live && frame.puff > 0.15 && (frame.bt = (frame.bt ?? 0) - dt) <= 0) { const per = 60 / (14 + 26 * frame.puff); frame.bt = per / 2; frame.inh = !frame.inh; sound.breath(0.03 + 0.11 * frame.puff, frame.inh); }
@@ -695,9 +695,9 @@ $('devBody').addEventListener('click', e => { const b = e.target.closest('button
 $('openDev').onclick = () => { $('paused').hidden = true; $('dev').hidden = false; panel = 'dev'; drawDev(); };
 $('devBack').onclick = () => { $('dev').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidden = false; panel = 'list';
-  try { const d = await (await fetch('./checklist.json?t=' + Date.now())).json(), label = { done: 'DONE', in: 'IN', next: 'NEXT', later: 'LATER', talk: 'TALK' };
-    const order = ['next', 'in', 'talk', 'later', 'done'];
-    $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${d.about.replace(/[<&>]/g, '')}</p>` + d.items.slice().sort((a, b) => order.indexOf(a.s) - order.indexOf(b.s)).map(it => `<div class="ck"><b class="${it.s}">${label[it.s] || it.s}</b><span>${String(it.idea).replace(/[<&>]/g, '')}<small>${String(it.where || '').replace(/[<&>]/g, '')}</small></span></div>`).join(''); }
+  try { const d = await (await fetch('./checklist.json?t=' + Date.now())).json(), K = [['built', 'BUILT'], ['tested', 'TESTED'], ['seen', 'SEEN'], ['pad', 'PAD'], ['played', 'PLAYED']], esc = x => String(x || '').replace(/[<&>]/g, '');
+    const n = it => K.filter(([k]) => it.checks[k]).length, done = d.items.filter(it => n(it) === 5).length;   // (five proven marks per item, his rule 2026-10-19; sim/checklist_verify.mjs erases any mark without its proof)
+    $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${done} of ${d.items.length} done. Each idea has a task and five marks; a mark only counts with its proof.</p>` + d.items.slice().sort((a, b) => n(b) - n(a)).map(it => `<div class="ck"><b class="${n(it) === 5 ? 'done' : n(it) ? 'in' : 'later'}">${n(it)} / 5</b><span>${esc(it.task)}<small>${esc(it.idea)}</small><small>${K.map(([k, w]) => `<i style="font-style:normal;margin-right:10px;color:${it.checks[k] ? '#ff4fd8' : '#5a5d72'}">${it.checks[k] ? '&#10003;' : '&#9675;'} ${w}</i>`).join('')}</small></span></div>`).join(''); }
   catch (e) { $('listBody').textContent = 'The checklist could not load.'; } };
 $('listBack').onclick = () => { $('list').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 function reloadWorld(d) {   // (the world as it was at dusk; everyone here now stays, back at the fire)

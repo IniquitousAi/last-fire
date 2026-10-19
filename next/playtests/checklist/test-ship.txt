@@ -1,0 +1,3 @@
+drop test: overshoot -0%, settled in 3.00 s  PASS
+drop on hills: overshoot 2%, settled in 2.77 s
+pad run (300 m over hills): 8.1 s, landed 2.2 m off  PASS

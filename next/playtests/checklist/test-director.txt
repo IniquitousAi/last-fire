@@ -1,0 +1,6 @@
+mean of 32 seeds, 3 nights each (falls = times someone fell; tense = share of night moments with danger close; flow band 0.25 to 0.70)
+careful  no director {"falls":0,"kills":247,"tense":0.54}   director {"falls":0,"kills":238,"tense":0.508}
+greedy   no director {"falls":1.06,"kills":21,"tense":0.115}   director {"falls":1.22,"kills":52,"tense":0.319}
+split    no director {"falls":3.13,"kills":91,"tense":0.339}   director {"falls":2.03,"kills":79,"tense":0.387}
+perfect  no director {"falls":0,"kills":257,"tense":0.432}   director {"falls":0,"kills":250,"tense":0.419}
+(44.2 s)
