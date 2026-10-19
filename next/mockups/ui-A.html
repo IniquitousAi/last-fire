@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Last Fire: The Board (mockup A)</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;800&display=swap" rel="stylesheet">
+<style>
+:root{--slate:rgba(10,11,18,.92);--edge:#24263a;--quiet:#8a8ca3;--pink:#ff2a8d;--violet:#b026ff;--red:#ff3b5c;--white:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:400;overflow:hidden}
+.ui{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:24px 24px 18px}
+.col{width:420px;display:flex;flex-direction:column;gap:8px}
+.panel{background:var(--slate);border:1px solid var(--edge);padding:11px 14px}
+.form{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.14em;color:var(--quiet);text-transform:uppercase}
+.form b{font-weight:400;color:var(--white)}
+.label{font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--quiet);margin-top:6px}
+.odds{font-weight:800;font-size:56px;line-height:1;color:var(--pink);letter-spacing:-.01em;margin:4px 0 2px}
+.fine{font-size:14px;color:var(--quiet);line-height:1.35}
+.fine em{font-style:normal;color:var(--white)}
+.chips{display:flex;gap:8px;margin-top:6px}
+.chip{border:1px solid var(--edge);background:#07080d;padding:4px 9px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--quiet)}
+.chip b{font-weight:800;margin-left:6px}
+.chip .v{color:var(--violet)} .chip .r{color:var(--red)} .chip .w{color:var(--white)}
+.stamp{display:inline-block;border:2px solid var(--red);color:var(--red);font-weight:800;font-size:13px;letter-spacing:.2em;padding:1px 8px;transform:rotate(-3deg);margin-left:8px}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.key{background:#08090e;border:1px solid var(--edge);color:var(--white);font:800 22px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-align:left;padding:8px 12px 6px;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline}
+.key small{font-weight:400;font-size:12px;letter-spacing:.12em;color:var(--quiet)}
+.key:hover{border-color:var(--pink);color:var(--pink)}
+.key.main{grid-column:span 2;font-size:28px}
+.key.main:hover{border-color:var(--violet);color:var(--violet)}
+.row{display:flex;gap:6px;align-items:stretch}
+.field{flex:1;background:#08090e;border:1px solid var(--edge);padding:6px 12px}
+.field span{display:block;font-size:12px;letter-spacing:.14em;color:var(--quiet);text-transform:uppercase}
+.field input{all:unset;font-size:20px;font-weight:800;color:var(--white);width:100%}
+.toggle{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--quiet);margin-top:2px;cursor:pointer}
+.sw{width:34px;height:18px;border:1px solid var(--edge);background:#08090e;position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:10px;height:10px;background:var(--quiet)}
+.toggle.on .sw::after{left:19px;background:var(--pink)}
+.toggle.on b{color:var(--white);font-weight:400}
+.rec{font-weight:800;font-size:24px;line-height:1.1;margin:6px 0 4px}.rec .p{color:var(--pink)}.rec .v{color:var(--violet)}
+.alt{font-size:13px;color:var(--quiet);border-top:1px solid var(--edge);padding-top:6px;margin-top:6px}.alt b{font-weight:400;color:var(--white)}
+/* HUD sample */
+.hudwrap{position:relative}
+.hudtag{font-size:12px;letter-spacing:.2em;color:var(--quiet);text-transform:uppercase;margin-bottom:4px}
+.hud{background:var(--slate);border:1px solid var(--edge);height:120px;display:grid;grid-template-columns:1.3fr 1fr 1fr 1.4fr;max-width:1000px}
+.cell{padding:12px 16px;border-right:1px solid var(--edge);display:flex;flex-direction:column;justify-content:space-between}
+.cell:last-child{border-right:0}
+.cell .k{font-size:13px;letter-spacing:.16em;color:var(--quiet);text-transform:uppercase}
+.cell .n{font-weight:800;font-size:44px;line-height:1}
+.cell .s{font-size:13px;color:var(--quiet)}
+.bar{height:6px;background:#08090e;border:1px solid var(--edge);margin-top:4px}
+.bar i{display:block;height:100%}
+</style>
+</head>
+<body>
+<iframe src="../?sky" style="position:fixed;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0"></iframe>
+<div class="ui">
+  <div class="col">
+    <div class="panel">
+      <div class="form"><span>Form LF-0001 &middot; Honest Odds</span><b>Day 214</b></div>
+      <div class="label">Real odds: anything past the dark</div>
+      <div class="odds">0.00000317%</div>
+      <div class="fine">Posted daily. Checked by nobody. <em>Survival today: 81%. Have a nice day.</em></div>
+      <div class="chips">
+        <span class="chip">Fire<b class="v">LVL 3</b></span>
+        <span class="chip">Light<b class="w">62%</b></span>
+        <span class="chip">Taken<b class="r">4</b></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="form"><span>Form LF-12 &middot; Personnel Record</span><b>On file</b></div>
+      <div class="rec">Your best night: <span class="p">night 6</span>, <span class="v">41</span> of them burned. You held the gate alone.</div>
+      <div class="fine">The board noticed. It rarely does.</div>
+      <div class="alt">New arrival version: <b>Somewhere a number has too many zeros. Every night you live, it loses one.</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="form" style="margin-bottom:10px"><span>Form LF-7 &middot; Report For Duty</span><span class="stamp">FILED</span></div>
+      <div class="keys">
+        <button class="key main">CONTINUE <small>WORLD 3 &middot; NIGHT 11</small></button>
+        <button class="key">TEST <small>NO RECORD</small></button>
+        <button class="key">PLAY ALONE <small>SOLO</small></button>
+        <button class="key">OLDER WORLDS <small>2</small></button>
+        <button class="key">HOST <small>OPEN CAMP</small></button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label class="field"><span>Your name</span><input value="DANIEL" maxlength="16"></label>
+        <label class="field" style="flex:.8"><span>Camp code</span><input placeholder="____" maxlength="6"></label>
+        <button class="key" style="flex:none;width:86px;justify-content:center">JOIN</button>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')" style="margin-top:10px"><span class="sw"></span><b>Open a CONTINUE world to friends</b></div>
+      <div class="fine" style="margin-top:8px;font-size:13px">Signing in triplicate is optional. The dark is not.</div>
+    </div>
+  </div>
+
+  <div class="hudwrap">
+    <div class="hudtag">HUD sample &middot; in game</div>
+    <div class="hud">
+      <div class="cell"><span class="k">Light left</span><span class="n" style="color:var(--violet)">62%</span>
+        <div class="bar"><i style="width:62%;background:var(--violet)"></i></div></div>
+      <div class="cell"><span class="k">Ammo</span><span class="n">14<span style="font-size:22px;color:var(--quiet);font-weight:400"> / 60</span></span><span class="s">Quota: do not miss.</span></div>
+      <div class="cell"><span class="k">The fire</span><span class="n">LVL 3</span><span class="s">Feed it or join it.</span></div>
+      <div class="cell"><span class="k">Real odds</span><span class="n" style="color:var(--pink);font-size:36px">0.00000317%</span><span class="s"><span style="color:var(--red)">Dark in 2:40.</span> Have a nice day.</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

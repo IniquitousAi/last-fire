@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Last Fire: The Suit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --plate:#0a0b12f0; --plate2:#0e1019; --edge:#24263a; --edge2:#33364f;
+  --quiet:#7d8099; --white:#ffffff;
+  --pink:#ff2a8d; --violet:#b026ff; --red:#ff3b5c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;color:var(--white);font-family:"Barlow Condensed",sans-serif;font-weight:400;overflow:hidden}
+.cut{clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.cut-s{clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+/* plates: edge drawn by a 1px padded wrapper so it survives the clip */
+.plate{background:var(--edge);padding:1px}
+.plate>.in{background:var(--plate)}
+.lbl{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--quiet)}
+.heavy{font-weight:800}
+
+/* hairline frame marks at the screen corners */
+.mark{position:fixed;width:28px;height:28px;border-color:var(--edge2);border-style:solid;z-index:2;pointer-events:none}
+.m1{top:12px;left:12px;border-width:1px 0 0 1px}.m2{top:12px;right:12px;border-width:1px 1px 0 0}
+.m3{bottom:12px;left:12px;border-width:0 0 1px 1px}.m4{bottom:12px;right:12px;border-width:0 1px 1px 0}
+
+.ui{position:fixed;inset:0;z-index:1;display:grid;grid-template-rows:auto 1fr auto;padding:24px 28px;gap:16px;pointer-events:none}
+.ui>*{pointer-events:auto}
+
+/* top status strip */
+.top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:22px;letter-spacing:.12em;margin-right:14px}
+.chip{display:inline-flex}
+.chip .in{display:flex;gap:8px;align-items:baseline;padding:5px 12px 4px}
+.chip b{font-weight:800;font-size:15px;letter-spacing:.08em}
+.boot{margin-left:auto;font-size:13px;letter-spacing:.18em;color:var(--quiet)}
+.boot b{color:var(--white);font-weight:800}
+
+/* left column: reading + menu. Earth stays right-center, uncovered */
+.left{width:min(420px,44vw);display:flex;flex-direction:column;gap:14px;align-self:start}
+.reading .in{padding:16px 20px 14px}
+.odds{font-weight:800;font-size:clamp(46px,6.2vw,62px);line-height:.95;letter-spacing:.01em;color:var(--pink);font-variant-numeric:tabular-nums}
+.odds small{font-size:.5em;color:var(--white)}
+.fine{font-size:15px;color:var(--quiet);margin-top:8px;line-height:1.35}
+.fine b{color:var(--white);font-weight:400}
+.rows{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--edge);margin-top:12px}
+.rows div{background:var(--plate2);padding:6px 10px}
+.rows b{display:block;font-weight:800;font-size:22px}
+
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.key{display:block;background:var(--edge);padding:1px;border:0;cursor:pointer;font:inherit;color:inherit;text-align:left}
+.key .in{background:var(--plate);padding:10px 14px 9px;display:flex;justify-content:space-between;align-items:baseline}
+.key .t{font-weight:800;font-size:22px;letter-spacing:.06em}
+.key .n{font-size:13px;letter-spacing:.16em;color:var(--quiet)}
+.key:hover{background:var(--pink)}
+.key:hover .t{color:var(--pink)}
+.key.main .t{color:var(--white)}
+.key.wide{grid-column:1/-1}
+.key.main{background:var(--edge2)}
+
+.form .in{padding:12px 14px;display:grid;gap:10px}
+.field{display:flex;gap:10px;align-items:center}
+.field input{flex:1;background:#05060a;border:1px solid var(--edge);color:var(--white);font:inherit;font-size:18px;font-weight:800;letter-spacing:.06em;padding:6px 10px;outline:none}
+.field input:focus{border-color:var(--violet)}
+.tog{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:15px}
+.tog input{display:none}
+.sw{width:38px;height:18px;border:1px solid var(--edge2);background:#05060a;position:relative;flex:none}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:10px;height:10px;background:var(--quiet)}
+.tog input:checked+.sw:after{left:23px;background:var(--violet)}
+.tog .st{margin-left:auto;font-weight:800;letter-spacing:.12em;color:var(--quiet)}
+.tog input:checked~.st{color:var(--violet)}
+
+/* in-game HUD sample band */
+.hud .in{padding:10px 16px 12px}
+.hudhead{display:flex;justify-content:space-between;margin-bottom:8px}
+.hudrow{display:grid;grid-template-columns:1.3fr 1fr 1fr 1.4fr;gap:1px;background:var(--edge)}
+.hudrow>div{background:var(--plate2);padding:8px 12px;min-width:0}
+.big{font-weight:800;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:#05060a;border:1px solid var(--edge);margin-top:6px}
+.bar i{display:block;height:100%}
+
+/* middle row: menu left, "your play" slot top right (Earth sits lower center, stays clear) */
+.mid{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;min-height:0}
+.you{width:min(370px,40vw)}
+.you .in{padding:14px 18px 14px}
+.you .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.tabs{display:flex;gap:4px}
+.tabs button{background:#05060a;border:1px solid var(--edge);color:var(--quiet);font:inherit;font-size:13px;letter-spacing:.14em;padding:2px 8px;cursor:pointer}
+.tabs button.on{color:var(--white);border-color:var(--edge2)}
+.tabs button:hover{color:var(--pink)}
+.mem{font-size:20px;line-height:1.25}
+.mem .num{display:block;font-weight:800;font-size:64px;line-height:.95;color:var(--violet);font-variant-numeric:tabular-nums}
+.mem .num small{font-size:22px;color:var(--white);letter-spacing:.08em;margin-left:6px}
+.mem .also{display:block;margin-top:10px;padding-top:8px;border-top:1px solid var(--edge);font-size:16px;color:var(--quiet)}
+.mem .also b{color:var(--white);font-weight:800}
+.sell{font-weight:800;font-size:34px;line-height:1.05;letter-spacing:.01em}
+.sell span{color:var(--red)}
+.sell+.also{display:block;margin-top:10px;font-size:16px;color:var(--quiet)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<iframe src="../?sky" style="position:fixed;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0" title="sky"></iframe>
+<div class="mark m1"></div><div class="mark m2"></div><div class="mark m3"></div><div class="mark m4"></div>
+
+<div class="ui">
+  <div class="top">
+    <span class="brand">LAST FIRE</span>
+    <span class="chip plate cut-s"><span class="in cut-s"><span class="lbl">Suit</span><b>07</b></span></span>
+    <span class="chip plate cut-s"><span class="in cut-s"><span class="lbl">Visor</span><b style="color:var(--violet)">ONLINE</b></span></span>
+    <span class="chip plate cut-s"><span class="in cut-s"><span class="lbl">Earth signal</span><b style="color:var(--red)">LOST</b></span></span>
+    <span class="boot">BOOT <b>4 / 4</b> &nbsp; SEAL <b>OK</b></span>
+  </div>
+
+  <div class="mid">
+  <div class="left">
+    <div class="plate cut reading"><div class="in cut">
+      <div class="lbl">Camp's real odds, long run</div>
+      <div class="odds">0.00000317<small>%</small></div>
+      <div class="fine">Posted board said <b>81%</b>. Footnote 4: figures may be rounded toward comfort. Form 12-C, in triplicate.</div>
+      <div class="rows">
+        <div><span class="lbl">Era</span><b>I</b></div>
+        <div><span class="lbl">Night</span><b>01</b></div>
+        <div><span class="lbl">Change</span><b style="color:var(--violet)">+0.00000004</b></div>
+      </div>
+    </div></div>
+
+    <div class="keys">
+      <button class="key cut main wide"><span class="in cut"><span class="t">CONTINUE</span><span class="n">NIGHT 01 / CAMP 3</span></span></button>
+      <button class="key cut"><span class="in cut"><span class="t">TEST</span><span class="n">RANGE</span></span></button>
+      <button class="key cut"><span class="in cut"><span class="t">OLDER WORLDS</span><span class="n">6</span></span></button>
+      <button class="key cut"><span class="in cut"><span class="t">HOST</span><span class="n">CO-OP</span></span></button>
+      <button class="key cut"><span class="in cut"><span class="t">PLAY ALONE</span><span class="n">SOLO</span></span></button>
+      <button class="key cut wide"><span class="in cut"><span class="t">CODE + JOIN</span><span class="n">ENTER A FRIEND'S CODE</span></span></button>
+    </div>
+
+    <div class="plate cut form"><div class="in cut">
+      <div class="field"><span class="lbl">Name</span><input value="DANIEL" maxlength="16" aria-label="Your name"></div>
+      <label class="tog"><input type="checkbox" checked><span class="sw"></span>Open a CONTINUE world to friends<span class="st">OPEN</span></label>
+    </div></div>
+  </div>
+
+  <div class="plate cut you"><div class="in cut">
+    <div class="head"><span class="lbl">From your nights</span>
+      <span class="tabs"><button class="on" data-v="back">RETURNING</button><button data-v="new">NEW</button></span></div>
+    <div class="mem" id="back">Your best night: night 6.
+      <span class="num">41<small>BURNED</small></span>
+      You held the gate alone.
+      <span class="also">You always go for the depot. <b>7</b> parts last trip.</span></div>
+    <div class="mem" id="new" hidden><div class="sell">The board says 81%. <span>It is lying.</span> Go check.</div>
+      <span class="also">One fire on the Moon. Earth went dark. The real number has too many zeros.</span></div>
+  </div></div>
+  </div>
+
+  <div class="plate cut hud"><div class="in cut">
+    <div class="hudhead"><span class="lbl">HUD sample: in game, same suit</span><span class="lbl">Rough</span></div>
+    <div class="hudrow">
+      <div><span class="lbl">Light left</span><div class="big">62<small style="font-size:16px">%</small></div><div class="bar"><i style="width:62%;background:var(--white)"></i></div></div>
+      <div><span class="lbl">Ammo</span><div class="big">14<span style="color:var(--quiet);font-size:18px"> / 48</span></div></div>
+      <div><span class="lbl">Fire level</span><div class="big" style="color:var(--red)">2</div><div class="bar"><i style="width:28%;background:var(--red)"></i></div></div>
+      <div><span class="lbl">Real odds</span><div class="big" style="color:var(--pink);font-size:28px">0.00000317%</div></div>
+    </div>
+  </div></div>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  back.hidden=b.dataset.v!=='back'; window['new'].hidden=b.dataset.v!=='new';});
+</script>
+</body>
+</html>

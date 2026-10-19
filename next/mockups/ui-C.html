@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Last Fire: The Number</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#07070c; --key:#0d0e16; --edge:#24263a; --edge2:#3a3d58;
+  --pink:#ff2a8d; --violet:#b026ff; --red:#ff3b5c; --white:#ffffff; --dim:#8d90a8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:400;overflow:hidden}
+.ui{position:fixed;inset:0;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto 1fr auto;padding:40px 44px 28px;gap:0 32px;pointer-events:none}
+.ui *{pointer-events:auto}
+
+/* the number */
+.odds{position:fixed;z-index:1;right:44px;bottom:calc(33vh + 118px);text-align:right;max-width:calc(100% - 400px)}
+.odds .fine{margin-left:auto}
+.label{font-size:15px;letter-spacing:.32em;color:var(--dim);text-transform:uppercase}
+.label b{color:var(--violet);font-weight:800}
+.num{font-weight:800;line-height:.86;letter-spacing:-.01em;font-size:clamp(84px,13.4vw,190px);color:var(--white);margin-top:6px;white-space:nowrap}
+.num .z{color:var(--edge2)}
+.num .d{color:var(--pink)}
+.num .pc{font-size:.5em;color:var(--white);vertical-align:.58em;margin-left:.04em}
+.fine{margin-top:14px;font-size:16px;color:var(--dim);max-width:560px;line-height:1.35}
+.fine b{color:var(--white);font-weight:400}
+
+/* you: what the game learned about this player */
+.you{position:fixed;z-index:1;top:40px;left:44px;max-width:min(560px,calc(100% - 300px))}
+.you .k{font-size:13px;letter-spacing:.3em;color:var(--dim)}
+.you .k b{color:var(--red);font-weight:800}
+.you p{font-weight:800;font-size:30px;line-height:1.05;margin-top:6px;color:var(--white)}
+.you p em{font-style:normal;color:var(--pink)}
+.you p i{font-style:normal;color:var(--violet)}
+.as{display:flex;gap:4px;margin-top:10px}
+.as button{background:var(--key);border:1px solid var(--edge);color:var(--dim);font:400 12px 'Barlow Condensed';letter-spacing:.24em;padding:3px 10px;cursor:pointer}
+.as button.on{color:var(--white);border-color:var(--edge2)}
+.as button:hover{color:var(--pink);border-color:var(--pink)}
+/* menu */
+.menu{grid-column:1;grid-row:2;align-self:start;margin-top:150px;display:flex;flex-direction:column;gap:6px;width:300px;margin-bottom:22px}
+.name{display:flex;align-items:center;gap:10px;height:42px;background:var(--key);border:1px solid var(--edge);padding:0 14px;margin-bottom:6px}
+.name span{font-size:13px;letter-spacing:.24em;color:var(--dim)}
+.name input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--white);font:800 20px 'Barlow Condensed';letter-spacing:.06em;text-transform:uppercase}
+.key{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 16px;background:var(--key);border:1px solid var(--edge);color:var(--white);font:800 20px 'Barlow Condensed';letter-spacing:.14em;cursor:pointer;text-align:left}
+.key small{font:400 13px 'Barlow Condensed';letter-spacing:.12em;color:var(--dim)}
+.key:hover{border-color:var(--pink);color:var(--pink)}
+.key:hover small{color:var(--white)}
+.key.main{color:var(--pink)}
+.key.main:hover{border-color:var(--violet);color:var(--violet)}
+.row{display:flex;gap:6px}
+.code{flex:1;min-width:0;height:44px;background:var(--key);border:1px solid var(--edge);color:var(--white);font:800 20px 'Barlow Condensed';letter-spacing:.3em;padding:0 14px;outline:0;text-transform:uppercase}
+.code::placeholder{color:var(--edge2)}
+.code:focus{border-color:var(--violet)}
+.row .key{width:104px;justify-content:center}
+.toggle{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:15px;color:var(--dim);cursor:pointer;letter-spacing:.04em}
+.toggle i{width:34px;height:18px;border:1px solid var(--edge2);background:var(--key);position:relative;flex:none}
+.toggle i:after{content:'';position:absolute;top:3px;left:3px;width:10px;height:10px;background:var(--dim)}
+.toggle input{display:none}
+.toggle input:checked + i{border-color:var(--violet)}
+.toggle input:checked + i:after{left:19px;background:var(--violet)}
+.toggle input:checked ~ em{color:var(--white)}
+.toggle em{font-style:normal}
+
+/* HUD sample */
+.hud{grid-column:1 / 3;grid-row:3;border-top:1px solid var(--edge);padding-top:10px}
+.hud .tag{font-size:12px;letter-spacing:.3em;color:var(--dim);margin-bottom:8px}
+.strip{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;background:rgba(7,7,12,.82);border:1px solid var(--edge);padding:10px 18px;flex-wrap:nowrap}
+.cell{display:flex;flex-direction:column;min-width:0}
+.cell span{font-size:12px;letter-spacing:.24em;color:var(--dim)}
+.cell b{font-weight:800;font-size:30px;line-height:1;white-space:nowrap}
+.cell b small{font-size:15px;font-weight:400;color:var(--dim);margin-left:4px}
+.light b{color:var(--red)}
+.bar{width:120px;height:6px;background:var(--edge);margin-top:6px}
+.bar i{display:block;height:100%;width:22%;background:var(--red)}
+.fire b{color:var(--violet)}
+.fire .bar i{width:64%;background:var(--violet)}
+.ammo b{color:var(--white)}
+.hodds b{color:var(--pink)}
+.hodds b .z{color:var(--edge2)}
+
+.corner{position:fixed;top:40px;right:44px;z-index:1;text-align:right;font-size:13px;letter-spacing:.28em;color:var(--dim)}
+.corner b{display:block;font-weight:800;font-size:22px;letter-spacing:.18em;color:var(--white)}
+
+@media (max-width:1100px){
+  .ui{padding:28px 28px 22px}
+  .odds{right:28px}
+  .corner{top:28px;right:28px}
+  .you{top:28px;left:28px}
+  .cell b{font-size:26px}
+  .bar{width:90px}
+}
+</style>
+</head>
+<body>
+<iframe src="../?sky" style="position:fixed;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0" title="sky"></iframe>
+
+<div class="corner"><b>LAST FIRE</b>THE MOON, NEAR SIDE</div>
+
+<section class="you">
+  <div class="k" id="youK">WHAT YOU LOVED, FROM YOUR LAST 9 RUNS &middot; <b>REMEMBERED</b></div>
+  <p id="youP">Your best night: <em>night 6</em>, <i>41</i> of them burned. You held the gate alone.</p>
+  <div class="as"><button class="on" data-v="r">RETURNING</button><button data-v="n">NEW PLAYER</button><span class="k" style="align-self:center;margin-left:8px;font-size:11px">MOCKUP VIEW</span></div>
+</section>
+
+<div class="ui">
+  <section class="odds">
+    <div class="label">REAL ODDS, LONG RUN &middot; <b>CHECKED</b></div>
+    <div class="num"><span class="z">0.00000</span><span class="d">317</span><span class="pc">%</span></div>
+    <p class="fine">Chance anything exists past the dark. Up from <b>0.00000309%</b> yesterday. The board in the square says 81%. Both numbers were signed by the same office. Form 7-C, in triplicate.</p>
+  </section>
+
+  <nav class="menu">
+    <label class="name"><span>NAME</span><input value="DANIEL" maxlength="16"></label>
+    <button class="key main">CONTINUE <small>WORLD 4, NIGHT 12</small></button>
+    <button class="key">PLAY ALONE <small>NEW WORLD</small></button>
+    <button class="key">HOST <small>FRIENDS JOIN BY CODE</small></button>
+    <div class="row"><input class="code" placeholder="CODE" maxlength="6"><button class="key">JOIN</button></div>
+    <button class="key">OLDER WORLDS <small>3 ON FILE</small></button>
+    <button class="key">TEST <small>DEV ROOM</small></button>
+    <label class="toggle"><input type="checkbox"><i></i><em>Open my CONTINUE world to friends</em></label>
+  </nav>
+
+  <section class="hud">
+    <div class="tag">HUD SAMPLE, IN GAME</div>
+    <div class="strip">
+      <div class="cell light"><span>LIGHT LEFT</span><b>2:41<small>MIN</small></b><div class="bar"><i></i></div></div>
+      <div class="cell ammo"><span>AMMO</span><b>14<small>/ 60</small></b></div>
+      <div class="cell fire"><span>THE FIRE</span><b>LV 3<small>64%</small></b><div class="bar"><i></i></div></div>
+      <div class="cell hodds"><span>ODDS</span><b><span class="z">0.00000</span>317%</b></div>
+    </div>
+  </section>
+</div>
+<script>
+var V={r:['WHAT YOU LOVED, FROM YOUR LAST 9 RUNS &middot; <b>REMEMBERED</b>','Your best night: <em>night 6</em>, <i>41</i> of them burned. You held the gate alone.'],
+       n:['THE CAMP IS HIRING &middot; <b>ONE OPENING</b>','The odds are <em>0.00000317%</em>. Somebody has to go <i>check</i>.']};
+document.querySelectorAll('.as button').forEach(function(b){b.onclick=function(){
+  document.querySelectorAll('.as button').forEach(function(x){x.classList.toggle('on',x===b)});
+  var v=V[b.dataset.v];document.getElementById('youK').innerHTML=v[0];document.getElementById('youP').innerHTML=v[1];}});
+</script>
+</body>
+</html>

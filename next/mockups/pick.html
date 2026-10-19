@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pick a Look</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;800&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 400 16px "Barlow Condensed", sans-serif; color: #eef0f8; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; }
+  .bar { position: fixed; right: 0; top: 0; z-index: 9; display: flex; gap: 0; background: #07080d; box-shadow: 0 0 0 1px #24263a inset; }
+  .bar button { font: 800 18px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #eef0f8; background: #07080d; border: 0; box-shadow: 0 0 0 1px #24263a inset; padding: 9px 16px 7px; cursor: pointer; }
+  .bar button small { display: block; font-weight: 400; font-size: 12px; letter-spacing: .04em; color: #a3a6bb; }
+  .bar button.on { color: #ff4fd8; } .bar button:hover { box-shadow: 0 0 0 1px #ff4fd8 inset; }
+</style>
+</head>
+<body>
+<iframe id="f" src="ui-A.html"></iframe>
+<div class="bar">
+  <button data-f="ui-A.html" class="on">A<small>(the board)</small></button>
+  <button data-f="ui-B.html">B<small>(the suit)</small></button>
+  <button data-f="ui-C.html">C<small>(the number)</small></button>
+</div>
+<script>
+  // flip, do not compare (a Vigil lesson): each look fills the window, one click shows the next
+  document.querySelectorAll('.bar button').forEach(b => b.onclick = () => { document.getElementById('f').src = b.dataset.f; document.querySelectorAll('.bar button').forEach(q => q.classList.toggle('on', q === b)); });
+</script>
+</body>
+</html>
