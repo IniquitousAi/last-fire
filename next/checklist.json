@@ -833,8 +833,14 @@
      "proof": "sim/modes.mjs#a hangout of 4 is a full game",
      "at": "2026-10-19"
     },
-    "seen": null,
-    "pad": null,
+    "seen": {
+     "proof": "playtests/lanes/C/hangout-friends.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "playtests/lanes/C/codex_run.json#friends joined by the pad",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "sim/modes.mjs#for (const n of [1, 2, 4])",
      "at": "2026-10-19"
@@ -1051,12 +1057,18 @@
      "proof": "sim/immersion_test.mjs#seven eras, seven different lessons",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/codex-3.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/codex_run.json#A opens the CODEX",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1073,12 +1085,18 @@
      "proof": "sim/immersion_test.mjs#where feel overruled a number",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/codex-4.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -1319,12 +1337,18 @@
      "proof": "sim/immersion_test.mjs#lore reason",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/codex-1-rules.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/codex_run.json#A opens the CODEX",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1369,12 +1393,18 @@
      "proof": "sim/immersion_test.mjs#feel check that the live value sits inside",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/codex-4.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -1615,12 +1645,18 @@
      "proof": "sim/immersion_test.mjs#labels: 0-2 trips guess",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/codex-labels.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1641,7 +1677,10 @@
      "proof": "playtests/lanes/C/details-tally.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "playtests/lanes/C/codex_run.json#walking the boot-print path",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "playtests/lanes/C/wilds_run.json#earth gate",
      "at": "2026-10-19"
@@ -1690,7 +1729,10 @@
      "proof": "sim/fuzz.mjs#no rule broken",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/fuzz-report.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
@@ -1843,12 +1885,18 @@
      "proof": "sim/immersion_test.mjs#placed models have a reason",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/C/codex-2.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/codex_run.json#the right stick scrolled",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   }

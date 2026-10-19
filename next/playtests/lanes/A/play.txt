@@ -18,7 +18,7 @@ PASS  The board reads the era and what it needs from you  ({"era":1,"name":"Scav
 PASS  With a controller in hand the key hides and the one prompt line says it  (key none, prompt "F · CHECK THE REAL ODDS (free)")
 PASS  No AIM LINK sign is shown in the test run (it only shows when the mouse is really free)  (hidden)
 PASS  The dark learns only after two calm nights with no falls  (before: false, after two calm nights: true)
-PASS  The night rolls over and the news comes, with the real odds because you checked  (night 1 to 2; wrist: Last night: Something small sat on the wall all night and left at dawn. Filed as a cat.  Real odds today: 99%. The board says 99%.)
+PASS  The night rolls over and the news comes, with the real odds because you checked  (night 1 to 2; wrist: Last night: The rats got the ration forms. The rations are fine.  Real odds today: 99%. The board says 99%.)
 PASS  The palette checker catches orange, cyan and gold and passes neon pink (control)  (1.00 1.00 1.00 0.00)
 PASS  No screen is more than 1 percent cyan, orange or gold  (28 screens read; worst light-and-dark at 0.10%)
 PASS  No page errors  (none)
