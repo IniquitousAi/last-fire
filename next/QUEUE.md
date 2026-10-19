@@ -60,7 +60,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-53. **The Simulator tests the economy too** (item 49's sim is node-only): add THE CAMP'S BOOKS to the Simulator page so the dues rules are watchable like the rest. (added when item 52 finished)
+
+54. **Fire min-max, pass 2** (item 24 stays open: his big ask): the fire's level growth as a visible event (a ring of light rolling out across the yard when it grows), and its sound layered with a low hum that rises with level. (added when item 53 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -103,3 +104,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 50, honor lamps for credit (v103).
 - Item 51, the Simulator page, opened from DEV (v104).
 - Item 52, Earth's late pressure eased, perfect tension 0.68 (v105).
+- Item 53, THE CAMP'S BOOKS on the Simulator page.
