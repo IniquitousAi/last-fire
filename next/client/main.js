@@ -1,32 +1,32 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=128';
-import { Ambience } from './ambience.js?v=128';
-import { Camp, BOARD } from './camp.js?v=128';
-import { Guide } from './guide.js?v=128';
-import { buildSites } from './earthsite.js?v=128';
-import { Truck } from './truck.js?v=128';
-import { ShipView } from './shipview.js?v=128';
-import { Wrist } from './wrist.js?v=128';
-import { FireCore } from './firecore.js?v=128';
+import * as C from '../core/game.js?v=129';
+import { Ambience } from './ambience.js?v=129';
+import { Camp, BOARD } from './camp.js?v=129';
+import { Guide } from './guide.js?v=129';
+import { buildSites } from './earthsite.js?v=129';
+import { Truck } from './truck.js?v=129';
+import { ShipView } from './shipview.js?v=129';
+import { Wrist } from './wrist.js?v=129';
+import { FireCore } from './firecore.js?v=129';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=128';
-import { FriendVoice } from './friendvoice.js?v=128';
-import { crewFrom } from '../core/habits.js?v=128';
-import { HudLook } from './hudlook.js?v=128';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=128';
-import { sound, GUNS } from '../../src/combat.js?v=128';
-import { FX } from '../../src/fx.js?v=128';
+import { think as friendThink } from './friend.js?v=129';
+import { FriendVoice } from './friendvoice.js?v=129';
+import { crewFrom } from '../core/habits.js?v=129';
+import { HudLook } from './hudlook.js?v=129';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=129';
+import { sound, GUNS } from '../../src/combat.js?v=129';
+import { FX } from '../../src/fx.js?v=129';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 128;   // (this copy's version; ./version.json says the newest)
+const BUILD = 129;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -115,7 +115,7 @@ scene.add(sky);
 // ---------------------------------------------------------------- the game (rules) and you
 const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); };   // (what you hear and what you see agree: each crackle makes the flame jump)
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
-clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(255,79,216,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
+clickPlay.innerHTML = '<div style="width:34px;height:34px;margin:0 auto;border:1px solid rgba(255,79,216,.6);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-4px;width:1px;height:7px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-4px;width:1px;height:7px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-4px;width:7px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-4px;width:7px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:8px;font-size:12px;letter-spacing:.22em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:12px;letter-spacing:.06em;color:#a3a6bb;margin-top:1px">click to link your aim</div>';   /* (was 132 px across, his note: way too giant) */
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
 let truck = null, ship = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;

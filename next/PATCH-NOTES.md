@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v129** Small precise crosshair; the aim-link ring 132 px to 34 px.
 - **v128** The ship modeled in code (shipmodel.js): smooth flying-wing hull, canopy, four pods, thin light seams; 18.7k triangles, 6 draw calls (about 5 more in view).
 - **v127** Settings (aim toggle by default, sprint toggle, field of view, aim speed, invert look, auto reload, crosshair, reset); the camp people feel human (varied routes and pace, smooth turns, head follows you, the clerk breathes and glances); cyan lamp heads now white-violet; wet ground near lights. CHARACTERS.md for a later Tripo buy.
 - **v126** A film grade over the world only (violet shadows, orange and yellow turned to red or pink, grain, lens edge; LOOK.md change 1); ground light is small sparks, not orbs; masks breathe instead of shaking.

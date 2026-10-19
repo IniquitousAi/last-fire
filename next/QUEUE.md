@@ -1,5 +1,13 @@
 # Last Fire: the queue
 
+
+## TOP FIVE (Daniel, 2026-10-19 about 05:50: "make sure our top five priority tasks are complete or in progress... finish first or start ASAP")
+1. **The truck**: works; a smooth code-modeled body in the ship's style is being built (helper, truck.js + truckmodel.js).
+2. **The spaceship**: body shipped v128, flight works; open: fly the drop to Earth, check the cockpit view from inside.
+3. **The HUD, crosshair included**: crosshair and aim-link ring fixed v129; open: the rest of the HUD pass (gauntlet findings).
+4. **The character model**: the free soldier as the crew suit for friends and bots (helper, crew.js + mockups/crew.html), to be wired into main.js.
+5. **The hands and reload**: first-person arms and a real reload (helper, hands.js + mockups/hands.html), to be wired into main.js.
+
 His rule (2026-10-19, before 02:55): anything he says to change or add goes here, in no particular order; he rambles, the queue remembers.
 Claude picks the order by the bottleneck: what he will see first and most.
 
