@@ -8,9 +8,9 @@ import * as THREE from 'three';
 export const GUNS = {
   pistol:  { name: 'M1911',   ap: 0.1, dmg: 40,  head: 2.5, rpm: 420, auto: false, mag: 8,  reserve: 64,  reload: 1.4, spread: 0.010, recoil: 0.022, price: 0,    snd: [1.1, 0.22, 0.8, 150] },
   smg:     { name: 'MP-5',    ap: 0.15, dmg: 32,  head: 2.0, rpm: 780, auto: true,  mag: 30, reserve: 180, reload: 2.1, spread: 0.022, recoil: 0.011, price: 1000, snd: [1.35, 0.16, 0.65, 170] },
-  shotgun: { name: 'Olympia', ap: 0.35, dmg: 34,  head: 1.6, rpm: 80,  auto: false, mag: 2,  reserve: 40,  reload: 2.6, spread: 0.075, recoil: 0.085, price: 1250, snd: [0.6, 0.5, 1.0, 70], pellets: 8 },
+  shotgun: { name: 'Olympia', ap: 0.35, dmg: 34,  head: 1.85, rpm: 80,  auto: false, mag: 2,  reserve: 40,  reload: 2.6, spread: 0.075, recoil: 0.085, price: 1250, snd: [0.6, 0.5, 1.0, 70], pellets: 8 },
   rifle:   { name: 'M14',     ap: 0.7, dmg: 120, head: 3.0, rpm: 300, auto: false, mag: 8,  reserve: 96,  reload: 2.3, spread: 0.004, recoil: 0.045, price: 1500, snd: [0.85, 0.38, 1.0, 95] },
-  ar:      { name: 'M4',      ap: 0.3, dmg: 48,  head: 2.2, rpm: 720, auto: true,  mag: 30, reserve: 210, reload: 2.2, spread: 0.014, recoil: 0.013, price: 1750, snd: [1.0, 0.24, 0.85, 120] },
+  ar:      { name: 'M4',      ap: 0.3, dmg: 48,  head: 2.0,  rpm: 720, auto: true,  mag: 30, reserve: 210, reload: 2.2, spread: 0.014, recoil: 0.013, price: 1750, snd: [1.0, 0.24, 0.85, 120] },
   lmg:     { name: 'RPK',     ap: 0.4, dmg: 55,  head: 2.0, rpm: 600, auto: true,  mag: 45, reserve: 270, reload: 3.4, spread: 0.03,  recoil: 0.016, price: 3500, snd: [0.8, 0.3, 0.9, 100] },
   minigun: { name: 'Minigun', ap: 0.45, dmg: 42,  head: 1.8, rpm: 1500, auto: true, mag: 150, reserve: 450, reload: 4.6, spread: 0.045, recoil: 0.006, price: 5000, spin: 0.55, snd: [1.2, 0.12, 0.75, 130] },   // (spins up for half a second before it fires; you walk slower carrying it)
   knife:   { name: 'Knife',   ap: 0.5, dmg: 150, head: 1.5, rpm: 140, auto: false, mag: 1, reserve: 0, reload: 0, spread: 0, recoil: 0, price: 0, melee: true, snd: [1, 0.1, 0.4, 200] },

@@ -241,8 +241,13 @@ export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
   return best;
 }
 // a shell takes most of a blow and wears (piercing guns get more through and wear it faster); the blow that breaks it is spent on it
+// Hit reactions, Cyberpunk's own (CD Projekt's hitReactionComponent and hit-reaction thresholds, CYBERPUNK.md): damage adds up over 0.25 s;
+// past 15% of its health a shape flinches 0.2 s, past 30% it staggers 0.4 s, past 40% it goes down for 2.5 s. The giant is tough: double the bars.
+export const REACT = { window: 0.25, bars: [[0.4, 3, 2.5], [0.3, 2, 0.4], [0.15, 1, 0.2]] };
+function react(g, k, dmg) { if (k.kind === 'shard') return; if (!(k.rw > g.t - REACT.window)) { k.rw = g.t; k.racc = 0; } k.racc += dmg; const f = k.racc / k.max / (k.kind === 'giant' ? 2 : 1);
+  for (const [bar, r, t] of REACT.bars) if (f >= bar) { if (r > (k.rt > 0 ? k.r : 0)) { k.r = r; k.rt = t; } break; } }
 export function damage(g, k, part, dmg, ap, by) {
-  const key = part ? 'sb' : 'sh'; let res;
+  const key = part ? 'sb' : 'sh'; let res; react(g, k, dmg);
   if (k[key] > 0) { const through = dmg * (0.25 + 0.75 * ap); k[key] -= dmg * (0.6 + ap);
     if (k[key] <= 0) { k[key] = 0; k.hp -= Math.min(through, k.max * 0.5); res = { shell: true, broke: true }; } else { k.hp -= through; res = { shell: true, broke: false }; } }
   else { k.hp -= dmg; res = { shell: false, broke: false }; }
@@ -460,7 +465,8 @@ function moveHollow(g, dt, ph) {
   const T = g.tactic, f = g.fire; if (g.noises) { for (const n of g.noises) n.t -= dt; g.noises = g.noises.filter(n => n.t > 0); }
   for (const k of g.hollow) {
     const K = KINDS[k.kind];
-    if (!k.earth && (ph === 'day' || ph === 'dawn')) { k.hp -= dt * 60; if (k.hp <= 0) k.dead = true; continue; }   // (light of day unmakes them: no motes, they were never yours)
+    if (!k.earth && (ph === 'day' || ph === 'dawn')) { k.hp -= dt * 60; if (k.hp <= 0) k.dead = true; continue; }
+    if (k.rt > 0) { k.rt -= dt; if (k.rt <= 0) k.r = 0; else continue; }   /* (flinched, staggered or down: it does nothing until it recovers) */   // (light of day unmakes them: no motes, they were never yours)
     let tx, tz, target = null;
     if (k.kind === 'shard') {   // (the shard goes for the fire, or for whoever carries the most light, weighed by its tactic)
       let best = (Math.hypot(f.x - k.x, f.z - k.z) + 1) / T.fireBias; tx = f.x; tz = f.z;

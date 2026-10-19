@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=143';
-import { Ambience } from './ambience.js?v=143';
-import { Camp, BOARD } from './camp.js?v=143';
-import { Guide } from './guide.js?v=143';
-import { buildSites } from './earthsite.js?v=143';
-import { Truck } from './truck.js?v=143';
-import { ShipView } from './shipview.js?v=143';
-import { Crew } from './crew.js?v=143';
-import { Hands } from './hands.js?v=143';
-import { Wrist } from './wrist.js?v=143';
-import { FireCore } from './firecore.js?v=143';
+import * as C from '../core/game.js?v=144';
+import { Ambience } from './ambience.js?v=144';
+import { Camp, BOARD } from './camp.js?v=144';
+import { Guide } from './guide.js?v=144';
+import { buildSites } from './earthsite.js?v=144';
+import { Truck } from './truck.js?v=144';
+import { ShipView } from './shipview.js?v=144';
+import { Crew } from './crew.js?v=144';
+import { Hands } from './hands.js?v=144';
+import { Wrist } from './wrist.js?v=144';
+import { FireCore } from './firecore.js?v=144';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=143';
-import { FriendVoice } from './friendvoice.js?v=143';
-import { crewFrom } from '../core/habits.js?v=143';
-import { HudLook } from './hudlook.js?v=143';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=143';
-import { sound, GUNS } from '../../src/combat.js?v=143';
-import { FX } from '../../src/fx.js?v=143';
+import { think as friendThink } from './friend.js?v=144';
+import { FriendVoice } from './friendvoice.js?v=144';
+import { crewFrom } from '../core/habits.js?v=144';
+import { HudLook } from './hudlook.js?v=144';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=144';
+import { sound, GUNS } from '../../src/combat.js?v=144';
+import { FX } from '../../src/fx.js?v=144';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 143;   // (this copy's version; ./version.json says the newest)
+const BUILD = 144;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -244,7 +244,8 @@ function drawHollow(dt) {
       const K = C.KINDS[k.kind], reach = (K && K.reach) || 1.2; let d = 1e9; for (const p of g.players) if (!p.ember) d = Math.min(d, Math.hypot(p.x - k.x, p.z - k.z));
       const tell = Math.max(0, Math.min(1, 1 - (d - reach) / (reach * 1.6))) + (k.kind === 'watcher' && !C.lookedAt(g, k) && d < 30 ? 0.5 : 0); v.tell = (v.tell || 0) + (tell - (v.tell || 0)) * Math.min(1, dt * 8);
       for (const m of v.eyes) m.emissiveIntensity = 3 + 9 * v.tell; }
-    const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;   // (no bob: they hold their height; the animation does the moving)
+    const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;
+    { const want = k.rt > 0 ? [0, 0.18, 0.4, 1.35][k.r || 0] : 0; v.lean = (v.lean || 0) + (want - (v.lean || 0)) * Math.min(1, dt * (want > (v.lean || 0) ? 30 : 5)); v.o.rotation.order = 'YXZ'; v.o.rotation.x = -v.lean; if (k.r === 3 && k.rt > 0) v.o.position.y -= v.lean * 0.35; }   /* (the hit reaction you see: a snap back, a reel, or down on its back; it rises slowly) */   // (no bob: they hold their height; the animation does the moving)
     if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix && hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k))) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));   // (seen, it freezes mid-motion)
   }
   for (const [id, v] of seen) if (!alive.has(id)) { scene.remove(v.o); seen.delete(id); }
@@ -735,7 +736,7 @@ function sync(dt) {
   if (net.host && stateT >= 1 / 12) { stateT = 0; net.send({ t: 's', c: +g.clock.toFixed(5), n: g.night,
     f: [g.fire.level, Math.floor(g.fire.light), Math.round(g.fire.fuel)],
     p: g.players.map(p => [p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(2), +(p.pitch || 0).toFixed(2), Math.round(p.hp), Math.floor(p.carried), p.ember ? 1 : 0, p.gun || 'pistol', p.tp || 0, p.name]),
-    h: g.hollow.flatMap(k => [k.id, KIND_I.indexOf(k.kind), +k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2), +k.yaw.toFixed(2)]),
+    h: g.hollow.flatMap(k => [k.id, KIND_I.indexOf(k.kind) + 16 * (k.rt > 0 ? k.r || 0 : 0), +k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2), +k.yaw.toFixed(2)]),
     m: g.motes.slice(0, 300).flatMap(q => [+q.x.toFixed(1), +q.z.toFixed(1)]),
     nd: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.lit ? 1 : 0, n.who || '', n.n || 0, n.honor || '']),
     em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), e: g.earth ? +g.earth.t.toFixed(1) : -1, pt: g.parts.map(q => [q.id, q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), st: g.stash, tr: g.truck, pk: g.players.map(p => [p.id, p.pack || []]), ec: g.econ ? { day: g.econ.day, pool: Math.round(g.econ.pool), people: g.econ.people } : 0, wr: g.earth && g.earth.wrecks ? g.earth.wrecks.map(w => [w.id, +w.x.toFixed(1), +w.z.toFixed(1), +(w.ry || 0).toFixed(2), w.left]) : 0, ln: g.learned || {}, fl: (g.flares || []).map(f => [+f.x.toFixed(2), +f.z.toFixed(2), +f.t.toFixed(1), f.earth ? 1 : 0]), th: g.theories || null, du: g.dues || {}, cl: [g.lost || [], g.out ? g.out.who : ''], fw: g.gapNext !== undefined ? [+g.gapNext.toFixed(3), +(g.gapAt - g.t).toFixed(2)] : 0, sh: g.ship ? [g.ship.x, g.ship.y, g.ship.z, g.ship.yaw, g.ship.roll, g.ship.pitch, g.ship.vx, g.ship.vz, g.ship.vy].map(v => +v.toFixed(3)).concat(g.ship.pilot || 0) : 0, car: g.car ? [+g.car.x.toFixed(2), +g.car.z.toFixed(2), +g.car.yaw.toFixed(3), +g.car.v.toFixed(2), g.car.seats, g.car.store] : 0, ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z, m.who || '', m.n || 0]) } : {}) }); sentMarks = g.marks.length; }
@@ -745,7 +746,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
   if (Array.isArray(m.p)) { const ps = []; for (const a of m.p.slice(0, MAX_PLAYERS)) { if (!Array.isArray(a) || !a.slice(0, 9).every(fin)) continue; const [id, x, y, z, yaw, pitch, hp, carried, ember, gun, tp, name] = a;
       let q = g.players.find(o => o.id === id) || { id, isPlayer: true }; if (id === myId) { q = me; if ((q.tp || 0) !== tp) { q.x = x; q.y = y; q.z = z; q.tp = tp; } } else Object.assign(q, { tx: x, ty: y, tz: z, yaw, pitch, gun: GUNS[gun] ? gun : 'pistol', name: String(name || 'Friend').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) });
       if (q.x === undefined) { q.x = x; q.y = y; q.z = z; } q.hp = hp; q.carried = carried; q.ember = !!ember; ps.push(q); } g.players = ps; }
-  if (Array.isArray(m.h) && m.h.length <= C.MAX_HOLLOW * 6) { const old = new Map(g.hollow.map(k => [k.id, k])), hs = []; for (let i = 0; i + 5 < m.h.length; i += 6) { const [id, ki, x, y, z, yaw] = m.h.slice(i, i + 6); if (![id, ki, x, y, z, yaw].every(fin) || !KIND_I[ki]) continue; const k = old.get(id) || { id, kind: KIND_I[ki], x, y, z, yaw, sh: 0, sb: 0 }; Object.assign(k, { tx: x, ty: y, tz: z, tyaw: yaw }); hs.push(k); } g.hollow = hs; }
+  if (Array.isArray(m.h) && m.h.length <= C.MAX_HOLLOW * 6) { const old = new Map(g.hollow.map(k => [k.id, k])), hs = []; for (let i = 0; i + 5 < m.h.length; i += 6) { const [id, kr, x, y, z, yaw] = m.h.slice(i, i + 6), ki = kr % 16; if (![id, kr, x, y, z, yaw].every(fin) || !KIND_I[ki]) continue; const k = old.get(id) || { id, kind: KIND_I[ki], x, y, z, yaw, sh: 0, sb: 0 }; Object.assign(k, { r: kr >> 4, rt: kr >> 4 ? 1 : 0, tx: x, ty: y, tz: z, tyaw: yaw }); hs.push(k); } g.hollow = hs; }
   if (Array.isArray(m.m)) { g.motes = []; for (let i = 0; i + 1 < m.m.length && i < 600; i += 2) if (fin(m.m[i]) && fin(m.m[i + 1])) g.motes.push({ x: m.m[i], z: m.m[i + 1] }); }
   if (Array.isArray(m.nd)) g.nodes = m.nd.filter(a => Array.isArray(a) && C.NODE[a[1]]).slice(0, 400).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3], hp: a[4], lit: !!a[5], who: typeof a[6] === 'string' ? a[6].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[7] | 0, ...(typeof a[8] === 'string' && a[8] ? { honor: a[8].replace(/[^A-Za-z0-9 _,-]/g, '').slice(0, 24) } : {}) }));
   if (Array.isArray(m.mk)) g.marks = m.mk.filter(a => Array.isArray(a) && [a[0], a[1], a[2]].every(fin)).slice(-MARKS).map(a => ({ k: a[0] ? 'fall' : 'wreck', x: a[1], z: a[2], who: typeof a[3] === 'string' ? a[3].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[4] | 0 }));
