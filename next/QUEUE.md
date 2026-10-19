@@ -1,6 +1,17 @@
 # Last Fire: the queue
 
 
+## JOB ONE (his words, 2026-10-19 about 09:00): an AI plays the whole game, tutorial to end game
+"If you can progress through the game as an AI, then we're building a decent game. So I just need you to progress to the end game.
+But keep in mind, I really want visuals to be AAA... AAA visuals, but DevOps performance." Also: "not enough immersion... not enough
+guidance of the lore and tutorial"; the ship bobbed and flew confusingly (fixed v152: altitude hold, no bounce, pad flying).
+- Build `?autoplay`: a robot that plays the real client from the menu, step by step through the guide (the 8 steps), the first night,
+  the drop to Earth, the truck, back to the Moon, to the end game, using only what a player sees and can press (controller inputs).
+- Every place it gets stuck, lost or bored is a bug in guidance, lore or mechanics: log it with a screenshot in playtests/autoplay/,
+  fix it, run again. Report how far it got (step N of the run) and the time each stage took.
+- Visuals: AAA is the bar; the look helper's three looks (?look=1/2/3, client/looks.js, playtests/looks/) come first for him to pick.
+- Performance: keep 120+ fps in the headless run at 1000x900.
+
 ## The eras and unlocks (his words, 2026-10-19: what the finished game's order is; dev mode today has everything unlocked)
 - Start on the **Moon: era 3**. Pistol and shotgun only, no vehicle.
 - Then **Earth: era 4**, a taste of the real game.
