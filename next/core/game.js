@@ -405,6 +405,7 @@ export function dimmestGap(g) { const f = g.fire; let best = 0, low = Infinity;
 // the Director (GAMEDEV-TRICKS.md 11, 12: Left 4 Dead's pacing, Alien: Isolation's menace gauge). Each person's stress rises with hurt, with the
 // dark close (8 m) and with being alone; it fades when nothing is near. When anyone peaks, the dark sends nothing new for a while: build up,
 // peak, breathe. It never cheats: what is already out there keeps coming.
+export const FLOOD_WARN = 2.5;   // (seconds between the dark choosing a gap and pouring through it: a perfect crew sees it coming, his 5A pass line is 2 s)
 export const DIRECTOR = { hurt: 0.025, near: 0.06, alone: 0.015, decay: 0.07, peak: 1.0, relax: 6, r: 3 };   // (picked from 16 tried by sim/director.mjs)
 function director(g, dt) {
   if (g.director === false || globalThis.__director === false) return; const D = DIRECTOR;
@@ -422,7 +423,8 @@ function spawn(g, dt, ph) {
   g.spawnT = rush ? (g.flood !== false ? 0.35 : 0.5) : 1.6;   // (a flood pours faster than a scatter: tuned by sim/flood.mjs)
   const base = ['walker', 'walker', 'walker', ...g.fire.woke, ...(night >= 3 ? ['runner'] : []), ...(night >= 2 ? ['watcher'] : [])], gz = g.gaze || {}, tot = Object.values(gz).reduce((a, b) => a + b, 0);
   const pool = tot < 30 ? base : [...base, ...[...new Set(base)].flatMap(k => Array(Math.round(3 * (gz[k] || 0) / tot)).fill(k))];   // (the dark wears what you looked at, INNOVATION.md idea 3: it never says so)
-  if (rush && g.flood !== false && !((g.gapT = (g.gapT || 0) - dt) > 0)) { g.gapT = 5; const was = g.gap; g.gap = dimmestGap(g); if (was === undefined || Math.abs(Math.atan2(Math.sin(g.gap - was), Math.cos(g.gap - was))) > 0.6) { g.log.push([+g.t.toFixed(2), 'flood', +g.gap.toFixed(2)]); evidence(g, 'mind', 1.05); } }   // (late in the night the horde floods: it finds the weakest part of your light and pours in there)
+  if (rush && g.flood !== false && !((g.gapT = (g.gapT || 0) - dt) > 0)) { g.gapT = 5; const was = g.gapNext !== undefined ? g.gapNext : g.gap, gap = dimmestGap(g); if (was === undefined || Math.abs(Math.atan2(Math.sin(gap - was), Math.cos(gap - was))) > 0.6) { g.gapNext = gap; g.gapAt = g.t + FLOOD_WARN; g.log.push([+g.t.toFixed(2), 'flood-warn', +gap.toFixed(2)]); } }
+  if (g.gapNext !== undefined && g.t >= g.gapAt) { g.gap = g.gapNext; g.gapNext = undefined; const now = dimmestGap(g); g.log.push([+g.t.toFixed(2), 'flood', +g.gap.toFixed(2), +Math.abs(Math.atan2(Math.sin(now - g.gap), Math.cos(now - g.gap))).toFixed(2)]);   /* (the last number: how far the dimmest gap has moved since the warning, for sim/breach.mjs) */ evidence(g, 'mind', 1.05); }   /* (the breach shows before it pours, INNOVATION.md 5A: the new gap is marked FLOOD_WARN seconds before the dark is sent through it) */   // (late in the night the horde floods: it finds the weakest part of your light and pours in there)
   const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = rush && g.flood !== false && g.gap !== undefined ? g.gap + (g.rSpawn() - 0.5) * 0.5 : T.probe + (g.rSpawn() - 0.5) * (rush ? Math.PI * 2 : T.spread), r = tideRadius(g) + 4;
   const x = g.fire.x + Math.cos(a) * r, z = g.fire.z + Math.sin(a) * r, grow = night - 1;
   g.hollow.push({ id: g.nextId++, kind, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });

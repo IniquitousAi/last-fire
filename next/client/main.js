@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=123';
-import { Ambience } from './ambience.js?v=123';
-import { Camp, BOARD } from './camp.js?v=123';
-import { Guide } from './guide.js?v=123';
-import { buildSites } from './earthsite.js?v=123';
-import { Truck } from './truck.js?v=123';
-import { ShipView } from './shipview.js?v=123';
-import { Wrist } from './wrist.js?v=123';
-import { FireCore } from './firecore.js?v=123';
+import * as C from '../core/game.js?v=124';
+import { Ambience } from './ambience.js?v=124';
+import { Camp, BOARD } from './camp.js?v=124';
+import { Guide } from './guide.js?v=124';
+import { buildSites } from './earthsite.js?v=124';
+import { Truck } from './truck.js?v=124';
+import { ShipView } from './shipview.js?v=124';
+import { Wrist } from './wrist.js?v=124';
+import { FireCore } from './firecore.js?v=124';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=123';
-import { FriendVoice } from './friendvoice.js?v=123';
-import { crewFrom } from '../core/habits.js?v=123';
-import { HudLook } from './hudlook.js?v=123';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=123';
-import { sound, GUNS } from '../../src/combat.js?v=123';
-import { FX } from '../../src/fx.js?v=123';
+import { think as friendThink } from './friend.js?v=124';
+import { FriendVoice } from './friendvoice.js?v=124';
+import { crewFrom } from '../core/habits.js?v=124';
+import { HudLook } from './hudlook.js?v=124';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=124';
+import { sound, GUNS } from '../../src/combat.js?v=124';
+import { FX } from '../../src/fx.js?v=124';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 123;   // (this copy's version; ./version.json says the newest)
+const BUILD = 124;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -420,7 +420,7 @@ function frame(now) {
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { growFire(); sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
-  drawHollow(dt); drawGrowRing(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
+  drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
@@ -594,7 +594,7 @@ function sync(dt) {
     h: g.hollow.flatMap(k => [k.id, KIND_I.indexOf(k.kind), +k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2), +k.yaw.toFixed(2)]),
     m: g.motes.slice(0, 300).flatMap(q => [+q.x.toFixed(1), +q.z.toFixed(1)]),
     nd: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.lit ? 1 : 0, n.who || '', n.n || 0, n.honor || '']),
-    em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), e: g.earth ? +g.earth.t.toFixed(1) : -1, pt: g.parts.map(q => [q.id, q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), st: g.stash, tr: g.truck, pk: g.players.map(p => [p.id, p.pack || []]), ec: g.econ ? { day: g.econ.day, pool: Math.round(g.econ.pool), people: g.econ.people } : 0, wr: g.earth && g.earth.wrecks ? g.earth.wrecks.map(w => [w.id, +w.x.toFixed(1), +w.z.toFixed(1), +(w.ry || 0).toFixed(2), w.left]) : 0, ln: g.learned || {}, fl: (g.flares || []).map(f => [+f.x.toFixed(2), +f.z.toFixed(2), +f.t.toFixed(1), f.earth ? 1 : 0]), th: g.theories || null, du: g.dues || {}, cl: [g.lost || [], g.out ? g.out.who : ''], sh: g.ship ? [g.ship.x, g.ship.y, g.ship.z, g.ship.yaw, g.ship.roll, g.ship.pitch, g.ship.vx, g.ship.vz, g.ship.vy].map(v => +v.toFixed(3)).concat(g.ship.pilot || 0) : 0, car: g.car ? [+g.car.x.toFixed(2), +g.car.z.toFixed(2), +g.car.yaw.toFixed(3), +g.car.v.toFixed(2), g.car.seats, g.car.store] : 0, ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z, m.who || '', m.n || 0]) } : {}) }); sentMarks = g.marks.length; }
+    em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), e: g.earth ? +g.earth.t.toFixed(1) : -1, pt: g.parts.map(q => [q.id, q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), st: g.stash, tr: g.truck, pk: g.players.map(p => [p.id, p.pack || []]), ec: g.econ ? { day: g.econ.day, pool: Math.round(g.econ.pool), people: g.econ.people } : 0, wr: g.earth && g.earth.wrecks ? g.earth.wrecks.map(w => [w.id, +w.x.toFixed(1), +w.z.toFixed(1), +(w.ry || 0).toFixed(2), w.left]) : 0, ln: g.learned || {}, fl: (g.flares || []).map(f => [+f.x.toFixed(2), +f.z.toFixed(2), +f.t.toFixed(1), f.earth ? 1 : 0]), th: g.theories || null, du: g.dues || {}, cl: [g.lost || [], g.out ? g.out.who : ''], fw: g.gapNext !== undefined ? [+g.gapNext.toFixed(3), +(g.gapAt - g.t).toFixed(2)] : 0, sh: g.ship ? [g.ship.x, g.ship.y, g.ship.z, g.ship.yaw, g.ship.roll, g.ship.pitch, g.ship.vx, g.ship.vz, g.ship.vy].map(v => +v.toFixed(3)).concat(g.ship.pilot || 0) : 0, car: g.car ? [+g.car.x.toFixed(2), +g.car.z.toFixed(2), +g.car.yaw.toFixed(3), +g.car.v.toFixed(2), g.car.seats, g.car.store] : 0, ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z, m.who || '', m.n || 0]) } : {}) }); sentMarks = g.marks.length; }
 }
 function applyState(m) {   // (a friend's copy of the world, from the host; their own position stays their own unless the host moved them)
   if (fin(m.c)) g.clock = m.c; if (Number.isInteger(m.n)) g.night = m.n; if (Array.isArray(m.f) && m.f.every(fin)) [g.fire.level, g.fire.light, g.fire.fuel] = m.f;
@@ -614,6 +614,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
   if (m.du && typeof m.du === 'object') { const d = {}; for (const [k, v] of Object.entries(m.du).slice(0, 32)) if (k.length <= 24 && fin(v)) d[k] = v; g.dues = d; }
   if (Array.isArray(m.cl) && Array.isArray(m.cl[0])) { g.lost = m.cl[0].filter(w => C.CAMP_OUT.includes(w)); g.out = C.CAMP_OUT.includes(m.cl[1]) ? { who: m.cl[1] } : null; }
   if (Array.isArray(m.sh) && m.sh.length === 10 && m.sh.every(fin)) { const [x, y, z, yaw, roll, pitch, vx, vz, vy, pilot] = m.sh; g.ship = Object.assign(g.ship || {}, { x, y, z, yaw, roll, pitch, vx, vz, vy, pilot: pilot || null }); }
+  if (Array.isArray(m.fw) && m.fw.every(fin)) { g.gapNext = m.fw[0]; g.gapAt = g.t + m.fw[1]; } else if (m.fw === 0) g.gapNext = undefined;   /* (the breach warning reaches friends too) */
   if (m.car === 0) g.car = null; else if (Array.isArray(m.car) && m.car.slice(0, 4).every(fin) && Array.isArray(m.car[4]) && Array.isArray(m.car[5])) { const [x, z, yaw, v, seats, store] = m.car; g.car = { x, z, yaw, v, seats: [0, 1, 2, 3].map(i => fin(seats[i]) ? seats[i] : null), store: store.filter(k => C.PARTS[k]).slice(0, 40) }; }
   if (Array.isArray(m.pt)) g.parts = m.pt.filter(a => Array.isArray(a) && C.PARTS[a[1]] && fin(a[0]) && fin(a[2]) && fin(a[3])).slice(0, 60).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3] }));
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of C.PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; if (m.st) g.stash = cnt(m.st); if (m.tr) g.truck = cnt(m.tr);
@@ -629,6 +630,9 @@ function drawFlares() { const live = new Set(); (g.flares || []).forEach((f, i) 
   for (const [k, o] of flareViews) if (!live.has(k)) { scene.remove(o); flareViews.delete(k); } }
 // the fire grows: a ring of light rolls out from the core across the yard to the new edge of its circle (one mesh, reused)
 const growRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); growRing.visible = false; scene.add(growRing); let growT = -1;
+// the breach shows before it pours (queue 68, sim/breach.mjs): violet smoke bulges up at the gap the dark has picked, until it comes through
+let breachT = 0;
+function drawBreach(dt) { if (g.gapNext === undefined || g.t >= g.gapAt || (breachT -= dt) > 0) return; breachT = 0.18; const R = C.tideRadius(g) + 2, a = g.gapNext + (Math.random() - 0.5) * 0.35, x = g.fire.x + Math.cos(a) * R, z = g.fire.z + Math.sin(a) * R; fx.burst(new THREE.Vector3(x, g.land(x, z) + 0.6, z), 10, [0.42, 0.1, 0.62], 2.2, 0.9); }
 function growFire() { growT = 0; growRing.visible = true; if (fireObj) fireObj.flare(1.5); }
 function drawGrowRing(dt) { if (growT < 0) return; growT += dt; const k = Math.min(1, growT / 1.8), r = 1 + (C.fireRadius(g.fire) - 1) * (1 - Math.pow(1 - k, 3)); growRing.scale.set(r, 1, r); growRing.position.set(g.fire.x, g.land(g.fire.x, g.fire.z) + 0.12, g.fire.z); growRing.material.opacity = 0.85 * (1 - k); if (k >= 1) { growT = -1; growRing.visible = false; } }
 function drawTraces() { const ts = g.traces || [], key = ts.map(t => t.of + ':' + t.x + ':' + Math.ceil(t.t / 10)).join('|'); if (key === traceKey) return; traceKey = key; const v = [];

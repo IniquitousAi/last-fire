@@ -34,7 +34,7 @@ export function play(tactic, styleName, seed, nights = 3, n = 2) {
   for (let i = 0; i < n; i++) { const p = addPlayer(g, i + 1, 'R' + i), a = i / n * Math.PI * 2; p.homeX = g.fire.x + Math.cos(a) * Math.min(6, S.roam); p.homeZ = g.fire.z + Math.sin(a) * Math.min(6, S.roam); if (S.together < 0.5) { p.homeX = g.fire.x + Math.cos(a) * S.roam * 0.8; p.homeZ = g.fire.z + Math.sin(a) * S.roam * 0.8; } }
   const dt = 0.1; g.clock = 0.5;
   while (g.night <= nights) { for (const p of g.players) think(g, p, S, r, dt); step(g, dt); if (g.t > 330 * nights) break; }
-  return { falls: g.stats.falls, kills: g.stats.kills, banked: g.stats.banked, level: g.fire.level, drained: Math.round(g.stats.drained), tense: g.stats.beats ? g.stats.tense / g.stats.beats : 0, beats: g.stats.beats };
+  return { falls: g.stats.falls, kills: g.stats.kills, banked: g.stats.banked, level: g.fire.level, drained: Math.round(g.stats.drained), tense: g.stats.beats ? g.stats.tense / g.stats.beats : 0, beats: g.stats.beats, log: g.log };
 }
 // the dark's score against a crew: how close it holds them to the edge (flow), not how many it kills; thrown out (fair = false) if a perfect crew falls, or the nights stop being in the flow band
 export function judge(tactic, crew, seeds) {

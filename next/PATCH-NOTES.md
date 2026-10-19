@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v124** The breach shows before it pours: violet smoke and a red compass bracket 2.5 s before the flood comes through the weakest gap (robots: 146 of 146 warned, 93% on the weakest light). sim/breach.mjs.
 - **v123** The masks' eyes flare before they strike (and the watcher's while unwatched); camp props instanced: about 102 to 73 draw calls a frame.
 - **v122** Camp check: the walker at 1.3 m/s on every screen (was tied to the refresh rate: 3 m/s at 144 Hz), feet matched to the walk, fence at exactly 21 m where you are stopped, stones, bedrolls and lanterns grounded.
 - **v121** Back to the old grim menu at his word (v120 copied the Reactor's layout and felt like an office slide); the sky, the bigger Earth and the game fixes stay. BUILDING.md: how building will work.
