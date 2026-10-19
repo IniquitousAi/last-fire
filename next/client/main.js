@@ -1,8 +1,8 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=3';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=3';
+import * as C from '../core/game.js?v=4';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=4';
 import { sound, GUNS } from '../../src/combat.js?v=11';
 import { FX } from '../../src/fx.js?v=11';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
@@ -158,7 +158,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
-  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); });
+  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') tryGrow(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
@@ -179,7 +179,7 @@ $('room').addEventListener('click', e => { const b = e.target.closest('button');
   if (b.id === 'lockRoom') { net.lock(!net.locked); drawPause(); } });
 
 // ---------------------------------------------------------------- actions
-let msgT = 0; function say(t, s = 3) { $('msg').textContent = t; msgT = s; }
+let msgT = 0, duskSnap = null, god = false; function say(t, s = 3) { $('msg').textContent = t; msgT = s; }
 const look = () => new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw, 0, 'YXZ'));
 function switchGun(k) { if (k === gunKey) return; gunKey = k; reloadT = 0; }
 function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; reloadT = G.reload; sound.magOut(); setTimeout(() => sound.magIn(), G.reload * 700); }
@@ -197,6 +197,10 @@ function shoot() {
 }
 let hitT = 0;
 function showHit(r, head) { $('hit').className = r.kill ? 'kill' : r.shell ? 'shell' : 'on'; hitT = r.kill ? 0.25 : 0.12; r.kill ? sound.kill() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.hit(head); }
+function tryGrow() {   // (growing the fire: your choice, and tonight the dark answers with what the new level wakes)
+  if (!C.canGrow(g)) return; if (Math.hypot(me.x - g.fire.x, me.z - g.fire.z) > C.fireRadius(g.fire)) return say('Stand at the fire to grow it.');
+  if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }
+$('prompt').addEventListener('click', () => tryGrow()); $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
 function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
 const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x39e6ff, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
@@ -234,7 +238,8 @@ function hud() {
   txt('light', `<b>${Math.floor(me.carried)}</b><span>LIGHT CARRIED (bring it to the fire, or build with it)</span>`, true);
   $('hpBar').style.width = Math.max(0, me.hp) + '%';
   const am = ammo[gunKey]; txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
-  const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f); txt('prompt', me.ember ? 'You fell. The fire will take you back.' : nearFire && me.carried > 0 ? '' : buildPick ? 'Left click to place, right click to cancel' : '');
+  const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
+  txt('prompt', me.ember ? 'You fell. A friend can carry your Ember to the fire.' : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F (or click here): GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
   if ((msgT -= 1 / 60) <= 0) txt('msg', '');
   if (was.carry !== Math.floor(me.carried / 5)) { was.carry = Math.floor(me.carried / 5); drawBuild(); }
 }
@@ -249,9 +254,9 @@ function frame(now) {
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   if (locked() && mouse[0] && !panel && !buildPick && (GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
   ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
-  const hp0 = me.hp; if (isHost()) C.step(g, dt); else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
+  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) C.step(g, dt); else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
-  for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
+  for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
   drawHollow(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000;
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
@@ -266,6 +271,33 @@ function frame(now) {
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
   renderer.autoClear = false; renderer.clearDepth(); renderer.render(vscene, vcam); renderer.autoClear = true;
   fpsN++; fpsT += dt; if (fpsT > 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} fps`; fpsN = 0; fpsT = 0; }
+}
+// ---------------------------------------------------------------- DEV: dive in, test one thing, get back to playing (host or alone only: it changes the world)
+const DEV = [
+  ['RESTART THE NIGHT', 'back to this dusk, as it was', () => { if (!duskSnap) return 'No dusk yet tonight. SKIP TO DUSK first.'; reloadWorld(JSON.parse(duskSnap)); return 'Back to dusk.'; }],
+  ['SKIP TO DUSK', 'the dark starts rolling in', () => { g.clock = C.DUSK_AT - 0.002; return 'Dusk in a moment.'; }],
+  ['SKIP TO DAWN', 'end the night now', () => { g.clock = 0.969; return 'Dawn in a moment.'; }],
+  ['+100 LIGHT', 'in your hands, to build or bank', () => { me.carried += 100; return '+100 light carried.'; }],
+  ['WAKE A GIANT', 'one walks out of the dark, 25 m away', () => { if (C.phase(g.clock) === 'day' || C.phase(g.clock) === 'dawn') g.clock = C.NIGHT_AT + 0.01; const K = C.KINDS.giant, x = me.x + Math.sin(me.yaw) * -25, z = me.z + Math.cos(me.yaw) * -25; g.hollow.push({ id: g.nextId++, kind: 'giant', x, z, y: g.land(x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0, dead: false, speed: K.speed }); return 'A giant is coming. Back away and keep shooting.'; }],
+  ['GOD MODE', 'nothing hurts you (again to turn off)', () => { god = !god; return god ? 'God mode ON.' : 'God mode OFF.'; }],
+  ['NEW WORLD', 'a fresh world; this one stays saved', () => { saveNow(); startWorld(null); return 'A new world.'; }],
+  ['CLEAR THE DARK', 'every Hollow gone, right now', () => { g.hollow = []; return 'The dark is empty, for now.'; }],
+];
+function drawDev() { $('devBody').innerHTML = DEV.map(([n, d], i) => `<button class="key" data-i="${i}">${n}<small>(${d})</small></button>`).join(''); $('devNote').textContent = isHost() ? 'Each one closes this and puts you straight back in.' : 'Only the host can use DEV: it changes the whole world.'; }
+$('devBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !isHost()) return; const msg = DEV[+b.dataset.i][2](); $('dev').hidden = true; panel = null; $('paused').hidden = true; renderer.domElement.requestPointerLock(); say(msg, 3); });
+$('openDev').onclick = () => { $('paused').hidden = true; $('dev').hidden = false; panel = 'dev'; drawDev(); };
+$('devBack').onclick = () => { $('dev').hidden = true; $('paused').hidden = false; panel = 'pause'; };
+$('openList').onclick = async () => { $('paused').hidden = true; $('list').hidden = false; panel = 'list';
+  try { const d = await (await fetch('./checklist.json?t=' + Date.now())).json(), label = { done: 'DONE', in: 'IN', next: 'NEXT', later: 'LATER', talk: 'TALK' };
+    const order = ['next', 'in', 'talk', 'later', 'done'];
+    $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${d.about.replace(/[<&>]/g, '')}</p>` + d.items.slice().sort((a, b) => order.indexOf(a.s) - order.indexOf(b.s)).map(it => `<div class="ck"><b class="${it.s}">${label[it.s] || it.s}</b><span>${String(it.idea).replace(/[<&>]/g, '')}<small>${String(it.where || '').replace(/[<&>]/g, '')}</small></span></div>`).join(''); }
+  catch (e) { $('listBody').textContent = 'The checklist could not load.'; } };
+$('listBack').onclick = () => { $('list').hidden = true; $('paused').hidden = false; panel = 'pause'; };
+function reloadWorld(d) {   // (the world as it was at dusk; everyone here now stays, back at the fire)
+  const keepers = g.players.map(p => ({ id: p.id, name: p.name, gun: p.gun })), w = C.loadWorld(d); if (!w) return;
+  g = w; g.ready = true; for (const k of keepers) { const p = C.addPlayer(g, k.id, k.name); p.gun = k.gun; if (k.id === myId) me = p; }
+  for (const [, v] of seen) scene.remove(v.o); seen.clear(); for (const [, o] of nodeObjs) scene.remove(o); nodeObjs.clear(); marksDrawn = -1;
+  for (const p of g.players) p.tp = (p.tp || 0) + 1;   // (friends snap back to the fire too)
 }
 // ---------------------------------------------------------------- together: the host runs the rules and sends the world; friends send where they are
 const inbox = [], fin = v => typeof v === 'number' && Number.isFinite(v), KIND_I = Object.keys(C.KINDS);
@@ -285,7 +317,7 @@ function onNet(m, from) {
       const L = Math.hypot(m.d[0], m.d[1], m.d[2]); if (L < 0.5) return; const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], m.d[0] / L, m.d[1] / L, m.d[2] / L, 80);
       if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } return;
     }
-    if (m.t === 'build') { if (bucket(p, 'builds', 1, 3)) build(p, m.k, m.x, m.z); return; }
+    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; heardShot(m); net.relay(m, from); return; }
     return;
   }

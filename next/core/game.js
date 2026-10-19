@@ -1,3 +1,4 @@
+import { newRecord, sample, noteBank, noteShot, summarize } from './habits.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
 // so the browser, the robots and the daemon all run this one file. Every system draws from its own named random stream.
 // Units: meters and seconds. The valley is SIZE x SIZE, the fire at its middle.
@@ -38,7 +39,7 @@ export const KINDS = {
 };
 // what each fire level wakes in the dark that night: the player chooses when to provoke it, by feeding the fire
 export const WAKES = [[], ['runner'], ['shard'], ['giant'], ['runner', 'giant'], ['shard', 'giant']];
-export const FIRE_COST = [0, 40, 110, 220, 380, 600];   // (light banked to reach each level)
+export const FIRE_COST = [0, 60, 180, 400, 750, 1200];   // (banked light a level costs; growing it is the players' choice)
 
 // ---------------------------------------------------------------- the dark's tactics: a genome the daemon breeds from recorded nights
 // probe: the angle the first wave comes from (radians); spread: how wide they fan; rushAt: share of the night before they all commit;
@@ -53,7 +54,7 @@ export function clampTactic(t) {
 export function newGame(seed, tactic = BASE_TACTIC) {
   const C = 0;   // (the first fire stands at the world's middle; the world runs on forever from it)
   return { seed, land: makeLand(seed), t: 0, clock: 0.3, night: 1, tactic: clampTactic(tactic), rSpawn: stream(seed, 'spawn'), rAim: stream(seed, 'aim'), rMote: stream(seed, 'mote'),
-    fire: { x: C, z: C, level: 0, light: 0, fuel: 180, woke: [] }, nodes: [], marks: [], keep: {}, players: [], hollow: [], motes: [], embers: [], nextId: 1, log: [], stats: { kills: 0, falls: 0, banked: 0, tense: 0, beats: 0, drained: 0 } };
+    fire: { x: C, z: C, level: 0, light: 0, fuel: 180, woke: [] }, nodes: [], marks: [], keep: {}, rec: newRecord(), history: [], players: [], hollow: [], motes: [], embers: [], nextId: 1, log: [], stats: { kills: 0, falls: 0, banked: 0, tense: 0, beats: 0, drained: 0 } };
 }
 export function addPlayer(g, id, name = 'Player') {
   const p = { id, name, x: g.fire.x + 3 + g.players.length, z: g.fire.z, y: 0, yaw: 0, pitch: 0, hp: 100, carried: 0, ember: false, carrying: null, isPlayer: true, hurtT: 0 };
@@ -113,28 +114,29 @@ function die(g, k, by) {   // (a Hollow bursts into motes of light where it fell
 export function step(g, dt) {
   g.t += dt; const prev = g.clock; g.clock += dt / DAY;
   if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); }
+  if (prev < 0.97 && g.clock >= 0.97) { g.history.push(summarize(g.rec, g.night)); if (g.history.length > 30) g.history.shift(); g.rec = newRecord(); g.log.push([+g.t.toFixed(2), 'learned-night', g.night]); }   // (at the ebb, the night is written down)
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
+  if ((ph === 'night' || ph === 'dusk') && Math.floor(g.t) !== Math.floor(g.t - dt)) sample(g.rec, g, g.fire.x, g.fire.z);
   spawn(g, dt, ph); moveHollow(g, dt, ph);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; } }
   g.motes = g.motes.filter(m => m.t > 0);
   for (const p of g.players) {
-    if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
-    while (f.level < FIRE_COST.length - 1 && f.light >= FIRE_COST[f.level + 1]) { f.level++; g.log.push([+g.t.toFixed(2), 'level', f.level]); }
+    if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
     p.hurtT = Math.max(0, p.hurtT - dt); p.calm = p.hurtT > 0 ? 0 : (p.calm || 0) + dt; if (!p.ember && p.calm > 4) p.hp = Math.min(100, p.hp + dt * 8);   // (four quiet seconds and you get your breath back)
-    if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) { e.x = p.x; e.z = p.z; if (Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) revive(g, e); } else p.carrying = null; }
+    if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) { e.x = p.x; e.z = p.z; if (Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f) * 0.6) { e.t += dt; if (e.t >= 3) revive(g, e); } else e.t = 0; } else p.carrying = null; }   // (the fire takes three seconds to rekindle someone: hold their Ember near it)
     else if (!p.ember) for (const e of g.embers) if (!e.held && Math.hypot(p.x - e.x, p.z - e.z) < 1.5) { e.held = p.id; p.carrying = e.id; }
   }
   // a tense beat: a player hurt in the last second, or a Hollow within 5 m (for the fun checklist)
-  if (ph === 'night' && Math.floor(g.t) !== Math.floor(g.t - dt)) { g.stats.beats++; if (g.players.some(p => !p.ember && (p.hurtT > 0 || g.hollow.some(k => Math.hypot(k.x - p.x, k.z - p.z) < 5)))) g.stats.tense++; }
+  if (ph === 'night' && Math.floor(g.t) !== Math.floor(g.t - dt)) { g.stats.beats++; g.rec.beats++; if (g.players.some(p => !p.ember && (p.hurtT > 0 || g.hollow.some(k => Math.hypot(k.x - p.x, k.z - p.z) < 5)))) { g.stats.tense++; g.rec.tenseBeats++; } }
 }
 export function mark(g, k, x, z) { g.marks.push({ k, x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, n: g.night }); if (g.marks.length > 600) g.marks.splice(0, g.marks.length - 600); }   // (the world keeps where things happened)
 // ---------------------------------------------------------------- saving: everything that lasts, as plain data (the dark itself does not keep; it comes back each night)
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), marks: g.marks, keep: g.keep, stats: g.stats,
+    nodes: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp)]), motes: g.motes.map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : null };
 }
 export function loadWorld(d) {
@@ -143,7 +145,7 @@ export function loadWorld(d) {
   if (d.fire) { g.fire.level = Math.max(0, Math.min(FIRE_COST.length - 1, d.fire.level | 0)); g.fire.light = ok(d.fire.light) ? d.fire.light : 0; g.fire.fuel = ok(d.fire.fuel) ? d.fire.fuel : 180; }
   for (const n of d.nodes || []) if (Array.isArray(n) && NODE[n[1]] && [n[0], n[2], n[3], n[4]].every(ok)) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false });
   for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
-  g.marks = Array.isArray(d.marks) ? d.marks.filter(m => m && ok(m.x) && ok(m.z)).slice(-600) : []; g.keep = d.keep && typeof d.keep === 'object' ? d.keep : {}; if (d.stats) Object.assign(g.stats, d.stats);
+  g.marks = Array.isArray(d.marks) ? d.marks.filter(m => m && ok(m.x) && ok(m.z)).slice(-600) : []; g.keep = d.keep && typeof d.keep === 'object' ? d.keep : {}; if (d.stats) Object.assign(g.stats, d.stats); g.history = Array.isArray(d.history) ? d.history.filter(h => h && typeof h === 'object').slice(-30) : [];
   g.startAt = Array.isArray(d.host) && d.host.every(ok) ? d.host : null; linkNetwork(g); return g;
 }
 function revive(g, e) {
@@ -151,13 +153,18 @@ function revive(g, e) {
   const h = g.players.find(q => q.id === e.held); if (h) h.carrying = null;
   g.embers = g.embers.filter(q => q !== e); g.log.push([+g.t.toFixed(2), 'revive', e.of, e.held]);
 }
+// growing the fire is a choice: a player standing at it spends banked light, and tonight the dark answers with what that level wakes
+export function canGrow(g) { const f = g.fire; return f.level < FIRE_COST.length - 1 && f.light >= FIRE_COST[f.level + 1]; }
+export function grow(g, p) { const f = g.fire; if (!canGrow(g) || !p || p.ember || Math.hypot(p.x - f.x, p.z - f.z) > fireRadius(f)) return false; f.light -= FIRE_COST[f.level + 1]; f.level++; g.log.push([+g.t.toFixed(2), 'level', f.level, p.id]); return true; }
+export function shotBy(g, p, hit) { if (p) noteShot(g.rec, p, hit); }   // (for the record: how well each player hits)
 export function hurt(g, p, n, from) {
   if (p.ember) return; p.hp -= n; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
-    p.ember = true; p.hp = 0; g.stats.falls++; if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) e.held = null; p.carrying = null; }
+    p.ember = true; p.hp = 0; g.stats.falls++; g.rec.falls++; if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) e.held = null; p.carrying = null; }
     for (let i = 0; i < Math.ceil(p.carried / 5); i++) g.motes.push({ id: g.nextId++, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2, v: 5, t: 60 });
     p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0 }); mark(g, 'fall', p.x, p.z); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
-    if (g.players.every(q => q.ember)) { for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.fire.light = Math.max(0, g.fire.light); g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }   // (everyone down: all wake at the fire; the fire keeps every level)
+    if (g.players.every(q => q.ember)) {   // (everyone down: the dark took what it came for. The night is lost, what you carried lies where you fell, and it draws back to dawn; the fire keeps every level)
+      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97; g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
   }
 }
 

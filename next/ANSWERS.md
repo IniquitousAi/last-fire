@@ -55,3 +55,18 @@ How these are asked (his rule, 2026-10-18 about 22:00): only about the why (the 
 | How does the world respond? | Both: it remembers everything and adapts | A persistent world that keeps every mark, plus the daemon breeding the dark against the crew's habits. |
 | What should building feel like? | Clever engineering | Machines and systems that solve problems, not decoration and not only walls. |
 | How should your body feel? | "i think depends" | **Decided by Claude:** grounded but sharp by default, and movement is itself a growth axis (more options as you go), matching round 4's "more options". |
+
+## Round 7, the dark that learns you (2026-10-18 night)
+
+| Question | His answer | What it means for the build |
+| --- | --- | --- |
+| How should being learned feel? | Unsettling | You slowly notice it knows you. Nothing announces it. |
+| Should the dark ever say what it learned? | Never | No message, no reveal, no hint in words. It shows only in how it plays. |
+| How fast should it adapt? | Only when you get too comfortable | It answers when the crew has been winning easily (measured: nights under the tense band, no falls), and otherwise keeps its tactic. |
+| When Dalton hosts? | "what makes the most logical sense here? i want the game to be different due to the uniqueness of my foundation, nothing its built on is lackluster, unless it cost money then we find work arounds" | **Decided by Claude: one mind for every world.** The daemon on Daniel's PC is the dark's mind for the whole crew. Any host's game sends its recorded nights to it over the game's own free, encrypted browser-to-browser link (a listener beside the daemon, behind a pairing secret, plain data only, size-capped) and receives the certified tactic. PC off: nights queue in the host's browser and send next time. Free. |
+
+## His vision, in his words (2026-10-18 night, while piece 4 was being built)
+
+"hyper awareness, and the villain is Iniquitous by nature, rng elements dark humor, dry humor, dry dark humor, and lots of mayhem, imagine You're hanging out with the guys. You gotta survive all alone in the dark. Imagine like a Maze Runner vibe. But you're not trapped. The maze is kind of the obvious lore, but at the same time, it's so dark and evil and mysterious. That most people want to learn how to play before they enter it."
+
+Also: a checklist he can see of every idea, added and checked off; a dev way to dive in, test, come back and keep playing (restart like Era 1 and 2 had); and an in-depth back and forth on every layer (quality, ideas, performance, visuals, social) before building further.
