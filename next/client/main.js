@@ -301,6 +301,24 @@ function coldHands(dt) { if (!g || !me || me.ember) return; const warm = C.light
   if (cold > 0.6 && coldSaid !== g.night) { coldSaid = g.night; say('Your hands are going cold out here. Light steadies them.', 4); } }
 // the demo run's script: [start s, what]. Each gun: hip fire, spam the sights, fire aimed, empty it and reload; then move while aiming
 const DEMO_RUN = [[0, 'look'], [4, 'gun ar'], [5, 'ads spam'], [11, 'fire hip'], [14, 'ads fire'], [18, 'reload'], [22, 'gun pistol'], [23, 'ads spam'], [27, 'reload'], [30, 'gun shotgun'], [31, 'fire hip'], [33, 'reload'], [37, 'gun lmg'], [38, 'move ads'], [42, 'reload'], [46, 'end']];
+// ?demo&night: a 45 s night run for recordings. It starts at the end of dusk, eases its aim onto the nearest shape (a camera operator, not a player
+// skill: test only), and uses every move: hip fire, aiming, boost jump and slam, dodges, sprint and slide, reloads, three guns
+const NIGHT_RUN = [[0, 'look'], [5, 'gun ar'], [6, 'ads fire'], [11, 'boost'], [11.3, 'boost2'], [12.1, 'slam'], [14, 'fire hip'], [18, 'reload'], [21, 'dodge L'], [22.2, 'dodge R'], [23.5, 'sprint'], [25.2, 'slide'], [26.5, 'ads fire'],
+  [31, 'gun shotgun'], [32, 'fire hip'], [35, 'reload'], [37.5, 'gun lmg'], [38, 'boost'], [38.3, 'boost2'], [39.1, 'slam'], [40.5, 'ads fire'], [46, 'end']];
+const press = code => { dispatchEvent(new KeyboardEvent('keydown', { code })); dispatchEvent(new KeyboardEvent('keyup', { code })); };   // (down and up: a held key would keep jumping)
+function demoAim(dt) { let best = null, bd = 45; for (const k of g.hollow) { if (k.dead || C.onEarth(k)) continue; const d = Math.hypot(k.x - me.x, k.z - me.z); if (d < bd) { bd = d; best = k; } } if (!best) return false;
+  const want = Math.atan2(-(best.x - me.x), -(best.z - me.z)), dy = (best.y + 1.3) - (me.y + eyeH), dyaw = Math.atan2(Math.sin(want - me.yaw), Math.cos(want - me.yaw));
+  me.yaw += dyaw * Math.min(1, dt * 5); me.pitch += (Math.atan2(dy, bd) - me.pitch) * Math.min(1, dt * 5); return Math.abs(dyaw) < 0.08; }
+function demoNight(dt) { const d = demoNight; if (!d.t) g.clock = Math.max(g.clock, C.NIGHT_AT - 0.02); d.t = (d.t || 0) + dt; const t = d.t, cur = NIGHT_RUN.filter(r => r[0] <= t).pop(), [, what] = cur, fresh = d.on !== cur; d.on = cur;
+  mouse[0] = false; keys.KeyW = keys.KeyA = keys.KeyD = keys.ShiftLeft = false; const on = what === 'look' ? (me.yaw += 0.5 * dt, false) : demoAim(dt);
+  if (what.startsWith('gun') && fresh) switchGun(what.split(' ')[1]);
+  if (what === 'ads fire') { aimOn = t - cur[0] > 0.4; mouse[0] = aimOn && on && t % 0.5 < 0.32; }
+  if (what === 'fire hip') { aimOn = false; mouse[0] = on && t % 0.45 < 0.3; }
+  if (what === 'reload' && fresh) { aimOn = false; ammo[gunKey].mag = Math.min(ammo[gunKey].mag, 2); reload(); }
+  if (what === 'boost' && fresh) { aimOn = false; jumpBuf = 0.15; } if (what === 'boost2' && fresh) press('Space'); if (what === 'slam' && fresh) press('KeyC');
+  if (what === 'dodge L' && fresh) { keys.KeyA = true; press('ShiftLeft'); keys.KeyA = false; } if (what === 'dodge R' && fresh) { keys.KeyD = true; press('ShiftLeft'); keys.KeyD = false; }
+  if (what === 'sprint') { aimOn = false; keys.KeyW = true; keys.ShiftLeft = true; } if (what === 'slide') { keys.KeyW = true; if (fresh) { keys.ShiftLeft = true; press('KeyC'); } }
+  if (what === 'end' && fresh) { aimOn = false; say('Night run over.', 3); } }
 function demoStep(dt) { const d = demoStep; d.t = (d.t || 0) + dt; const t = d.t, cur = DEMO_RUN.filter(r => r[0] <= t).pop(), [, what] = cur, fresh = d.on !== cur; d.on = cur;
   me.yaw += Math.sin(t * 0.6) * 0.25 * dt * (what === 'look' ? 3 : 1); me.pitch = Math.sin(t * 0.37) * 0.06;   // (a slow, smooth sweep: never a jerk)
   mouse[0] = false; keys.KeyW = keys.KeyA = false;
@@ -510,7 +528,7 @@ function frame(now) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
-  if (DEMO && !panel) demoStep(dt); if (!panel) move(dt);
+  if (DEMO && !panel) (/night/.test(location.search) ? demoNight : demoStep)(dt); if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
