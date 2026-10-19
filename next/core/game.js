@@ -41,6 +41,29 @@ export const speedOf = p => Math.max(0.45, 1 - loadOf(p) / 160);   // (60 kg on 
 export const fitted = (g, k) => (g.truck && g.truck[k]) || 0;
 export const canFit = (g, k) => (g.stash[k] || 0) > 0 && fitted(g, k) < PARTS[k].n && PARTS[k].after.every(a => fitted(g, a) >= PARTS[a].n);
 export const truckDone = g => PART_ORDER.every(k => fitted(g, k) >= PARTS[k].n);
+// the finished truck rides the lander down; on Earth it seats four, holds 400 kg, its headlights make the dark solid, and it runs things over
+export const CAR = { speed: 17, back: 6, turn: 1.7, seats: 4, store: 400, ram: 160, lamp: 14 };
+const SEAT_AT = [[-0.45, -0.2], [0.45, -0.2], [-0.45, 1.2], [0.45, 1.2]];   // (driver, front passenger, two in the back; truck's own space, forward is -z)
+export const seatOf = (g, id) => g.car ? g.car.seats.indexOf(id) : -1;
+export function seatPos(c, i) { const [ox, oz] = SEAT_AT[i] || SEAT_AT[0], co = Math.cos(c.yaw), si = Math.sin(c.yaw); return [c.x + ox * co + oz * si, c.z - ox * si + oz * co]; }
+export const storeKg = car => car.store.reduce((s, k) => s + PARTS[k].kg, 0);
+export function useCar(g, p) {   // (F at the truck: load your pack first if you carry one, else get in; F inside gets you out)
+  const c = g.car; if (!c || !p || p.ember) return null; const i = c.seats.indexOf(p.id);
+  if (i >= 0) { c.seats.splice(i, 1); p.x = c.x + Math.cos(c.yaw) * 2.2; p.z = c.z - Math.sin(c.yaw) * 2.2; p.tp = (p.tp || 0) + 1; return 'out'; }
+  if (Math.hypot(p.x - c.x, p.z - c.z) > 3.8) return null;
+  if ((p.pack || []).length) { const keep = []; for (const k of p.pack) if (storeKg(c) + PARTS[k].kg <= CAR.store) c.store.push(k); else keep.push(k); const n = p.pack.length - keep.length; p.pack = keep; return n ? 'stowed' : 'full'; }
+  if (c.seats.length >= CAR.seats) return null; c.seats.push(p.id); p.tp = (p.tp || 0) + 1; return c.seats[0] === p.id ? 'driver' : 'seat';
+}
+function driveCar(g, dt) {
+  const c = g.car; if (!c) return; c.seats = c.seats.filter(id => { const q = g.players.find(p => p.id === id); return q && !q.ember && onEarth(q); });
+  const d = g.players.find(p => p.id === c.seats[0]), th = d && d.drive ? d.drive.th : 0, st = d && d.drive ? d.drive.st : 0;
+  const want = th > 0 ? th * CAR.speed : th * CAR.back; c.v += (want - c.v) * Math.min(1, dt * (th === 0 ? 1.2 : 1.6));
+  c.yaw -= st * CAR.turn * dt * Math.max(-1, Math.min(1, c.v / 6));
+  const nx = c.x - Math.sin(c.yaw) * c.v * dt, nz = c.z - Math.cos(c.yaw) * c.v * dt, [px, pz] = pushOut(nx, nz, 1.7);
+  if (px !== nx || pz !== nz) c.v *= -0.25; c.x = px; c.z = pz;   // (a tower stops it hard)
+  for (const k of g.hollow) if (k.earth && !k.dead && Math.abs(c.v) > 5 && Math.hypot(k.x - c.x, k.z - c.z) < 2.2 && solid(g, k)) { damage(g, k, 0, CAR.ram * Math.abs(c.v) / CAR.speed, 1, d ? d.id : 0); c.v *= 0.85; }
+  c.seats.forEach((id, i) => { const q = g.players.find(p => p.id === id); if (!q) return; [q.x, q.z] = seatPos(c, i); q.y = heightAt(g.land, q.x, q.z) + 0.9; });
+}
 export function fit(g, p) {
   if (!p || p.ember || Math.hypot(p.x - BAY.x, p.z - BAY.z) > 5) return null; const k = PART_ORDER.find(k => canFit(g, k)); if (!k) return null;
   g.stash[k]--; g.truck[k] = fitted(g, k) + 1; g.log.push([+g.t.toFixed(2), 'fit', k]); return k;
@@ -113,6 +136,8 @@ export function lightAt(g, x, z) {   // (0 in the dark, 1 at the heart of a ligh
   for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r) L = Math.max(L, 1 - d / r); }
   for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8); }
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light) L = Math.max(L, 1 - d / EARTH.light); }
+  if (g.car) { const c = g.car, dx = x - c.x, dz = z - c.z, ahead = -dx * Math.sin(c.yaw) - dz * Math.cos(c.yaw), side = Math.abs(dx * Math.cos(c.yaw) - dz * Math.sin(c.yaw));
+    if (ahead > 0 && ahead < CAR.lamp && side < 1.2 + ahead * 0.45) L = Math.max(L, 0.8 * (1 - ahead / CAR.lamp)); else if (dx * dx + dz * dz < 9) L = Math.max(L, 0.3); }   // (the headlights: a wedge of light ahead, a little around the cab)
   return L;
 }
 
@@ -150,7 +175,7 @@ export function step(g, dt) {
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
   if ((ph === 'night' || ph === 'dusk') && Math.floor(g.t) !== Math.floor(g.t - dt)) sample(g.rec, g, g.fire.x, g.fire.z);
-  spawn(g, dt, ph); spawnEarth(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
+  spawn(g, dt, ph); spawnEarth(g, dt); driveCar(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; } }
   g.motes = g.motes.filter(m => m.t > 0);
@@ -212,6 +237,7 @@ export function drop(g, p) {
   if (!p || p.ember || onEarth(p) || Math.hypot(p.x - PAD.x, p.z - PAD.z) > 4) return false;
   if (!g.earth) { g.earth = { t: EARTH.stay, n: (g.trips = (g.trips || 0) + 1) }; const r = stream(g.seed, 'earth-' + g.earth.n);
     for (let i = 0; i < EARTH.cells; i++) { const a = r() * Math.PI * 2, d = 14 + r() * 50; g.motes.push({ id: g.nextId++, x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d, v: 8, t: 1e9, cell: true }); } }
+  if (g.earth && !g.car && truckDone(g)) g.car = { x: EARTH.x + 7, z: EARTH.z - 3, yaw: 0, v: 0, seats: [], store: [] };
   if (g.earth && !g.earth.parts) { g.earth.parts = true; const r = stream(g.seed, 'parts-' + g.earth.n), lack = PART_ORDER.flatMap(k => Array(Math.max(0, PARTS[k].n - fitted(g, k) - (g.stash[k] || 0))).fill(k)), pool = lack.length ? lack : PART_ORDER;
     for (let i = 0; i < 3; i++) { const a = r() * Math.PI * 2, d = 22 + r() * 48; g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
   for (const q of [...g.motes, ...g.parts]) if (onEarth(q)) [q.x, q.z] = pushOut(q.x, q.z, 1);   // (nothing lies inside a tower)
@@ -222,7 +248,7 @@ export function rise(g, p) {
   p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'rise', p.id]);
   if (!g.players.some(onEarth)) endTrip(g); return true;
 }
-function endTrip(g) { g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
+function endTrip(g) { if (g.car) { for (const k of g.car.store) g.stash[k] = (g.stash[k] || 0) + 1; g.car = null; } g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.parts = g.parts.filter(q => !onEarth(q)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
 function tripClock(g, dt) {
   if (!g.earth) return; g.earth.t -= dt; if (g.earth.t > 0) return;
   for (const p of g.players) if (onEarth(p)) {   // (left behind: the lander is gone; whatever brings you back up, the light you carried stays down there)

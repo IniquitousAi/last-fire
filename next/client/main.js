@@ -1,21 +1,21 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=27';
-import { Ambience } from './ambience.js?v=27';
-import { Camp, BOARD } from './camp.js?v=27';
-import { Guide } from './guide.js?v=27';
-import { buildSites } from './earthsite.js?v=27';
-import { Truck } from './truck.js?v=27';
-import { HudLook } from './hudlook.js?v=27';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=27';
-import { sound, GUNS } from '../../src/combat.js?v=27';
-import { FX } from '../../src/fx.js?v=27';
+import * as C from '../core/game.js?v=29';
+import { Ambience } from './ambience.js?v=29';
+import { Camp, BOARD } from './camp.js?v=29';
+import { Guide } from './guide.js?v=29';
+import { buildSites } from './earthsite.js?v=29';
+import { Truck } from './truck.js?v=29';
+import { HudLook } from './hudlook.js?v=29';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=29';
+import { sound, GUNS } from '../../src/combat.js?v=29';
+import { FX } from '../../src/fx.js?v=29';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 27;   // (this copy's version; ./version.json says the newest)
+const BUILD = 29;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -159,7 +159,7 @@ function drawNetwork(t) {
   for (const n of g.nodes) if (n.lit) { const a = src.filter(s => s !== n && Math.hypot(s.x - n.x, s.z - n.z) <= s.reach).sort((p, q) => Math.hypot(p.x - n.x, p.z - n.z) - Math.hypot(q.x - n.x, q.z - n.z))[0]; if (a) pts.push(a.x, g.land(a.x, a.z) + 1.6, a.z, n.x, g.land(n.x, n.z) + 1.6, n.z); }
   linkLines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
   // the ground shader's lights: the fire, your glow, and the 22 nearest lit nodes
-  const arr = uLights.value; arr[0].set(f.x, f.z, lit ? C.fireRadius(f) : 3, lit ? 1 : 0.3); arr[1].set(me.x, me.z, C.glowOf(g, me), 0.55);
+  const arr = uLights.value; arr[0].set(f.x, f.z, lit ? C.fireRadius(f) : 3, lit ? 1 : 0.3); arr[1].set(me.x, me.z, C.glowOf(g, me), 0.55); if (g.car) arr[2].set(g.car.x - Math.sin(g.car.yaw) * 7, g.car.z - Math.cos(g.car.yaw) * 7, 8, 0.9); else arr[2].set(0, 0, 0, 0);
   const near = g.nodes.filter(n => n.lit && lit).sort((a, b) => Math.hypot(a.x - me.x, a.z - me.z) - Math.hypot(b.x - me.x, b.z - me.z));
   for (let i = 2; i < NODE_MAX; i++) { const n = near[i - 2]; if (n) arr[i].set(n.x, n.z, C.NODE[n.kind].r, 0.9); else arr[i].set(0, 0, 0, 0); }
 }
@@ -248,7 +248,11 @@ const atBay = () => !C.onEarth(me) && Math.hypot(me.x - C.BAY.x, me.z - C.BAY.z)
 function fitPart() { if (isHost()) { const k = C.fit(g, me); if (k) { sound.buy(); say(`The ${k} is on. ${C.truckDone(g) ? 'The truck is whole.' : ''}`, 3); } } else net.send({ t: 'build', k: 'fit', x: 0, z: 0 }); }
 function bayLine() { const k = C.PART_ORDER.find(k => C.canFit(g, k)); if (k) return `F (or click here): FIT THE ${k.toUpperCase()} (${g.stash[k]} in the stash)`; if (C.truckDone(g)) return 'The truck is whole. (driving it comes next)';
   const need = C.PART_ORDER.find(k => C.fitted(g, k) < C.PARTS[k].n); const blocked = C.PARTS[need].after.find(a => C.fitted(g, a) < C.PARTS[a].n); return `THE TRUCK: needs ${blocked ? `the ${blocked} before the ${need}` : `a ${need}`} (find parts on Earth)`; }
-function act() { if (me.ember) return; if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
+const nearCar = () => g.car && (C.seatOf(g, me.id) >= 0 || Math.hypot(me.x - g.car.x, me.z - g.car.z) < 3.8);
+function carLine() { const c = g.car, kg = C.storeKg(c); if (C.seatOf(g, me.id) >= 0) return `F (or click here): GET OUT   ·   ${Math.round(Math.abs(c.v) * 3.6)} km/h   ·   load ${kg} of ${C.CAR.store} kg`;
+  return (me.pack || []).length ? `F (or click here): LOAD YOUR PACK INTO THE TRUCK (${kg} of ${C.CAR.store} kg)` : c.seats.length >= C.CAR.seats ? 'The truck is full.' : `F (or click here): GET IN${c.seats.length ? '' : ' AND DRIVE (W, S, A, D)'}`; }
+function useCar() { if (isHost()) { const r = C.useCar(g, me); if (r === 'stowed') { sound.drop(); say('Loaded into the truck.', 2); } else if (r === 'full') say('The truck is full.', 2); } else net.send({ t: 'build', k: 'car', x: 0, z: 0 }); }
+function act() { if (me.ember) return; if (nearCar()) return useCar(); if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
 $('prompt').addEventListener('click', () => act()); $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
 function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
@@ -266,6 +270,9 @@ $('build').addEventListener('click', e => { const b = e.target.closest('.bk'); i
 const vel = new THREE.Vector2(); let vy = 0, onGround = true;
 function move(dt) {
   if (me.ember) return;
+  const seat = C.seatOf(g, me.id); if (seat >= 0 && g.car) {   // (in the truck: you ride; the driver's W/S and A/D are throttle and steering)
+    me.drive = seat === 0 ? { th: (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), st: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) } : null;
+    [me.x, me.z] = C.seatPos(g.car, seat); me.y = g.land(me.x, me.z) + 0.9; vel.x = vel.y = 0; vy = 0; onGround = true; return; }
   const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), sprint = (keys.ShiftLeft || keys.ShiftRight) && f > 0 && ads < 0.5;
   const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * f + cosY * s, wz = -cosY * f - sinY * s; const len = Math.hypot(wx, wz) || 1; wx /= len; wz /= len;
   const top = (sprint ? 7.4 : 4.6) * C.speedOf(me) * (1 - ads * 0.35) * (f || s ? 1 : 0), acc = onGround ? 14 : 3;   // (about a third of a second to full speed, less to stop)
@@ -291,7 +298,7 @@ function hud() {
   $('hpBar').style.width = Math.max(0, me.hp) + '%';
   const am = ammo[gunKey]; txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
-  txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : atPad() ? `F (or click here): DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (the lander waits 150 s down there)'}` : atSite() ? 'F (or click here): RIDE UP (bring what you carry home)' : atBay() ? bayLine() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F (or click here): GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
+  txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : atPad() ? `F (or click here): DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (the lander waits 150 s down there)'}` : atSite() ? 'F (or click here): RIDE UP (bring what you carry home)' : atBay() ? bayLine() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F (or click here): GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
   if ((msgT -= 1 / 60) <= 0) txt('msg', '');
   if (was.carry !== Math.floor(me.carried / 5)) { was.carry = Math.floor(me.carried / 5); drawBuild(); }
 }
@@ -313,6 +320,9 @@ function frame(now) {
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
+  const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
+  if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
+    camera.position.set(c.x + Math.sin(me.yaw) * back, cy + up, c.z + Math.cos(me.yaw) * back); camera.lookAt(c.x, cy + 1.6, c.z); }
   sound.listen(me.x, me.y + 1.62, me.z, -Math.sin(me.yaw), 0, -Math.cos(me.yaw));
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
@@ -323,7 +333,7 @@ function frame(now) {
   hud();
   renderer.render(scene, camera);
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
-  renderer.autoClear = false; renderer.clearDepth(); renderer.render(vscene, vcam); renderer.autoClear = true;
+  if (!driving) { renderer.autoClear = false; renderer.clearDepth(); renderer.render(vscene, vcam); renderer.autoClear = true; }
   fpsN++; fpsT += dt; if (fpsT > 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} fps`; fpsN = 0; fpsT = 0; }
 }
 // ---------------------------------------------------------------- DEV: dive in, test one thing, get back to playing (host or alone only: it changes the world)
@@ -415,6 +425,7 @@ function onNet(m, from) {
     if (!p) return;
     if (m.t === 'in') {   // (a friend's own move: checked against how fast a person can go; the host keeps their health, light and Ember)
       if (![m.x, m.y, m.z, m.yaw, m.pi].every(fin)) return; const dt = Math.max(0.02, (performance.now() - (p.inT || 0)) / 1000); p.inT = performance.now();
+      if (C.seatOf(g, p.id) >= 0) { p.drive = fin(m.th) && fin(m.st) ? { th: Math.max(-1, Math.min(1, m.th)), st: Math.max(-1, Math.min(1, m.st)) } : null; p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); return; }   /* (riding: the truck moves them; only their keys count) */
       if (!p.ember && Math.hypot(m.x - p.x, m.z - p.z) < Math.max(1.5, 11 * dt)) { p.x = m.x; p.z = m.z; p.y = m.y; } else if (!p.ember) p.tp = (p.tp || 0) + 1;   /* (too far, too fast: snap them back to the last good spot, so a lag spike can never strand anyone) */ p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); p.gun = GUNS[m.g] ? m.g : 'pistol'; const nm = String(m.n || '').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Friend'; if (p.name !== nm) { p.name = nm; if (!p.kept && g.keep[nm] > 0) { p.carried += g.keep[nm]; p.kept = true; } } return;
     }
     if (m.t === 'shot') {   // (the host traces it in its own world with the gun's own damage, no faster than the gun fires)
@@ -422,7 +433,7 @@ function onNet(m, from) {
       const L = Math.hypot(m.d[0], m.d[1], m.d[2]); if (L < 0.5) return; const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], m.d[0] / L, m.d[1] / L, m.d[2] / L, 80);
       if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } return;
     }
-    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else build(p, m.k, m.x, m.z); return; }
+    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; heardShot(m); net.relay(m, from); return; }
     return;
   }
@@ -442,7 +453,7 @@ function heardShot(m) { const o = new THREE.Vector3(m.x, m.y, m.z); sound.shot(m
 let sendT = 0, stateT = 0, sentMarks = -1;
 function sync(dt) {
   if (!net || !net.live) return; sendT += dt; stateT += dt;
-  if (!net.host && sendT >= 1 / 15) { sendT = 0; net.send({ t: 'in', x: +me.x.toFixed(2), y: +me.y.toFixed(2), z: +me.z.toFixed(2), yaw: +me.yaw.toFixed(3), pi: +me.pitch.toFixed(2), g: gunKey, n: SET.name }); }
+  if (!net.host && sendT >= 1 / 15) { sendT = 0; net.send({ t: 'in', x: +me.x.toFixed(2), y: +me.y.toFixed(2), z: +me.z.toFixed(2), yaw: +me.yaw.toFixed(3), pi: +me.pitch.toFixed(2), g: gunKey, n: SET.name, ...(me.drive ? { th: me.drive.th, st: me.drive.st } : {}) }); }
   if (net.host) me.gun = gunKey;
   if (net.host && stateT >= 1 / 12) { stateT = 0; net.send({ t: 's', c: +g.clock.toFixed(5), n: g.night,
     f: [g.fire.level, Math.floor(g.fire.light), Math.round(g.fire.fuel)],
@@ -450,7 +461,7 @@ function sync(dt) {
     h: g.hollow.flatMap(k => [k.id, KIND_I.indexOf(k.kind), +k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2), +k.yaw.toFixed(2)]),
     m: g.motes.slice(0, 300).flatMap(q => [+q.x.toFixed(1), +q.z.toFixed(1)]),
     nd: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.lit ? 1 : 0]),
-    em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), e: g.earth ? +g.earth.t.toFixed(1) : -1, pt: g.parts.map(q => [q.id, q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), st: g.stash, tr: g.truck, pk: g.players.map(p => [p.id, p.pack || []]), ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z]) } : {}) }); sentMarks = g.marks.length; }
+    em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), e: g.earth ? +g.earth.t.toFixed(1) : -1, pt: g.parts.map(q => [q.id, q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), st: g.stash, tr: g.truck, pk: g.players.map(p => [p.id, p.pack || []]), car: g.car ? [+g.car.x.toFixed(2), +g.car.z.toFixed(2), +g.car.yaw.toFixed(3), +g.car.v.toFixed(2), g.car.seats, g.car.store] : 0, ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z]) } : {}) }); sentMarks = g.marks.length; }
 }
 function applyState(m) {   // (a friend's copy of the world, from the host; their own position stays their own unless the host moved them)
   if (fin(m.c)) g.clock = m.c; if (Number.isInteger(m.n)) g.night = m.n; if (Array.isArray(m.f) && m.f.every(fin)) [g.fire.level, g.fire.light, g.fire.fuel] = m.f;
@@ -462,6 +473,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
   if (Array.isArray(m.nd)) g.nodes = m.nd.filter(a => Array.isArray(a) && C.NODE[a[1]]).slice(0, 400).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3], hp: a[4], lit: !!a[5] }));
   if (Array.isArray(m.mk)) g.marks = m.mk.filter(a => Array.isArray(a) && a.every(fin)).slice(-MARKS).map(a => ({ k: a[0] ? 'fall' : 'wreck', x: a[1], z: a[2] }));
   if (fin(m.e)) g.earth = m.e >= 0 ? { t: m.e } : null;
+  if (m.car === 0) g.car = null; else if (Array.isArray(m.car) && m.car.slice(0, 4).every(fin) && Array.isArray(m.car[4]) && Array.isArray(m.car[5])) { const [x, z, yaw, v, seats, store] = m.car; g.car = { x, z, yaw, v, seats: seats.filter(fin).slice(0, 4), store: store.filter(k => C.PARTS[k]).slice(0, 40) }; }
   if (Array.isArray(m.pt)) g.parts = m.pt.filter(a => Array.isArray(a) && C.PARTS[a[1]] && fin(a[0]) && fin(a[2]) && fin(a[3])).slice(0, 60).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3] }));
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of C.PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; if (m.st) g.stash = cnt(m.st); if (m.tr) g.truck = cnt(m.tr);
   if (Array.isArray(m.pk)) for (const a of m.pk) if (Array.isArray(a) && a[0] === myId && Array.isArray(a[1])) me.pack = a[1].filter(k => C.PARTS[k]).slice(0, 12);
