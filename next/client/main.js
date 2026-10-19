@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=55';
-import { Ambience } from './ambience.js?v=55';
-import { Camp, BOARD } from './camp.js?v=55';
-import { Guide } from './guide.js?v=55';
-import { buildSites } from './earthsite.js?v=55';
-import { Truck } from './truck.js?v=55';
-import { Wrist } from './wrist.js?v=55';
-import { think as friendThink } from './friend.js?v=55';
-import { FriendVoice } from './friendvoice.js?v=55';
-import { crewFrom } from '../core/habits.js?v=55';
-import { HudLook } from './hudlook.js?v=55';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=55';
-import { sound, GUNS } from '../../src/combat.js?v=55';
-import { FX } from '../../src/fx.js?v=55';
+import * as C from '../core/game.js?v=57';
+import { Ambience } from './ambience.js?v=57';
+import { Camp, BOARD } from './camp.js?v=57';
+import { Guide } from './guide.js?v=57';
+import { buildSites } from './earthsite.js?v=57';
+import { Truck } from './truck.js?v=57';
+import { Wrist } from './wrist.js?v=57';
+import { think as friendThink } from './friend.js?v=57';
+import { FriendVoice } from './friendvoice.js?v=57';
+import { crewFrom } from '../core/habits.js?v=57';
+import { HudLook } from './hudlook.js?v=57';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=57';
+import { sound, GUNS } from '../../src/combat.js?v=57';
+import { FX } from '../../src/fx.js?v=57';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 55;   // (this copy's version; ./version.json says the newest)
+const BUILD = 57;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -31,6 +31,16 @@ document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(78, innerWidth / innerHeight, 0.05, 900);
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
 scene.add(new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09));   // (barely any moonlight: the dark is dark, the light is yours)
+// the sky's logic, given to everything (his rule: the sky is the reference for pretty). Research: small bright accents read on large dark
+// fields, saturation shows in the dark (Hunt 2001), rim light separates a form from a dark background. So objects stay dark and get a thin
+// violet edge, taken from the sky's own violet, fading past 60 m; the ground gets rare mineral glints, stars underfoot.
+THREE.ShaderChunk.emissivemap_fragment += `
+#ifdef USE_RIM
+  { float rimF = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 6.0), rimD = smoothstep(60.0, 6.0, length(vViewPosition));
+    totalEmissiveRadiance += vec3(0.48, 0.30, 1.0) * rimF * rimD * 0.7; }
+#endif`;
+function rimAll() { scene.traverse(o => { if (!o.isMesh || !o.material || o.material === groundMat) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.isMeshStandardMaterial && !m.userData.rim) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '' }; m.needsUpdate = true; } }); }
+setInterval(() => { if (g) rimAll(); }, 2000);   // (new things get their edge within two seconds; a material is changed once)
 const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uEarth: { value: 0 } },
   vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `varying vec3 vD; uniform float uT; uniform float uEarth;
@@ -88,7 +98,8 @@ groundMat.onBeforeCompile = sh => {   // (light from the network lights the grou
       float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
       totalEmissiveRadiance += diffuseColor.rgb * vec3(0.7, 0.82, 1.25) * min(L, 1.4) * 0.8;
       float far = smoothstep(55.0, 140.0, length(vW.xz - cameraPosition.xz)); float vein = smoothstep(0.82, 0.97, gn(vW * 0.09 + vec3(0.0, 0.0, 0.0))) * smoothstep(0.35, 0.8, gn(vW * 0.031));
-      vec3 hue = mix(vec3(0.25, 0.9, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */`);
+      vec3 hue = mix(vec3(0.48, 0.30, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */
+      totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.9;   /* (rare mineral glints: the stars, underfoot) */`);
 };
 function buildTile(tx, tz, res = RES) {
   const geo = new THREE.PlaneGeometry(TILE, TILE, res - 1, res - 1); geo.rotateX(-Math.PI / 2);
