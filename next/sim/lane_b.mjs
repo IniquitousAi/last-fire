@@ -63,7 +63,20 @@ sec('grow', () => {
   const dusk = lvl => { const h = C.newGame(9); h.fire.level = lvl; C.addPlayer(h, 1, 'A'); h.clock = C.DUSK_AT - 0.01; for (let i = 0; i < 80; i++) C.step(h, 0.1); return h.fire.woke.slice(); };
   const w0 = dusk(0), w1 = dusk(1), w3 = dusk(3);
   check('the dark answers: level 0 wakes nothing extra, level 1 a runner, level 3 a giant', w0.length === 0 && w1.includes('runner') && w3.includes('giant'), `0:[${w0}] 1:[${w1}] 3:[${w3}]`);
-  const h = C.newGame(9); C.addPlayer(h, 1, 'A'); h.fire.level = 5; h.fire.light = 99999; check('the top level cannot be grown past', !C.canGrow(h), 'level 5 stays');
+  const h = C.newGame(9); C.addPlayer(h, 1, 'A'); h.fire.level = C.MAX_LEVEL; h.fire.light = 1e12; check('only the hostile-save wall (MAX_LEVEL) stops the fire', !C.canGrow(h), `level ${C.MAX_LEVEL} stays`);
+});
+
+// item 24, in play: the fire keeps growing past level 5 on the curve (cost, what it wakes, its circle), saves and all
+sec('infinite', () => {
+  const g = C.newGame(5), p = C.addPlayer(g, 1, 'A'); p.x = g.fire.x + 2; g.fire.light = 1e6; const lv = [], radii = []; let spent = 0;
+  for (let i = 0; i < 14; i++) { const before = g.fire.light; const ok = C.grow(g, p); spent += before - g.fire.light; lv.push(ok ? g.fire.level : -1); radii.push(C.fireRadius(g.fire)); }
+  check('the fire grows 14 levels in a row (past the old stop at 5)', lv.join() === '1,2,3,4,5,6,7,8,9,10,11,12,13,14', lv.join(','));
+  check('each level past 5 costs what the curve says (levelCost), total light matches', spent === Array.from({ length: 14 }, (_, i) => C.levelCost(i + 1)).reduce((a, b) => a + b, 0), `${spent} light for 14 levels, level 14 costs ${C.levelCost(14)}`);
+  const inc = radii.slice(1).map((r, i) => r - radii[i]); check('the circle always grows but each level adds less than the one before after level 5', inc.every(x => x > 0) && inc.slice(5).every((x, i) => x <= inc[4 + i] + 1e-9), radii.map(r => r.toFixed(1)).join(' '));
+  check('what each level wakes: more of the dark past the table, never more than 8 extra', C.wakesOf(5).length === 2 && C.wakesOf(8).length === 5 && C.wakesOf(30).length === 10, [5, 8, 12, 30].map(l => C.wakesOf(l).length).join(','));
+  const h = C.loadWorld(JSON.parse(JSON.stringify(C.saveWorld(g)))); check('a level-14 fire survives save and load; a hostile level is clamped', h.fire.level === 14 && C.loadWorld({ v: 1, seed: 3, fire: { level: 99999, light: 0, fuel: 100 } }).fire.level === C.MAX_LEVEL, `level ${h.fire.level}`);
+  let top = 0; for (const seed of [1, 2, 3]) { const r = certPlay(C.BASE_TACTIC, [{ name: 'P1', roam: 12, greed: 8, bankAt: 12, aim: 0.95, together: 1, blind: -1 }, { name: 'P2', roam: 12, greed: 8, bankAt: 12, aim: 0.95, together: 1, blind: -1 }], seed, 16); top = Math.max(top, r.g.fire.level); }
+  check('robots playing 16 nights with the growth rule reach past level 5', top >= 6, `highest level ${top}`);
 });
 
 // item 20: the learned friend plays like the recorded player (record-to-record, two very different players, 3 seeds)

@@ -158,6 +158,22 @@ const FAKE_PEER = `window.Peer = class { constructor(id) { this.id = id; this._h
     check('you are back up at the fire and the dark is gone', !post.ember && post.hollow === 0, `ember ${post.ember}, hollow ${post.hollow}`);
     await p.waitForTimeout(2500); await shot('15-night-lost-after');
   }
+  // ---- stage 'late': items 16 and 24 seen from the player's spot: night 12, and the fire grown past level 5 on the pad
+  if (!only || only === 'late') {
+    console.log('\n== late night and a fire past level 5');
+    await go(); await p.fill('#name', 'Robo'); await p.click('#solo'); await ready(); await p.waitForTimeout(1500); await p.mouse.click(500, 450); await p.waitForTimeout(300);
+    await p.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /SKIP THE GUIDE/.test(x.innerText)); if (b) b.click(); });
+    await p.evaluate(() => { const g = lastfire2.g, me = lastfire2.me; g.holdDay = false; g.night = 3; g.clock = 0.3; g.fire.level = 7; g.fire.light = 2600;   /* (night 3 so the learned friends do not grow it for us) */ me.x = g.fire.x + 2; me.z = g.fire.z + 1; }); await p.waitForTimeout(600);
+    const pr = await p.evaluate(() => document.getElementById('prompt').innerText.replace(/\s+/g, ' ')); console.log('  prompt:', pr);
+    check('at fire level 7 the prompt still offers GROW (no stop at 5)', /GROW THE FIRE to level 8/.test(pr), pr.slice(0, 80));
+    const a = await L(); await press(15); await p.waitForTimeout(600); const z = await L();
+    check('the pad use button grows it to level 8 and spends the curve price', z.level === 8 && a.light - z.light > 2500, `level ${a.level} -> ${z.level}, light ${a.light} -> ${z.light}`);
+    await shot('24-fire-level-8');
+    const hud = await p.evaluate(() => document.getElementById('fireHud').innerText.replace(/\s+/g, ' ')); check('the HUD shows FIRE 8 and the next price', /FIRE 8/.test(hud) && /light to grow it/.test(hud), hud.slice(0, 90));
+    await p.evaluate(() => { const g = lastfire2.g; g.night = 12; g.clock = 0.7; }); await p.waitForTimeout(2500); await shot('16-night-12');
+    const n = await p.evaluate(() => ({ night: lastfire2.g.night, level: lastfire2.g.fire.level, hollow: lastfire2.g.hollow.filter(k => !k.dead).length, hp: lastfire2.me.hp }));
+    check('night 12 plays: the world is at night 12, fire 8, and the screen was looked at', n.night === 12 && n.level === 8, JSON.stringify(n));
+  }
   // ---- stage 'tab': item 47 (Tab feedback with a picture)
   if (!only || only === 'tab') {
     console.log('\n== tab feedback');

@@ -1,0 +1,50 @@
+{
+ "at": "2026-10-19T17:44:08.389Z",
+ "worlds": {
+  "browser-wmvfj0qsd": {
+   "hash": "b5916450956c",
+   "nights": 5,
+   "tactic": null,
+   "why": "not fair in every run",
+   "crew": [
+    {
+     "name": "Daniel",
+     "roam": 5.8,
+     "together": 0.97,
+     "blind": 0,
+     "aim": 0.32
+    }
+   ],
+   "faithful": {
+    "ok": true,
+    "bad": []
+   },
+   "certify": {
+    "noise": 0.279,
+    "gain": -0.126,
+    "seconds": 53.4
+   },
+   "at": "2026-10-19T17:44:08.389Z"
+  }
+ },
+ "mind": {
+  "worlds": 1,
+  "nights": 5,
+  "crew": [
+   {
+    "name": "Daniel",
+    "roam": 5.8,
+    "together": 0.97,
+    "aim": 0.32,
+    "bankAt": 8.3
+   }
+  ]
+ },
+ "summary": {
+  "worlds": 1,
+  "learned": 1,
+  "skipped": 0,
+  "certified": 0,
+  "seconds": 53.4
+ }
+}

@@ -164,6 +164,8 @@ export const moveOn = (g, k) => !!g && g.fire.level >= (MOVES[k] ?? 0);
 export const movesAt = level => Object.keys(MOVES).filter(k => MOVES[k] <= level);
 export const nextMove = g => Object.keys(MOVES).filter(k => MOVES[k] > g.fire.level).sort((a, b) => MOVES[a] - MOVES[b])[0] || null;
 export const FIRE_COST = [0, 60, 180, 400, 750, 1200];   // (banked light a level costs; growing it is the players' choice)
+export const MAX_LEVEL = 40;   // (the fire keeps growing on the curve; 40 is only a wall for hostile saves)
+export function wakesOf(level) { if (level < WAKES.length) return WAKES[level]; const extra = ['runner', 'watcher', 'giant', 'shard'], out = WAKES[WAKES.length - 1].slice(); for (let i = 0; i < Math.min(8, level - (WAKES.length - 1)); i++) out.push(extra[i % extra.length]); return out; }   // (past the table each level wakes one more of the dark, up to eight more)
 export const FIRE_TAIL = { ratio: 1.3, decay: 0.95 };   // (past the table each level costs ratio x the last, and the ratio itself falls toward 1 by decay each step: the curve flattens and never stops. Tuned by sim/growth.mjs --tune)
 export function levelCost(n, tail = FIRE_TAIL) { if (n < FIRE_COST.length) return FIRE_COST[n]; let c = FIRE_COST[FIRE_COST.length - 1], r = tail.ratio; for (let i = FIRE_COST.length; i <= n; i++) { c = Math.round(c * r); r = 1 + (r - 1) * tail.decay; } return c; }   // (the table's levels today; the fire's look and what it wakes stop at the table's end until the levels past it are made)
 
@@ -189,7 +191,7 @@ export function addPlayer(g, id, name = 'Player') {
   p.y = heightAt(g.land, p.x, p.z); if (g.keep && g.keep[name] > 0) { p.carried = g.keep[name]; } g.players.push(p); return p;
 }
 export const phase = c => c < DUSK_AT ? 'day' : c < NIGHT_AT ? 'dusk' : c < DAWN_AT ? 'night' : 'dawn';
-export function fireRadius(f) { return f.fuel > 0 ? 9 + f.level * 2.5 : 3; }
+export function fireRadius(f) { return f.fuel > 0 ? 9 + Math.min(f.level, 5) * 2.5 + (f.level > 5 ? 3 * Math.log2(f.level - 4) : 0) : 3; }   // (a level adds 2.5 m up to 5, then the circle's growth flattens: it never stops, it just slows)
 // the Tide: by day the dark sits beyond the rim; over dusk it rolls in until only the light is left
 export function tideRadius(g) {   // (how far out the dark holds back: far by day, pressed to the light's edge by night)
   const rim = 120, inner = fireRadius(g.fire) + 14, c = g.clock;
@@ -301,7 +303,7 @@ export function step(g, dt) {
   if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); campTrips(g);
     { const S = g.stats, k = (S.kills || 0) - (S.killsMark || 0); S.killsMark = S.kills || 0; if (k > (S.bestKills || 0)) { S.bestKills = k; S.bestNight = g.night - 1; } } }   /* (the menu remembers your best night: his rule, it learned from you) */
   if (prev < 0.97 && g.clock >= 0.97) { g.history.push(summarize(g.rec, g.night)); if (g.history.length > 30) g.history.shift(); g.rec = newRecord(); g.log.push([+g.t.toFixed(2), 'learned-night', g.night]); }   // (at the ebb, the night is written down)
-  if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
+  if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = wakesOf(g.fire.level); g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
   if ((ph === 'night' || ph === 'dusk') && Math.floor(g.t) !== Math.floor(g.t - dt)) sample(g.rec, g, g.fire.x, g.fire.z);
   if (Math.floor(g.t) !== Math.floor(g.t - dt)) { g.seenToday = g.seenToday || []; for (const p of g.players) if (p.name && !p.bot && !g.seenToday.includes(p.name)) g.seenToday.push(p.name); }
@@ -339,7 +341,7 @@ export function saveWorld(g) {
 export function loadWorld(d) {
   const ok = v => typeof v === 'number' && Number.isFinite(v); if (!d || d.v !== 1 || !ok(d.seed)) return null;
   const g = newGame(d.seed, d.tactic || BASE_TACTIC); g.t = ok(d.t) ? d.t : 0; g.clock = ok(d.clock) ? d.clock : 0.3; g.night = Number.isInteger(d.night) ? d.night : 1; g.nextId = Number.isInteger(d.nextId) ? d.nextId : 1;
-  if (d.fire) { g.fire.level = Math.max(0, Math.min(FIRE_COST.length - 1, d.fire.level | 0)); g.fire.light = ok(d.fire.light) ? d.fire.light : 0; g.fire.fuel = ok(d.fire.fuel) ? d.fire.fuel : 180; }
+  if (d.fire) { g.fire.level = Math.max(0, Math.min(MAX_LEVEL, d.fire.level | 0)); g.fire.light = ok(d.fire.light) ? d.fire.light : 0; g.fire.fuel = ok(d.fire.fuel) ? d.fire.fuel : 180; }
   for (const n of d.nodes || []) if (Array.isArray(n) && NODE[n[1]] && [n[0], n[2], n[3], n[4]].every(ok)) g.nodes.push({ id: n[0], kind: n[1], x: n[2], z: n[3], hp: n[4], lit: false, who: typeof n[5] === 'string' ? n[5].slice(0, 12) : '', n: Number.isInteger(n[6]) ? n[6] : 0, ...(typeof n[7] === 'string' && n[7] ? { honor: n[7].slice(0, 24) } : {}) });
   for (const m of d.motes || []) if (Array.isArray(m) && m.every(ok)) g.motes.push({ id: g.nextId++, x: m[0], z: m[1], v: m[2], t: 1e9 });   // (light left lying out there stays until someone takes it)
   const cnt = o => { const r = {}; if (o && typeof o === 'object') for (const k of PART_ORDER) if (Number.isInteger(o[k]) && o[k] >= 0 && o[k] <= 99) r[k] = o[k]; return r; }; g.stash = cnt(d.stash); g.truck = cnt(d.truck);
@@ -361,8 +363,8 @@ function revive(g, e) {
   g.embers = g.embers.filter(q => q !== e); g.log.push([+g.t.toFixed(2), 'revive', e.of, e.held]);
 }
 // growing the fire is a choice: a player standing at it spends banked light, and tonight the dark answers with what that level wakes
-export function canGrow(g) { const f = g.fire; return f.level < FIRE_COST.length - 1 && f.light >= FIRE_COST[f.level + 1]; }
-export function grow(g, p) { const f = g.fire; if (!canGrow(g) || !p || p.ember || Math.hypot(p.x - f.x, p.z - f.z) > fireRadius(f)) return false; f.light -= FIRE_COST[f.level + 1]; f.level++; g.log.push([+g.t.toFixed(2), 'level', f.level, p.id]); return true; }
+export function canGrow(g) { const f = g.fire; return f.level < MAX_LEVEL && f.light >= levelCost(f.level + 1); }
+export function grow(g, p) { const f = g.fire; if (!canGrow(g) || !p || p.ember || Math.hypot(p.x - f.x, p.z - f.z) > fireRadius(f)) return false; f.light -= levelCost(f.level + 1); f.level++; g.log.push([+g.t.toFixed(2), 'level', f.level, p.id]); return true; }
 export function shotBy(g, p, hit) { if (p) noteShot(g.rec, p, hit); }   // (for the record: how well each player hits)
 // people go out, and some do not come back (INNOVATION.md, camp): at each dawn one of the camp (never the Clerk: the desk needs her) goes out
 // for a day; the next dawn they come back on the camp's true odds, from the last three nights' falls. A loss is permanent and saved.
@@ -406,7 +408,7 @@ export function hurt(g, p, n, from) {
     (g.traces = g.traces || []).push({ of: p.id, pts: (p.trail || []).slice(), x: p.x, z: p.z, cause: from || 'the dark', fx: killer ? killer.x : p.x, fz: killer ? killer.z : p.z, t: 120 }); if (g.traces.length > 6) g.traces.shift(); p.trail = [];
     p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0, cause: from || 'the dark' }); mark(g, 'fall', p.x, p.z, p.name); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
     if (g.players.every(q => q.ember)) { g.stats.lostNights = (g.stats.lostNights || 0) + 1;   // (everyone down: the dark took what it came for. The night is lost, what you carried lies where you fell, and it draws back to dawn; the fire keeps every level)
-      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; if (g.earth) endTrip(g); if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97;   /* (a trip that ends in everyone falling is still recorded and cleared) */ g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
+      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; if (g.earth) endTrip(g); if (g.clock > 0.5 && g.clock < 0.97) { g.history.push(summarize(g.rec, g.night)); if (g.history.length > 30) g.history.shift(); g.rec = newRecord(); g.clock = 0.97; }   /* (a lost night is written down too: it is the night the dark learns the most from) */   /* (a trip that ends in everyone falling is still recorded and cleared) */ g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
   }
 }
 

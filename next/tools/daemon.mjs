@@ -8,14 +8,14 @@
 //   in one world is there for the next world's learner, free.
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { fileURLToPath } from 'node:url';
 import { learn } from '../sim/certify.mjs';
-import { crewFrom } from '../core/habits.js';
+import { crewFrom, CAL, AIM_TABLE } from '../core/habits.js';
 import { BASE_TACTIC, loadWorld } from '../core/game.js';
 const here = path.dirname(fileURLToPath(import.meta.url)), next = path.join(here, '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : d; };
 
 export function readWorlds(dir) {   // (every *.json that loads as a saved world and has recorded nights)
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort().map(f => { try { const raw = fs.readFileSync(path.join(dir, f), 'utf8'), d = JSON.parse(raw), w = loadWorld(d); return w ? { id: f.replace(/\.json$/, ''), hash: crypto.createHash('sha1').update(JSON.stringify(w.history)).digest('hex').slice(0, 12), history: w.history, tactic: w.tactic, nights: w.history.length } : null; } catch (e) { return null; } }).filter(Boolean);
+  return fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort().map(f => { try { const raw = fs.readFileSync(path.join(dir, f), 'utf8'), d = JSON.parse(raw), w = loadWorld(d); return w ? { id: f.replace(/\.json$/, ''), hash: crypto.createHash('sha1').update(JSON.stringify([w.history, CAL, AIM_TABLE])).digest('hex').slice(0, 12), history: w.history, tactic: w.tactic, nights: w.history.length } : null; } catch (e) { return null; } }).filter(Boolean);
 }
 export function runOnce({ dir = path.join(next, 'daemon', 'worlds'), out = path.join(next, 'daemon', 'learned.json'), gens = 6, pop = 12 } = {}) {
   let prev = {}; try { prev = JSON.parse(fs.readFileSync(out, 'utf8')); } catch (e) {}

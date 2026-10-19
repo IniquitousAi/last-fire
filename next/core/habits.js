@@ -32,12 +32,16 @@ export function summarize(rec, night) {
 // the crew as robots: each player's habits averaged over their recorded nights (newer nights count double)
 // the record is what came out of play; a robot's dials are what goes in. CAL turns one into the other (fitted by sim/faithful.mjs --fit so a
 // learned friend's own record lands on the source's: the round trip that makes 'you cannot tell it is not him' true)
-export const CAL = { roam: 1.8, aim: 1.45, pull: 0.45, load: 2.0 };   // (best of 100 by sim/faithful.mjs --fit: mean round-trip error 13% over roam, together, aim and carried load)
+export const CAL = { roamSolo: 1.0, roam: 1.8, aim: 1.45, pull: 0.45, load: 2.0 };   // (best of 100 by sim/faithful.mjs --fit: mean round-trip error 13% over roam, together, aim and carried load)
+// recorded hit share saturates (a robot with 0.9 aim still records about 0.55, since far shots miss): measured by playing robots at known aims
+// (3 seeds x 3 nights, two players), so the inverse is a table, not one multiplier. Between rows it is a straight line.
+export const AIM_TABLE = [[0.0, 0.0], [0.231, 0.3], [0.345, 0.45], [0.447, 0.6], [0.522, 0.75], [0.549, 0.9], [0.609, 0.95]];
+export function aimFrom(rec) { const T = AIM_TABLE; if (rec <= T[0][0]) return 0.2; for (let i = 1; i < T.length; i++) if (rec <= T[i][0]) { const [r0, a0] = T[i - 1], [r1, a1] = T[i]; return Math.max(0.2, a0 + (a1 - a0) * (rec - r0) / (r1 - r0)); } return 0.95; }
 export function crewFrom(history) {
   const acc = {};
   history.forEach((h, i) => { const w = i >= history.length - 3 ? 2 : 1; for (const [name, p] of Object.entries(h.players || {})) { const a = acc[name] ||= { w: 0, roam: 0, farShare: 0, together: 0, bankAt: 0, aim: 0, load: 0, loadN: 0, blind: new Array(SECTORS).fill(0) };
     a.w += w; a.roam += p.roam * w; a.farShare += p.farShare * w; a.together += p.together * w; a.bankAt += p.bankAt * w; a.load += (p.load || 0) * w; a.loadN += p.loadN || 0; a.aim += p.aim * w; a.blind[p.blind] += w; } });
-  return Object.entries(acc).map(([name, a]) => ({ name, roam: a.roam / a.w * CAL.roam, greed: Math.max(5, a.roam / a.w * (0.6 + a.farShare / a.w)), bankAt: a.loadN >= 20 ? Math.max(3, a.load / a.w * CAL.load) : a.bankAt / a.w,   /* (the load habit only once it is measured: 20 samples out past the circle) */ load: a.load / a.w, aim: Math.max(0.2, Math.min(0.95, a.aim / a.w * CAL.aim)), together: a.together / a.w, blind: a.blind.indexOf(Math.max(...a.blind)) }));
+  return Object.entries(acc).map(([name, a]) => ({ name, roam: a.roam / a.w * (Object.keys(acc).length === 1 ? CAL.roamSolo : CAL.roam), greed: Math.max(5, a.roam / a.w * (0.6 + a.farShare / a.w)), bankAt: a.loadN >= 20 ? Math.max(3, a.load / a.w * CAL.load) : a.bankAt / a.w,   /* (the load habit only once it is measured: 20 samples out past the circle) */ load: a.load / a.w, aim: aimFrom(a.aim / a.w), together: a.together / a.w, blind: a.blind.indexOf(Math.max(...a.blind)) }));
 }
 
 // too comfortable: the last two nights were calm (under the tense band) and nobody fell. Only then does the dark go learn.

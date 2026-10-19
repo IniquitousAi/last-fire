@@ -20,9 +20,10 @@ PASS  both are back up (revived at the fire), dark cleared  (revived)
 PASS  the world keeps running after the lost night  (night 2)
 
 == perfect
-32 seeds x 12 nights: 7 falls in 6 of 383 nights; fall-free seeds 26 of 32 (falls on seeds 5,7,18,19,27,31)
-PASS  perfect crew: at least 24 of 32 seeds fall-free over 12 nights, and 97% of nights  (26/32 seeds, 98.4% of nights clean)
-GAP   STRICT: zero falls on every seed (known gap if FAIL, not counted in the exit code)  (7 falls)
+32 seeds x 12 nights: 0 falls in 0 of 384 nights; fall-free seeds 32 of 32 (falls on seeds none)
+PASS  perfect crew: at least 24 of 32 seeds fall-free over 12 nights, and 97% of nights  (32/32 seeds, 100.0% of nights clean)
+PASS  STRICT: a perfect crew holds 12 of 12 nights on all 32 seeds (zero falls)  (0 falls)
+PASS  holdout seeds 101 to 132 (never tuned on): at most 3 falls  (0 falls)
 
 == grow
 PASS  no light banked: cannot grow  (light 0)
@@ -30,14 +31,22 @@ PASS  too far from the fire: cannot grow  (far)
 PASS  standing at it with the light: grows, spends the light  (light 70 -> 10)
 PASS  the circle gets bigger  (9 m -> 11.5 m)
 PASS  the dark answers: level 0 wakes nothing extra, level 1 a runner, level 3 a giant  (0:[] 1:[runner] 3:[giant])
-PASS  the top level cannot be grown past  (level 5 stays)
+PASS  only the hostile-save wall (MAX_LEVEL) stops the fire  (level 40 stays)
+
+== infinite
+PASS  the fire grows 14 levels in a row (past the old stop at 5)  (1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+PASS  each level past 5 costs what the curve says (levelCost), total light matches  (42740 light for 14 levels, level 14 costs 8693)
+PASS  the circle always grows but each level adds less than the one before after level 5  (11.5 14.0 16.5 19.0 21.5 24.5 26.3 27.5 28.5 29.3 29.9 30.5 31.0 31.5)
+PASS  what each level wakes: more of the dark past the table, never more than 8 extra  (2,5,9,10)
+PASS  a level-14 fire survives save and load; a hostile level is clamped  (level 14)
+PASS  robots playing 16 nights with the growth rule reach past level 5  (highest level 6)
 
 == friend
-11: roam 7.6/18.9 -> 7.6/17.6  aim 0.72/0.50 -> 0.72/0.44
-22: roam 9.8/23.3 -> 8.1/20.4  aim 0.72/0.45 -> 0.73/0.37
-33: roam 7.4/18.1 -> 6.7/16.7  aim 0.71/0.48 -> 0.74/0.46
+11: roam 7.6/18.9 -> 7.6/19.1  aim 0.70/0.45 -> 0.69/0.36
+22: roam 9.8/23.3 -> 9.7/17.5  aim 0.70/0.40 -> 0.74/0.32
+33: roam 7.4/18.1 -> 6.8/18.1  aim 0.69/0.43 -> 0.63/0.34
 PASS  the friend keeps the two players apart (bold roams wider, careful aims better) in every seed  (ordering kept)
-PASS  roam within 35% of the recorded player, aim within 0.15  (worst roam off 17%, worst aim off 0.08)
+PASS  roam within 35% of the recorded player, aim within 0.15  (worst roam off 25%, worst aim off 0.09)
 
 == moves
 PASS  jump, sprint and crouch are there from the start (level 0)  (jump,sprint,crouch)

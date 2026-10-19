@@ -130,7 +130,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
 scene.add(sky);
 
 // ---------------------------------------------------------------- the game (rules) and you
-const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); };   // (what you hear and what you see agree: each crackle makes the flame jump)
+const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); }; if (/[?&](test|shot)(&|$)/.test(location.search)) window.__amb = amb;   // (what you hear and what you see agree: each crackle makes the flame jump)
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
 clickPlay.innerHTML = '<div style="font-size:12px;letter-spacing:.22em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:12px;letter-spacing:.06em;color:#a3a6bb;margin-top:1px">click to link your aim</div>';   /* (the reticle itself dims on standby: his note, 2026-10-19, a second ring here made a double crosshair) */
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, 22px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
@@ -246,8 +246,8 @@ scene.add(linkLines);
 function drawNetwork(t) {
   const f = g.fire;
   if (!fireObj) { fireObj = new FireCore(scene); fireObj.place(f.x, g.land(f.x, f.z), f.z); }   // (the Last Fire: a plasma core, client/firecore.js)
-  const lit = f.fuel > 0, pulse = fireObj.update(t, 1 / 60, f.level, Math.min(1, f.fuel / 300), Math.hypot(camera.position.x - f.x, camera.position.z - f.z));
-  fireLight.position.set(f.x, g.land(f.x, f.z) + 1.8 + f.level * 0.5, f.z); fireLight.color.setHex(0xd7a0ff); fireLight.intensity = lit ? 26 * (0.9 + Math.sin(t * 11) * 0.03 + Math.sin(t * 4.3) * 0.03 + pulse * 0.25) : 2; fireLight.distance = C.fireRadius(f) * 2.2;   // (the light breathes with the flame and jumps with each crackle)
+  const lit = f.fuel > 0, pulse = fireObj.update(t, 1 / 60, Math.min(f.level, 5) + Math.log2(1 + Math.max(0, f.level - 5)), Math.min(1, f.fuel / 300), Math.hypot(camera.position.x - f.x, camera.position.z - f.z));
+  fireLight.position.set(f.x, g.land(f.x, f.z) + 1.8 + Math.min(f.level, 8) * 0.5, f.z); fireLight.color.setHex(0xd7a0ff); fireLight.intensity = lit ? 26 * (0.9 + Math.sin(t * 11) * 0.03 + Math.sin(t * 4.3) * 0.03 + pulse * 0.25) : 2; fireLight.distance = C.fireRadius(f) * 2.2;   // (the light breathes with the flame and jumps with each crackle)
   const live = new Set(), pts = [];
   for (const n of g.nodes) {
     live.add(n.id); let o = nodeObjs.get(n.id);
@@ -578,13 +578,13 @@ function move(dt) {
 const was = {}; const txt = (id, v, html = false) => { if (was[id] !== v) { was[id] = v; html ? $(id).innerHTML = v : $(id).textContent = v; } };
 const PHASE = { day: ['THE LULL', 'the dark holds back'], dusk: ['IT STIRS', 'the dark is rolling in'], night: ['THE SURGE', 'hold the light'], dawn: ['IT EBBS', 'the dark draws back'] };
 function hud() {
-  const f = g.fire, next = C.FIRE_COST[f.level + 1];
+  const f = g.fire, next = C.levelCost(f.level + 1);
   txt('fireHud', `<b>FIRE ${f.level}</b><small>${next ? `${Math.min(next, Math.floor(f.light))} of ${next} light to grow it` : 'as big as it gets'}  ·  fuel ${Math.ceil(f.fuel)} s</small>`, true);
   const [a, b] = PHASE[C.phase(g.clock)]; if (C.onEarth(me) && g.earth) { const t = Math.max(0, Math.ceil(g.earth.t)); txt('phase', `<b>EARTH</b><small>the lander leaves in ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</small>`, true); } else txt('phase', `<b>${a}</b><small>${b}  ·  night ${g.night}</small>`, true);
   { const kg = C.loadOf(me); txt('light', `<b>${Math.floor(me.carried)}</b><span>LIGHT CARRIED (bring it to the fire, or build with it)</span>${kg ? `<span style="display:block;color:#b9a8ff">PACK ${kg} kg: ${(me.pack || []).join(', ')} (${Math.round(C.speedOf(me) * 100)}% speed; drop it at the truck bay)</span>` : ''}`, true); }
   $('hpBar').style.width = Math.max(0, me.hp) + '%'; $('hpBar').style.opacity = (0.35 + 0.65 * Math.max(0, me.hp) / 100).toFixed(2);
   const am = ammo[gunKey]; if (mounted()) txt('ammo', `<b>${Math.round(heat * 100)}%</b><span>heat</span><small>${overheat ? 'TOO HOT, COOLING' : 'MOUNTED GUN, endless rounds'}</small>`, true); else txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
-  const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
+  const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.wakesOf(f.level + 1);
   txt('prompt', !me.ember && C.inRift(me) ? riftLine() : !me.ember && C.onEarth(me) && Math.hypot(me.x - C.RIFT.x, me.z - C.RIFT.z) < 32 && me.z < C.RIFT.z ? 'THE RIFT  ·  nobody who walked in has come back' : ship && ship.near(me, g) && !me.ember ? 'F  ·  BOARD THE SHIP' : me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.near ? 'F  ·  CHECK THE REAL ODDS (free)' : camp && camp.jobNear() ? camp.jobLine() : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? (padOn ? 'RT to place, LT to put it away' : 'Left click to place, right click to cancel') : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
   { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : atStore() ? [STORE.x, g.land(STORE.x, STORE.z) + 2.6, STORE.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
     let tx = innerWidth / 2, ty = innerHeight * 0.6;   // (the tag hangs over the thing it belongs to; off screen, it waits low in the middle)
@@ -644,7 +644,7 @@ function frame(now) {
   { const ph = C.phase(g.clock), nt = ph === 'night' ? 1 : ph === 'dusk' || ph === 'dawn' ? 0.5 : 0, onE = C.onEarth(me);   // (far sounds: each from a real shape, wreck or part out there)
     const causes = [...g.hollow.filter(k => !k.dead && !!k.earth === onE).map(k => ({ x: k.x, z: k.z, dark: true })), ...(onE ? [...((g.earth && g.earth.wrecks) || []), ...(g.parts || [])].map(w => ({ x: w.x, z: w.z })) : [])];
     const e = !me.ember && farStep(frame.far = frame.far || {}, dt, me, nt, causes); if (e) { amb.far(e.voice, e.x, g.land(e.x, e.z) + 1, e.z, frame.muf || 0); if (TEST) (window.__far = window.__far || []).push(e.voice); } }
-  amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z, level: g.fire.level }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
+  amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z, level: g.fire.level }, C.lightAt(g, me.x, me.z, true), g.fire.fuel > 0); embers(dt); farLights(dt);
   if (immersion) immersion.update(dt, now / 1000);
   hud();
   composer.render();   // (the world through bloom: only the brightest light bleeds, the fire, lamps, tracers; the HUD is never touched)

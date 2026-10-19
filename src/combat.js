@@ -75,6 +75,7 @@ function tone(d, f0, f1, dur, gain, type = 'sine', at = 0) {
   g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(d.node); if (d.send) g.connect(d.send); o.start(t); o.stop(t + dur + 0.02);
 }
 export const sound = {
+  heard,   // (the memory of which variant each sound last played; a test sets heard.__log = [] to read the picks)
   muffle(k) { if (!dark) return; dark.frequency.setTargetAtTime(20000 * Math.pow(800 / 20000, Math.max(0, Math.min(1, k))), ac.currentTime, 0.25); },
   setVolume(v) { volume = v; if (out) out.gain.value = v; },
   wake() { ctx(); },

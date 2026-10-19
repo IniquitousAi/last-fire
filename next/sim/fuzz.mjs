@@ -8,7 +8,7 @@ const RULES = {
   'health stays between -0 and 100': g => g.players.every(p => p.hp <= 100.0001 && Number.isFinite(p.hp)),
   'light carried is never negative': g => g.players.every(p => p.carried >= -1e-9),
   'the fire fuel stays between 0 and 600': g => g.fire.fuel >= 0 && g.fire.fuel <= 600.0001,
-  'the fire level stays on its ladder': g => g.fire.level >= 0 && g.fire.level < G.FIRE_COST.length,
+  'the fire level stays on its ladder': g => g.fire.level >= 0 && g.fire.level <= G.MAX_LEVEL,
   'banked light is never negative': g => g.fire.light >= -1e-9,
   'the clock stays in [0, 1)': g => g.clock >= 0 && g.clock < 1.0001,
   'light at any place is between 0 and 1': (g, r) => { for (const p of g.players) { const L = G.lightAt(g, p.x + r() * 4, p.z + r() * 4); if (!(L >= 0 && L <= 1.0001)) return false; } return true; },
