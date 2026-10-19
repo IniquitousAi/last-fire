@@ -1,19 +1,20 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=24';
-import { Ambience } from './ambience.js?v=24';
-import { Camp, BOARD } from './camp.js?v=24';
-import { Guide } from './guide.js?v=24';
-import { HudLook } from './hudlook.js?v=24';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=24';
-import { sound, GUNS } from '../../src/combat.js?v=24';
-import { FX } from '../../src/fx.js?v=24';
+import * as C from '../core/game.js?v=25';
+import { Ambience } from './ambience.js?v=25';
+import { Camp, BOARD } from './camp.js?v=25';
+import { Guide } from './guide.js?v=25';
+import { buildSites } from './earthsite.js?v=25';
+import { HudLook } from './hudlook.js?v=25';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=25';
+import { sound, GUNS } from '../../src/combat.js?v=25';
+import { FX } from '../../src/fx.js?v=25';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 24;   // (this copy's version; ./version.json says the newest)
+const BUILD = 25;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -25,9 +26,9 @@ document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(78, innerWidth / innerHeight, 0.05, 900);
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
 scene.add(new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09));   // (barely any moonlight: the dark is dark, the light is yours)
-const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 } },
+const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uEarth: { value: 0 } },
   vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `varying vec3 vD; uniform float uT;
+  fragmentShader: `varying vec3 vD; uniform float uT; uniform float uEarth;
     float h(vec3 p){ p = fract(p * 0.3183 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float n(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y), mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
     float fbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * n(p); p *= 2.03; a *= 0.5; } return s; }
@@ -40,6 +41,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
       // Earth, seen from the Moon: blue where it is still itself, black where the dark has taken it, thin violet where the two meet (PLAN-SPACE.md)
       vec3 E = normalize(vec3(0.6, 0.22, -0.78)); float R = 0.13, a = acos(clamp(dot(d, E), -1.0, 1.0));
       vec3 t1 = normalize(cross(E, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, E); vec2 q = vec2(dot(d, t1), dot(d, t2)) / sin(R); float r2 = dot(q, q);
+      if (uEarth > 0.5) { float m = acos(clamp(dot(d, E), -1.0, 1.0)); if (m < 0.05) { vec2 mq = vec2(dot(d, t1), dot(d, t2)) / sin(0.05); vec3 MN = normalize(mq.x * t1 + mq.y * t2 - sqrt(max(0.0, 1.0 - dot(mq, mq))) * E); col = vec3(0.55, 0.58, 0.66) * (0.25 + 0.75 * max(dot(MN, normalize(t1 * 0.85 + t2 * 0.25 - E * 0.35)), 0.0)) * (0.7 + 0.3 * fbm(MN * 6.0)); } r2 = 2.0; R = 0.05; }   /* (from Earth: the Moon, small and gray, where home is) */
       if (r2 < 1.0) {
         vec3 N = normalize(q.x * t1 + q.y * t2 - sqrt(1.0 - r2) * E); float sp = uT * 0.008, cs = cos(sp), sn = sin(sp); vec3 P = vec3(N.x * cs - N.z * sn, N.y, N.x * sn + N.z * cs);
         vec3 L = normalize(t1 * 0.85 + t2 * 0.25 - E * 0.35); float lit = max(dot(N, L), 0.0);
@@ -59,7 +61,7 @@ const amb = new Ambience(() => SET.vol);
 const clickPlay = Object.assign(document.createElement('div'), { textContent: 'CLICK THE GAME TO PLAY  (your mouse is yours until you do)' }); clickPlay.hidden = true;
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '42%', transform: 'translateX(-50%)', padding: '10px 18px', font: '500 20px "Barlow Condensed", sans-serif', letterSpacing: '.12em', color: '#39e6ff', background: '#05060bcc', borderRadius: '8px', pointerEvents: 'none', zIndex: 3 });
 document.body.append(clickPlay);
-let camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
+let sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
 const keys = {}, mouse = [false, false, false];
 const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once: the fire, your glow, the nearest nodes)
@@ -197,7 +199,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
 addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
-  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') tryGrow(); });
+  if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
@@ -239,7 +241,10 @@ function showHit(r, head) { $('hit').className = r.kill ? 'kill' : r.shell ? 'sh
 function tryGrow() {   // (growing the fire: your choice, and tonight the dark answers with what the new level wakes)
   if (!C.canGrow(g)) return; if (Math.hypot(me.x - g.fire.x, me.z - g.fire.z) > C.fireRadius(g.fire)) return say('Stand at the fire to grow it.');
   if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }
-$('prompt').addEventListener('click', () => tryGrow()); $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
+function trip(k) { sound.buy(); if (isHost()) { if (k === 'drop') C.drop(g, me); else C.rise(g, me); } else net.send({ t: 'build', k, x: 0, z: 0 }); }
+const atPad = () => !C.onEarth(me) && Math.hypot(me.x - C.PAD.x, me.z - C.PAD.z) < 4, atSite = () => C.onEarth(me) && Math.hypot(me.x - C.EARTH.x, me.z - C.EARTH.z) < 4;
+function act() { if (me.ember) return; if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
+$('prompt').addEventListener('click', () => act()); $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
 function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
 const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x39e6ff, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
@@ -275,12 +280,12 @@ const PHASE = { day: ['THE LULL', 'the dark holds back'], dusk: ['IT STIRS', 'th
 function hud() {
   const f = g.fire, next = C.FIRE_COST[f.level + 1];
   txt('fireHud', `<b>FIRE ${f.level}</b><small>${next ? `${Math.floor(f.light)} of ${next} light to grow it` : 'as big as it gets'}  ·  fuel ${Math.ceil(f.fuel)} s</small>`, true);
-  const [a, b] = PHASE[C.phase(g.clock)]; txt('phase', `<b>${a}</b><small>${b}  ·  night ${g.night}</small>`, true);
+  const [a, b] = PHASE[C.phase(g.clock)]; if (C.onEarth(me) && g.earth) { const t = Math.max(0, Math.ceil(g.earth.t)); txt('phase', `<b>EARTH</b><small>the lander leaves in ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</small>`, true); } else txt('phase', `<b>${a}</b><small>${b}  ·  night ${g.night}</small>`, true);
   txt('light', `<b>${Math.floor(me.carried)}</b><span>LIGHT CARRIED (bring it to the fire, or build with it)</span>`, true);
   $('hpBar').style.width = Math.max(0, me.hp) + '%';
   const am = ammo[gunKey]; txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
-  txt('prompt', me.ember ? 'You fell. A friend can carry your Ember to the fire.' : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F (or click here): GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
+  txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : atPad() ? `F (or click here): DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (the lander waits 150 s down there)'}` : atSite() ? 'F (or click here): RIDE UP (bring what you carry home)' : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F (or click here): GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '');
   if ((msgT -= 1 / 60) <= 0) txt('msg', '');
   if (was.carry !== Math.floor(me.carried / 5)) { was.carry = Math.floor(me.carried / 5); drawBuild(); }
 }
@@ -298,7 +303,7 @@ function frame(now) {
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) C.step(g, dt); else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
-  drawHollow(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000;
+  drawHollow(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
@@ -411,7 +416,7 @@ function onNet(m, from) {
       const L = Math.hypot(m.d[0], m.d[1], m.d[2]); if (L < 0.5) return; const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], m.d[0] / L, m.d[1] / L, m.d[2] / L, 80);
       if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } return;
     }
-    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else build(p, m.k, m.x, m.z); return; }
+    if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else build(p, m.k, m.x, m.z); return; }
     if (m.t === 'bang') { if (!GUNS[m.g] || ![m.x, m.y, m.z].every(fin) || Math.hypot(m.x - p.x, m.z - p.z) > 4 || !bucket(p, 'bangs', 14, 20)) return; heardShot(m); net.relay(m, from); return; }
     return;
   }
@@ -481,6 +486,7 @@ async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
   if (!camp) camp = new Camp(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, name: () => SET.name, camera: () => camera });
+  if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); }
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); } });
   setTimeout(() => guide.start(), 1200);

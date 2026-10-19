@@ -141,3 +141,9 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - His idea: the Moon is the safe base; Earth is consumed by darkness and dangerous; many scary enemy types; never zombies or anything overused; nobody is sure if they are demons, aliens or just the dark, "in the form of something that we think is our imagination". Simulate the simulatable, judge taste after. Free assets only.
 - Theme picked: **One thing, many masks** (recommended): the dark is one mind wearing the shapes our brains are built to see (shadow figures, faces in patterns), and it learns new ones from you; the codex labels every guess.
 - The plan: PLAN-SPACE.md.
+
+## Two ways to play (2026-10-19 about 03:00, his words summarized)
+- Two major play styles, balanced: **all-out violence** (hordes and hordes; Serious Sam with modern military gear; take out anger on dark, demon, mysterious-looking things; build your action and "I don't give a fuck" skills) and **building literally anything** (in depth, fun, put together logically; his example: a truck on Earth from parts you go find).
+- The real balance is collaboration: one fights, one builds; the finished truck takes the whole crew anywhere and has its own storage.
+- Basic feel-good: storage balanced by weight; the more you carry, the slower you are.
+- How it lands in the plan: Earth trips are where the hordes are (the violence) and where the parts are found (the building); the Moon camp is where things get assembled.

@@ -19,13 +19,19 @@ function valueNoise(r) {
   return (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), u = s(x - xi), v = s(y - yi);
     return at(xi, yi) * (1 - u) * (1 - v) + at(xi + 1, yi) * u * (1 - v) + at(xi, yi + 1) * (1 - u) * v + at(xi + 1, yi + 1) * u * v; };
 }
+// ---------------------------------------------------------------- the drop: the camp is on the Moon; Earth is a trip down, short and dangerous (PLAN-SPACE.md)
+export const PAD = { x: 11, z: -13 };   // (the lander's pad inside the camp wall)
+export const EARTH = { x: 0, z: 6000, stay: 150, light: 9, reach: 16, cells: 10 };   // (the landing site: the lander waits 150 s, its lamp holds 9 m)
+export const onEarth = p => p.z > 3000;
 export function makeLand(seed) {
   const r = stream(seed, 'land'), n1 = valueNoise(r), n2 = valueNoise(r), n3 = valueNoise(r), n4 = valueNoise(r);
   return (x, z) => {   // (rolling ground, long ridges, and the far land growing stranger the farther from the first fire)
     const d = Math.hypot(x, z), far = Math.min(1, d / 1500), k = Math.min(1, Math.max(0, (d - 18) / 30)), home = 1 - k * k * (3 - 2 * k);
     const h = n1(x / 90, z / 90) * 22 + n2(x / 28, z / 28) * 5 + n3(x / 9, z / 9) * 0.8, ridge = Math.abs(n4(x / 160, z / 160) - 0.5) * 2;
     const yard = n1(0, 0) * 22 + n2(0, 0) * 5 + n3(x / 9, z / 9) * 0.2;   /* (the camp's yard: level, at the height the hills around it already have, so no bowl) */
-    return (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + yard * home;
+    const e = Math.hypot(x - EARTH.x, z - EARTH.z), ke = Math.min(1, Math.max(0, (e - 40) / 50)), site = 1 - ke * ke * (3 - 2 * ke);   /* (Earth's landing site: a flat dead city floor, rough hills past it) */
+    const wild = (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + yard * home;
+    return site > 0 ? wild * (1 - site) + (n1(EARTH.x / 90, EARTH.z / 90) * 22 + n3(x / 4, z / 4) * 0.35) * site : wild;
   };
 }
 export function heightAt(land, x, z) { return land(x, z); }
@@ -73,7 +79,7 @@ export function tideRadius(g) {   // (how far out the dark holds back: far by da
 export function glowOf(g, p) { if (p.ember) return 0; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 6) near++; return 3 + near * 2 + Math.min(4, p.carried * 0.08); }
 export const NODE = { relay: { r: 7, reach: 22, hp: 120, cost: 15 }, lamp: { r: 11, reach: 0, hp: 80, cost: 25 } };   // (a relay carries light on; a lamp only shines)
 export function linkNetwork(g) {   // (which nodes are lit: walk outward from the fire through relays in reach of each other)
-  const f = g.fire, lit = new Set(), open = [{ x: f.x, z: f.z, reach: 24 }];
+  const f = g.fire, lit = new Set(), open = [{ x: f.x, z: f.z, reach: 24 }, ...(g.earth ? [{ x: EARTH.x, z: EARTH.z, reach: EARTH.reach }] : [])];
   for (const n of g.nodes) n.lit = false;
   while (open.length) { const a = open.pop(); for (const n of g.nodes) if (!n.lit && n.hp > 0 && Math.hypot(n.x - a.x, n.z - a.z) <= a.reach) { n.lit = true; if (NODE[n.kind].reach) open.push({ x: n.x, z: n.z, reach: NODE[n.kind].reach }); } }
 }
@@ -82,8 +88,9 @@ export function placeNode(g, kind, x, z, by) {
 }
 export function lightAt(g, x, z) {   // (0 in the dark, 1 at the heart of a light)
   let L = 0; const f = g.fire, rf = fireRadius(f), df = Math.hypot(f.x - x, f.z - z); if (df < rf) L = 1 - df / rf;
-  for (const n of g.nodes) if (n.lit && f.fuel > 0) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r) L = Math.max(L, 1 - d / r); }
+  for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r) L = Math.max(L, 1 - d / r); }
   for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8); }
+  if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light) L = Math.max(L, 1 - d / EARTH.light); }
   return L;
 }
 
@@ -121,14 +128,14 @@ export function step(g, dt) {
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
   if ((ph === 'night' || ph === 'dusk') && Math.floor(g.t) !== Math.floor(g.t - dt)) sample(g.rec, g, g.fire.x, g.fire.z);
-  spawn(g, dt, ph); moveHollow(g, dt, ph);
+  spawn(g, dt, ph); spawnEarth(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; } }
   g.motes = g.motes.filter(m => m.t > 0);
   for (const p of g.players) {
     if (!p.ember && p.carried > 0 && Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f)) { f.light += p.carried; f.fuel = Math.min(600, f.fuel + p.carried * 1.5); g.stats.banked += p.carried; noteBank(g.rec, p, p.carried); g.log.push([+g.t.toFixed(2), 'bank', p.id, p.carried]); p.carried = 0; }
     p.hurtT = Math.max(0, p.hurtT - dt); p.calm = p.hurtT > 0 ? 0 : (p.calm || 0) + dt; if (!p.ember && p.calm > 4) p.hp = Math.min(100, p.hp + dt * 8);   // (four quiet seconds and you get your breath back)
-    if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) { e.x = p.x; e.z = p.z; if (Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f) * 0.6) { e.t += dt; if (e.t >= 3) revive(g, e); } else e.t = 0; } else p.carrying = null; }   // (the fire takes three seconds to rekindle someone: hold their Ember near it)
+    if (p.carrying) { const e = g.embers.find(q => q.id === p.carrying); if (e) { e.x = p.x; e.z = p.z; if (Math.hypot(p.x - f.x, p.z - f.z) < fireRadius(f) * 0.6 || (g.earth && Math.hypot(p.x - EARTH.x, p.z - EARTH.z) < 3.5)) { e.t += dt; if (e.t >= 3) revive(g, e); } else e.t = 0; } else p.carrying = null; }   // (the fire takes three seconds to rekindle someone: hold their Ember near it)
     else if (!p.ember) for (const e of g.embers) if (!e.held && Math.hypot(p.x - e.x, p.z - e.z) < 1.5) { e.held = p.id; p.carrying = e.id; }
   }
   // a tense beat: a player hurt in the last second, or a Hollow within 5 m (for the fun checklist)
@@ -167,10 +174,39 @@ export function hurt(g, p, n, from) {
     for (let i = 0; i < Math.ceil(p.carried / 5); i++) g.motes.push({ id: g.nextId++, x: p.x + (g.rMote() - 0.5) * 2, z: p.z + (g.rMote() - 0.5) * 2, v: 5, t: 60 });
     p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0 }); mark(g, 'fall', p.x, p.z); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
     if (g.players.every(q => q.ember)) {   // (everyone down: the dark took what it came for. The night is lost, what you carried lies where you fell, and it draws back to dawn; the fire keeps every level)
-      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97; g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
+      for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; g.earth = null; if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97; g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
   }
 }
 
+// the trip: down to Earth from the pad, back up from the landing site; the lander leaves when its time is up, with or without you
+export function drop(g, p) {
+  if (!p || p.ember || onEarth(p) || Math.hypot(p.x - PAD.x, p.z - PAD.z) > 4) return false;
+  if (!g.earth) { g.earth = { t: EARTH.stay, n: (g.trips = (g.trips || 0) + 1) }; const r = stream(g.seed, 'earth-' + g.earth.n);
+    for (let i = 0; i < EARTH.cells; i++) { const a = r() * Math.PI * 2, d = 14 + r() * 50; g.motes.push({ id: g.nextId++, x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d, v: 8, t: 1e9, cell: true }); } }
+  p.x = EARTH.x + 1.5; p.z = EARTH.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'drop', p.id]); return true;
+}
+export function rise(g, p) {
+  if (!p || p.ember || !onEarth(p) || Math.hypot(p.x - EARTH.x, p.z - EARTH.z) > 4) return false;
+  p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'rise', p.id]);
+  if (!g.players.some(onEarth)) endTrip(g); return true;
+}
+function endTrip(g) { g.earth = null; g.hollow = g.hollow.filter(k => !k.earth); g.motes = g.motes.filter(m => !onEarth(m)); g.nodes = g.nodes.filter(n => !onEarth(n)); g.embers = g.embers.filter(e => !onEarth(e)); linkNetwork(g); }
+function tripClock(g, dt) {
+  if (!g.earth) return; g.earth.t -= dt; if (g.earth.t > 0) return;
+  for (const p of g.players) if (onEarth(p)) {   // (left behind: the lander is gone; whatever brings you back up, the light you carried stays down there)
+    if (p.ember) { const e = g.embers.find(q => q.of === p.id); if (e) e.x = 1e9; } p.ember = false; p.carrying = null; p.carried = 0; p.hp = 25;
+    p.x = PAD.x - 1.5; p.z = PAD.z + 1.5; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; g.log.push([+g.t.toFixed(2), 'stranded', p.id]); }
+  g.embers = g.embers.filter(e => e.x < 1e8); endTrip(g);
+}
+export const EARTH_DARK = { base: 24, perPlayer: 3, perMinute: 4, every: 0.3 };   // (how hard Earth pushes: picked by sim/drop.mjs --tune from 45 settings, 20 trips each: a perfect player comes back 95%, a greedy one 65%, tense 0.61 to 0.69 of the trip)
+function spawnEarth(g, dt) {
+  if (!g.earth) return; const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
+  const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
+  g.spawnE = (g.spawnE || 0) - dt; if (g.spawnE > 0 || g.hollow.filter(k => k.earth).length >= want) return; g.spawnE = EARTH_DARK.every;
+  const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'giant'] : ['walker', 'walker', 'runner'];
+  const kind = pool[Math.floor(g.rSpawn() * pool.length)], K = KINDS[kind], a = g.rSpawn() * Math.PI * 2, r = 26 + g.rSpawn() * 12, x = who.x + Math.cos(a) * r, z = who.z + Math.sin(a) * r, grow = Math.max(0, g.night - 1);
+  g.hollow.push({ id: g.nextId++, kind, earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp * (1 + 0.25 * grow), max: K.hp * (1 + 0.25 * grow), sh: K.shell[0] + K.grow[0] * grow, sb: K.shell[1] + K.grow[1] * grow, cd: 0, dead: false, speed: K.speed * (0.85 + g.rSpawn() * 0.3) });
+}
 function spawn(g, dt, ph) {
   if (ph !== 'night' && ph !== 'dusk') return;
   const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + g.players.length * 3), T = g.tactic;
@@ -186,11 +222,11 @@ function moveHollow(g, dt, ph) {
   const T = g.tactic, f = g.fire;
   for (const k of g.hollow) {
     const K = KINDS[k.kind];
-    if (ph === 'day' || ph === 'dawn') { k.hp -= dt * 60; if (k.hp <= 0) k.dead = true; continue; }   // (light of day unmakes them: no motes, they were never yours)
+    if (!k.earth && (ph === 'day' || ph === 'dawn')) { k.hp -= dt * 60; if (k.hp <= 0) k.dead = true; continue; }   // (light of day unmakes them: no motes, they were never yours)
     let tx, tz, target = null;
     if (k.kind === 'shard') {   // (the shard goes for the fire, or for whoever carries the most light, weighed by its tactic)
       let best = (Math.hypot(f.x - k.x, f.z - k.z) + 1) / T.fireBias; tx = f.x; tz = f.z;
-      for (const p of g.players) if (!p.ember && p.carried > 0) { const s = Math.hypot(p.x - k.x, p.z - k.z) / (1 + p.carried * 0.05 * T.greed); if (s < best) { best = s; tx = p.x; tz = p.z; target = p; } }
+      for (const p of g.players) if (!p.ember && p.carried > 0 && !!k.earth === onEarth(p)) { const s = Math.hypot(p.x - k.x, p.z - k.z) / (1 + p.carried * 0.05 * T.greed); if (s < best) { best = s; tx = p.x; tz = p.z; target = p; } }
       const d = Math.hypot(tx - k.x, tz - k.z);
       if (d > K.reach) { k.x += (tx - k.x) / d * k.speed * dt; k.z += (tz - k.z) / d * k.speed * dt; }
       else if (target) { const take = Math.min(target.carried, dt * 8); target.carried -= take; } else { const take = Math.min(f.fuel, dt * 6); f.fuel -= take; g.stats.drained += take; }
@@ -198,9 +234,9 @@ function moveHollow(g, dt, ph) {
     }
     // walkers, runners and giants hunt players: the lone one counts more (isolate), a glowing carrier more again (greed)
     let best = Infinity;
-    for (const p of g.players) { if (p.ember) continue; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++;
+    for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++;
       const s = Math.hypot(p.x - k.x, p.z - k.z) / ((near === 0 ? T.isolate : 1) * (1 + Math.min(1, p.carried * 0.02) * (T.greed - 1))); if (s < best) { best = s; target = p; } }
-    let node = null; if (g.nodes.length) { let nb = Infinity; for (const n of g.nodes) if (n.lit && n.hp > 0) { const s2 = Math.hypot(n.x - k.x, n.z - k.z) * (n.hp / NODE[n.kind].hp + 0.5) / T.fireBias; if (s2 < nb) { nb = s2; node = n; } } if (node && (!target || nb < best * 0.8)) target = null; }   // (a weak, lonely relay is a better prize than a person)
+    let node = null; if (g.nodes.length) { let nb = Infinity; for (const n of g.nodes) if (n.lit && n.hp > 0 && !!k.earth === onEarth(n)) { const s2 = Math.hypot(n.x - k.x, n.z - k.z) * (n.hp / NODE[n.kind].hp + 0.5) / T.fireBias; if (s2 < nb) { nb = s2; node = n; } } if (node && (!target || nb < best * 0.8)) target = null; }   // (a weak, lonely relay is a better prize than a person)
     if (!target && !node) continue;
     if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
     tx = target.x; tz = target.z;
