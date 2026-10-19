@@ -1,6 +1,13 @@
 # Last Fire: the queue
 
 
+## The eras and unlocks (his words, 2026-10-19: what the finished game's order is; dev mode today has everything unlocked)
+- Start on the **Moon: era 3**. Pistol and shotgun only, no vehicle.
+- Then **Earth: era 4**, a taste of the real game.
+- Back to the **Moon for the tutorial** (planning, building, defending), or say skip and stay on Earth and get oriented there.
+- Once the tutorial is smooth, **the real game is on Earth, at the real base camp** (reasoned).
+- So the rifle, the rail and the rest are late-game unlocks, not starting guns. Today is dev mode with AI and sims, so everything is unlocked ("messy af lol").
+
 ## North star (his words, 2026-10-19): Cyberpunk 2077 as close to one-to-one as possible, plus friends and survival
 
 Never stop working on the game; use REA and GitHub to learn from the best. Cyberpunk's yellow becomes hot pink and violet (his palette). In order:

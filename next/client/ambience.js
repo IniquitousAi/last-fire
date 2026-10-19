@@ -17,6 +17,18 @@ export class Ambience {
     const hf = ac.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 400; for (const o of this.hum) { o.connect(hf); o.start(); } hf.connect(this.humG).connect(this.fireP);
     this.crack = noise(0.05, 'white'); { const d = this.crack.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] *= Math.exp(-i / (d.length * 0.18)); }   // (each crackle dies away fast, like wood, not a click)
   }
+  // a far sound (farsound.js picks what and where): placed in 3D with HRTF, highs gone with distance, a long echo; in the dark the world's muffle smears it
+  far(voice, x, y, z, muffle = 0) {
+    if (!this.ac) return; const ac = this.ac, t = ac.currentTime, P = ac.createPanner(); Object.assign(P, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 8, rolloffFactor: 0.6, maxDistance: 200 });
+    if (P.positionX) { P.positionX.value = x; P.positionY.value = y; P.positionZ.value = z; } else P.setPosition(x, y, z);
+    const L = this.ac.listener, d = L.positionX ? Math.hypot(x - L.positionX.value, z - L.positionZ.value) : 60, lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.max(350, 3200 - d * 22) * (1 - 0.5 * muffle);
+    const g = ac.createGain(); g.gain.value = 0; lp.connect(g).connect(P).connect(this.master); const env = (peak, a, hold, rel) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + a + hold); g.gain.exponentialRampToValueAtTime(0.0001, t + a + hold + rel); return a + hold + rel; };
+    const noise = sec => { const b = ac.createBuffer(1, ac.sampleRate * sec, ac.sampleRate), q = b.getChannelData(0); for (let i = 0; i < q.length; i++) q[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; return s; };
+    if (voice === 'creak' || voice === 'groan') { const base = voice === 'groan' ? 46 + Math.random() * 10 : 140 + Math.random() * 60, o1 = ac.createOscillator(), o2 = ac.createOscillator(), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = base * 3; bp.Q.value = voice === 'groan' ? 3 : 9;
+      for (const [o, k] of [[o1, 1], [o2, 1.012]]) { o.type = 'sawtooth'; o.frequency.setValueAtTime(base * k, t); o.frequency.exponentialRampToValueAtTime(base * k * 0.72, t + 2); o.connect(bp); } bp.connect(lp); const len = env(voice === 'groan' ? 0.16 : 0.07, 0.4, 0.8, 1.2); o1.start(t); o2.start(t); o1.stop(t + len); o2.stop(t + len); }   /* (metal under strain: two detuned tones gliding down; the groan is the same, deeper and wider) */
+    else if (voice === 'impact' || voice === 'crack') { const s = noise(0.3), bp = ac.createBiquadFilter(); bp.type = 'lowpass'; bp.frequency.value = voice === 'impact' ? 180 : 1800; s.playbackRate.value = voice === 'impact' ? 0.3 : 0.25; s.connect(bp).connect(lp); env(voice === 'impact' ? 0.5 : 0.12, 0.005, 0.02, voice === 'impact' ? 0.9 : 0.25); s.start(t); }   /* (something heavy landing; a dry snap) */
+    else { const sec = voice === 'slide' ? 2.2 : 1.4, s = noise(sec), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2; bp.frequency.setValueAtTime(voice === 'slide' ? 300 : 400, t); bp.frequency.exponentialRampToValueAtTime(voice === 'slide' ? 220 : 1600, t + sec); s.connect(bp).connect(lp); env(voice === 'slide' ? 0.09 : 0.06, voice === 'slide' ? 0.8 : 0.15, sec * 0.4, 0.6); s.start(t); }   /* (a scrape sweeping up; dust sliding, slow in) */
+  }
   update(dt, cam, fire, lightHere, alive) {
     if (!this.ac) return; const ac = this.ac, L = ac.listener;
     const fx = -Math.sin(cam.rotation.y), fz = -Math.cos(cam.rotation.y);
