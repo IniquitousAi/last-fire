@@ -27,6 +27,15 @@ export const onEarth = p => p.z > 3000;
 export const TOWERS = (() => { let q = 33; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647, out = [];
   for (let i = 0; i < 60; i++) { const a = rnd() * Math.PI * 2, r = 16 + rnd() * 80, w = 3 + rnd() * 7, d = 3 + rnd() * 7, h = 3 + rnd() * rnd() * 30, tx = (rnd() - 0.5) * 0.12, ry = rnd() * Math.PI, tz = (rnd() - 0.5) * 0.12;
     out.push({ x: EARTH.x + Math.cos(a) * r, z: EARTH.z + Math.sin(a) * r, w, d, h, tx, ry, tz }); } return out; })();
+export function shadowed(ax, az, bx, bz) {   // (shadows are the dark too, INNOVATION.md: does a tower stand between a light and a point? slab test in each tower's own frame)
+  if (az < 3000 && bz < 3000) return false;
+  const minx = Math.min(ax, bx) - 8, maxx = Math.max(ax, bx) + 8, minz = Math.min(az, bz) - 8, maxz = Math.max(az, bz) + 8;
+  for (const t of TOWERS) { if (t.x < minx || t.x > maxx || t.z < minz || t.z > maxz) continue; const c = Math.cos(t.ry), s = Math.sin(t.ry), hx = t.w / 2, hz = t.d / 2;
+    const ax2 = (ax - t.x) * c - (az - t.z) * s, az2 = (ax - t.x) * s + (az - t.z) * c, bx2 = (bx - t.x) * c - (bz - t.z) * s, bz2 = (bx - t.x) * s + (bz - t.z) * c, dx = bx2 - ax2, dz = bz2 - az2;
+    let t0 = 0, t1 = 1; for (const [p, d, h] of [[ax2, dx, hx], [az2, dz, hz]]) { if (Math.abs(d) < 1e-9) { if (Math.abs(p) > h) { t0 = 2; break; } continue; } let u = (-h - p) / d, v = (h - p) / d; if (u > v) [u, v] = [v, u]; t0 = Math.max(t0, u); t1 = Math.min(t1, v); if (t0 > t1) break; }
+    if (t0 <= t1 && t0 < 1 && t1 > 0 && t0 < 0.98) return true; }
+  return false;
+}
 export function pushOut(x, z, rad = 0.4) {   // (moves a point out of any tower it is inside: the towers are solid)
   if (z < 3000) return [x, z];
   for (const t of TOWERS) { const dx = x - t.x, dz = z - t.z; if (dx * dx + dz * dz > 120) continue; const c = Math.cos(t.ry), s = Math.sin(t.ry), lx = dx * c - dz * s, lz = dx * s + dz * c, hx = t.w / 2 + rad, hz = t.d / 2 + rad;
@@ -135,12 +144,12 @@ export function placeNode(g, kind, x, z, by) {
 }
 export function lightAt(g, x, z, noGlow) {   // (noGlow: leave out the glow players carry, for 'is this place lit')   // (0 in the dark, 1 at the heart of a light)
   let L = 0; const f = g.fire, rf = fireRadius(f), df = Math.hypot(f.x - x, f.z - z); if (df < rf) L = 1 - df / rf;
-  for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r) L = Math.max(L, 1 - d / r); }
+  for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r && 1 - d / r > L && !shadowed(n.x, n.z, x, z)) L = 1 - d / r; }
   if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8); }
-  if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light) L = Math.max(L, 1 - d / EARTH.light); }
+  if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !shadowed(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
   if (g.tracers) for (const t of g.tracers) { const vx = t.bx - t.ax, vz = t.bz - t.az, k = Math.max(0, Math.min(1, ((x - t.ax) * vx + (z - t.az) * vz) / (vx * vx + vz * vz))), d = Math.hypot(t.ax + vx * k - x, t.az + vz * k - z); if (d < TRACER.width) L = Math.max(L, 0.5 * t.t / TRACER.life); }
   if (g.car) { const c = g.car, dx = x - c.x, dz = z - c.z, ahead = -dx * Math.sin(c.yaw) - dz * Math.cos(c.yaw), side = Math.abs(dx * Math.cos(c.yaw) - dz * Math.sin(c.yaw));
-    if (ahead > 0 && ahead < CAR.lamp && side < 1.2 + ahead * 0.45) L = Math.max(L, 0.8 * (1 - ahead / CAR.lamp)); else if (dx * dx + dz * dz < 9) L = Math.max(L, 0.3); }   // (the headlights: a wedge of light ahead, a little around the cab)
+    if (ahead > 0 && ahead < CAR.lamp && side < 1.2 + ahead * 0.45 && 0.8 * (1 - ahead / CAR.lamp) > L && !shadowed(c.x, c.z, x, z)) L = 0.8 * (1 - ahead / CAR.lamp); else if (dx * dx + dz * dz < 9) L = Math.max(L, 0.3); }   // (the headlights: a wedge of light ahead, a little around the cab)
   return L;
 }
 
