@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=102';
-import { Ambience } from './ambience.js?v=102';
-import { Camp, BOARD } from './camp.js?v=102';
-import { Guide } from './guide.js?v=102';
-import { buildSites } from './earthsite.js?v=102';
-import { Truck } from './truck.js?v=102';
-import { Wrist } from './wrist.js?v=102';
-import { FireCore } from './firecore.js?v=102';
+import * as C from '../core/game.js?v=103';
+import { Ambience } from './ambience.js?v=103';
+import { Camp, BOARD } from './camp.js?v=103';
+import { Guide } from './guide.js?v=103';
+import { buildSites } from './earthsite.js?v=103';
+import { Truck } from './truck.js?v=103';
+import { Wrist } from './wrist.js?v=103';
+import { FireCore } from './firecore.js?v=103';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=102';
-import { FriendVoice } from './friendvoice.js?v=102';
-import { crewFrom } from '../core/habits.js?v=102';
-import { HudLook } from './hudlook.js?v=102';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=102';
-import { sound, GUNS } from '../../src/combat.js?v=102';
-import { FX } from '../../src/fx.js?v=102';
+import { think as friendThink } from './friend.js?v=103';
+import { FriendVoice } from './friendvoice.js?v=103';
+import { crewFrom } from '../core/habits.js?v=103';
+import { HudLook } from './hudlook.js?v=103';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=103';
+import { sound, GUNS } from '../../src/combat.js?v=103';
+import { FX } from '../../src/fx.js?v=103';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 102;   // (this copy's version; ./version.json says the newest)
+const BUILD = 103;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -318,6 +318,7 @@ function carLine() { const c = g.car, kg = C.storeKg(c); const mySeat = C.seatOf
   return (me.pack || []).length ? `F  ·  LOAD YOUR PACK INTO THE TRUCK (${kg} of ${C.CAR.store} kg)` : !c.seats.includes(null) ? 'The truck is full.' : `F  ·  GET IN${c.seats[0] === null ? ' AND DRIVE (W, S, A, D)' : ''}`; }
 function useCar() { if (isHost()) { const r = C.useCar(g, me); if (r === 'stowed') { sound.drop(); say('Loaded into the truck.', 2); } else if (r === 'full') say('The truck is full.', 2); } else net.send({ t: 'build', k: 'car', x: 0, z: 0 }); }
 function friendSign() {   // (the world keeps your friends: walk past what someone else built, or where they fell, and it says so)
+  const hon = g.nodes.find(n => n.honor && Math.hypot(me.x - n.x, me.z - n.z) < 2.2); if (hon) return `The camp raised this lamp for ${hon.honor === SET.name ? 'you' : hon.honor}  ·  for pulling more than their weight`;
   const mine = n => !n || n === SET.name, node = g.nodes.find(n => !mine(n.who) && Math.hypot(me.x - n.x, me.z - n.z) < 2.2);
   if (node) return `${node.who}'s ${node.kind}  ·  built night ${node.n || '?'}${node.lit ? ', still carrying light' : ', dark now'}`;
   const m = g.marks.find(m => m.k === 'fall' && !mine(m.who) && Math.hypot(me.x - m.x, me.z - m.z) < 1.6); return m ? `${m.who} fell here  ·  night ${m.n}` : '';
@@ -397,7 +398,7 @@ function frame(now) {
   ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { runFriends(dt); C.step(g, dt); } else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
-  for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
+  for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
   drawHollow(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
@@ -570,7 +571,7 @@ function sync(dt) {
     p: g.players.map(p => [p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(2), +(p.pitch || 0).toFixed(2), Math.round(p.hp), Math.floor(p.carried), p.ember ? 1 : 0, p.gun || 'pistol', p.tp || 0, p.name]),
     h: g.hollow.flatMap(k => [k.id, KIND_I.indexOf(k.kind), +k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2), +k.yaw.toFixed(2)]),
     m: g.motes.slice(0, 300).flatMap(q => [+q.x.toFixed(1), +q.z.toFixed(1)]),
-    nd: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.lit ? 1 : 0, n.who || '', n.n || 0]),
+    nd: g.nodes.map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.lit ? 1 : 0, n.who || '', n.n || 0, n.honor || '']),
     em: g.embers.map(e => [e.id, e.of, +e.x.toFixed(1), +e.z.toFixed(1), e.held || 0]), e: g.earth ? +g.earth.t.toFixed(1) : -1, pt: g.parts.map(q => [q.id, q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), st: g.stash, tr: g.truck, pk: g.players.map(p => [p.id, p.pack || []]), ec: g.econ ? { day: g.econ.day, pool: Math.round(g.econ.pool), people: g.econ.people } : 0, wr: g.earth && g.earth.wrecks ? g.earth.wrecks.map(w => [w.id, +w.x.toFixed(1), +w.z.toFixed(1), +(w.ry || 0).toFixed(2), w.left]) : 0, ln: g.learned || {}, fl: (g.flares || []).map(f => [+f.x.toFixed(2), +f.z.toFixed(2), +f.t.toFixed(1), f.earth ? 1 : 0]), th: g.theories || null, du: g.dues || {}, cl: [g.lost || [], g.out ? g.out.who : ''], car: g.car ? [+g.car.x.toFixed(2), +g.car.z.toFixed(2), +g.car.yaw.toFixed(3), +g.car.v.toFixed(2), g.car.seats, g.car.store] : 0, ...(g.marks.length !== sentMarks ? { mk: g.marks.slice(-MARKS).map(m => [m.k === 'fall' ? 1 : 0, m.x, m.z, m.who || '', m.n || 0]) } : {}) }); sentMarks = g.marks.length; }
 }
 function applyState(m) {   // (a friend's copy of the world, from the host; their own position stays their own unless the host moved them)
@@ -580,7 +581,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
       if (q.x === undefined) { q.x = x; q.y = y; q.z = z; } q.hp = hp; q.carried = carried; q.ember = !!ember; ps.push(q); } g.players = ps; }
   if (Array.isArray(m.h) && m.h.length <= C.MAX_HOLLOW * 6) { const old = new Map(g.hollow.map(k => [k.id, k])), hs = []; for (let i = 0; i + 5 < m.h.length; i += 6) { const [id, ki, x, y, z, yaw] = m.h.slice(i, i + 6); if (![id, ki, x, y, z, yaw].every(fin) || !KIND_I[ki]) continue; const k = old.get(id) || { id, kind: KIND_I[ki], x, y, z, yaw, sh: 0, sb: 0 }; Object.assign(k, { tx: x, ty: y, tz: z, tyaw: yaw }); hs.push(k); } g.hollow = hs; }
   if (Array.isArray(m.m)) { g.motes = []; for (let i = 0; i + 1 < m.m.length && i < 600; i += 2) if (fin(m.m[i]) && fin(m.m[i + 1])) g.motes.push({ x: m.m[i], z: m.m[i + 1] }); }
-  if (Array.isArray(m.nd)) g.nodes = m.nd.filter(a => Array.isArray(a) && C.NODE[a[1]]).slice(0, 400).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3], hp: a[4], lit: !!a[5], who: typeof a[6] === 'string' ? a[6].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[7] | 0 }));
+  if (Array.isArray(m.nd)) g.nodes = m.nd.filter(a => Array.isArray(a) && C.NODE[a[1]]).slice(0, 400).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3], hp: a[4], lit: !!a[5], who: typeof a[6] === 'string' ? a[6].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[7] | 0, ...(typeof a[8] === 'string' && a[8] ? { honor: a[8].replace(/[^A-Za-z0-9 _,-]/g, '').slice(0, 24) } : {}) }));
   if (Array.isArray(m.mk)) g.marks = m.mk.filter(a => Array.isArray(a) && [a[0], a[1], a[2]].every(fin)).slice(-MARKS).map(a => ({ k: a[0] ? 'fall' : 'wreck', x: a[1], z: a[2], who: typeof a[3] === 'string' ? a[3].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[4] | 0 }));
   if (m.ec && typeof m.ec === 'object' && m.ec.people && typeof m.ec.people === 'object') { const c = C.campOf(g); c.day = m.ec.day | 0; c.pool = fin(m.ec.pool) ? m.ec.pool : 0; for (const [n, v] of Object.entries(m.ec.people).slice(0, 32)) if (v && fin(v.paid) && fin(v.owed)) c.people[n] = { ...C.person(g, n), paid: v.paid, owed: v.owed }; }
   if (fin(m.e)) g.earth = m.e >= 0 ? { ...(g.earth || {}), t: m.e } : null;
