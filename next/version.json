@@ -1,1 +1,1 @@
-{"v": 173, "notes": "Saves hold after a reload, your room code is kept, the pad's Back button sends feedback, sounds never repeat back to back, the dev menu lists every item", "serves": "B,C"}
+{"v": 174, "notes": "Item 52: the night rules run the same in the browser and headless", "serves": "B"}

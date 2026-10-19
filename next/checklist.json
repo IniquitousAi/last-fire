@@ -1419,7 +1419,10 @@
      "proof": "sim/lane_b.mjs#core",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/core-node-vs-browser.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"

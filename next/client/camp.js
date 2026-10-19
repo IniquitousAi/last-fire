@@ -4,10 +4,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
-import { pickFresh } from '../core/lines.js?v=173';
-import * as LO from '../core/lore.js?v=173';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
-import * as JOB from '../core/jobs.js?v=173';
-import { stream } from '../core/game.js?v=173';
+import { pickFresh } from '../core/lines.js?v=174';
+import * as LO from '../core/lore.js?v=174';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
+import * as JOB from '../core/jobs.js?v=174';
+import { stream } from '../core/game.js?v=174';
 
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 }, EDGE = { x: 3.4, z: 18.2 };   // (the edge sign stands inside the gate, which opens on the dark at 21 m)
 // the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
