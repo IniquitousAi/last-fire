@@ -9,6 +9,13 @@ for f in list((HERE / 'client').glob('*.js')) + list((HERE / 'core').glob('*.js'
     shutil.copy(f, tmp / (f.stem + '.mjs'))
     r = subprocess.run(['node', '--check', str(tmp / (f.stem + '.mjs'))], capture_output=True, text=True)
     if r.returncode: sys.exit(f'NOT SHIPPED: {f.name} does not parse:\n{r.stderr[:600]}')
+# a // comment swallows everything after it on its line, so code there silently never runs (it broke the game four times). Refuse it.
+SWALLOWED = re.compile(r"//[^'`\n]*\)\s+(?:[A-Za-z_$][\w$.]*\s*(?:\(|=[^=>])|if \(|for \(|return\b|const |let )")
+for f in list((HERE / 'client').glob('*.js')) + list((HERE / 'core').glob('*.js')):
+    for i, line in enumerate(f.read_text(encoding='utf-8').splitlines(), 1):
+        k = line.find('//')
+        if k > 0 and 'http' not in line[max(0, k - 6):k + 2] and SWALLOWED.search(line[k:]):
+            sys.exit(f'NOT SHIPPED: {f.name}:{i} has code after a // comment (it never runs):\n{line.strip()[:200]}')
 main = HERE / 'client' / 'main.js'; s = main.read_text(encoding='utf-8')
 old = int(re.search(r'const BUILD = (\d+);', s).group(1)); new = old + 1
 s = s.replace(f'const BUILD = {old};', f'const BUILD = {new};')
