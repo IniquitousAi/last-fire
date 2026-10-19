@@ -1,22 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=44';
-import { Ambience } from './ambience.js?v=44';
-import { Camp, BOARD } from './camp.js?v=44';
-import { Guide } from './guide.js?v=44';
-import { buildSites } from './earthsite.js?v=44';
-import { Truck } from './truck.js?v=44';
-import { Wrist } from './wrist.js?v=44';
-import { HudLook } from './hudlook.js?v=44';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=44';
-import { sound, GUNS } from '../../src/combat.js?v=44';
-import { FX } from '../../src/fx.js?v=44';
+import * as C from '../core/game.js?v=45';
+import { Ambience } from './ambience.js?v=45';
+import { Camp, BOARD } from './camp.js?v=45';
+import { Guide } from './guide.js?v=45';
+import { buildSites } from './earthsite.js?v=45';
+import { Truck } from './truck.js?v=45';
+import { Wrist } from './wrist.js?v=45';
+import { HudLook } from './hudlook.js?v=45';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=45';
+import { sound, GUNS } from '../../src/combat.js?v=45';
+import { FX } from '../../src/fx.js?v=45';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 44;   // (this copy's version; ./version.json says the newest)
+const BUILD = 45;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -117,7 +117,7 @@ function darken(root, eyes) {   // (the wraiths are drawn as shadow: near black,
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
 const seen = new Map();
-const LOOK = { walker: ['wraith', 1.6, 0xc8d4ff], runner: ['clawed', 1.0, 0xd8c8ff], giant: ['wraith', 3.4, 0xff5577], watcher: ['wraith', 2.4, 0xeef0f8] };
+const LOOK = { walker: ['wraith', 1.6, 0xc8d4ff], runner: ['clawed', 1.0, 0xd8c8ff], giant: ['wraith', 3.4, 0xff5577], watcher: ['wraith', 2.4, 0xeef0f8], face: ['clawed', 1.1, 0xff6fb1] };
 function drawHollow(dt) {
   const alive = new Set();
   for (const k of g.hollow) {
@@ -129,6 +129,7 @@ function drawHollow(dt) {
           const hatM = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 1 }), brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.03, 24), hatM), crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.42, 20), hatM);
           const hat = new THREE.Group(); crown.position.y = 0.22; hat.add(brim, crown); hat.scale.set(1 / (sc * 0.6), 1 / sc, 1 / (sc * 0.6)); hat.position.y = b.max.y - 0.05 * s.y; o.add(hat); }
         const mix = new THREE.AnimationMixer(o), A = n => { const c = src.animations.find(a => a.name.endsWith(n)); return c ? mix.clipAction(c) : null; }; v = { o, mix, fly: A('Fast_Flying'), idle: A('Flying_Idle'), hit: A('Punch'), death: A('Death') }; (v.fly || v.idle)?.play(); }
+      if (k.kind === 'face') { const at = new THREE.Vector3(k.x, k.y + 1.2, k.z); fx.burst(at, 28, [0.55, 0.57, 0.66], 5, 0.7); if (sound.shatter) sound.shatter(at); }   // (it tears out of the wall: concrete dust and a crack)
       v.mats = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
       scene.add(v.o); seen.set(k.id, v);
     }

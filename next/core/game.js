@@ -87,6 +87,7 @@ export const KINDS = {
   walker: { hp: 120, shell: [40, 0], grow: [12, 15], speed: 2.4, bite: 14, wait: 1.0, reach: 1.2, hits: [[2.2, 0.26, 0, 2.5], [1.4, 0.4, 1, 1]], motes: 2 },
   runner: { hp: 70, shell: [20, 30], grow: [6, 8], speed: 5.6, bite: 8, wait: 0.6, reach: 1.1, hits: [[0.95, 0.24, 0, 2.5], [0.85, 0.42, 1, 1]], motes: 1 },
   shard: { hp: 100, shell: [0, 60], grow: [0, 15], speed: 3.4, bite: 0, wait: 1, reach: 1.6, hits: [[2.6, 0.55, 1, 1]], motes: 3 },   // (it floats to the fire and drinks its light)
+  face: { hp: 90, shell: [0, 20], grow: [5, 6], speed: 6.4, bite: 16, wait: 0.7, reach: 1.2, hits: [[1.5, 0.25, 0, 3], [1.0, 0.4, 1, 1]], motes: 2 },   // (the face in the wall: dormant in a tower's surface on Earth until you pass too close, then it tears out and lunges)
   watcher: { hp: 160, shell: [0, 0], grow: [0, 0], speed: 4.6, bite: 30, wait: 1.4, reach: 1.4, hits: [[2.6, 0.22, 0, 3], [1.6, 0.35, 1, 1]], motes: 4, watched: true },   // (the tall one in the hat: it only moves while nobody is looking at it)
   giant: { hp: 900, shell: [150, 250], grow: [40, 60], speed: 1.3, bite: 34, wait: 1.6, reach: 1.9, hits: [[2.85, 0.32, 0, 2], [2.0, 0.72, 1, 1]], motes: 12 },
 };
@@ -262,8 +263,16 @@ function tripClock(g, dt) {
   g.embers = g.embers.filter(e => e.x < 1e8); endTrip(g);
 }
 export const EARTH_DARK = { base: 18, perPlayer: 3, perMinute: 14, every: 0.3 };   // (how hard Earth pushes: picked by sim/drop.mjs --tune from 45 settings, 20 trips each, robots slowed by what they carry: perfect solo back 100%, careful 95%, greedy 65%, tense 0.58 to 0.70)
+function wakeFaces(g) {   // (about a third of the towers hold one face each per trip; passing within 3 m of that wall wakes it)
+  if (!g.earth.faces) { const r = stream(g.seed, 'faces-' + g.earth.n); g.earth.faces = TOWERS.map(() => r() < 0.33); }
+  for (const p of g.players) { if (p.ember || !onEarth(p)) continue;
+    TOWERS.forEach((t, i) => { if (!g.earth.faces[i]) return; const dx = p.x - t.x, dz = p.z - t.z; if (dx * dx + dz * dz > 150) return; const c = Math.cos(t.ry), sn = Math.sin(t.ry), lx = dx * c - dz * sn, lz = dx * sn + dz * c;
+      const ex = Math.max(0, Math.abs(lx) - t.w / 2), ez = Math.max(0, Math.abs(lz) - t.d / 2); if (Math.hypot(ex, ez) > 3) return;
+      g.earth.faces[i] = false; const wx = Math.max(-t.w / 2, Math.min(t.w / 2, lx)), wz = Math.max(-t.d / 2, Math.min(t.d / 2, lz)), x = t.x + wx * c + wz * sn, z = t.z - wx * sn + wz * c, K = KINDS.face;
+      g.hollow.push({ id: g.nextId++, kind: 'face', earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0.4, dead: false, speed: K.speed }); g.log.push([+g.t.toFixed(2), 'face', i]); }); }
+}
 function spawnEarth(g, dt) {
-  if (!g.earth) return; const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
+  if (!g.earth) return; wakeFaces(g); const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
   const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
   g.spawnE = (g.spawnE || 0) - dt; if (g.spawnE > 0 || g.hollow.filter(k => k.earth).length >= want) return; g.spawnE = EARTH_DARK.every;
   const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'watcher', 'giant'] : into > 30 ? ['walker', 'walker', 'runner', 'watcher'] : ['walker', 'walker', 'runner'];
