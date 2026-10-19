@@ -166,6 +166,13 @@
   "54": "The wrist hologram is now deep blue (#3d63ff, no cyan) after his sheet. Era 1 (Scavenged): words only. Era 2 (Light): a map ring with the fire's bearing and distance. Era 3 (the dark's own): map plus a schematic and a scan line. The era is the real one from era_state.json via camp.era.",
   "1": "Lead took it.",
   "5": "Lead took it.",
-  "56": "Lead took it."
+  "56": "Lead took it.",
+  "52": "Left: the running browser game at its seed, dusk. Right: the same seed's night run through core/ only in node (58 log lines, hash 1708730986), identical to the same module run inside the browser (same hash), and the browser game's ground matches the headless core at 5 spots. Test: next/sim/lane_d_core_browser.cjs (also checks that no file in core/ imports anything outside core/ or touches the DOM, three.js or audio: 20 files clean). Servers use --bind 127.0.0.1."
+ },
+ "52": {
+  "seen": {
+   "proof": "next/playtests/lanes/D/core-node-vs-browser.png",
+   "at": "2026-10-19"
+  }
  }
 }

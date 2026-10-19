@@ -1,0 +1,115 @@
+{
+ "seed": 29472979,
+ "node": {
+  "seed": 29472979,
+  "probes": [
+   [
+    0,
+    0,
+    7.111342
+   ],
+   [
+    12,
+    7,
+    7.164971
+   ],
+   [
+    -30,
+    18,
+    10.350415
+   ],
+   [
+    55,
+    -40,
+    9.506482
+   ],
+   [
+    6020,
+    3,
+    14.436552
+   ]
+  ],
+  "fire": [
+   0,
+   0
+  ],
+  "steps": 1501,
+  "night": 2,
+  "kills": 31,
+  "falls": 1,
+  "logLines": 58,
+  "logHash": 1708730986,
+  "head": [
+   "15.1 dusk 1 0",
+   "49.1 kill walker light",
+   "51.4 kill walker light",
+   "53.8 relax 1.08",
+   "54 kill walker light",
+   "54 bank 2 4",
+   "55.1 kill walker light",
+   "55.1 bank 2 4",
+   "55.3 kill walker light",
+   "59.9 relax 1.5",
+   "60.7 kill walker light",
+   "60.7 bank 2 2",
+   "63 kill walker light",
+   "63.5 kill walker light"
+  ]
+ },
+ "web": {
+  "seed": 29472979,
+  "probes": [
+   [
+    0,
+    0,
+    7.111342
+   ],
+   [
+    12,
+    7,
+    7.164971
+   ],
+   [
+    -30,
+    18,
+    10.350415
+   ],
+   [
+    55,
+    -40,
+    9.506482
+   ],
+   [
+    6020,
+    3,
+    14.436552
+   ]
+  ],
+  "fire": [
+   0,
+   0
+  ],
+  "steps": 1501,
+  "night": 2,
+  "kills": 31,
+  "falls": 1,
+  "logLines": 58,
+  "logHash": 1708730986,
+  "head": [
+   "15.1 dusk 1 0",
+   "49.1 kill walker light",
+   "51.4 kill walker light",
+   "53.8 relax 1.08",
+   "54 kill walker light",
+   "54 bank 2 4",
+   "55.1 kill walker light",
+   "55.1 bank 2 4",
+   "55.3 kill walker light",
+   "59.9 relax 1.5",
+   "60.7 kill walker light",
+   "60.7 bank 2 2",
+   "63 kill walker light",
+   "63.5 kill walker light"
+  ]
+ }
+}
