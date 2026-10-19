@@ -4,10 +4,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
-import { pickFresh } from '../core/lines.js?v=176';
-import * as LO from '../core/lore.js?v=176';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
-import * as JOB from '../core/jobs.js?v=176';
-import { stream } from '../core/game.js?v=176';
+import { pickFresh } from '../core/lines.js?v=177';
+import * as LO from '../core/lore.js?v=177';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
+import * as JOB from '../core/jobs.js?v=177';
+import { stream } from '../core/game.js?v=177';
 
 /* (the palette guard, A2 look pass 2026-10-19: no orange, gold, rust, brown or olive may reach the screen from a scanned asset. Every loaded material's diffuse is checked in the shader: a hue from red-orange through yellow to green with real color in it is pulled to a cold blue-gray steel at the same brightness. Blues, violets and grays pass untouched; lamps and signs are emissive and are not touched.) */
 const GUARD_GLSL = `#include <map_fragment>
@@ -53,7 +53,8 @@ export class Camp {
     this.scene = scene; this.ctx = ctx; this.checkedNight = -1; this.drawn = ''; const land = ctx.land, L = new GLTFLoader();
     const put = (url, x, z, s, ry = 0) => L.loadAsync('../assets/' + url).then(r => { const o = r.scene; o.scale.setScalar(s); o.position.set(x, land(x, z), z); o.rotation.y = ry; scene.add(o); return o; }).catch(() => null);
     // the leaders' hut: a big canvas shelter over a desk, a cold lamp, and the two papers
-    put('kit/structure-canvas.glb', HUT.x, HUT.z, 4.6, 0.6); const desk = put('kit/workbench.glb', HUT.x - 0.6, HUT.z - 0.9, 3.2, 0.6); put('kit/chest.glb', HUT.x + 1.4, HUT.z + 1.2, 2.4, 2);
+    const tint = (p, c, r) => p.then(o => { if (o) o.traverse(n => { if (n.isMesh) { n.material = n.material.clone(); n.material.color.setHex(c); n.material.roughness = r; } }); });   /* (the kit's flat palette read pale blue-gray under the cold lamp: the desk is dark worn wood, the hut a dull canvas) */
+    tint(put('kit/structure-canvas.glb', HUT.x, HUT.z, 4.6, 0.6), 0x8c8a78, 0.95); const desk = put('kit/workbench.glb', HUT.x - 0.6, HUT.z - 0.9, 3.2, 0.6); put('kit/chest.glb', HUT.x + 1.4, HUT.z + 1.2, 2.4, 2);
     const lamp = new THREE.PointLight(0xdfe6ff, 3, 9, 1.6);   /* (was 6: the papers under it blew out to pure white and flashed his eyes, 2026-10-19) */ lamp.position.set(HUT.x, land(HUT.x, HUT.z) + 2.4, HUT.z); scene.add(lamp);
     const name = ctx.name();
     const form = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.6), new THREE.MeshStandardMaterial({ color: 0x8a8d99, roughness: 1, map: paper([['FORM 12-A: MORNING ODDS', 34, '#2b3a8f'], ['Survival today: 92%', 44], ['(approved by the council)', 26, '#555a6e'], [`Signed: ${name}`, 30], ['Please do not round down.', 24, '#8a2b4f']]), roughness: 0.9 }));
@@ -61,6 +62,7 @@ export class Camp {
     const deskY = land(HUT.x - 0.6, HUT.z - 0.9) + 1.06;
     form.rotation.x = real.rotation.x = -Math.PI / 2; form.rotation.z = 0.5; real.rotation.z = 0.75;
     form.position.set(HUT.x - 0.8, deskY, HUT.z - 0.3); real.position.set(HUT.x + 0.1, deskY + 0.002, HUT.z - 0.45); scene.add(form, real);
+    tint(desk, 0x7c6249, 0.92);
     desk.then(o => { if (!o) return; o.updateMatrixWorld(true); const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);   // (each paper dropped straight down onto whatever is really under it)
       for (const [pp, lift] of [[form, 0.004], [real, 0.006]]) { ray.set(new THREE.Vector3(pp.position.x, pp.position.y + 3, pp.position.z), down); const hit = ray.intersectObject(o, true)[0]; if (hit) pp.position.y = hit.point.y + lift; } });
     // the board: a dark panel on a post at the edge of the fire's light, redrawn only when what it shows changes

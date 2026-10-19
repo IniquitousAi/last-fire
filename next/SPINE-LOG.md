@@ -11,3 +11,4 @@
 - v174 serves B: Item 52: the night rules run the same in the browser and headless
 - v175 serves B: A perfect crew holds 12 nights, the fire grows past level 5, camp murmur and wind, creature sizes fixed
 - v176 serves B: Lane B2: perfect crew holds 12 nights in the real client, FRIEND VS YOU and THE DAEMON pages, EXPORT NIGHTS; 69 of 69
+- v177 serves A: Rift wall now reads as lit slate at night and the leaders' desk is dark worn wood (was near black / pale)
