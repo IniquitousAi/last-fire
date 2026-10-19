@@ -320,7 +320,10 @@ function campTrips(g) { campDues(g);
   const free = CAMP_OUT.filter(w => !g.lost.includes(w)); if (free.length && r() < 0.3) { g.out = { who: free[Math.floor(r() * free.length)], night: g.night }; g.log.push([+g.t.toFixed(2), 'goes', g.out.who]); }
 }
 export function hurt(g, p, n, from) {
-  if (p.ember) return; p.hp -= n; p.hurtT = 1;
+  if (p.ember) return;
+  // two quiet mercies the best action games keep (GAMEDEV-TRICKS.md): the last quarter of your light is worth more than it looks (Doom,
+  // Assassin's Creed), and no single hit takes you from healthy to down (Control). Falls stay earned, never one cheap blow.
+  const was = p.hp; if (was <= 25) n *= 0.6; p.hp -= n; if (was > 40 && p.hp <= 0) p.hp = 1; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
     for (const k of p.pack || []) g.parts.push({ id: g.nextId++, kind: k, x: p.x + (Math.random() - 0.5) * 2, z: p.z + (Math.random() - 0.5) * 2 }); p.pack = [];
     if (g.earth && onEarth(p)) { const L = g.earth.lost = g.earth.lost || { falls: 0, cells: 0, parts: 0 }; L.falls++; L.cells += p.carried / 8; }
