@@ -1,22 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=38';
-import { Ambience } from './ambience.js?v=38';
-import { Camp, BOARD } from './camp.js?v=38';
-import { Guide } from './guide.js?v=38';
-import { buildSites } from './earthsite.js?v=38';
-import { Truck } from './truck.js?v=38';
-import { Wrist } from './wrist.js?v=38';
-import { HudLook } from './hudlook.js?v=38';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=38';
-import { sound, GUNS } from '../../src/combat.js?v=38';
-import { FX } from '../../src/fx.js?v=38';
+import * as C from '../core/game.js?v=39';
+import { Ambience } from './ambience.js?v=39';
+import { Camp, BOARD } from './camp.js?v=39';
+import { Guide } from './guide.js?v=39';
+import { buildSites } from './earthsite.js?v=39';
+import { Truck } from './truck.js?v=39';
+import { Wrist } from './wrist.js?v=39';
+import { HudLook } from './hudlook.js?v=39';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=39';
+import { sound, GUNS } from '../../src/combat.js?v=39';
+import { FX } from '../../src/fx.js?v=39';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 38;   // (this copy's version; ./version.json says the newest)
+const BUILD = 39;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -60,8 +60,9 @@ scene.add(sky);
 
 // ---------------------------------------------------------------- the game (rules) and you
 const amb = new Ambience(() => SET.vol);
-const clickPlay = Object.assign(document.createElement('div'), { textContent: 'CLICK THE GAME TO PLAY  (your mouse is yours until you do)' }); clickPlay.hidden = true;
-Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '42%', transform: 'translateX(-50%)', padding: '10px 18px', font: '500 20px "Barlow Condensed", sans-serif', letterSpacing: '.12em', color: '#39e6ff', background: '#05060bcc', borderRadius: '8px', pointerEvents: 'none', zIndex: 3 });
+const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
+clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(57,230,255,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#39e6ff"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#39e6ff"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#39e6ff"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#39e6ff"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#39e6ff">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
+Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
 let truck = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
