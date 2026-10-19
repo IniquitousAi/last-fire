@@ -3,7 +3,7 @@
 // 2. Breed tactics against them (the same breeder as robots.mjs).
 // 3. Certify, the daemon's way: three runs in a row on fresh nights, each fair (a perfect crew never falls), each in the flow band
 //    (25 to 70% of moments tense, about one fall a night), and better than the dark it would replace by more than twice the noise.
-import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, BASE_TACTIC, clampTactic, stream, shotBy, canGrow, grow, FIRE_COST } from '../core/game.js';
+import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, BASE_TACTIC, clampTactic, stream, shotBy, canGrow, grow, FIRE_COST, fired } from '../core/game.js';
 import { crewFrom, summarize, SECTORS } from '../core/habits.js';
 
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
@@ -27,7 +27,7 @@ function think(g, p, r, dt) {   // (one robot plays one person's habits: where t
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), chance = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < chance * 0.35;
   if (r() > chance) { shotBy(g, p, false); return; }
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], ox = p.x, oy = p.y + 1.6, oz = p.z, vx = k.x - ox, vy = k.y + hy - oy, vz = k.z - oz, L = Math.hypot(vx, vy, vz);
-  const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); shotBy(g, p, !!h); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
+  fired(g, p, ox, oz, vx / L, vz / L); const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); shotBy(g, p, !!h); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
 }
 // one game: this crew of robots plays some nights against a tactic
 export function play(tactic, crew, seed, nights = 2) {

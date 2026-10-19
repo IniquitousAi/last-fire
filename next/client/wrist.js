@@ -1,4 +1,4 @@
-// The wrist screen (his rule 85, 2026-10-19: "UI you can't tell is UI"). Messages are no longer text on the screen: a thin band on your
+// The wrist screen (his UI rule, 2026-10-19: "UI you can't tell is UI"). Messages are no longer text on the screen: a thin band on your
 // left wrist projects them as a small hologram that opens, holds, and folds away. It lives in the held-gun scene, so it moves with you.
 import * as THREE from 'three';
 
@@ -13,12 +13,12 @@ export class Wrist {
     this.holo.position.set(0, 0, 0); this.root.add(band, lip, this.holo); this.root.visible = false;
     this.text = ''; this.t = 0; this.hold = 0; this.open = 0;
   }
-  draw(text) {
+  draw(text, head = 'INCOMING') {
     const g = this.c.getContext('2d'), W = 1024, H = 384; g.clearRect(0, 0, W, H);
     g.fillStyle = 'rgba(8,24,40,0.55)'; g.fillRect(0, 0, W, H);
     g.strokeStyle = '#39e6ff'; g.lineWidth = 3; const k = 34;   // (corner marks only: the frame is implied, never a box)
     for (const [x, y, dx, dy] of [[4, 4, 1, 1], [W - 4, 4, -1, 1], [4, H - 4, 1, -1], [W - 4, H - 4, -1, -1]]) { g.beginPath(); g.moveTo(x, y + dy * k); g.lineTo(x, y); g.lineTo(x + dx * k, y); g.stroke(); }
-    g.fillStyle = '#39e6ff'; g.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText('WRIST  ·  INCOMING', 36, 52);
+    g.fillStyle = '#39e6ff'; g.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText('WRIST  ·  ' + head.toUpperCase(), 36, 52);
     g.fillStyle = '#eef0f8'; g.font = '400 50px "Barlow Condensed", "Arial Narrow", sans-serif';
     const words = String(text).split(' '), lines = []; let line = '';
     for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > W - 72 && line) { lines.push(line); line = w; } else line = t; } if (line) lines.push(line);
@@ -26,7 +26,7 @@ export class Wrist {
     g.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H; y += 4) g.fillRect(0, y, W, 1);   // (scanlines: it is light in the air, not paint)
     this.tex.needsUpdate = true;
   }
-  say(text, sec = 3) { if (!text) return; if (text !== this.text) { this.text = text; this.draw(text); if (this.open < 0.5) this.open = 0; } this.hold = Math.max(1.6, sec); }
+  say(text, sec = 3, head) { if (!text) return; if (text !== this.text) { this.text = text; this.draw(text, head); if (this.open < 0.5) this.open = 0; } this.hold = Math.max(1.6, sec); }
   update(dt) {
     this.hold -= dt; const want = this.hold > 0 ? 1 : 0; this.open += (want - this.open) * Math.min(1, dt * (want ? 14 : 7));
     this.root.visible = this.open > 0.01; if (!this.root.visible) return;

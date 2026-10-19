@@ -3,7 +3,7 @@
 // --tune tries Earth's pressure settings and keeps the one closest to the pass lines (all of them reasoned, from the night's flow band):
 //   a perfect player solo comes back at least 95% of the time; a careful one 70 to 90%; a greedy one 40 to 70% (and brings the most light);
 //   tense (danger within 5 m) between 25% and 70% of the trip.
-import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK } from '../core/game.js';
+import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK, fired } from '../core/game.js';
 
 const STYLES = {
   careful: { roam: 28, leaveAt: 35, full: 30, aim: 0.75 },
@@ -22,7 +22,7 @@ function think(g, p, S, r, dt) {
   const k = g.hollow.filter(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), hc = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < hc * 0.35; if (r() > hc) return;
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], oy = p.y + 1.6, vx = k.x - p.x, vy = k.y + hy - oy, vz = k.z - p.z, L = Math.hypot(vx, vy, vz);
-  const h = hitRay(g, p.x, oy, p.z, vx / L, vy / L, vz / L, 31); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
+  fired(g, p, p.x, p.z, vx / L, vz / L); const h = hitRay(g, p.x, oy, p.z, vx / L, vy / L, vz / L, 31); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
 }
 export function trip(style, seed, n = 1) {
   const g = newGame(seed), S = STYLES[style], r = stream(seed, 'drop-' + style); g.clock = 0.3;

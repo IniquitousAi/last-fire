@@ -1,7 +1,7 @@
 // Robot crews that play Last Fire headless, and the breeder that evolves the dark's tactics against them.
 // A crew style is how a group plays (how far from the fire they roam, how greedy for light, how well they aim, whether they stick together).
 // Later, styles come from recorded sessions of the real crew; for now, a few made-up crews stand in for them.
-import { newGame, addPlayer, step, hitRay, damage, heightAt, fireRadius, KINDS, BASE_TACTIC, clampTactic, stream } from '../core/game.js';
+import { newGame, addPlayer, step, hitRay, damage, heightAt, fireRadius, KINDS, BASE_TACTIC, clampTactic, stream, fired } from '../core/game.js';
 
 export const STYLES = {
   careful: { roam: 10, greed: 6, bankAt: 10, aim: 0.75, together: 1 },
@@ -26,7 +26,7 @@ function think(g, p, S, r, dt) {   // (one robot: shoot the nearest Hollow it ca
   const k = g.hollow.filter(k => Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), hitChance = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < hitChance * 0.35; if (r() > hitChance) return;   // (harder to hit the farther it is)
   const hy = head ? KINDS[k.kind].hits[0][0] : KINDS[k.kind].hits[KINDS[k.kind].hits.length - 1][0], ox = p.x, oy = p.y + 1.6, oz = p.z, vx = k.x - ox, vy = k.y + hy - oy, vz = k.z - oz, L = Math.hypot(vx, vy, vz);
-  const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
+  fired(g, p, ox, oz, vx / L, vz / L); const h = hitRay(g, ox, oy, oz, vx / L, vy / L, vz / L, 31); if (h) damage(g, h.k, h.part, PISTOL.dmg * (h.mult > 1 ? PISTOL.head : 1), PISTOL.ap, p.id);
 }
 // one game: a crew of n robots plays some nights against a tactic; returns what the night did to them
 export function play(tactic, styleName, seed, nights = 3, n = 2) {

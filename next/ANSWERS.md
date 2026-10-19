@@ -142,13 +142,13 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - Theme picked: **One thing, many masks** (recommended): the dark is one mind wearing the shapes our brains are built to see (shadow figures, faces in patterns), and it learns new ones from you; the codex labels every guess.
 - The plan: PLAN-SPACE.md.
 
-## Two ways to play (2026-10-19 about 03:00, his words summarized)
+## Two ways to play (2026-10-19, between 02:35 and 02:55, his words summarized)
 - Two major play styles, balanced: **all-out violence** (hordes and hordes; Serious Sam with modern military gear; take out anger on dark, demon, mysterious-looking things; build your action and "I don't give a fuck" skills) and **building literally anything** (in depth, fun, put together logically; his example: a truck on Earth from parts you go find).
 - The real balance is collaboration: one fights, one builds; the finished truck takes the whole crew anywhere and has its own storage.
 - Basic feel-good: storage balanced by weight; the more you carry, the slower you are.
 - How it lands in the plan: Earth trips are where the hordes are (the violence) and where the parts are found (the building); the Moon camp is where things get assembled.
 
-## Heat and light (2026-10-19 about 03:20, his words summarized)
+## Heat and light (2026-10-19, between 02:35 and 02:55, his words summarized)
 - Light is warmth and light, and part of the do-your-job system (play your part, pay your part). Everyone who plays knows it as a starting rule, like the camp's founding rules: without it you have no heat and no light.
 - Heat and light should be part of survival. Right now the dark is almost perfect (super dark without a flashlight), but you could technically play the whole game without lights, with a lot of skill.
 - Undecided on a warmth mechanic. 7 Days to Die's eating, drinking, hot and cold annoyed him but brought immersion; innovation should find something cool.

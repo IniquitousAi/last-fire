@@ -1,6 +1,6 @@
 # Last Fire: the queue
 
-His rule (2026-10-19 about 03:50): anything he says to change or add goes here, in no particular order; he rambles, the queue remembers.
+His rule (2026-10-19, before 02:55): anything he says to change or add goes here, in no particular order; he rambles, the queue remembers.
 Claude picks the order by the bottleneck: what he will see first and most. Done items move to the bottom with their version.
 
 ## Waiting

@@ -1,22 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=35';
-import { Ambience } from './ambience.js?v=35';
-import { Camp, BOARD } from './camp.js?v=35';
-import { Guide } from './guide.js?v=35';
-import { buildSites } from './earthsite.js?v=35';
-import { Truck } from './truck.js?v=35';
-import { Wrist } from './wrist.js?v=35';
-import { HudLook } from './hudlook.js?v=35';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=35';
-import { sound, GUNS } from '../../src/combat.js?v=35';
-import { FX } from '../../src/fx.js?v=35';
+import * as C from '../core/game.js?v=36';
+import { Ambience } from './ambience.js?v=36';
+import { Camp, BOARD } from './camp.js?v=36';
+import { Guide } from './guide.js?v=36';
+import { buildSites } from './earthsite.js?v=36';
+import { Truck } from './truck.js?v=36';
+import { Wrist } from './wrist.js?v=36';
+import { HudLook } from './hudlook.js?v=36';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=36';
+import { sound, GUNS } from '../../src/combat.js?v=36';
+import { FX } from '../../src/fx.js?v=36';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 35;   // (this copy's version; ./version.json says the newest)
+const BUILD = 36;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -225,17 +225,24 @@ $('room').addEventListener('click', e => { const b = e.target.closest('button');
   if (b.id === 'lockRoom') { net.lock(!net.locked); drawPause(); } });
 
 // ---------------------------------------------------------------- actions
-let msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); }   // (messages come from the wrist screen, never as text on the glass: his rule 85)
+let msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); }   // (messages come from the wrist screen, never as text on the glass: his UI rule)
 const look = () => new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw, 0, 'YXZ'));
 function switchGun(k) { if (k === gunKey) return; gunKey = k; reloadT = 0; }
 function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; reloadT = G.reload; sound.magOut(); setTimeout(() => sound.magIn(), G.reload * 700); }
+// a tracer's burn: the whole line it flew stays lit in the air for a third of a second, fading (the light that made the smoke solid)
+const BURN = 8, burnGeo = new THREE.BufferGeometry(), burnPos = new Float32Array(BURN * 6), burnCol = new Float32Array(BURN * 6), burnLife = new Float32Array(BURN); let burnI = 0;
+burnGeo.setAttribute('position', new THREE.BufferAttribute(burnPos, 3)); burnGeo.setAttribute('color', new THREE.BufferAttribute(burnCol, 3));
+const burnLines = new THREE.LineSegments(burnGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); burnLines.frustumCulled = false; scene.add(burnLines);
+function burn(a, b) { const i = burnI++ % BURN; burnPos.set([a.x, a.y, a.z, b.x, b.y, b.z], i * 6); burnLife[i] = C.TRACER.life; }
+function drawBurns(dt) { for (let i = 0; i < BURN; i++) { burnLife[i] = Math.max(0, burnLife[i] - dt); const k = burnLife[i] / C.TRACER.life; burnCol.set([0.75 * k, 0.95 * k, 1.0 * k, 0.1 * k, 0.15 * k, 0.2 * k], i * 6); } burnGeo.attributes.position.needsUpdate = true; burnGeo.attributes.color.needsUpdate = true; }
 function shoot() {
   const G = GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || reloadT > 0 || me.ember) return;
   if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; }
   a.mag--; shotCd = 60 / G.rpm; sound.shot(gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6);
   const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(), sp = G.spread * (ads > 0.5 ? 0.3 : 1); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize();
+  const lit = isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0);   // (every fourth round is a tracer: it lights its path)
   const h = C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), end = o.clone().addScaledVector(d, h ? h.t : 60), gm = held[gunKey];
-  if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); fx.tracer(camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())), end); }
+  if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); const a = camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())); fx.tracer(a, end); if (lit) burn(a, o.clone().addScaledVector(d, h ? h.t : C.TRACER.len)); }
   if (h) { if ((h.part ? h.k.sb : h.k.sh) > 0) fx.spark(end); else fx.ichor(end, h.mult > 1); }
   if (isHost()) { if (h) showHit(C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, me.id), h.mult > 1); } else net.send({ t: 'shot', g: gunKey, o: [o.x, o.y, o.z], d: [d.x, d.y, d.z] });
   if (net) net.send({ t: 'bang', g: gunKey, x: +me.x.toFixed(2), y: +(me.y + 1.5).toFixed(2), z: +me.z.toFixed(2), e: [+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)] });
@@ -320,7 +327,7 @@ function frame(now) {
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) C.step(g, dt); else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
-  drawHollow(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
+  drawHollow(dt); drawBurns(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
@@ -434,7 +441,7 @@ function onNet(m, from) {
     }
     if (m.t === 'shot') {   // (the host traces it in its own world with the gun's own damage, no faster than the gun fires)
       const G = GUNS[m.g]; if (!G || p.ember || !Array.isArray(m.o) || !Array.isArray(m.d) || ![...m.o, ...m.d].every(fin) || Math.hypot(m.o[0] - p.x, m.o[2] - p.z) > 3 || !bucket(p, 'shots', G.rpm / 60 + 1, 4)) return;
-      const L = Math.hypot(m.d[0], m.d[1], m.d[2]); if (L < 0.5) return; const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], m.d[0] / L, m.d[1] / L, m.d[2] / L, 80);
+      const L = Math.hypot(m.d[0], m.d[1], m.d[2]); if (L < 0.5) return; C.fired(g, p, m.o[0], m.o[2], m.d[0] / L, m.d[2] / L); const h = C.hitRay(g, m.o[0], m.o[1], m.o[2], m.d[0] / L, m.d[1] / L, m.d[2] / L, 80);
       if (h) { const r = C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } return;
     }
     if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'grow') C.grow(g, p); else if (m.k === 'drop') C.drop(g, p); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else build(p, m.k, m.x, m.z); return; }
@@ -511,7 +518,7 @@ function myName() { SET.name = ($('name').value || 'Player').replace(/[^A-Za-z0-
 async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
-  if (!camp) camp = new Camp(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, name: () => SET.name, camera: () => camera });
+  if (!camp) camp = new Camp(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who), name: () => SET.name, camera: () => camera });
   if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); }
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); } });

@@ -115,8 +115,8 @@ export class Camp {
       const facing = ((P.o.position.x - me.x) * fx + (P.o.position.z - me.z) * fz) / Math.max(d, 0.01);
       if (d < 4.5 && facing > 0.5 && P.line && d < best) { best = d; talk = P; }
     }
-    if (this.voice && this.voice.until > performance.now()) { const t = `<span style="color:#b9a8ff">${this.voice.role[0].toUpperCase() + this.voice.role.slice(1)}</span>&nbsp; ${this.voice.line}`; this.sub.hidden = false; if (this.sub.innerHTML !== t) this.sub.innerHTML = t; return; }   // (the guide's voice comes first while it speaks)
-    this.sub.hidden = !talk; if (talk) { const t = `<span style="color:#b9a8ff">${talk.role[0].toUpperCase() + talk.role.slice(1)}</span>&nbsp; ${talk.line.replace(/[<>&]/g, '')}`; if (this.sub.innerHTML !== t) this.sub.innerHTML = t; }
+    const who = this.voice && this.voice.until > performance.now() ? this.voice : talk ? { role: talk.role, line: talk.line.replace(/[<>&]/g, '') } : null;   // (the guide's voice first, then whoever you face)
+    this.sub.hidden = true; if (who && who.line !== this.lastHeard) { this.lastHeard = who.line; if (this.ctx.hear) this.ctx.hear(who.role[0].toUpperCase() + who.role.slice(1), who.line); }   // (what people say comes through your wrist: his UI rule)
   }
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
   yard(L, land) {
