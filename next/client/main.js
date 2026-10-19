@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=99';
-import { Ambience } from './ambience.js?v=99';
-import { Camp, BOARD } from './camp.js?v=99';
-import { Guide } from './guide.js?v=99';
-import { buildSites } from './earthsite.js?v=99';
-import { Truck } from './truck.js?v=99';
-import { Wrist } from './wrist.js?v=99';
-import { FireCore } from './firecore.js?v=99';
+import * as C from '../core/game.js?v=100';
+import { Ambience } from './ambience.js?v=100';
+import { Camp, BOARD } from './camp.js?v=100';
+import { Guide } from './guide.js?v=100';
+import { buildSites } from './earthsite.js?v=100';
+import { Truck } from './truck.js?v=100';
+import { Wrist } from './wrist.js?v=100';
+import { FireCore } from './firecore.js?v=100';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=99';
-import { FriendVoice } from './friendvoice.js?v=99';
-import { crewFrom } from '../core/habits.js?v=99';
-import { HudLook } from './hudlook.js?v=99';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=99';
-import { sound, GUNS } from '../../src/combat.js?v=99';
-import { FX } from '../../src/fx.js?v=99';
+import { think as friendThink } from './friend.js?v=100';
+import { FriendVoice } from './friendvoice.js?v=100';
+import { crewFrom } from '../core/habits.js?v=100';
+import { HudLook } from './hudlook.js?v=100';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=100';
+import { sound, GUNS } from '../../src/combat.js?v=100';
+import { FX } from '../../src/fx.js?v=100';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 99;   // (this copy's version; ./version.json says the newest)
+const BUILD = 100;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -397,7 +397,7 @@ function frame(now) {
   ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { runFriends(dt); C.step(g, dt); } else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
-  for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
+  for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
   drawHollow(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
@@ -582,7 +582,7 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
   if (Array.isArray(m.m)) { g.motes = []; for (let i = 0; i + 1 < m.m.length && i < 600; i += 2) if (fin(m.m[i]) && fin(m.m[i + 1])) g.motes.push({ x: m.m[i], z: m.m[i + 1] }); }
   if (Array.isArray(m.nd)) g.nodes = m.nd.filter(a => Array.isArray(a) && C.NODE[a[1]]).slice(0, 400).map(a => ({ id: a[0], kind: a[1], x: a[2], z: a[3], hp: a[4], lit: !!a[5], who: typeof a[6] === 'string' ? a[6].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[7] | 0 }));
   if (Array.isArray(m.mk)) g.marks = m.mk.filter(a => Array.isArray(a) && [a[0], a[1], a[2]].every(fin)).slice(-MARKS).map(a => ({ k: a[0] ? 'fall' : 'wreck', x: a[1], z: a[2], who: typeof a[3] === 'string' ? a[3].replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) : '', n: a[4] | 0 }));
-  if (m.ec && typeof m.ec === 'object' && m.ec.people && typeof m.ec.people === 'object') { const c = C.campOf(g); c.day = m.ec.day | 0; for (const [n, v] of Object.entries(m.ec.people).slice(0, 32)) if (v && fin(v.paid) && fin(v.owed)) c.people[n] = { ...C.person(g, n), paid: v.paid, owed: v.owed }; }
+  if (m.ec && typeof m.ec === 'object' && m.ec.people && typeof m.ec.people === 'object') { const c = C.campOf(g); c.day = m.ec.day | 0; c.pool = fin(m.ec.pool) ? m.ec.pool : 0; for (const [n, v] of Object.entries(m.ec.people).slice(0, 32)) if (v && fin(v.paid) && fin(v.owed)) c.people[n] = { ...C.person(g, n), paid: v.paid, owed: v.owed }; }
   if (fin(m.e)) g.earth = m.e >= 0 ? { ...(g.earth || {}), t: m.e } : null;
   if (g.earth && Array.isArray(m.wr)) g.earth.wrecks = m.wr.filter(a => Array.isArray(a) && a.every(fin)).slice(0, 6).map(a => ({ id: a[0], x: a[1], z: a[2], ry: a[3], left: a[4] }));
   if (m.ln && typeof m.ln === 'object') { g.learned = {}; for (const k of C.PART_ORDER) if (m.ln[k]) g.learned[k] = 1; }
@@ -633,7 +633,7 @@ function myName() { SET.name = ($('name').value || 'Player').replace(/[^A-Za-z0-
 async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
-  if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who), name: () => SET.name, camera: () => camera });
+  if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale + ':' + e.pool }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100), pool: Math.round(g.econ.pool || 0) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who), name: () => SET.name, camera: () => camera });
   if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); }
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); },
