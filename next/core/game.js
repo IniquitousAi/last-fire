@@ -332,7 +332,7 @@ export function hurt(g, p, n, from) {
   if (p.ember) return;
   // two quiet mercies the best action games keep (GAMEDEV-TRICKS.md): the last quarter of your light is worth more than it looks (Doom,
   // Assassin's Creed), and no single hit takes you from healthy to down (Control). Falls stay earned, never one cheap blow.
-  const was = p.hp; if (was <= 25) n *= 0.6; p.hp -= n; if (was > 40 && p.hp <= 0) p.hp = 1; p.hurtT = 1;
+  p.stress = (p.stress || 0) + n * DIRECTOR.hurt; const was = p.hp; if (was <= 25) n *= 0.6; p.hp -= n; if (was > 40 && p.hp <= 0) p.hp = 1; p.hurtT = 1;
   if (p.hp <= 0) {   // (you become an Ember where you fell; the light you carried spills as motes; a friend carries the Ember home)
     for (const k of p.pack || []) g.parts.push({ id: g.nextId++, kind: k, x: p.x + (Math.random() - 0.5) * 2, z: p.z + (Math.random() - 0.5) * 2 }); p.pack = [];
     if (g.earth && onEarth(p)) { const L = g.earth.lost = g.earth.lost || { falls: 0, cells: 0, parts: 0 }; L.falls++; L.cells += p.carried / 8; }
@@ -400,8 +400,20 @@ function spawnEarth(g, dt) {
 export function dimmestGap(g) { const f = g.fire; let best = 0, low = Infinity;
   for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; let L = 0; for (const r of [8, 14, 20]) L += lightAt(g, f.x + Math.cos(a) * r, f.z + Math.sin(a) * r, true); if (L < low) { low = L; best = a; } }
   return best; }
+// the Director (GAMEDEV-TRICKS.md 11, 12: Left 4 Dead's pacing, Alien: Isolation's menace gauge). Each person's stress rises with hurt, with the
+// dark close (8 m) and with being alone; it fades when nothing is near. When anyone peaks, the dark sends nothing new for a while: build up,
+// peak, breathe. It never cheats: what is already out there keeps coming.
+export const DIRECTOR = { hurt: 0.025, near: 0.06, alone: 0.015, decay: 0.07, peak: 1.0, relax: 6, r: 3 };   // (picked from 16 tried by sim/director.mjs)
+function director(g, dt) {
+  if (g.director === false || globalThis.__director === false) return; const D = DIRECTOR;
+  for (const p of g.players) { if (p.ember) { p.stress = 0; continue; } let near = 0; for (const k of g.hollow) if (!k.dead && Math.abs(k.x - p.x) < D.r && Math.abs(k.z - p.z) < D.r && Math.hypot(k.x - p.x, k.z - p.z) < D.r) near++;
+    const alone = g.players.length > 1 && !g.players.some(q => q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 15);
+    p.stress = Math.max(0, Math.min(1.5, (p.stress || 0) + dt * (Math.min(near, 4) * D.near + (alone ? D.alone : 0)) - (near ? 0 : dt * D.decay))); }
+  g.relaxT = Math.max(0, (g.relaxT || 0) - dt); const I = Math.max(0, ...g.players.map(p => p.stress || 0));
+  if (!g.relaxT && I > D.peak) { g.relaxT = D.relax; g.log.push([+g.t.toFixed(2), 'relax', +I.toFixed(2)]); }
+}
 function spawn(g, dt, ph) {
-  if (ph !== 'night' && ph !== 'dusk') return;
+  if (ph !== 'night' && ph !== 'dusk') return; director(g, dt); if (g.relaxT > 0) return;   /* (a breath after a peak) */
   const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + g.players.length * 3), T = g.tactic;
   g.spawnT = (g.spawnT || 0) - dt; if (g.spawnT > 0 || g.hollow.length >= want) return;
   const into = (g.clock - NIGHT_AT) / (DAWN_AT - NIGHT_AT), rush = into > T.rushAt;
