@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=139';
-import { Ambience } from './ambience.js?v=139';
-import { Camp, BOARD } from './camp.js?v=139';
-import { Guide } from './guide.js?v=139';
-import { buildSites } from './earthsite.js?v=139';
-import { Truck } from './truck.js?v=139';
-import { ShipView } from './shipview.js?v=139';
-import { Crew } from './crew.js?v=139';
-import { Hands } from './hands.js?v=139';
-import { Wrist } from './wrist.js?v=139';
-import { FireCore } from './firecore.js?v=139';
+import * as C from '../core/game.js?v=140';
+import { Ambience } from './ambience.js?v=140';
+import { Camp, BOARD } from './camp.js?v=140';
+import { Guide } from './guide.js?v=140';
+import { buildSites } from './earthsite.js?v=140';
+import { Truck } from './truck.js?v=140';
+import { ShipView } from './shipview.js?v=140';
+import { Crew } from './crew.js?v=140';
+import { Hands } from './hands.js?v=140';
+import { Wrist } from './wrist.js?v=140';
+import { FireCore } from './firecore.js?v=140';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=139';
-import { FriendVoice } from './friendvoice.js?v=139';
-import { crewFrom } from '../core/habits.js?v=139';
-import { HudLook } from './hudlook.js?v=139';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=139';
-import { sound, GUNS } from '../../src/combat.js?v=139';
-import { FX } from '../../src/fx.js?v=139';
+import { think as friendThink } from './friend.js?v=140';
+import { FriendVoice } from './friendvoice.js?v=140';
+import { crewFrom } from '../core/habits.js?v=140';
+import { HudLook } from './hudlook.js?v=140';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=140';
+import { sound, GUNS } from '../../src/combat.js?v=140';
+import { FX } from '../../src/fx.js?v=140';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 139;   // (this copy's version; ./version.json says the newest)
+const BUILD = 140;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -143,14 +143,18 @@ function updateShade() { if (!g || C.onEarth(me)) return;
 // ---------------------------------------------------------------- the land: endless, in 32 m tiles built around you as you walk
 const TILE = 32, RES = 33, VIEW = 4, NEAR = 1.6, tiles = new Map();   // (to 128 m: the fog hides everything past about 130 m; tiles past the first ring at a quarter of the detail)
 const groundMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
-groundMat.onBeforeCompile = sh => {   // (light from the network lights the ground: one loop over a small array, no extra lamps)
+// the ground's surface (his ask, 2026-10-19: a world that looks decent): Poly Haven's gray_rocks and ambientCG's Rock035, both CC0 photo scans,
+// laid in world space and blended by a slow noise, so the land reads as real stone and never repeats in a grid
+const rockTex = u => { const t = new THREE.TextureLoader().load('../assets/tex/' + u); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+const uRock = { value: rockTex('gray_rocks_diff_1k.jpg') }, uDark = { value: rockTex('Rock035_1K-JPG_Color.jpg') };
+groundMat.onBeforeCompile = sh => { sh.uniforms.uRock = uRock; sh.uniforms.uDark = uDark;   // (light from the network lights the ground: one loop over a small array, no extra lamps)
   sh.uniforms.uLights = uLights; sh.uniforms.uShade = uShade; sh.uniforms.uShadeBox = uShadeBox;
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
   sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-    varying vec3 vW; uniform vec4 uLights[${NODE_MAX}]; uniform sampler2D uShade; uniform vec3 uShadeBox;
+    varying vec3 vW; uniform vec4 uLights[${NODE_MAX}]; uniform sampler2D uShade; uniform sampler2D uRock, uDark; uniform vec3 uShadeBox;
     float gh(vec3 p){ p = fract(p * 0.3183 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float gn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(gh(i), gh(i + vec3(1,0,0)), f.x), mix(gh(i + vec3(0,1,0)), gh(i + vec3(1,1,0)), f.x), f.y), mix(mix(gh(i + vec3(0,0,1)), gh(i + vec3(1,0,1)), f.x), mix(gh(i + vec3(0,1,1)), gh(i + vec3(1,1,1)), f.x), f.y), f.z); }`)
-    .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.55 + gn(vW * 0.35) * 0.35 + gn(vW * 1.7) * 0.3 + gn(vW * 7.0) * 0.2;')
+    .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.55 + gn(vW * 0.35) * 0.35 + gn(vW * 1.7) * 0.3 + gn(vW * 7.0) * 0.2; vec3 rk = mix(texture2D(uRock, vW.xz * 0.22).rgb, texture2D(uDark, vW.xz * 0.15).rgb * 1.3, smoothstep(0.35, 0.65, gn(vW * 0.05))); diffuseColor.rgb *= rk * 1.9;')
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       vec2 su = (vW.xz - uShadeBox.xy) / (2.0 * uShadeBox.z) + 0.5; float shd = (su.x > 0.0 && su.y > 0.0 && su.x < 1.0 && su.y < 1.0) ? texture2D(uShade, su).r : 1.0;   /* (the rule's shadows: on the fire and the nodes, never on your own glow, the truck's lamps or a flare) */
       float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += (i == 0 || i >= 5 ? shd : 1.0) * q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
