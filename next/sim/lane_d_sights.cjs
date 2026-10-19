@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 8092, W = 1000, H = 900;
   const centroid = async () => { const png = (await p.screenshot()).toString('base64');
     return p.evaluate(async b64 => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
       const x0 = img.width / 2 - 22, y0 = img.height / 2 - 22, d = g.getImageData(x0, y0, 44, 44).data; let sx = 0, sy = 0, n = 0;
-      for (let y = 0; y < 44; y++) for (let x = 0; x < 44; x++) { const i = (y * 44 + x) * 4, r = d[i], gg = d[i + 1], bb = d[i + 2]; if (r > 200 && gg < 130 && bb > 150 && r - gg > 100) { sx += x; sy += y; n++; } }
+      for (let y = 0; y < 44; y++) for (let x = 0; x < 44; x++) { const i = (y * 44 + x) * 4, r = d[i], gg = d[i + 1], bb = d[i + 2]; if (r > 170 && gg < 120 && bb > 90 && r - gg > 90) { sx += x; sy += y; n++; } }
       return n < 6 ? null : { x: x0 + sx / n + 0.5 - img.width / 2, y: y0 + sy / n + 0.5 - img.height / 2, n }; }, png); };
   for (const k of ['pistol', 'shotgun', 'lmg']) {
     await p.evaluate(k => { __lf.gun(k); __lf.aim(true); }, k); await p.waitForTimeout(1800);
@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 8092, W = 1000, H = 900;
   }
   for (const k of ['ar', 'rail']) {
     await p.evaluate(k => { __lf.gun(k); __lf.aim(true); }, k); await p.waitForTimeout(2200);
-    const pts = []; for (let i = 0; i < 4; i++) { const c = await centroid(); if (c) pts.push(c); await p.waitForTimeout(500); }
+    const pts = []; for (let i = 0; i < 6; i++) { const c = await centroid(); if (c) pts.push(c); await p.waitForTimeout(350); }
     if (!pts.length) { say(false, k + ' reticle pixels found', 'none (no sight drawn)'); continue; }
     const mx = pts.reduce((a, c) => a + c.x, 0) / pts.length, my = pts.reduce((a, c) => a + c.y, 0) / pts.length, rx = Math.max(...pts.map(q => q.x)) - Math.min(...pts.map(q => q.x)), ry = Math.max(...pts.map(q => q.y)) - Math.min(...pts.map(q => q.y));
     say(Math.abs(mx) <= 2 && Math.abs(my) <= 2, k + ' reticle center within 2 px of screen center', `off x ${mx.toFixed(2)} y ${my.toFixed(2)} px over ${pts.length} frames`);

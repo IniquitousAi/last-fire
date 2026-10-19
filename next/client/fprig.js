@@ -8,7 +8,7 @@ export class FpRig {
     this.mix = new T.AnimationMixer(this.root); const clip = n => gltf.animations.find(a => a.name === n);
     this.a = {}; for (const n of ['idle', 'ads', 'fire', 'reload', 'reload_tac', 'reload_empty', 'charge']) { const c = clip(n); if (c) this.a[n] = this.mix.clipAction(c); }
     for (const n of ['fire', 'reload', 'reload_tac', 'reload_empty', 'charge']) if (this.a[n]) { this.a[n].setLoop(T.LoopOnce, 1); this.a[n].clampWhenFinished = false; }
-    this.a.idle.play(); this.a.ads.play(); this.a.ads.setEffectiveWeight(0); this.busy = null;
+    this.a.idle.play(); this.a.ads.play(); this.a.ads.paused = true; this.a.ads.setEffectiveWeight(0);   /* (the aimed pose holds still: the sight must not drift off center, tested in sim/lane_d_sights.cjs) */ this.busy = null;
     this.mix.addEventListener('finished', e => { if (e.action === this.busy) { this.busy = null; this.base(1); } });
   }
   base(w) { this.a.idle.setEffectiveWeight(w * (1 - this.adsW)); this.a.ads.setEffectiveWeight(w * this.adsW); }
