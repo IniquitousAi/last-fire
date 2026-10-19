@@ -1,17 +1,17 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=16';
-import { Ambience } from './ambience.js?v=16';
-import { Camp } from './camp.js?v=16';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=16';
-import { sound, GUNS } from '../../src/combat.js?v=16';
-import { FX } from '../../src/fx.js?v=16';
+import * as C from '../core/game.js?v=17';
+import { Ambience } from './ambience.js?v=17';
+import { Camp } from './camp.js?v=17';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=17';
+import { sound, GUNS } from '../../src/combat.js?v=17';
+import { FX } from '../../src/fx.js?v=17';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 16;   // (this copy's version; ./version.json says the newest)
+const BUILD = 17;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -65,7 +65,9 @@ groundMat.onBeforeCompile = sh => {   // (light from the network lights the grou
     .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.7 + gn(vW * 1.7) * 0.35 + gn(vW * 7.0) * 0.18;')
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
-      totalEmissiveRadiance += diffuseColor.rgb * vec3(0.75, 0.85, 1.25) * min(L, 1.6) * 1.15;`);
+      totalEmissiveRadiance += diffuseColor.rgb * vec3(0.75, 0.85, 1.25) * min(L, 1.6) * 1.15;
+      float far = smoothstep(55.0, 140.0, length(vW.xz - cameraPosition.xz)); float vein = smoothstep(0.82, 0.97, gn(vW * 0.09 + vec3(0.0, 0.0, 0.0))) * smoothstep(0.35, 0.8, gn(vW * 0.031));
+      vec3 hue = mix(vec3(0.25, 0.9, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */`);
 };
 function buildTile(tx, tz, res = RES) {
   const geo = new THREE.PlaneGeometry(TILE, TILE, res - 1, res - 1); geo.rotateX(-Math.PI / 2);
@@ -155,6 +157,12 @@ function embers(dt) { if (!g) return; const f = g.fire, y0 = g.land(f.x, f.z) + 
   for (let i = 0; i < EMB; i++) { if ((embLife[i] -= dt) <= 0) { if (!on) { embPos[i * 3 + 1] = -999; continue; } embLife[i] = 1.2 + Math.random() * 2.2; embPos.set([f.x + (Math.random() - 0.5) * 0.6, y0, f.z + (Math.random() - 0.5) * 0.6], i * 3); embVel.set([(Math.random() - 0.5) * 0.4, 0.9 + Math.random() * 1.4, (Math.random() - 0.5) * 0.4], i * 3); }
     embVel[i * 3] += (Math.random() - 0.5) * dt * 1.5; embVel[i * 3 + 2] += (Math.random() - 0.5) * dt * 1.5; for (let k = 0; k < 3; k++) embPos[i * 3 + k] += embVel[i * 3 + k] * dt; }
   embMesh.geometry.attributes.position.needsUpdate = true; }
+// far lights: a few slow drifting lights out where nobody has been (awe far; one draw call)
+const FAR = 9, farPos = new Float32Array(FAR * 3), farCol = new Float32Array(FAR * 3), farSeed = Array.from({ length: FAR }, (_, i) => ({ a: i / FAR * Math.PI * 2 + Math.random(), r: 150 + Math.random() * 90, h: 18 + Math.random() * 40, s: (Math.random() - 0.5) * 0.02 }));
+farSeed.forEach((f, i) => farCol.set([[0.3, 0.9, 1], [0.95, 0.35, 1], [0.6, 0.5, 1]][i % 3], i * 3));
+const farMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 9, vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+farMesh.geometry.setAttribute('position', new THREE.BufferAttribute(farPos, 3)); farMesh.geometry.setAttribute('color', new THREE.BufferAttribute(farCol, 3)); farMesh.frustumCulled = false; scene.add(farMesh);
+function farLights(dt) { if (!me) return; farSeed.forEach((f, i) => { f.a += f.s * dt; farPos.set([me.x + Math.cos(f.a) * f.r, f.h, me.z + Math.sin(f.a) * f.r], i * 3); }); farMesh.geometry.attributes.position.needsUpdate = true; }
 // motes of light: a few hundred points in one draw call; they drift toward you when you walk close
 const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xbfe0ff, size: 0.35, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
 motes.geometry.setAttribute('position', new THREE.BufferAttribute(motePos, 3)); motes.frustumCulled = false; scene.add(motes);
@@ -281,7 +289,7 @@ function frame(now) {
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
   drawFriends(dt); sync(dt); if (camp) camp.update(dt);
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
-  amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt);
+  amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
   renderer.render(scene, camera);
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
