@@ -270,6 +270,16 @@
    "s": "talk",
    "idea": "Tech by era: scavenged, then light, then the dark itself; creativity simulated too",
    "where": "lore 9"
+  },
+  {
+   "s": "talk",
+   "idea": "Knowledge is the crew's shared currency, labeled checked / reasoned / guess; a research computer is a real job",
+   "where": "merge answers"
+  },
+  {
+   "s": "talk",
+   "idea": "Immersion, small details and depth: the feeling that matters most; fun for the masses checked by research",
+   "where": "research next"
   }
  ]
 }
