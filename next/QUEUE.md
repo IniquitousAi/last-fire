@@ -39,7 +39,8 @@ Claude picks the order by the bottleneck: what he will see first and most.
 
 
 
-28. **One light is your health** (INNOVATION.md, UI and HUD): no health bar; your own glow dims as you are hurt, and the visor reads it. (added when item 27 finished)
+
+29. **Theories with odds on the board** (INNOVATION.md, odds board): the camp's theories of what the dark is, each with live odds that move as you learn. (added when item 28 finished)
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
@@ -57,3 +58,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 23, the world keeps your friends' builds and falls (v71); bump.py guards against code after a // comment.
 - Item 26, the roof lamp for the front seat (v72).
 - Item 27, the dark wears what you looked at (v73; its patch note says only 'Small changes', on purpose: it never says so).
+- Item 28, one light is your health (v74).
