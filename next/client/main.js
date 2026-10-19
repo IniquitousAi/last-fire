@@ -36,6 +36,7 @@ import { sound, GUNS } from '../../src/combat.js?v=172';
 import { FX } from '../../src/fx.js?v=172';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { Creatures } from './creatures.js?v=172';
+import { Impact, smokeHit } from './impact.js?v=172';
 
 const $ = id => document.getElementById(id);
 const BUILD = 172;   // (this copy's version; ./version.json says the newest)
@@ -216,7 +217,7 @@ load('lamppost', 'ph/street_lamp_02/street_lamp_02_1k.gltf');   // (the real sca
 const ready = Promise.all([load('stalker', 'm/dark/stalker.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), ...(/[?&]nofp(&|$)/.test(location.search) ? [] : [load('fp_rifle', 'fp/rifle_fp.glb')]),   /* (the Blender rifle and arms are the default since v155, his rule: the newest rig is never behind a switch) */ load('fp_rail', 'fp/sniper_fp.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
-const seen = new Map(); const creatures = new Creatures({ scene, models, fx, sound, C });
+const seen = new Map(); const impact = new Impact(scene, (x, z) => g ? g.land(x, z) : 0), creatures = new Creatures({ scene, models, fx, sound, C, impact });
 // the Kiroshi scan (Cyberpunk 2077, his north star, 2026-10-19): middle mouse or Z pings the dark; every shape within 30 m shows as a violet outline
 // for 2 s, 8 s between scans. Seeing is not hitting: out of the light they stay smoke
 const SCAN = { r: 30, t: 2, cd: 8, color: 0x8a5cff }; let scanCd = 0;
@@ -237,7 +238,7 @@ const smartTarget = () => smart.t >= SMART.lock ? g.hollow.find(k => k.id === sm
 addEventListener('mouseup', e => { if (e.button === 3 || e.button === 4) e.preventDefault(); });   // (the back side button must not take the browser back a page)
 function sandy() { if (!g || !me || me.ember) return; if (net) return say('Slow time works alone only: with friends the world is shared.', 3); if (sandyCd > 0) return say(`Slow time recharging: ${Math.ceil(sandyCd)} s.`, 2);
   sandyT = SANDY.t; sandyCd = SANDY.cd + SANDY.t; kick = Math.min(1, kick + 0.3); say('Slow time: 6 s.', 2); }
-function drawHollow(dt) { creatures.draw(g, dt, { seen, hitStop, smart, SMART, SCAN, camera, g }); }   // (the bodies: client/creatures.js; their rules: core moveHollow and bodyStep)
+function drawHollow(dt) { creatures.draw(g, dt, { seen, hitStop, smart, SMART, SCAN, camera, g }); impact.update(dt); }   // (the bodies: client/creatures.js; their rules: core moveHollow and bodyStep)
 
 // ---------------------------------------------------------------- the fire and the network's nodes
 const fireLight = new THREE.PointLight(0x9fc0ff, 0, 30, 1.6); scene.add(fireLight);
@@ -301,7 +302,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
-if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, get wrist() { return wrist; }, get camp() { return camp; }, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
+if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { impact, creatures, fire: () => shoot(), refill: () => { ammo[gunKey].mag = 30; }, get yawpitch() { return [me.yaw, me.pitch]; }, get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, get wrist() { return wrist; }, get camp() { return camp; }, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
   sight: () => { const gm = held[gunKey]; if (!gm || !gm.visible) return null; vcam.updateMatrixWorld(true); gm.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(gm), c = bx.getCenter(new THREE.Vector3()), p = new THREE.Vector3(c.x, bx.max.y, c.z).applyMatrix4(vcam.matrixWorldInverse).applyMatrix4(vcam.projectionMatrix); return { x: p.x * innerWidth / 2, y: p.y * innerHeight / 2, ads }; },   /* (test: where the held gun's sight point lands, in pixels from screen center) */ info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
@@ -445,7 +446,11 @@ function shoot() {
     const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z, mount ? 'mount' : gunKey) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
     const rc = G.charge ? shoot.c || 0 : 1, all = G.charge && rc >= 0.75 ? C.hitAll(g, o.x, o.y, o.z, d.x, d.y, d.z, 120) : null, h = all ? all[0] : C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), e = o.clone().addScaledVector(d, all && all.length ? all[all.length - 1].t + 30 : h ? h.t : 60); if (!end) end = e;
     fx.tracer(muzzle, e); if (lit || G.charge) burn(muzzle, o.clone().addScaledVector(d, h && !all ? h.t : C.TRACER.len));
-    for (const q of all || (h ? [h] : [])) { const qe = o.clone().addScaledVector(d, q.t); if ((q.part ? q.k.sb : q.k.sh) > 0) fx.spark(qe); else fx.ichor(qe, q.mult > 1); if (isHost()) showHit(C.damage(g, q.k, q.part, G.dmg * (0.5 + 0.5 * rc) * (q.mult > 1 ? G.head : 1), G.ap, me.id), q.mult > 1); }   /* (the rail: half damage uncharged; from 75% charge it goes through every shape in line, Cyberpunk's own bar) */
+    for (const q of all || (h ? [h] : [])) { const qe = o.clone().addScaledVector(d, q.t), shell = (q.part ? q.k.sb : q.k.sh) > 0, dmg = G.dmg * (0.5 + 0.5 * rc) * (q.mult > 1 ? G.head : 1), heavy = dmg >= q.k.max * 0.2;
+      if (shell) fx.spark(qe); const r = isHost() ? C.damage(g, q.k, q.part, dmg, G.ap, me.id) : null;
+      if (!shell) impact.ichor(qe, d, q.mult > 1, heavy, !!(r && r.kill));   // (dark ichor with crimson specks from the exact hit point, along the shot)
+      creatures.hit(q.k.id, qe, d, { head: q.mult > 1, heavy }); if (r) showHit(r, q.mult > 1, heavy); }
+    { const sm = smokeHit(g, C, o.x, o.y, o.z, d.x, d.y, d.z, h ? h.t : 60); if (sm) { impact.puff(sm, d); if (n === 0) sound.puff(); } }   // (out of every light the dark is smoke: the shot goes through, a gray puff, no blood)   /* (the rail: half damage uncharged; from 75% charge it goes through every shape in line, Cyberpunk's own bar) */
   }
   if (!isHost()) net.send({ t: 'shot', g: mount ? 'lmg' : gunKey, o: [o.x, o.y, o.z], d: ds[0], ds, c: G.charge ? +(shoot.c || 0).toFixed(2) : 1 });
   if (net) net.send({ t: 'bang', p: me.id, g: gunKey, x: +me.x.toFixed(2), y: +(me.y + 1.5).toFixed(2), z: +me.z.toFixed(2), e: [+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)] });
@@ -453,7 +458,7 @@ function shoot() {
 }
 let hitT = 0;
 let hitStop = 0;   // (hit stop, INNOVATION.md combat: the dark's own motion freezes for a few hundredths of a second when a hit lands; the world keeps running)
-function showHit(r, head) { hitStop = Math.max(hitStop, r.kill ? 0.075 : 0.035); kick = Math.min(1, kick + (r.kill ? 0.25 : 0.1)); $('hit').className = r.kill ? 'kill' : r.shell ? 'shell' : 'on'; hitT = r.kill ? 0.25 : 0.12; r.kill ? sound.kill() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.hit(head); }
+function showHit(r, head, heavy) { hitStop = Math.max(hitStop, r.kill ? 0.075 : 0.035); kick = Math.min(1, kick + (r.kill ? 0.25 : 0.1)); { const el = $('hit'); el.className = ''; void el.offsetWidth; el.className = r.kill ? 'kill' : r.shell ? 'shell' : head ? 'head' : 'on'; } hitT = r.kill ? 0.3 : 0.14; r.kill ? sound.slay() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.impact(head, heavy); }   /* (the marker: four chevrons tick inward, heavier and crimson on a kill) */
 function tryGrow() {   // (growing the fire: your choice, and tonight the dark answers with what the new level wakes)
   if (!C.canGrow(g)) return; if (Math.hypot(me.x - g.fire.x, me.z - g.fire.z) > C.fireRadius(g.fire)) return say('Stand at the fire to grow it.');
   if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }

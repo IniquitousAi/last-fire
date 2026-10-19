@@ -19,11 +19,11 @@ const CLIPS = ['Idle', 'Walk', 'Run', 'Attack', 'HitReact', 'Death'];
 const ang = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
 export class Creatures {
-  constructor({ scene, models, fx, sound, C, getG }) { this.scene = scene; this.models = models; this.fx = fx; this.sound = sound; this.C = C; this.dying = []; this.frame = 0; this.shardSrc = null; }
+  constructor({ scene, models, fx, sound, C, getG, impact }) { this.impact = impact; this.scene = scene; this.models = models; this.fx = fx; this.sound = sound; this.C = C; this.dying = []; this.frame = 0; this.shardSrc = null; }
 
   make(k) {
     const B = BODY[k.kind], src = this.models[B.model]; if (!src) return null;
-    const o = skClone(src.scene), mats = [], veins = [], lods = [], cache = new Map(); o.scale.set(B.s * (B.sx || 1), B.s, B.s * (B.sx || 1));
+    const o = skClone(src.scene), mats = [], veins = [], lods = [], cache = new Map(), hitU = { value: new THREE.Vector4(0, 0, 0, 0) };   // (hitU: where the last shot landed, in the world, and how hot it still is: the veins there flash crimson) o.scale.set(B.s * (B.sx || 1), B.s, B.s * (B.sx || 1));
     o.traverse(q => { if (!q.isMesh) return; q.castShadow = false; q.receiveShadow = false;
       const L = /LOD(\d)/.exec(q.name); if (L) lods[+L[1]] = q;
       // frustum culling stays on: the bind-pose sphere is grown once so swinging tendrils never pop out at the screen's edge
@@ -31,7 +31,7 @@ export class Creatures {
       const list = Array.isArray(q.material) ? q.material : [q.material];
       const out = list.map(m => { if (cache.has(m)) return cache.get(m); const n = m.clone(); cache.set(m, n);
         if (/Vein/.test(m.name)) { n.color.setHex(0x120008); n.emissive = new THREE.Color(B.rim); n.emissiveIntensity = 0.9; n.roughness = 1; veins.push(n); }
-        else { n.color.setHex(0x07060c); n.emissive = new THREE.Color(0x0a0c18); n.emissiveIntensity = 0.3; n.roughness = 0.9; n.metalness = 0; n.userData.rim = 1; n.defines = { ...(n.defines || {}), USE_RIM: '', RIM_COLOR: rimVec(B.rim, B.rimK) }; n.needsUpdate = true; mats.push(n); }
+        else { n.color.setHex(0x07060c); n.emissive = new THREE.Color(0x0a0c18); n.emissiveIntensity = 0.3; n.roughness = 0.9; n.metalness = 0; n.userData.rim = 1; hitPatch(n, hitU); n.defines = { ...(n.defines || {}), USE_RIM: '', RIM_COLOR: rimVec(B.rim, B.rimK) }; n.needsUpdate = true; mats.push(n); }
         return n; });
       q.material = Array.isArray(q.material) ? out : out[0]; });
     const mix = new THREE.AnimationMixer(o), act = {};
@@ -39,7 +39,7 @@ export class Creatures {
     for (const n of ['Idle', 'Walk', 'Run']) { act[n].setLoop(THREE.LoopRepeat); act[n].play(); }
     for (const n of ['Attack', 'HitReact', 'Death']) { act[n].setLoop(THREE.LoopOnce, 1); act[n].clampWhenFinished = true; }
     mix.update(Math.random() * 0.8);
-    return { o, mix, act, mats, veins, lods, lod: 0, acc: 0, B, mix_t: 0, loco: 'Idle', w: { Idle: 1, Walk: 0, Run: 0 }, speed: 0, px: k.x, pz: k.z, hd: k.yaw, a: 0, h: 0, down: false, hpS: k.hp + k.sh + k.sb, flash: 0, tell: 0, cd: k.cd || 0, rt: 0, sol: 0, base: B.rim };
+    return { hitU, b1: o.getObjectByName('spine_1'), b2: o.getObjectByName('spine_2'), bq1: new THREE.Quaternion(), bq2: new THREE.Quaternion(), o, mix, act, mats, veins, lods, lod: 0, acc: 0, B, mix_t: 0, loco: 'Idle', w: { Idle: 1, Walk: 0, Run: 0 }, speed: 0, px: k.x, pz: k.z, hd: k.yaw, a: 0, h: 0, down: false, hpS: k.hp + k.sh + k.sb, flash: 0, tell: 0, cd: k.cd || 0, rt: 0, sol: 0, base: B.rim };
   }
 
   // Earth's dark comes out of spawner pods: a dark violet egg with a glowing red core and red root tendrils on the ground. The pod flashes, splits, and the body
@@ -79,7 +79,7 @@ export class Creatures {
   }
 
   draw(g, dt, X) {   // X: { seen, hitStop, smart, SMART, SCAN, models }
-    const { seen } = X, C = this.C, alive = new Set(), cam = X.camera, now = performance.now() / 1000; this.frame++;
+    const { seen } = X; this.seenRef = seen; const C = this.C, alive = new Set(), cam = X.camera, now = performance.now() / 1000; this.frame++;
     for (const k of g.hollow) {
       alive.add(k.id); let v = seen.get(k.id);
       if (!v) {
@@ -100,7 +100,7 @@ export class Creatures {
       const cd = k.cd || 0; if (cd > v.cd + 0.2 && v.act.Attack && !(k.rt > 0)) { const a = v.act.Attack, len = a.getClip().duration; a.reset(); a.time = len * 0.3; a.timeScale = 1; a.setEffectiveWeight(1); a.play(); v.a = 1; v.atkT = len * 0.7; } v.cd = cd;
       if (v.atkT > 0) { v.atkT -= dt; if (v.atkT <= 0) v.a = 0; }
       // the hit reaction: flinch, stagger, or down
-      const hp = k.hp + k.sh + k.sb; if (hp < v.hpS - 0.01) v.flash = 0.16; v.hpS = hp;
+      const hp = k.hp + k.sh + k.sb; if (hp < v.hpS - 0.01) { v.flash = 0.16; if (!(v.hitU.value.w > 0.3)) v.hitU.value.set(k.x, k.y + 1.4, k.z, 0.8); } v.hpS = hp;   // (a shot we did not fire ourselves: the flash lands on the middle of the body)
       if (k.rt > 0 && (!(v.rt > 0) || (k.r || 0) > v.r)) { v.r = k.r || 1; const a = v.act.HitReact, dn = v.r >= 3; if (dn) { const De = v.act.Death; De.reset(); De.timeScale = 1.4; De.setEffectiveWeight(1); De.play(); v.down = true; } else { a.reset(); a.timeScale = v.r === 2 ? 0.8 : 1.5; a.setEffectiveWeight(1); a.play(); v.h = 1; } }
       if (k.rt > 0 && v.down) { const De = v.act.Death; if (De.time > De.getClip().duration * 0.45) De.paused = true; }
       if (!(k.rt > 0) && (v.rt > 0)) { v.h = 0; if (v.down) { v.down = false; v.act.Death.paused = false; v.act.Death.fadeOut(0.5); } }
@@ -116,7 +116,7 @@ export class Creatures {
       const tell = Math.max(0, Math.min(1, 1 - (dm - reach) / (reach * 1.6))) + (k.kind === 'watcher' && !C.lookedAt(g, k) && dm < 30 ? 0.5 : 0); v.tell += (tell - v.tell) * Math.min(1, dt * 8);
       v.flash = Math.max(0, v.flash - dt); const glow = (0.18 + 0.35 * v.sol) * (0.7 + 0.9 * v.tell) + 2.2 * (v.flash / 0.16);
       for (const m of v.veins) m.emissiveIntensity = glow;
-      for (const m of v.mats) { m.emissiveIntensity = 0.3 + 2 * (v.flash > 0 ? v.flash / 0.16 : 0); }
+      v.hitU.value.w = Math.max(0, v.hitU.value.w - dt / 0.16); for (const m of v.mats) m.emissiveIntensity = 0.3;
       if (v.tag > 0) v.tag -= dt; if (X.smart.id === k.id && X.smart.t >= X.SMART.lock) v.scan = Math.max(v.scan || 0, 0.45);   // (a locked shape keeps its outline, in pink)
       if (v.scan > 0 || v.scanned) { v.scan = Math.max(0, (v.scan || 0) - dt); const a = Math.min(1, v.scan / 0.4);
         for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); } if (v.scan > 0) { m.emissive.setHex(X.smart.id === k.id && X.smart.t >= X.SMART.lock ? X.SMART.color : X.SCAN.color); m.emissiveIntensity = 0.9 * a; } else m.emissive.setHex(m.userData.e0); }
@@ -124,11 +124,27 @@ export class Creatures {
       // the watcher holds perfectly still while anyone looks at it; hit stop freezes the dark for a few hundredths of a second
       // level of detail on one skeleton: 14k tris inside 15 m, 5k to 40 m, 1.5k past that; the pose updates at 30 Hz near, 10 Hz far, and not at all past 60 m
       { const want = d < 15 ? 0 : d < 40 ? 1 : 2, lod = v.lods.length ? Math.min(want, v.lods.length - 1) : 0; if (lod !== v.lod || !v.lodSet) { v.lods.forEach((m, i) => { if (m) m.visible = i === lod; }); v.lod = lod; v.lodSet = true; } }
-      v.acc += dt; const rate = d < 20 ? 1 / 30 : d < 60 ? 1 / 10 : Infinity;
-      if (X.hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k)) && v.acc >= rate) { v.mix.update(v.acc); v.acc = 0; } else if (v.acc > 1) v.acc = 1;
+      let upd = false; v.acc += dt; const rate = d < 20 ? 1 / 30 : d < 60 ? 1 / 10 : Infinity;
+      if (X.hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k)) && v.acc >= rate) { v.mix.update(v.acc); v.acc = 0; upd = true; } else if (v.acc > 1) v.acc = 1;
+      this.jerk(v, dt, upd);
     }
     for (const [id, v] of seen) if (!alive.has(id)) { seen.delete(id); if (v.mix && v.last && v.last.kind !== 'shard' && v.o.visible) this.startDeath(v); else this.scene.remove(v.o); }
     this.stepDying(dt);
+  }
+
+  // a shot lands: the body jerks away along the shot (an offset on top of the animation, on the spine and the neck), the veins there flash crimson.
+  // dir: the shot's direction (unit, world); head: a head hit snaps the neck; heavy: a harder jerk (the core's stagger does the rest)
+  hit(id, point, dir, info = {}) {
+    const v = this.seenRef && this.seenRef.get(id); if (!v || v.shard) return; v.hitU.value.set(point.x, point.y, point.z, 1); v.flash = 0.16; v.lastDir = dir.clone(); v.lastHit = performance.now();
+    v.jerk = { t: 0, d: new THREE.Vector3(dir.x, 0, dir.z).normalize(), amp: info.heavy ? 0.34 : 0.16, head: !!info.head };
+  }
+  jerk(v, dt, upd) {
+    if (!v.b1) return; if (upd || !v.bqInit) { v.bq1.copy(v.b1.quaternion); if (v.b2) v.bq2.copy(v.b2.quaternion); v.bqInit = true; }
+    const J = v.jerk; if (!J) { if (v.jerkOn) { v.b1.quaternion.copy(v.bq1); if (v.b2) v.b2.quaternion.copy(v.bq2); v.jerkOn = false; } return; }
+    J.t += dt; if (J.t > 0.7) { v.jerk = null; return; } v.jerkOn = true;
+    const k1 = Math.exp(-J.t / 0.2) * Math.cos(J.t * 14), axis = _up.clone().cross(J.d).normalize();   // (the top of the body goes the way the shot went, rings back, settles)
+    const apply = (bone, base, ang) => { const par = bone.parent; par.getWorldQuaternion(_pq); const Rw = _rq.setFromAxisAngle(axis, ang); bone.quaternion.copy(_pq.clone().invert().multiply(Rw).multiply(_pq).multiply(base)); };
+    apply(v.b1, v.bq1, J.amp * k1); if (v.b2) apply(v.b2, v.bq2, (J.head ? 0.7 : J.amp * 0.6) * Math.exp(-J.t / (J.head ? 0.13 : 0.2)) * Math.cos(J.t * (J.head ? 22 : 14)));   // (a head hit snaps the neck, fast and hard)
   }
 
   // a body that left the list collapses where it stood (a tree going over), lies a moment, then comes apart into light
@@ -136,13 +152,17 @@ export class Creatures {
     const k = v.last; v.o.position.set(k.x, k.y, k.z); v.o.rotation.y = k.yaw; const A = v.act; if (v.pod) { this.scene.remove(v.pod.g); v.pod = null; v.o.visible = true; }
     for (const n of ['Idle', 'Walk', 'Run', 'Attack', 'HitReact']) A[n].stop(); A.Death.stop(); A.Death.reset(); A.Death.paused = false; A.Death.timeScale = 1; A.Death.setEffectiveWeight(1); A.Death.play();
     for (const m of [...v.veins, ...v.mats]) m.transparent = true;
+    if (v.lastDir && performance.now() - v.lastHit < 1500) v.fallYaw = Math.atan2(-v.lastDir.x, -v.lastDir.z);   // (it goes over the way the shot was going)
     v.t = 0; this.dying.push(v); if (this.dying.length > 24) { const o = this.dying.shift(); this.scene.remove(o.o); }
   }
   stepDying(dt) {
-    for (const v of this.dying) { v.t += dt; v.mix.update(dt); const T = v.act.Death.getClip().duration, lie = T + 0.7, fade = 1.1;
-      if (v.t > lie) { const a = Math.max(0, 1 - (v.t - lie) / fade); for (const m of [...v.veins, ...v.mats]) m.opacity = a; for (const m of v.veins) m.emissiveIntensity = 1.2 + 3 * (1 - a);
-        if (!v.burst && v.t > lie + 0.15) { v.burst = true; const c = new THREE.Color(v.base); for (let i = 0; i < 4; i++) this.fx.burst(new THREE.Vector3(v.o.position.x + (Math.random() - 0.5) * 2, v.o.position.y + 0.3 + Math.random(), v.o.position.z + (Math.random() - 0.5) * 2), 10, [c.r, c.g, c.b], 3.5, 0.9); } } }
-    this.dying = this.dying.filter(v => { if (v.t > v.act.Death.getClip().duration + 0.7 + 1.1) { this.scene.remove(v.o); return false; } return true; });
+    for (const v of this.dying) { v.t += dt; v.mix.update(dt); const T = v.act.Death.getClip().duration, lie = T + 0.5, fade = 1.3;
+      if (v.fallYaw !== undefined && v.t < 0.5) { let d = v.fallYaw - v.o.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); v.o.rotation.y += d * Math.min(1, dt * 9); }
+      if (v.t > lie) { const a = Math.max(0, 1 - (v.t - lie) / fade); for (const m of [...v.veins, ...v.mats]) m.opacity = a;
+        // the body comes apart into red motes that rise: spawned over the lying shape, a few every frame while it fades
+        if (this.impact) { const n = Math.round(5 * (1 - (v.t - lie) / fade) + 1), sc = v.B.s; for (let i = 0; i < n; i++) { const r = Math.random() * 1.3 * sc, an = Math.random() * 6.283; _mp.set(v.o.position.x + Math.cos(an) * r, v.o.position.y + 0.1 + Math.random() * 0.5, v.o.position.z + Math.sin(an) * r); this.impact.mote(_mp); } if (!v.logged) { v.logged = true; this.impact.log('dissolve', 0); } } }
+    }
+    this.dying = this.dying.filter(v => { if (v.t > v.act.Death.getClip().duration + 0.5 + 1.3) { this.scene.remove(v.o); return false; } return true; });
   }
 
   // the shard is not a body: it floats to the fire and drinks its light (its model is the old crystal, violet, with no glow of its own)
@@ -153,5 +173,12 @@ export class Creatures {
     v.o.position.set(k.x, k.y + 2.6, k.z); v.o.rotation.y = k.yaw + performance.now() / 900;
     if (v.tag > 0) v.tag -= dt;
   }
+}
+const _up = new THREE.Vector3(0, 1, 0), _pq = new THREE.Quaternion(), _rq = new THREE.Quaternion(), _mp = new THREE.Vector3();
+function hitPatch(m, U) {   // (the crimson flash is a patch on the body's own shader: it lights only the surface near where the shot landed)
+  m.onBeforeCompile = sh => { sh.uniforms.uHit = U;
+    sh.vertexShader = 'varying vec3 vHp;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\n vHp = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = 'uniform vec4 uHit; varying vec3 vHp;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n { float hd = distance(vHp, uHit.xyz); totalEmissiveRadiance += vec3(1.0, 0.05, 0.16) * uHit.w * (1.0 - smoothstep(0.12, 0.8, hd)) * 2.4; }'); };
+  m.customProgramCacheKey = () => 'hollowhit';
 }
 function rimVec(hex, k) { const c = new THREE.Color(hex); return `vec3(${(c.r * k).toFixed(3)}, ${(c.g * k).toFixed(3)}, ${(c.b * k).toFixed(3)})`; }   // (thin limbs are all edge: the rim is held low so they read as a shape, not neon)

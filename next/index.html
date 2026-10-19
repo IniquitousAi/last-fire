@@ -32,9 +32,12 @@
   /* the HUD */
   /* one reticle, the Halo battle rifle / DMR shape (his pick, 2026-10-19): a thin ring, four short ticks pointing in, a center dot. White on a dark edge so it reads on any ground; it sizes with the screen (21 px across at 900 tall, was 26 px of ticks) and fades out as the sights come up */
   #cross { position: fixed; left: 50%; top: 50%; width: clamp(18px, 2.35vh, 26px); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; } #cross svg { display: block; width: 100%; height: 100%; overflow: visible; }
-  #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
-  #hit::before, #hit::after { content: ''; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); } #hit::after { transform: rotate(-45deg); }
-  #hit.on { opacity: .9; } #hit.shell::before, #hit.shell::after { background: var(--neon); height: 18px; top: 2px; } #hit.shell { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); }
+  #hit { position: fixed; left: 50%; top: 50%; width: 0; height: 0; opacity: 0; pointer-events: none; }
+  #hit i { position: absolute; width: 9px; height: 9px; border: solid #fff; border-width: 0 0 2px 2px; filter: drop-shadow(0 0 1px #000); }
+  #hit i:nth-child(1) { left: -22px; top: -22px; transform: rotate(135deg); } #hit i:nth-child(2) { left: 13px; top: -22px; transform: rotate(225deg); } #hit i:nth-child(3) { left: -22px; top: 13px; transform: rotate(45deg); } #hit i:nth-child(4) { left: 13px; top: 13px; transform: rotate(-45deg); }
+  #hit.on, #hit.head, #hit.shell, #hit.kill { opacity: 1; animation: hitTick .14s ease-out; } #hit.shell i { border-color: var(--neon); } #hit.head i { width: 11px; height: 11px; }
+  #hit.kill { animation: hitTickK .3s ease-out; } #hit.kill i { border-color: var(--red); border-width: 0 0 4px 4px; width: 12px; height: 12px; }
+  @keyframes hitTick { from { transform: scale(1.7); } to { transform: scale(1); } } @keyframes hitTickK { from { transform: scale(2.1); } 40% { transform: scale(1); } to { transform: scale(1); } }
   #light { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); text-align: center; text-shadow: 0 1px 3px #000; }
   #light b { display: block; font: 500 44px/1 "Barlow Condensed", sans-serif; color: var(--neon); } #light span { font-size: 15px; color: var(--meta); letter-spacing: .14em; }
   #fireHud { position: fixed; left: 18px; top: 14px; text-shadow: 0 1px 3px #000; } #fireHud b { font: 500 26px "Barlow Condensed", sans-serif; color: var(--violet); } #fireHud small { display: block; color: var(--meta); font-size: 15px; }
@@ -93,7 +96,7 @@
   <div id="menuNote" style="min-height:22px;color:var(--neon)"></div>
 </div></div>
 <div id="hud" hidden>
-  <div id="cross"><svg viewBox="-12 -12 24 24"><g fill="none" stroke-linecap="round"><g stroke="#000" stroke-opacity=".55" stroke-width="3.2"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g><g stroke="#fff" stroke-width="1.3"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g></g><circle r="1.9" fill="#000" fill-opacity=".55"/><circle r="1.1" fill="#fff"/></svg></div><div id="hit"></div>
+  <div id="cross"><svg viewBox="-12 -12 24 24"><g fill="none" stroke-linecap="round"><g stroke="#000" stroke-opacity=".55" stroke-width="3.2"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g><g stroke="#fff" stroke-width="1.3"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g></g><circle r="1.9" fill="#000" fill-opacity=".55"/><circle r="1.1" fill="#fff"/></svg></div><div id="hit"><i></i><i></i><i></i><i></i></div>
   <div id="fireHud"></div><div id="phase"></div>
   <div id="hp"><span>YOUR LIGHT</span><div><i id="hpBar"></i></div></div>
   <div id="light"></div><div id="ammo"></div><div id="build"></div>
