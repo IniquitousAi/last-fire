@@ -39,6 +39,7 @@ export class Guide {
     this.base = g.nodes.length; this.banked = g.stats.banked;
     this.goal.innerHTML = `<span style="color:#39e6ff">${i + 1} / ${STEPS.length}</span>&nbsp; ${S.goal}`;
     this.ctx.speak('the Clerk', S.line, 9);
+    if (S.id === 'shoot' && this.ctx.stage) this.ctx.stage();   // (the first one is staged: it walks slowly out of the dark into your light, smoke turning solid as it crosses: the rule, taught with no words. INNOVATION.md idea 5)
   }
   finish(skipped) { this.i = -1; this.box.hidden = true; this.beam.visible = this.ring.visible = false; this.ctx.setDone(); if (!skipped) this.ctx.speak('the Clerk', DONE, 10); }
   target() {   // (where the line of light stands for this step; null when the step is about doing, not going)

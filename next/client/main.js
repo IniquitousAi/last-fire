@@ -1,22 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=43';
-import { Ambience } from './ambience.js?v=43';
-import { Camp, BOARD } from './camp.js?v=43';
-import { Guide } from './guide.js?v=43';
-import { buildSites } from './earthsite.js?v=43';
-import { Truck } from './truck.js?v=43';
-import { Wrist } from './wrist.js?v=43';
-import { HudLook } from './hudlook.js?v=43';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=43';
-import { sound, GUNS } from '../../src/combat.js?v=43';
-import { FX } from '../../src/fx.js?v=43';
+import * as C from '../core/game.js?v=44';
+import { Ambience } from './ambience.js?v=44';
+import { Camp, BOARD } from './camp.js?v=44';
+import { Guide } from './guide.js?v=44';
+import { buildSites } from './earthsite.js?v=44';
+import { Truck } from './truck.js?v=44';
+import { Wrist } from './wrist.js?v=44';
+import { HudLook } from './hudlook.js?v=44';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=44';
+import { sound, GUNS } from '../../src/combat.js?v=44';
+import { FX } from '../../src/fx.js?v=44';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 43;   // (this copy's version; ./version.json says the newest)
+const BUILD = 44;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -526,7 +526,9 @@ async function begin(seed, id, saved = null) {
   if (!camp) camp = new Camp(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who), name: () => SET.name, camera: () => camera });
   if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); }
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
-    speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); } });
+    speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); },
+    stage: () => { if (!isHost()) return; const f = g.fire, a = Math.atan2(me.z - f.z, me.x - f.x) + 0.35, r = C.fireRadius(f) + 7, x = f.x + Math.cos(a) * r, z = f.z + Math.sin(a) * r, K = C.KINDS.walker;
+      g.hollow.push({ id: g.nextId++, kind: 'walker', x, z, y: g.land(x, z), yaw: 0, hp: K.hp, max: K.hp, sh: 0, sb: 0, cd: 0, dead: false, speed: 1.1, staged: true }); } });
   setTimeout(() => guide.start(), 1200);
   mode = 'play'; $('menu').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
   await ready; prepGun('pistol'); prepGun('ar');
