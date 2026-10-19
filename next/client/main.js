@@ -1,25 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=53';
-import { Ambience } from './ambience.js?v=53';
-import { Camp, BOARD } from './camp.js?v=53';
-import { Guide } from './guide.js?v=53';
-import { buildSites } from './earthsite.js?v=53';
-import { Truck } from './truck.js?v=53';
-import { Wrist } from './wrist.js?v=53';
-import { think as friendThink } from './friend.js?v=53';
-import { FriendVoice } from './friendvoice.js?v=53';
-import { crewFrom } from '../core/habits.js?v=53';
-import { HudLook } from './hudlook.js?v=53';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=53';
-import { sound, GUNS } from '../../src/combat.js?v=53';
-import { FX } from '../../src/fx.js?v=53';
+import * as C from '../core/game.js?v=54';
+import { Ambience } from './ambience.js?v=54';
+import { Camp, BOARD } from './camp.js?v=54';
+import { Guide } from './guide.js?v=54';
+import { buildSites } from './earthsite.js?v=54';
+import { Truck } from './truck.js?v=54';
+import { Wrist } from './wrist.js?v=54';
+import { think as friendThink } from './friend.js?v=54';
+import { FriendVoice } from './friendvoice.js?v=54';
+import { crewFrom } from '../core/habits.js?v=54';
+import { HudLook } from './hudlook.js?v=54';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=54';
+import { sound, GUNS } from '../../src/combat.js?v=54';
+import { FX } from '../../src/fx.js?v=54';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 53;   // (this copy's version; ./version.json says the newest)
+const BUILD = 54;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -64,7 +64,7 @@ scene.add(sky);
 // ---------------------------------------------------------------- the game (rules) and you
 const amb = new Ambience(() => SET.vol);
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
-clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(57,230,255,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#39e6ff"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#39e6ff"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#39e6ff"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#39e6ff"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#39e6ff">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
+clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(255,79,216,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
 let truck = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
@@ -285,7 +285,7 @@ function act() { if (me.ember) return; if (nearCar()) return useCar(); if (atPad
 $('prompt').addEventListener('click', () => act()); $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
 function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
-const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x39e6ff, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
+const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
 function build(p, kind, x, z) {   // (host only: the player must carry the light, and stand within 9 m of where it goes)
   const K = C.NODE[kind]; if (!K || !Number.isFinite(x) || !Number.isFinite(z) || p.ember || p.carried < K.cost || Math.hypot(p.x - x, p.z - z) > 9) return null;
   p.carried -= K.cost; return C.placeNode(g, kind, x, z, p.id);

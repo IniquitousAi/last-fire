@@ -9,49 +9,49 @@
 <meta name="theme-color" content="#04060c">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
 <style>
-  :root { --ink: #eef0f8; --meta: #a3a6bb; --cyan: #39e6ff; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
+  :root { --ink: #eef0f8; --meta: #a3a6bb; --neon: #ff4fd8; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
   * { box-sizing: border-box; } [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--ink); font: 400 17px/1.35 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; user-select: none; }
   canvas { display: block; }
-  /* every panel is visor glass (his BOOT pick and UI rule): dark, faint scanlines, corner marks, cyan on the left, pink on the right, no rounded box */
-  .panel { position: relative; background: repeating-linear-gradient(0deg, rgba(57,230,255,.035) 0 1px, transparent 1px 4px), rgba(3,6,12,.9); border-radius: 0; padding: 24px 26px 20px; }
-  .panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#39e6ff, #39e6ff) left top / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) left top / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 1.5px 22px no-repeat, linear-gradient(#39e6ff, #39e6ff) left bottom / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) left bottom / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 1.5px 22px no-repeat; }
+  /* every panel is visor glass (his BOOT pick and UI rule): dark, faint scanlines, corner marks, violet on the left, pink on the right (his rule: cyan the least possible), no rounded box */
+  .panel { position: relative; background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgba(3,6,12,.9); border-radius: 0; padding: 24px 26px 20px; }
+  .panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#7b5cff, #7b5cff) left top / 22px 1.5px no-repeat, linear-gradient(#7b5cff, #7b5cff) left top / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right top / 1.5px 22px no-repeat, linear-gradient(#7b5cff, #7b5cff) left bottom / 22px 1.5px no-repeat, linear-gradient(#7b5cff, #7b5cff) left bottom / 1.5px 22px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 22px 1.5px no-repeat, linear-gradient(#ff6fb1, #ff6fb1) right bottom / 1.5px 22px no-repeat; }
   .key { display: block; width: 100%; margin: 0 0 10px; padding: 11px 14px 9px; font: 500 19px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0e0f17; border: 1px solid #000; border-radius: 9px; cursor: pointer; text-align: left; box-shadow: 0 0 0 1px #2c2f4a inset; transition: transform .1s; }
   .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
-  .key:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--cyan) inset; } .key:active { transform: translateY(1px); }
+  .key:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--neon) inset; } .key:active { transform: translateY(1px); }
   .over { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10; }
   #menu { background: radial-gradient(circle at 50% 35%, #0b1022 0%, #000 70%); }
   #menu .panel { width: min(460px, 100%); }
   h1 { margin: 0 0 2px; font: 500 56px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; } .tag { color: var(--meta); margin: 0 0 18px; font-size: 18px; }
   #name { width: 100%; margin-bottom: 10px; font: 500 22px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0b0c14; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; outline: none; }
-  .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--cyan); font-weight: 500; }
+  .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--neon); font-weight: 500; }
   #paused { background: radial-gradient(circle at 50% 50%, #00000060, #000000c0); } #paused .panel { width: min(420px, 100%); }
-  label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--cyan); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #39e6ff; }
+  label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--neon); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #ff4fd8; }
   /* the HUD */
   #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #0009; pointer-events: none; }
   #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
   #hit::before, #hit::after { content: ''; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); } #hit::after { transform: rotate(-45deg); }
-  #hit.on { opacity: .9; } #hit.shell::before, #hit.shell::after { background: var(--cyan); height: 18px; top: 2px; } #hit.shell { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); }
+  #hit.on { opacity: .9; } #hit.shell::before, #hit.shell::after { background: var(--neon); height: 18px; top: 2px; } #hit.shell { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); }
   #light { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); text-align: center; text-shadow: 0 1px 3px #000; }
-  #light b { display: block; font: 500 44px/1 "Barlow Condensed", sans-serif; color: var(--cyan); } #light span { font-size: 15px; color: var(--meta); letter-spacing: .14em; }
+  #light b { display: block; font: 500 44px/1 "Barlow Condensed", sans-serif; color: var(--neon); } #light span { font-size: 15px; color: var(--meta); letter-spacing: .14em; }
   #fireHud { position: fixed; left: 18px; top: 14px; text-shadow: 0 1px 3px #000; } #fireHud b { font: 500 26px "Barlow Condensed", sans-serif; color: var(--violet); } #fireHud small { display: block; color: var(--meta); font-size: 15px; }
   #phase { position: fixed; right: 18px; top: 14px; text-align: right; text-shadow: 0 1px 3px #000; } #phase b { font: 500 24px "Barlow Condensed", sans-serif; } #phase small { display: block; color: var(--meta); font-size: 15px; }
   #hp { position: fixed; left: 18px; bottom: 22px; width: 200px; } #hp span { font-size: 13px; letter-spacing: .16em; color: var(--meta); } #hp div { height: 5px; background: #ffffff1c; border-radius: 3px; margin-top: 3px; } #hp i { display: block; height: 100%; background: var(--red); border-radius: 3px; }
-  #ammo { position: fixed; right: 18px; bottom: 18px; text-align: right; text-shadow: 0 1px 3px #000; } #ammo b { font: 500 48px/1 "Barlow Condensed", sans-serif; } #ammo span { font-size: 22px; color: var(--meta); margin-left: 6px; } #ammo small { display: block; color: var(--cyan); font-size: 16px; letter-spacing: .12em; }
+  #ammo { position: fixed; right: 18px; bottom: 18px; text-align: right; text-shadow: 0 1px 3px #000; } #ammo b { font: 500 48px/1 "Barlow Condensed", sans-serif; } #ammo span { font-size: 22px; color: var(--meta); margin-left: 6px; } #ammo small { display: block; color: var(--neon); font-size: 16px; letter-spacing: .12em; }
   #build { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; gap: 8px; }
   .bk { min-width: 110px; padding: 7px 12px 6px; font: 500 16px "Barlow Condensed", sans-serif; letter-spacing: .1em; color: #fff; background: #05060bcc; border: 1px solid #23253a; border-radius: 8px; cursor: pointer; text-align: left; }
-  .bk small { display: block; font: 400 13px "Barlow Condensed", sans-serif; color: var(--meta); letter-spacing: .02em; } .bk.on { border-color: var(--cyan); } .bk.off { opacity: .45; }
+  .bk small { display: block; font: 400 13px "Barlow Condensed", sans-serif; color: var(--meta); letter-spacing: .02em; } .bk.on { border-color: var(--neon); } .bk.off { opacity: .45; }
   #msg { position: fixed; left: 50%; top: 27%; transform: translateX(-50%); font-size: 21px; text-shadow: 0 1px 3px #000; text-align: center; max-width: 80vw; pointer-events: none; }
   #prompt { position: fixed; left: 0; top: 0; transform: translate(50vw, 60vh) translate(-50%, -100%); font-size: 17px; letter-spacing: .06em; color: #cfeeff; white-space: nowrap; pointer-events: none; padding: 7px 14px 6px;
-    background: repeating-linear-gradient(0deg, rgba(57,230,255,.07) 0 1px, transparent 1px 4px), rgba(4,14,24,.55); }
+    background: repeating-linear-gradient(0deg, rgba(255,79,216,.07) 0 1px, transparent 1px 4px), rgba(4,14,24,.55); }
   #prompt:empty { display: none; }
   /* a holo tag: corner marks only, hung over the thing it belongs to (his UI rule: words are there for a reason in the world) */
-  #prompt::before, #prompt::after { content: ''; position: absolute; width: 10px; height: 10px; border: 1.5px solid #39e6ff; pointer-events: none; }
+  #prompt::before, #prompt::after { content: ''; position: absolute; width: 10px; height: 10px; border: 1.5px solid #ff4fd8; pointer-events: none; }
   #prompt::before { left: 0; top: 0; border-right: 0; border-bottom: 0; } #prompt::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
-  .mark { position: fixed; left: 0; top: 0; padding: 2px 8px; font-size: 15px; letter-spacing: .08em; color: var(--cyan); background: #05060bb0; border-radius: 5px; white-space: nowrap; pointer-events: none; } .mark.down { color: var(--red); }
+  .mark { position: fixed; left: 0; top: 0; padding: 2px 8px; font-size: 15px; letter-spacing: .08em; color: var(--neon); background: #05060bb0; border-radius: 5px; white-space: nowrap; pointer-events: none; } .mark.down { color: var(--red); }
   #room .code { font-size: 18px; letter-spacing: .14em; color: var(--meta); margin: 4px 0 10px; } #room .code b { font-size: 32px; color: #fff; letter-spacing: .3em; margin-left: 8px; font-weight: 500; }
   .ck { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid #ffffff12; font-size: 16px; } .ck b { font-weight: 500; letter-spacing: .1em; font-size: 14px; } .ck small { display: block; color: var(--meta); font-size: 14px; }
-  .ck .done { color: var(--cyan); } .ck .in { color: var(--violet); } .ck .next { color: var(--pink); } .ck .later { color: var(--meta); } .ck .talk { color: var(--red); }
+  .ck .done { color: var(--neon); } .ck .in { color: var(--violet); } .ck .next { color: var(--pink); } .ck .later { color: var(--meta); } .ck .talk { color: var(--red); }
   #dev .key { margin: 0; }
   #fps { position: fixed; left: 18px; top: 70px; font-size: 13px; color: var(--meta); }
   #hurt { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 50%, #b0002280 100%); opacity: 0; transition: opacity .15s; }
@@ -59,7 +59,7 @@
   body[class*=menu-] #menu { background: transparent; }
   /* A: BOOT, the visor powering on: menu in the left column under visor rims, a boot log typing once */
   body.menu-A #menu { place-items: center start; padding-left: 7vw; } body.menu-A #menu .panel { background: transparent; width: min(420px, 100%); } body.menu-A #menu .panel::after { display: none; }
-  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 400 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #39e6ffb0; line-height: 1.7; white-space: pre; text-align: right; }
+  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 400 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #ff4fd8b0; line-height: 1.7; white-space: pre; text-align: right; }
   body.menu-A #menu .key { background: #05060bb0; }
   #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 20px; letter-spacing: .1em; }
 </style>
@@ -78,7 +78,7 @@
   <button class="key" id="host">HOST<small>(opens your newest world to your crew; your room code and link never change)</small></button>
   <div style="display:flex;gap:10px;margin-bottom:10px"><input id="code" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Room code" style="width:150px;font:500 22px 'Barlow Condensed';letter-spacing:.3em;text-transform:uppercase;color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:0 12px;outline:none"><button class="key" id="join" style="margin:0">JOIN<small>(a friend's code)</small></button></div>
   <button class="key" id="solo">PLAY ALONE<small>(your own world)</small></button>
-  <div id="menuNote" style="min-height:22px;color:var(--cyan)"></div>
+  <div id="menuNote" style="min-height:22px;color:var(--neon)"></div>
 </div></div>
 <div id="hud" hidden>
   <div id="cross"></div><div id="hit"></div>
@@ -116,9 +116,9 @@
   </div>
 </div></div>
 <div id="upd" hidden style="position:fixed;right:18px;bottom:110px;z-index:12;width:min(340px,calc(100vw - 36px))"><div class="panel" style="padding:14px 16px 12px">
-  <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--cyan)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
+  <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=53"></script>
+<script type="module" src="./client/main.js?v=54"></script>
 </body>
 </html>

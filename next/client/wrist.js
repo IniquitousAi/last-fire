@@ -6,9 +6,9 @@ export class Wrist {
   constructor(vcam) {
     this.c = document.createElement('canvas'); this.c.width = 1024; this.c.height = 384; this.tex = new THREE.CanvasTexture(this.c); this.tex.colorSpace = THREE.SRGBColorSpace;
     this.root = new THREE.Group(); this.root.position.set(-0.13, -0.115, -0.55); this.root.rotation.set(-0.16, 0.32, 0.03); vcam.add(this.root);
-    // the band and its emitter: a dark strip, a hair of cyan where the light comes out
+    // the band and its emitter: a dark strip, a hair of magenta where the light comes out
     const band = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.02, 0.055), new THREE.MeshStandardMaterial({ color: 0x0b0d13, roughness: 0.4, metalness: 0.7 })); band.position.set(0, -0.062, 0.02);
-    const lip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.003, 0.004), new THREE.MeshBasicMaterial({ color: 0x39e6ff })); lip.position.set(0, -0.051, 0.048);
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.003, 0.004), new THREE.MeshBasicMaterial({ color: 0xff4fd8 })); lip.position.set(0, -0.051, 0.048);
     this.holo = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.09), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.holo.position.set(0, 0, 0); this.root.add(band, lip, this.holo); this.root.visible = false;
     this.text = ''; this.t = 0; this.hold = 0; this.open = 0;
@@ -16,9 +16,9 @@ export class Wrist {
   draw(text, head = 'INCOMING') {
     const g = this.c.getContext('2d'), W = 1024, H = 384; g.clearRect(0, 0, W, H);
     g.fillStyle = 'rgba(8,24,40,0.55)'; g.fillRect(0, 0, W, H);
-    g.strokeStyle = '#39e6ff'; g.lineWidth = 3; const k = 34;   // (corner marks only: the frame is implied, never a box)
+    g.strokeStyle = '#ff4fd8'; g.lineWidth = 3; const k = 34;   // (corner marks only: the frame is implied, never a box)
     for (const [x, y, dx, dy] of [[4, 4, 1, 1], [W - 4, 4, -1, 1], [4, H - 4, 1, -1], [W - 4, H - 4, -1, -1]]) { g.beginPath(); g.moveTo(x, y + dy * k); g.lineTo(x, y); g.lineTo(x + dx * k, y); g.stroke(); }
-    g.fillStyle = '#39e6ff'; g.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText('WRIST  ·  ' + head.toUpperCase(), 36, 52);
+    g.fillStyle = '#ff4fd8'; g.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText('WRIST  ·  ' + head.toUpperCase(), 36, 52);
     g.fillStyle = '#eef0f8'; g.font = '400 50px "Barlow Condensed", "Arial Narrow", sans-serif';
     const words = String(text).split(' '), lines = []; let line = '';
     for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > W - 72 && line) { lines.push(line); line = w; } else line = t; } if (line) lines.push(line);

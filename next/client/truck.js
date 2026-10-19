@@ -1,10 +1,10 @@
 // Parts lying out on Earth, and the truck at the bay in camp, drawn as it is really fitted (gray boxes first, PLAN-SPACE.md: real models
 // come once his hands say the building feels right). Each part has a shape you can read from far away, so you know what you found.
 import * as THREE from 'three';
-import { BAY, PARTS } from '../core/game.js?v=53';
+import { BAY, PARTS } from '../core/game.js?v=54';
 
 const steel = new THREE.MeshStandardMaterial({ color: 0x3a3f4b, roughness: 0.5, metalness: 0.6 }), rubber = new THREE.MeshStandardMaterial({ color: 0x15161b, roughness: 0.95 });
-const cell = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0x39e6ff, emissiveIntensity: 1.2 }), body = new THREE.MeshStandardMaterial({ color: 0x2b303a, roughness: 0.7, metalness: 0.35 });
+const cell = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xff4fd8, emissiveIntensity: 1.2 }), body = new THREE.MeshStandardMaterial({ color: 0x2b303a, roughness: 0.7, metalness: 0.35 });
 const SHAPE = {
   frame: () => { const g = new THREE.Group(); for (const s of [-0.55, 0.55]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 4.2), steel); r.position.x = s; g.add(r); } for (const z of [-1.6, 0, 1.6]) { const c = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.12, 0.14), steel); c.position.z = z; g.add(c); } return g; },
   axle: () => new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.0, 8).rotateZ(Math.PI / 2), steel),
