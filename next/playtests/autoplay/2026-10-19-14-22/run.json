@@ -1,0 +1,109 @@
+{
+ "minutes": 9,
+ "reached": [
+  "Read your form, then go to the board by the fire",
+  "Check the real odds at the board",
+  "Walk to the gate",
+  "Stand by the fire until dusk",
+  "Let one into the light, shoot it, walk through what it drops",
+  "the first night",
+  "Take the lander down to Earth",
+  "Earth",
+  "after the guide",
+  "Earth",
+  "after the guide",
+  "Earth",
+  "after the guide",
+  "Earth",
+  "after the guide"
+ ],
+ "stages": [
+  {
+   "name": "start",
+   "secs": 0
+  },
+  {
+   "name": "Read your form, then go to the board by the fire",
+   "secs": 4.2
+  },
+  {
+   "name": "Check the real odds at the board",
+   "secs": 2.3
+  },
+  {
+   "name": "Walk to the gate",
+   "secs": 8.9
+  },
+  {
+   "name": "Stand by the fire until dusk",
+   "secs": 20.3
+  },
+  {
+   "name": "Let one into the light, shoot it, walk through what it drops",
+   "secs": 0.3
+  },
+  {
+   "name": "the first night",
+   "secs": 18.4
+  },
+  {
+   "name": "Take the lander down to Earth",
+   "secs": 6.5
+  },
+  {
+   "name": "Earth",
+   "secs": 0.3
+  },
+  {
+   "name": "after the guide",
+   "secs": 142
+  },
+  {
+   "name": "Earth",
+   "secs": 0.4
+  },
+  {
+   "name": "after the guide",
+   "secs": 74.6
+  },
+  {
+   "name": "Earth",
+   "secs": 0.4
+  },
+  {
+   "name": "after the guide",
+   "secs": 140.2
+  },
+  {
+   "name": "Earth",
+   "secs": 0.3
+  },
+  {
+   "name": "after the guide",
+   "secs": 102.9
+  }
+ ],
+ "findings": [
+  {
+   "t": 8.2,
+   "kind": "pad",
+   "what": "the menu has no controller focus: SOLO needs a mouse click",
+   "shot": "01-pad-the-menu-has-no-controller-focus-SOL.png"
+  },
+  {
+   "t": 119.6,
+   "kind": "lost",
+   "what": "after the guide nothing says what to do next or where the drop to Earth is",
+   "shot": "15-lost-after-the-guide-nothing-says-what-t.png"
+  },
+  {
+   "t": 198.6,
+   "kind": "died",
+   "what": "everyone fell, the night was lost during \"after the guide\" at 119 s in, health was the only bar (50)",
+   "shot": "16-died-everyone-fell-the-night-was-lost-du.png"
+  }
+ ],
+ "fired": 0,
+ "errors": [],
+ "fps": "41 fps"
+}
