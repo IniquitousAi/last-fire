@@ -799,7 +799,7 @@ $('fbSend').onclick = async () => {
 // ---------------------------------------------------------------- updates: a pop-up when a newer version is out; yes puts you right back where you were
 let updSeen = 0;
 async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || ''); $('upd').hidden = false; } } catch (e) {} }
-setInterval(checkUpdate, 60000); setTimeout(checkUpdate, 8000);
+setInterval(checkUpdate, location.port === '8093' ? 5000 : 60000);   // (played from his own files: a fix shows up in seconds) setTimeout(checkUpdate, 8000);
 (async () => {   // (the menu says which version this is; an old copy from the browser's cache swaps itself for the new one)
   $('ver').innerHTML = `<b>VERSION ${BUILD}</b>`;
   try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json();
