@@ -20,7 +20,7 @@
   .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
   .key:hover, .key:focus-visible, .bk:focus-visible { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--neon) inset; outline: none; } .key:active { transform: translateY(1px); }
   .over { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10; }
-  #list, #dev, #codex { background: #000000d8; z-index: 30; } #list .panel, #dev .panel, #codex .panel { background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgb(3,6,12); }   /* (a reading page is solid: nothing of the game shows through or overlaps it) */
+  #list, #dev, #devView, #codex { background: #000000d8; z-index: 30; } #list .panel, #dev .panel, #devView .panel, #codex .panel { background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgb(3,6,12); }   /* (a reading page is solid: nothing of the game shows through or overlaps it) */
   #menu { background: radial-gradient(circle at 50% 35%, #0b1022 0%, #000 70%); }
   #menu .panel { width: min(460px, 100%); }
   h1 { margin: 0 0 2px; font: 500 56px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; } .tag { color: var(--meta); margin: 0 0 18px; font-size: 18px; }
@@ -120,6 +120,10 @@
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">DEV</b><button class="key" id="devBack" style="width:auto;margin:0">BACK</button></div>
   <div id="devBody" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
   <p class="note" id="devNote"></p>
+</div></div>
+<div id="devView" class="over" hidden><div class="panel" style="width:min(720px,100%);max-height:calc(100vh - 32px);overflow:auto">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b id="devViewTitle" style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">DEV</b><button class="key" id="devViewBack" style="width:auto;margin:0">BACK</button></div>
+  <div id="devViewBody"></div>
 </div></div>
 <div id="list" class="over" hidden><div class="panel" style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto">
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">CHECKLIST</b><button class="key" id="listBack" style="width:auto;margin:0">BACK</button></div>

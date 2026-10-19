@@ -1,0 +1,52 @@
+Last Fire, ?perfectcrew=SEED: the real browser client (headless Chromium 1000x900, GPU renderer on) plays 12 nights with the perfect crew.
+Both seats are the robot of sim/lane_b.mjs (client/friend.js perfectThink): the player's seat is driven by it, since nobody is at the keys; the rest is the client's own frame loop, camera, HUD and core.
+10 world steps of 0.1 s per frame. run 2026-10-19T18:15:00.167Z
+
+--- seed 1
+night  1 done  falls so far 0  fire level 0  kills 52  tense 0.00  night falls 0  (13 s real)
+night  2 done  falls so far 0  fire level 0  kills 81  tense 0.00  night falls 0  (17 s real)
+night  3 done  falls so far 0  fire level 0  kills 109  tense 0.04  night falls 0  (20 s real)
+night  4 done  falls so far 0  fire level 0  kills 135  tense 0.01  night falls 0  (27 s real)
+night  5 done  falls so far 0  fire level 0  kills 176  tense 0.00  night falls 0  (30 s real)
+night  6 done  falls so far 0  fire level 0  kills 216  tense 0.01  night falls 0  (37 s real)
+night  7 done  falls so far 0  fire level 0  kills 262  tense 0.07  night falls 0  (45 s real)
+night  8 done  falls so far 0  fire level 0  kills 285  tense 0.11  night falls 0  (47 s real)
+night  9 done  falls so far 0  fire level 1  kills 309  tense 0.10  night falls 0  (50 s real)
+night 10 done  falls so far 0  fire level 1  kills 335  tense 0.10  night falls 0  (53 s real)
+night 11 done  falls so far 0  fire level 1  kills 350  tense 0.04  night falls 0  (57 s real)
+night 12 done  falls so far 0  fire level 1  kills 375  tense 0.14  night falls 0  (61 s real)
+DAWN OF NIGHT 12: night counter 12, clock 0.985, fire level 1, both players up (2 of 2), falls 0, lost nights 0, kills 375
+ended: nights recorded 12, falls 0, lost nights 0, 62 s real
+
+--- seed 2
+night  1 done  falls so far 0  fire level 0  kills 50  tense 0.00  night falls 0  (0 s real)
+night  2 done  falls so far 0  fire level 0  kills 79  tense 0.02  night falls 0  (6 s real)
+night  3 done  falls so far 0  fire level 0  kills 107  tense 0.03  night falls 0  (10 s real)
+night  4 done  falls so far 0  fire level 0  kills 139  tense 0.12  night falls 0  (12 s real)
+night  5 done  falls so far 0  fire level 0  kills 180  tense 0.02  night falls 0  (15 s real)
+night  6 done  falls so far 0  fire level 0  kills 218  tense 0.01  night falls 0  (18 s real)
+night  7 done  falls so far 0  fire level 0  kills 262  tense 0.00  night falls 0  (21 s real)
+night  8 done  falls so far 0  fire level 0  kills 284  tense 0.06  night falls 0  (23 s real)
+night  9 done  falls so far 0  fire level 0  kills 298  tense 0.10  night falls 0  (26 s real)
+night 10 done  falls so far 0  fire level 1  kills 329  tense 0.23  night falls 0  (30 s real)
+night 11 done  falls so far 0  fire level 1  kills 366  tense 0.16  night falls 0  (33 s real)
+night 12 done  falls so far 0  fire level 1  kills 406  tense 0.24  night falls 0  (36 s real)
+DAWN OF NIGHT 12: night counter 12, clock 0.981, fire level 1, both players up (2 of 2), falls 0, lost nights 0, kills 406
+ended: nights recorded 12, falls 0, lost nights 0, 37 s real
+
+--- seed 3
+night  1 done  falls so far 0  fire level 0  kills 84  tense 0.02  night falls 0  (3 s real)
+night  2 done  falls so far 0  fire level 0  kills 118  tense 0.00  night falls 0  (6 s real)
+night  3 done  falls so far 0  fire level 0  kills 140  tense 0.04  night falls 0  (9 s real)
+night  4 done  falls so far 0  fire level 0  kills 164  tense 0.08  night falls 0  (12 s real)
+night  5 done  falls so far 0  fire level 0  kills 213  tense 0.02  night falls 0  (15 s real)
+night  6 done  falls so far 0  fire level 0  kills 253  tense 0.01  night falls 0  (18 s real)
+night  7 done  falls so far 0  fire level 0  kills 284  tense 0.00  night falls 0  (20 s real)
+night  8 done  falls so far 0  fire level 1  kills 304  tense 0.07  night falls 0  (23 s real)
+night  9 done  falls so far 0  fire level 1  kills 359  tense 0.47  night falls 0  (26 s real)
+night 10 done  falls so far 0  fire level 1  kills 405  tense 0.42  night falls 0  (29 s real)
+night 11 done  falls so far 0  fire level 1  kills 421  tense 0.09  night falls 0  (32 s real)
+night 12 done  falls so far 0  fire level 1  kills 454  tense 0.19  night falls 0  (36 s real)
+DAWN OF NIGHT 12: night counter 12, clock 0.979, fire level 1, both players up (2 of 2), falls 0, lost nights 0, kills 454
+ended: nights recorded 12, falls 0, lost nights 0, 37 s real
+

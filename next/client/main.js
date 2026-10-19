@@ -316,6 +316,9 @@ function coldHands(dt) { if (!g || !me || me.ember) return; const warm = C.light
 // ?autoplay: the robot player (sim/autoplay.cjs) drives the pad from outside and sees only what is on the screen: where the guide's line of
 // light stands in the frame, and the shapes and motes inside the frame (screen x and y from -1 to 1, and how far). Never on for players.
 const AUTO = /[?&]autoplay(&|$)/.test(location.search), eyeV = new THREE.Vector3();
+// ?perfectcrew[=seed][&x=10]: TEST ONLY (checklist item 16, played). PLAY ALONE starts a seeded world whose two players are the perfect crew of
+// sim/lane_b.mjs (the player's seat is driven by the same robot, since nobody is at the keys); the real client loop, camera and core run it, x world steps (0.1 s each) a frame.
+const PERF = (m => m ? { seed: +m[1] || 1, x: Math.max(1, Math.min(40, +new URLSearchParams(location.search).get('x') || 10)) } : null)(location.search.match(/[?&]perfectcrew(?:=(\d+))?(?:&|$)/));; if (PERF) window.__perf = PERF;   // (the run can slow it down for a picture)
 function eyes() { if (!me || !g) return null; const scr = (x, y, z) => { eyeV.set(x, y, z).project(camera); return eyeV.z < 1 && Math.abs(eyeV.x) < 1 && Math.abs(eyeV.y) < 1 ? [+eyeV.x.toFixed(3), +eyeV.y.toFixed(3)] : null; }, far = p => +Math.hypot(p.x - me.x, p.z - me.z).toFixed(1);
   const see = (list, h) => list.filter(k => !k.dead && far(k) < 80).map(k => { const s = scr(k.x, (k.y ?? g.land(k.x, k.z)) + h, k.z); return s && { s, d: far(k), solid: !!k.solid }; }).filter(Boolean);
   const tg = guide && guide.i >= 0 && guide.beam.visible ? guide.beam.position : null;
@@ -616,7 +619,7 @@ function frame(now) {
     if (mouse[0] && can) { if (railC === 0) { if (railRig) railRig.charge(); sound.click(); } railC = Math.min(1, railC + dt / GUNS[gunKey].charge); } else if (railC > 0) { shoot.c = railC; railC = 0; shoot(); } else if (mouse[0] && !can && ammo[gunKey].mag <= 0 && !shoot.held) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false; }
   else { if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false; }
   if (me.ember || (ship && ship.on)) aimOn = false; { const want = (SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0 && !mvSprint && readyT <= 0, T = MW.adsT[gunKey] || 0.25; ads = want ? Math.min(1, ads + dt / T) : Math.max(0, ads - dt / (T * 0.8)); }   /* (each gun reaches its sights in its own time, a straight line in, as in Modern Warfare) */
-  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { if (!(panel && !net)) { runFriends(wdt); C.step(g, wdt); } }   /* (alone, a menu pauses the world: the fire stops burning while you read) */ else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { ui.hit(hp0 - me.hp); sound.hurt(); }
+  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { if (!(panel && !net)) { if (PERF) { for (let i = 0; i < PERF.x; i++) { runFriends(0.1, i < PERF.x - 1); C.step(g, 0.1); } } else { runFriends(wdt); C.step(g, wdt); } } }   /* (alone, a menu pauses the world: the fire stops burning while you read) */ else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { ui.hit(hp0 - me.hp); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
@@ -681,7 +684,12 @@ function friendHeard(e) {   // (what a learned friend says, from what really hap
   if (e[1] === 'kill' && by(e[3])) fvoice.speak(by(e[3]), 'kill'); else if (e[1] === 'bank' && by(e[2])) fvoice.speak(by(e[2]), 'bank');
   else if (e[1] === 'dusk') fvoice.speak(bots[0], 'dusk'); else if (e[1] === 'fall' && e[2] === me.id) fvoice.speak(bots[0], 'youFell');
 }
-function runFriends(dt) { fvoice.update(g.players, dt); for (const p of g.players) if (p.bot && !p.ember && p.hp < (p.hp0 ?? 100) - 8) fvoice.speak(p, 'hurt'); for (const p of g.players) if (p.bot) p.hp0 = p.hp; for (const p of g.players) if (p.bot && !p.ember) { const shot = friendThink(g, p, p.r, dt); if (shot) { const from = new THREE.Vector3(p.x, p.y + 1.5, p.z); sound.shot('pistol', from); fx.tracer(from, new THREE.Vector3(shot.x, shot.y, shot.z)); } } }
+function perfectCrew() {   // (?perfectcrew: me and one friend are P1 and P2 of sim/lane_b.mjs, homes as sim/certify.mjs play puts them)
+  g.holdDay = false; g.clock = 0.5; SET.guided = 1; const P = name => ({ name, roam: 12, greed: 8, bankAt: 12, aim: 0.95, together: 1, blind: -1, perfect: true });
+  const seat = (p, i) => { const a = i / 2 * Math.PI * 2 + 0.4; p.style = P(p.name); p.r = C.stream(g.seed, 'perfect-' + i); p.homeX = g.fire.x + Math.cos(a) * 12; p.homeZ = g.fire.z + Math.sin(a) * 12; p.x = g.fire.x + 3 + i; p.z = g.fire.z; p.y = g.land(p.x, p.z); return p; };   /* (where C.addPlayer puts the sim's crew: at the fire, not at their homes) */
+  seat(me, 0).auto = true; me.bot = true;   /* (a bot's light goes to the fire, not into a person's camp dues: that is the rule the sim crew played under) */ const f = seat(C.addPlayer(g, 2, 'Perfect friend'), 1); f.bot = true; f.gun = 'rifle';
+}
+function runFriends(dt, quiet) { fvoice.update(g.players, dt); for (const p of g.players) if (p.bot && !p.ember && p.hp < (p.hp0 ?? 100) - 8) fvoice.speak(p, 'hurt'); for (const p of g.players) if (p.bot) p.hp0 = p.hp; for (const p of g.players) if ((p.bot || p.auto) && !p.ember) { const shot = friendThink(g, p, p.r, dt); if (shot && !quiet) { const from = new THREE.Vector3(p.x, p.y + 1.5, p.z); sound.shot('pistol', from); fx.tracer(from, new THREE.Vector3(shot.x, shot.y, shot.z)); } } }
 const DEV = [
   ['THE SIMULATOR', 'watch the robots test the game (opens a new tab)', () => { window.open('./sim.html', '_blank', 'noopener'); return 'The Simulator opened in a new tab.'; }],
   ['A LEARNED FRIEND JOINS', 'a teammate who plays like your recorded nights; keeps the camp', () => learnedFriend()],
@@ -694,9 +702,54 @@ const DEV = [
   ['GOD MODE', 'nothing hurts you (again to turn off)', () => { god = !god; return god ? 'God mode ON.' : 'God mode OFF.'; }],
   ['NEW WORLD', 'a fresh world; this one stays saved', () => { saveNow(); startWorld(null); return 'A new world.'; }],
   ['CLEAR THE DARK', 'every Hollow gone, right now', () => { g.hollow = []; return 'The dark is empty, for now.'; }],
+  ['EXPORT NIGHTS', 'save the recorded nights as a file (what the daemon reads)', () => exportNights()],
+  ['FRIEND VS YOU', "the learned friend's habits next to the recorded player's, with the match", () => { habitsView(); return HOLD; }],
+  ['THE DAEMON', 'what it learned from the recorded worlds, and what it refused', () => { daemonView(); return HOLD; }],
 ];
+const HOLD = {};   // (a DEV item that opens a page of its own returns this: the DEV list does not close)
+function devView(title, html) { $('devViewTitle').textContent = title; $('devViewBody').innerHTML = html; $('dev').hidden = true; $('devView').hidden = false; panel = 'devview'; return HOLD; }
+$('devViewBack').onclick = () => { $('devView').hidden = true; $('dev').hidden = false; panel = 'dev'; };
+function exportNights() {   // (no localStorage tricks: the world's own save, as a download; tools/daemon.mjs reads it from next/daemon/worlds/)
+  const n = (g.history || []).length; if (!n) return 'No nights recorded yet: play a night first, then export.';
+  const a = document.createElement('a'), name = `lastfire-nights-${worldId || 'world'}-${n}n.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(C.saveWorld(g))], { type: 'application/json' })); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  return `Saved ${n} recorded night${n === 1 ? '' : 's'} as ${name}. Put it in next/daemon/worlds/ and the daemon learns from it.`;
+}
+const esc = x => String(x ?? '').replace(/[<>&"]/g, '');
+const TBL = 'style="width:100%;border-collapse:collapse;font-size:15px"', TD = 'style="padding:6px 8px;border-bottom:1px solid #ffffff22;text-align:right"', TDL = 'style="padding:6px 8px;border-bottom:1px solid #ffffff22;text-align:left"';
+async function habitsView() {   // (item 20: the learned friend's recorded habits next to the player's, with the match)
+  devView('FRIEND VS YOU', '<p class="note">Reading the recorded nights...</p>');
+  try {
+    const crew = crewFrom(g.history || []), src = crew.find(c => c.name === SET.name) || crew.find(c => c.name !== SET.name) || crew[0];
+    if (!src) return devView('FRIEND VS YOU', '<p class="note">No nights recorded yet. Play a night or two (or let a robot play them), then open this again.</p>');
+    await new Promise(r => setTimeout(r, 60)); const { play, faithful } = await import('../sim/certify.mjs'), { crewFrom: cf } = await import('../core/habits.js'), t0 = performance.now();
+    const hist = []; for (const seed of [4242, 4243, 4244]) hist.push(...play(undefined, [src], seed).history);   /* (the friend plays the recorded habits on three fresh nights of its own, and what comes out of that play is recorded the same way yours is) */
+    const fr = cf(hist).find(c => c.name === src.name), ok = faithful([src]), secs = ((performance.now() - t0) / 1000).toFixed(1);
+    const rows = [['roams from the fire', 'm', src.roam, fr.roam, Math.max(5, src.roam * 0.35), 1], ['hits', '', src.aim, fr.aim, 0.15, 2], ['banks at', ' light', src.bankAt, fr.bankAt, Math.max(7, src.bankAt * 0.35), 1]];   /* (each habit's line is the certifier's own: past it the robots do not play like him and the dark refuses to learn) */
+    const score = rows.map(r => Math.max(0, 1 - Math.abs(r[2] - r[3]) / r[4])), match = Math.round(100 * score.reduce((a, b) => a + b, 0) / score.length);
+    devView('FRIEND VS YOU', `<p class="note" style="margin:0 0 8px">The recorded player is <b>${esc(src.name)}</b>, from ${(g.history || []).length} recorded nights. The learned friend plays those habits for three fresh nights, and its own record is read the same way.</p>
+      <div style="text-align:center;margin:10px 0"><div style="font:500 64px 'Barlow Condensed';letter-spacing:.06em;color:#ff4fd8" id="matchNum">${match}%</div><div class="note" style="margin:0">MATCH  (100% is the same habits; 0% is as far off as the certifier allows)</div></div>
+      <table ${TBL}><tr><th ${TDL}>habit</th><th ${TD}>recorded player</th><th ${TD}>learned friend</th><th ${TD}>off by</th><th ${TD}>match</th></tr>
+      ${rows.map((r, i) => `<tr><td ${TDL}>${r[0]}</td><td ${TD}>${r[2].toFixed(r[5])}${r[1]}</td><td ${TD}>${r[3].toFixed(r[5])}${r[1]}</td><td ${TD}>${Math.abs(r[2] - r[3]).toFixed(r[5])}</td><td ${TD}>${Math.round(score[i] * 100)}%</td></tr>`).join('')}
+      <tr><td ${TDL}>faces away from (sector)</td><td ${TD}>${src.blind}</td><td ${TD}>${fr.blind}</td><td ${TD}>${src.blind === fr.blind ? 'same' : 'differs'}</td><td ${TD}>shown, not scored</td></tr></table>
+      <p class="note">The certifier's check, run just now: <b>${ok.ok ? 'PASS' : 'FAIL'}</b>${ok.ok ? ' (every habit is inside its line)' : ': ' + esc(ok.bad.join('; '))}. Read in ${secs} s.</p>`);
+  } catch (e) { devView('FRIEND VS YOU', `<p class="note">Could not read it: ${esc(e.message)}</p>`); }
+}
+async function daemonView() {   // (item 22: what the daemon wrote on its last pass over the recorded worlds, refusals included)
+  devView('THE DAEMON', '<p class="note">Reading the daemon\'s last pass...</p>');
+  try {
+    const d = await (await fetch('./daemon/learned.json?t=' + Date.now())).json(), ws = Object.entries(d.worlds || {}), s = d.summary || {};
+    devView('THE DAEMON', `<p class="note" style="margin:0 0 8px">One daemon learns for every world from its recorded nights, whenever the PC is on, with no live world. It only keeps a dark it can prove: three fresh runs fair, in the flow band, and better than the current dark by more than twice the noise. Last pass: ${esc((d.at || '').replace('T', ' ').slice(0, 16))} UTC.</p>
+      <p class="note" style="margin:0 0 8px"><b>${s.worlds ?? ws.length}</b> world${(s.worlds ?? ws.length) === 1 ? '' : 's'} read, <b>${s.learned ?? 0}</b> learned, <b>${s.certified ?? 0}</b> certified (${s.seconds ?? '?'} s). Pooled across worlds: <b>${d.mind ? d.mind.nights : 0}</b> recorded nights.</p>
+      ${ws.map(([id, w]) => { const c = w.certify, need = c ? +(2 * c.noise).toFixed(3) : null; return `<div style="border:1px solid #ffffff33;padding:10px;margin:8px 0"><b>${esc(id)}</b>: ${w.nights} recorded nights<br>
+        crew rebuilt: ${(w.crew || []).map(p => `${esc(p.name)} roams ${p.roam} m, hits ${Math.round(p.aim * 100)}%`).join('; ') || 'none'}<br>
+        the robots play like them: <b>${w.faithful && w.faithful.ok ? 'yes' : 'no'}</b><br>
+        verdict: <b style="color:${w.tactic ? '#7dffb2' : '#ff4fd8'}">${w.tactic ? 'CERTIFIED, the new dark goes live' : 'REFUSED: ' + esc(w.why)}</b><br>
+        ${c ? `gain against noise: <b>${c.gain >= 0 ? '+' : ''}${c.gain}</b> against noise <b>${c.noise}</b> (it needed more than +${need}); ${c.seconds} s of breeding and three fresh runs` : 'no certification run (nothing to learn from yet)'}</div>`; }).join('') || '<p class="note">No recorded worlds in next/daemon/worlds yet. EXPORT NIGHTS saves one.</p>'}
+      <p class="note">A refusal is the daemon working: it keeps the current dark when it cannot prove a better one.</p>`);
+  } catch (e) { devView('THE DAEMON', `<p class="note">The daemon has not written a pass yet (next/daemon/learned.json): ${esc(e.message)}</p>`); }
+}
 function drawDev() { $('devBody').innerHTML = DEV.map(([n, d], i) => `<button class="key" data-i="${i}">${n}<small>(${d})</small></button>`).join(''); $('devNote').textContent = isHost() ? 'Each one closes this and puts you straight back in.' : 'Only the host can use DEV: it changes the whole world.'; }
-$('devBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !isHost()) return; const msg = DEV[+b.dataset.i][2](); $('dev').hidden = true; panel = null; $('paused').hidden = true; lockMouse(); say(msg, 3); });
+$('devBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !isHost()) return; const msg = DEV[+b.dataset.i][2](); if (msg === HOLD) return; $('dev').hidden = true; panel = null; $('paused').hidden = true; lockMouse(); say(msg, 3); });
 $('openDev').onclick = () => { $('paused').hidden = true; $('dev').hidden = false; panel = 'dev'; drawDev(); };
 $('devBack').onclick = () => { $('dev').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidden = false; panel = 'list';
@@ -933,7 +986,7 @@ function saveNow() {
   } catch (e) { say('This browser would not save the world (storage full or blocked).', 5); } }
 setInterval(saveNow, 20000); addEventListener('pagehide', saveNow); document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
 function loadSaved(id) { try { return C.loadWorld(JSON.parse(localStorage.getItem('lastfire2-w-' + id) || 'null')); } catch (e) { return null; } }
-function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const saved = id ? loadSaved(id) : null; begin(saved ? saved.seed : Math.floor(Math.random() * 1e9), 1, saved); if (!net && g && !g.players.some(p => p.bot)) learnedFriend();   /* (solo is the main case, never a reminder you are alone: a learned friend keeps the camp with you, AUDIT-2026-10-19) */ if (saved) say(`Back in your world: night ${saved.night}, fire ${saved.fire.level}. The light you left is where you left it.`, 6); }
+function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const saved = id ? loadSaved(id) : null; begin(saved ? saved.seed : PERF ? PERF.seed : Math.floor(Math.random() * 1e9), 1, saved); if (PERF && !saved) perfectCrew(); else if (!net && g && !g.players.some(p => p.bot)) learnedFriend();   /* (solo is the main case, never a reminder you are alone: a learned friend keeps the camp with you, AUDIT-2026-10-19) */ if (saved) say(`Back in your world: night ${saved.night}, fire ${saved.fire.level}. The light you left is where you left it.`, 6); }
 function drawWorlds() {
   const list = worlds(); if (!list.length) { $('worlds').innerHTML = ''; return; }
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
