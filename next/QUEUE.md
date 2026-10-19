@@ -1,6 +1,16 @@
 # Last Fire: the queue
 
 
+## North star (his words, 2026-10-19): Cyberpunk 2077 as close to one-to-one as possible, plus friends and survival
+
+Never stop working on the game; use REA and GitHub to learn from the best. Cyberpunk's yellow becomes hot pink and violet (his palette). In order:
+1. Kiroshi scan: middle mouse pings the dark; shapes within 30 m show as violet outlines for 2 s, 8 s cooldown (they stay smoke: you see, you do not hit).
+2. Tech weapon: the railgun sniper (Blender helper is building it) charges 0.4 s, pierces cover and bodies, quick scope.
+3. Smart pistol: rounds curve onto a scanned shape.
+4. Eye HUD: the wrist hologram plus a Kiroshi frame (thin corner brackets, live readouts); learn from Venge.io's REA capture.
+5. Neon on wet ground: more puddles and the camp's signs reflected (the wet shader exists).
+6. Double jump and air dash (have: boost jump and dodge); sandevistan-style slow time only in solo.
+
 ## TOP FIVE (Daniel, 2026-10-19 about 05:50: "make sure our top five priority tasks are complete or in progress... finish first or start ASAP")
 1. **The truck**: SHIPPED v130, a smooth code-modeled body that grows part by part. Open: wrecks are heavy (14.6k triangles each), the roof lamp housing not seen by eye yet.
 2. **The spaceship**: body shipped v128, flight works; open: fly the drop to Earth, check the cockpit view from inside.

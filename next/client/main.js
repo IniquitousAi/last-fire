@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=140';
-import { Ambience } from './ambience.js?v=140';
-import { Camp, BOARD } from './camp.js?v=140';
-import { Guide } from './guide.js?v=140';
-import { buildSites } from './earthsite.js?v=140';
-import { Truck } from './truck.js?v=140';
-import { ShipView } from './shipview.js?v=140';
-import { Crew } from './crew.js?v=140';
-import { Hands } from './hands.js?v=140';
-import { Wrist } from './wrist.js?v=140';
-import { FireCore } from './firecore.js?v=140';
+import * as C from '../core/game.js?v=141';
+import { Ambience } from './ambience.js?v=141';
+import { Camp, BOARD } from './camp.js?v=141';
+import { Guide } from './guide.js?v=141';
+import { buildSites } from './earthsite.js?v=141';
+import { Truck } from './truck.js?v=141';
+import { ShipView } from './shipview.js?v=141';
+import { Crew } from './crew.js?v=141';
+import { Hands } from './hands.js?v=141';
+import { Wrist } from './wrist.js?v=141';
+import { FireCore } from './firecore.js?v=141';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=140';
-import { FriendVoice } from './friendvoice.js?v=140';
-import { crewFrom } from '../core/habits.js?v=140';
-import { HudLook } from './hudlook.js?v=140';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=140';
-import { sound, GUNS } from '../../src/combat.js?v=140';
-import { FX } from '../../src/fx.js?v=140';
+import { think as friendThink } from './friend.js?v=141';
+import { FriendVoice } from './friendvoice.js?v=141';
+import { crewFrom } from '../core/habits.js?v=141';
+import { HudLook } from './hudlook.js?v=141';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=141';
+import { sound, GUNS } from '../../src/combat.js?v=141';
+import { FX } from '../../src/fx.js?v=141';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 140;   // (this copy's version; ./version.json says the newest)
+const BUILD = 141;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -201,6 +201,12 @@ function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near 
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
 const seen = new Map();
+// the Kiroshi scan (Cyberpunk 2077, his north star, 2026-10-19): middle mouse or Z pings the dark; every shape within 30 m shows as a violet outline
+// for 2 s, 8 s between scans. Seeing is not hitting: out of the light they stay smoke
+const SCAN = { r: 30, t: 2, cd: 8, color: 0x8a5cff }; let scanCd = 0;
+function scan() { if (!g || !me || me.ember || scanCd > 0) return; scanCd = SCAN.cd; let n = 0; for (const k of g.hollow) { if (Math.hypot(k.x - me.x, k.z - me.z) > SCAN.r) continue; const v = seen.get(k.id); if (v) { v.scan = SCAN.t; n++; } }
+  say(n ? `Scan: ${n} shape${n > 1 ? 's' : ''} within ${SCAN.r} m.` : `Scan: nothing within ${SCAN.r} m. For now.`, 2); }
+addEventListener('keydown', e => { if (e.code === 'KeyZ' && !e.repeat && mode === 'play' && !panel) scan(); });
 const LOOK = { walker: ['mutant', 1.75, 0xb48cff], runner: ['mutant', 1.55, 0xff4fa0], giant: ['mutant', 3.0, 0xff2b40],   /* (the baseline zombie, his ask 2026-10-19: Mixamo's Mutant via mohsenheydari/three-fps, drawn as shadow like the rest) */
   watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
 function drawHollow(dt) {
@@ -223,6 +229,9 @@ function drawHollow(dt) {
     }
     { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
       for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
+      if (v.scan > 0 || v.scanned) { v.scan = Math.max(0, (v.scan || 0) - dt); const a = Math.min(1, v.scan / 0.4);   /* (the scan outline: a violet edge that fades out over its last 0.4 s) */
+        for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); m.userData.i0 = m.emissiveIntensity; } if (v.scan > 0) { m.emissive.setHex(SCAN.color); m.emissiveIntensity = 0.9 * a; m.opacity = Math.max(m.opacity, 0.35 + 0.5 * a); } else { m.emissive.setHex(m.userData.e0); m.emissiveIntensity = m.userData.i0; } }
+        v.scanned = v.scan > 0; }
       const w = (1 - v.sol) * 0.035, t = performance.now() / 1000 + k.id, br = 1 + w * Math.sin(t * 1.3); v.o.scale.set(v.base * br, v.base * br, v.base * br); }   /* (smoke breathes slowly; it used to shake on three axes at once, which read as a glitch, his note 2026-10-19) */
     if (v.eyes.length) {   /* (the masks show intent, never in words, GAMEDEV-TRICKS.md 13: the pinpoint eyes flare as it closes to striking range, and the watcher's brighten while nobody looks at it, because that is when it moves) */
       const K = C.KINDS[k.kind], reach = (K && K.reach) || 1.2; let d = 1e9; for (const p of g.players) if (!p.ember) d = Math.min(d, Math.hypot(p.x - k.x, p.z - k.z));
@@ -340,7 +349,7 @@ addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
 addEventListener('mousemove', e => { if (!locked() || !me) return; const k = 0.0022 * SET.sens * (1 - ads * (1 - SET.adsSens)); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k * (SET.invertY ? -1 : 1))); });
-addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
+addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 1) scan(); if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
 addEventListener('mouseup', e => mouse[e.button] = false);
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
@@ -549,7 +558,7 @@ function frame(now) {
   drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
-  coldHands(dt); updateShade(); me.crouch = crouch || slideT > 0;
+  coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
   camera.position.set(me.x, me.y + eyeH, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - 22 * ads; camera.updateProjectionMatrix();
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
