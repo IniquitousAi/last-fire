@@ -1,10 +1,11 @@
 // The ship you fly (SHIP.md; his picks 2026-10-19: the HELMET cockpit HUD, a generated model). The physics live in core/ship.js and are
 // tested by sim/ship.mjs; this draws the ship, puts you in its cockpit and paints the helmet HUD from the real flight numbers.
-// The model: assets/ship.glb when it exists (made by TRELLIS.2 from a concept), else a gray-box stand-in, the way the lander started.
+// The model: assets/ship.glb when it exists (made by TRELLIS.2 from a concept), else the ship modeled in code (shipmodel.js).
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { SHIP, flyShip } from '../core/ship.js?v=126';
-import { shipBounds } from '../core/game.js?v=126';
+import { SHIP, flyShip } from '../core/ship.js?v=128';
+import { shipBounds } from '../core/game.js?v=128';
+import { buildShip } from './shipmodel.js?v=128';
 
 export class ShipView {
   constructor(scene, land) {
@@ -18,10 +19,8 @@ export class ShipView {
     this.cv = Object.assign(document.createElement('canvas'), { id: 'helmet' }); Object.assign(this.cv.style, { position: 'fixed', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', zIndex: 4, display: 'none' });
     document.body.append(this.cv); this.x = this.cv.getContext('2d');
   }
-  standIn() {   // (gray box until the generated model arrives: a low black wedge with two seams of light)
-    const sh = new THREE.Shape(); sh.moveTo(0, 4.5); sh.lineTo(3.6, -3.2); sh.lineTo(1.2, -2.4); sh.lineTo(0, -3.4); sh.lineTo(-1.2, -2.4); sh.lineTo(-3.6, -3.2); sh.closePath();
-    const hull = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.7, bevelEnabled: true, bevelSize: 0.25, bevelThickness: 0.2, bevelSegments: 3 }).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0b0c12, roughness: 0.3, metalness: 0.8 }));
-    hull.position.y = -0.4; const seam = new THREE.LineSegments(new THREE.EdgesGeometry(hull.geometry, 30), new THREE.LineBasicMaterial({ color: 0xff4fd8 })); seam.position.copy(hull.position); this.body.add(hull, seam);
+  standIn() {   // (until a generated model arrives: the ship modeled in code, shipmodel.js)
+    this.body.add(buildShip(THREE));
   }
   near(p, g) { const sv = g.ship; return !!sv && !sv.pilot && !this.on && Math.hypot(p.x - sv.x, p.z - sv.z) < 6; }
   // every frame: the pilot flies their own copy and the world follows it; everyone else eases toward the host's copy

@@ -1,32 +1,32 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=127';
-import { Ambience } from './ambience.js?v=127';
-import { Camp, BOARD } from './camp.js?v=127';
-import { Guide } from './guide.js?v=127';
-import { buildSites } from './earthsite.js?v=127';
-import { Truck } from './truck.js?v=127';
-import { ShipView } from './shipview.js?v=127';
-import { Wrist } from './wrist.js?v=127';
-import { FireCore } from './firecore.js?v=127';
+import * as C from '../core/game.js?v=128';
+import { Ambience } from './ambience.js?v=128';
+import { Camp, BOARD } from './camp.js?v=128';
+import { Guide } from './guide.js?v=128';
+import { buildSites } from './earthsite.js?v=128';
+import { Truck } from './truck.js?v=128';
+import { ShipView } from './shipview.js?v=128';
+import { Wrist } from './wrist.js?v=128';
+import { FireCore } from './firecore.js?v=128';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=127';
-import { FriendVoice } from './friendvoice.js?v=127';
-import { crewFrom } from '../core/habits.js?v=127';
-import { HudLook } from './hudlook.js?v=127';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=127';
-import { sound, GUNS } from '../../src/combat.js?v=127';
-import { FX } from '../../src/fx.js?v=127';
+import { think as friendThink } from './friend.js?v=128';
+import { FriendVoice } from './friendvoice.js?v=128';
+import { crewFrom } from '../core/habits.js?v=128';
+import { HudLook } from './hudlook.js?v=128';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=128';
+import { sound, GUNS } from '../../src/combat.js?v=128';
+import { FX } from '../../src/fx.js?v=128';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 127;   // (this copy's version; ./version.json says the newest)
+const BUILD = 128;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
