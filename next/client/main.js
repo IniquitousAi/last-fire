@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=78';
-import { Ambience } from './ambience.js?v=78';
-import { Camp, BOARD } from './camp.js?v=78';
-import { Guide } from './guide.js?v=78';
-import { buildSites } from './earthsite.js?v=78';
-import { Truck } from './truck.js?v=78';
-import { Wrist } from './wrist.js?v=78';
-import { FireCore } from './firecore.js?v=78';
+import * as C from '../core/game.js?v=79';
+import { Ambience } from './ambience.js?v=79';
+import { Camp, BOARD } from './camp.js?v=79';
+import { Guide } from './guide.js?v=79';
+import { buildSites } from './earthsite.js?v=79';
+import { Truck } from './truck.js?v=79';
+import { Wrist } from './wrist.js?v=79';
+import { FireCore } from './firecore.js?v=79';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=78';
-import { FriendVoice } from './friendvoice.js?v=78';
-import { crewFrom } from '../core/habits.js?v=78';
-import { HudLook } from './hudlook.js?v=78';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=78';
-import { sound, GUNS } from '../../src/combat.js?v=78';
-import { FX } from '../../src/fx.js?v=78';
+import { think as friendThink } from './friend.js?v=79';
+import { FriendVoice } from './friendvoice.js?v=79';
+import { crewFrom } from '../core/habits.js?v=79';
+import { HudLook } from './hudlook.js?v=79';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=79';
+import { sound, GUNS } from '../../src/combat.js?v=79';
+import { FX } from '../../src/fx.js?v=79';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 78;   // (this copy's version; ./version.json says the newest)
+const BUILD = 79;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -271,10 +271,14 @@ burnGeo.setAttribute('position', new THREE.BufferAttribute(burnPos, 3)); burnGeo
 const burnLines = new THREE.LineSegments(burnGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); burnLines.frustumCulled = false; scene.add(burnLines);
 function burn(a, b) { const i = burnI++ % BURN; burnPos.set([a.x, a.y, a.z, b.x, b.y, b.z], i * 6); burnLife[i] = C.TRACER.life; }
 function drawBurns(dt) { for (let i = 0; i < BURN; i++) { burnLife[i] = Math.max(0, burnLife[i] - dt); const k = burnLife[i] / C.TRACER.life; burnCol.set([0.75 * k, 0.95 * k, 1.0 * k, 0.1 * k, 0.15 * k, 0.2 * k], i * 6); } burnGeo.attributes.position.needsUpdate = true; burnGeo.attributes.color.needsUpdate = true; }
+// seats are jobs, part 2 (INNOVATION.md): the back seats work a mounted gun: endless rounds, but it heats; past red it locks until it cools
+const MOUNT = { ...GUNS.lmg, name: 'MOUNTED GUN', spread: 0.02, auto: true }; let heat = 0, overheat = false;
+const mounted = () => g && g.car && C.seatOf(g, me.id) >= 2;
 function shoot() {
-  const G = GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || reloadT > 0 || me.ember) return;
-  if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; }
-  a.mag--; shotCd = 60 / G.rpm; sound.shot(gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6);
+  const mount = mounted(), G = mount ? MOUNT : GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || (!mount && reloadT > 0) || me.ember) return;
+  if (mount) { if (overheat) { if (!shoot.hot) { sound.click(); shoot.hot = true; } return; } shoot.hot = false; heat = Math.min(1, heat + 0.045); if (heat >= 1) { overheat = true; say('The mount is red hot. Let it cool.', 2); } }
+  else { if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; } a.mag--; }
+  shotCd = 60 / G.rpm; sound.shot(mount ? 'lmg' : gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6);
   const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), sp = G.spread * (ads > 0.5 ? 0.3 : 1), ds = [], gm = held[gunKey]; let end = null;
   if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
   const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
@@ -285,7 +289,7 @@ function shoot() {
     fx.tracer(muzzle, e); if (lit) burn(muzzle, o.clone().addScaledVector(d, h ? h.t : C.TRACER.len));
     if (h) { if ((h.part ? h.k.sb : h.k.sh) > 0) fx.spark(e); else fx.ichor(e, h.mult > 1); if (isHost()) showHit(C.damage(g, h.k, h.part, G.dmg * (h.mult > 1 ? G.head : 1), G.ap, me.id), h.mult > 1); }
   }
-  if (!isHost()) net.send({ t: 'shot', g: gunKey, o: [o.x, o.y, o.z], d: ds[0], ds });
+  if (!isHost()) net.send({ t: 'shot', g: mount ? 'lmg' : gunKey, o: [o.x, o.y, o.z], d: ds[0], ds });
   if (net) net.send({ t: 'bang', g: gunKey, x: +me.x.toFixed(2), y: +(me.y + 1.5).toFixed(2), z: +me.z.toFixed(2), e: [+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)] });
   me.pitch = Math.min(1.55, me.pitch + G.recoil * 0.4); me.yaw += (Math.random() - 0.5) * G.recoil * 0.3;
 }
@@ -361,7 +365,7 @@ function hud() {
   const [a, b] = PHASE[C.phase(g.clock)]; if (C.onEarth(me) && g.earth) { const t = Math.max(0, Math.ceil(g.earth.t)); txt('phase', `<b>EARTH</b><small>the lander leaves in ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</small>`, true); } else txt('phase', `<b>${a}</b><small>${b}  ·  night ${g.night}</small>`, true);
   { const kg = C.loadOf(me); txt('light', `<b>${Math.floor(me.carried)}</b><span>LIGHT CARRIED (bring it to the fire, or build with it)</span>${kg ? `<span style="display:block;color:#b9a8ff">PACK ${kg} kg: ${(me.pack || []).join(', ')} (${Math.round(C.speedOf(me) * 100)}% speed; drop it at the truck bay)</span>` : ''}`, true); }
   $('hpBar').style.width = Math.max(0, me.hp) + '%'; $('hpBar').style.opacity = (0.35 + 0.65 * Math.max(0, me.hp) / 100).toFixed(2);
-  const am = ammo[gunKey]; txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
+  const am = ammo[gunKey]; if (mounted()) txt('ammo', `<b>${Math.round(heat * 100)}%</b><span>heat</span><small>${overheat ? 'TOO HOT, COOLING' : 'MOUNTED GUN, endless rounds'}</small>`, true); else txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
   txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
   { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : atStore() ? [STORE.x, g.land(STORE.x, STORE.z) + 2.6, STORE.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
@@ -380,7 +384,8 @@ function frame(now) {
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
-  if (locked() && mouse[0] && !panel && !buildPick && (GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
+  heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
+  if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
   ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { runFriends(dt); C.step(g, dt); } else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
