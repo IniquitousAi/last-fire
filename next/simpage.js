@@ -5,6 +5,7 @@ import { trip } from './sim/drop.mjs';
 import { campaign } from './sim/truckbuild.mjs';
 import { play as cplay } from './sim/certify.mjs';
 import { crewFrom } from './core/habits.js';
+import { run as campWeek } from './sim/economy.mjs';
 const $ = s => document.querySelector(s), wait = () => new Promise(r => setTimeout(r, 0)), pct = x => Math.round(x * 100) + '%';
 const band = x => x >= 0.25 && x <= 0.7;
 // each test: a name, what it asks, the columns, and a run that yields rows one at a time (so the table fills in live)
@@ -24,6 +25,10 @@ const TESTS = [
       for (const seed of [11, 22, 33]) { const src = crewFrom(cplay(undefined, [careful, bold], seed).history); await wait(); const fr = crewFrom(cplay(undefined, src, seed + 500).history); await wait();
         for (const s of src) { const m = fr.find(q => q.name === s.name); const ok = Math.abs(m.roam - s.roam) / s.roam < 0.25 && Math.abs(m.aim - s.aim) < 0.12;
           yield [`${s.name}, ${seed}`, `${s.roam.toFixed(1)} to ${m.roam.toFixed(1)} m`, `${s.together.toFixed(2)} to ${m.together.toFixed(2)}`, `${pct(s.aim)} to ${pct(m.aim)}`, ok]; } } } },
+  { id: 'camp', name: "THE CAMP'S BOOKS", asks: 'Daniel plays every day; Dalton sleeps through days 2 to 4. Fair means the one alone is never more than a day of dues behind, what he gives reaches the fire, and the friend who was away is not left behind.',
+    cols: ['seed', 'Daniel alone, worst', 'Dalton after', 'pool reached the fire', 'fair'], steps: 3,
+    async *run() { for (const seed of [1, 2, 3]) { await wait(); const log = campWeek(seed), solo = log.filter(d => d.day >= 2 && d.day <= 4), worst = Math.max(...solo.map(d => d.danielBehind)), poolOk = log.some(d => d.poolMax > 0) && log[log.length - 1].pool === 0, last = log[log.length - 1];
+      yield [seed, worst.toFixed(2) + ' days behind', `standing ${last.dalton >= 0 ? '+' : ''}${last.dalton}`, poolOk ? 'yes' : 'no', worst <= 1 && poolOk && last.daltonBehind <= 1]; } } },
 ];
 for (const T of TESTS) {
   const el = document.createElement('section'); el.className = 'test';
