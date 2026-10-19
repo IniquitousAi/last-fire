@@ -1,4 +1,6 @@
 import { newRecord, sample, noteBank, noteShot, summarize } from './habits.js';
+import { SHIP, makeShip, flyShip } from './ship.js';
+export { SHIP };
 import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHaveLantern, morale, CAMP } from './camp.js';
 // Last Fire, the rules. No drawing, no sound, no network, no Math.random: the same seed and the same inputs give the same night,
 // so the browser, the robots and the daemon all run this one file. Every system draws from its own named random stream.
@@ -57,6 +59,24 @@ const SEAT_AT = [[-0.45, -0.2], [0.45, -0.2], [-0.45, 1.2], [0.45, 1.2]];   // (
 export const seatOf = (g, id) => g.car && id !== null && id !== undefined ? g.car.seats.indexOf(id) : -1;   // (seats are fixed places: 0 drives, 1 aims the roof lamp, 2 and 3 work the mounted gun; empty is null)
 export function seatPos(c, i) { const [ox, oz] = SEAT_AT[i] || SEAT_AT[0], co = Math.cos(c.yaw), si = Math.sin(c.yaw); return [c.x + ox * co + oz * si, c.z - ox * si + oz * co]; }
 export const storeKg = car => car.store.reduce((s, k) => s + PARTS[k].kg, 0);
+// the ship (SHIP.md): one pilot seat, chosen by the host. The pilot's own game flies it (smooth, no wait on the network) and reports where it is,
+// the way every player reports their own position; with nobody at the controls the host settles it on its springs.
+export const SHIP_PARK = { x: 0, z: 34 };
+export function shipOf(g) { if (!g.ship) g.ship = makeShip(SHIP_PARK.x, g.land(SHIP_PARK.x, SHIP_PARK.z) + SHIP.hover - 0.05, SHIP_PARK.z, 0); return g.ship; }
+export function useShip(g, p) {
+  const s = shipOf(g); if (!p || p.ember) return null;
+  if (s.pilot === p.id) { s.pilot = null; const a = s.yaw + Math.PI / 2; p.x = s.x + Math.sin(a) * 4; p.z = s.z + Math.cos(a) * 4; p.y = g.land(p.x, p.z); s.vx = s.vz = 0; p.tp = (p.tp || 0) + 1; return 'out'; }
+  if (s.pilot || onEarth(p) || Math.hypot(p.x - s.x, p.z - s.z) > 6) return null; s.pilot = p.id; return 'in';
+}
+export function shipBounds(s) {   // (the camp wall bumps it off, and the Moon's edge holds it for now: Earth is a trip, not a flight, until the drop is flown)
+  const r = Math.hypot(s.x, s.z); if (r < 24) { s.x *= 24 / r; s.z *= 24 / r; const vr = (s.vx * s.x + s.vz * s.z) / 24; if (vr < 0) { s.vx -= vr * s.x / 24 * 1.4; s.vz -= vr * s.z / 24 * 1.4; } }
+  if (r > 1500) { s.x *= 1500 / r; s.z *= 1500 / r; }
+}
+function flyShips(g, dt) {
+  const s = shipOf(g), p = s.pilot && g.players.find(q => q.id === s.pilot);
+  if (s.pilot && (!p || p.ember)) s.pilot = null;
+  if (!s.pilot) { flyShip(s, {}, g.land, Math.min(dt, 1 / 30)); shipBounds(s); } else { p.x = s.x; p.z = s.z; p.y = s.y; }
+}
 export function useCar(g, p) {   // (F at the truck: load your pack first if you carry one, else get in; F inside gets you out)
   const c = g.car; if (!c || !p || p.ember) return null; const i = c.seats.indexOf(p.id);
   if (i >= 0) { c.seats[i] = null; p.x = c.x + Math.cos(c.yaw) * 2.2; p.z = c.z - Math.sin(c.yaw) * 2.2; p.tp = (p.tp || 0) + 1; return 'out'; }
@@ -216,7 +236,7 @@ export function step(g, dt) {
   if (Math.floor(g.t * 2) !== Math.floor((g.t - dt) * 2)) for (const p of g.players) if (!p.ember) { (p.trail = p.trail || []).push([+p.x.toFixed(1), +p.z.toFixed(1)]); if (p.trail.length > 20) p.trail.shift(); }
   if (g.traces && g.traces.length) { for (const t of g.traces) t.t -= dt; g.traces = g.traces.filter(t => t.t > 0); }
   if (Math.floor(g.t) !== Math.floor(g.t - dt)) { g.gaze = g.gaze || {}; for (const k of g.hollow) { if (k.dead) continue; for (const p of g.players) { if (p.ember) continue; const dx = k.x - p.x, dz = k.z - p.z, d = Math.hypot(dx, dz); if (d < 40 && d > 0.1 && (-Math.sin(p.yaw || 0) * dx - Math.cos(p.yaw || 0) * dz) / d > 0.9) { g.gaze[k.kind] = (g.gaze[k.kind] || 0) + 1; break; } } } }
-  spawn(g, dt, ph); spawnEarth(g, dt); driveCar(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
+  spawn(g, dt, ph); spawnEarth(g, dt); driveCar(g, dt); flyShips(g, dt); moveHollow(g, dt, ph); tripClock(g, dt);
   // motes: gathered by walking through them; carried light is banked by standing in the fire's circle
   for (const m of g.motes) { m.t -= dt; for (const p of g.players) if (!p.ember && Math.hypot(p.x - m.x, p.z - m.z) < 1.4) { p.carried += m.v; m.t = 0; if (m.cell && g.earth && g.earth.found) g.earth.found.cells++; } }
   g.motes = g.motes.filter(m => m.t > 0);

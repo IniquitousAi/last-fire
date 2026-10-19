@@ -3,12 +3,12 @@
 // The model: assets/ship.glb when it exists (made by TRELLIS.2 from a concept), else a gray-box stand-in, the way the lander started.
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { SHIP, makeShip, flyShip } from '../core/ship.js?v=109';
+import { SHIP, flyShip } from '../core/ship.js?v=110';
+import { shipBounds } from '../core/game.js?v=110';
 
-const PARK = { x: 0, z: 34, yaw: 0 };   // (outside the camp's gate, nose away from the tents)
 export class ShipView {
   constructor(scene, land) {
-    this.land = land; this.s = makeShip(PARK.x, land(PARK.x, PARK.z) + SHIP.hover - 0.05, PARK.z, PARK.yaw); this.on = false; this.lag = { r: 0, p: 0 }; this.read = { speed: 0, height: SHIP.hover };
+    this.land = land; this.on = false; this.d = null; this.lag = { r: 0, p: 0 }; this.read = { speed: 0, height: SHIP.hover };
     this.body = new THREE.Group(); scene.add(this.body);
     new GLTFLoader().load('./assets/ship.glb', gl => {   // (the real one: fit to 9 m long, nose along +z)
       const m = gl.scene, box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), k = 9 / Math.max(sz.x, sz.z);
@@ -23,27 +23,30 @@ export class ShipView {
     const hull = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.7, bevelEnabled: true, bevelSize: 0.25, bevelThickness: 0.2, bevelSegments: 3 }).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0b0c12, roughness: 0.3, metalness: 0.8 }));
     hull.position.y = -0.4; const seam = new THREE.LineSegments(new THREE.EdgesGeometry(hull.geometry, 30), new THREE.LineBasicMaterial({ color: 0xff4fd8 })); seam.position.copy(hull.position); this.body.add(hull, seam);
   }
-  near(p) { return !this.on && Math.hypot(p.x - this.s.x, p.z - this.s.z) < 6; }
-  board(me) { this.on = true; me.yaw = this.s.yaw + Math.PI; me.pitch = 0; this.lastYaw = this.s.yaw; const h = document.getElementById('hud'); if (h) h.style.visibility = 'hidden'; this.cv.style.display = 'block'; }
-  leave(me) { this.on = false; const s = this.s, a = s.yaw + Math.PI / 2; me.x = s.x + Math.sin(a) * 4; me.z = s.z + Math.cos(a) * 4; me.y = this.land(me.x, me.z); s.vx = s.vz = 0; const h = document.getElementById('hud'); if (h) h.style.visibility = ''; this.cv.style.display = 'none'; }
-  update(dt, keys, me) {
-    const k = c => keys[c] ? 1 : 0, s = this.s;
-    const input = this.on ? { fwd: k('KeyW') - k('KeyS'), turn: k('KeyA') - k('KeyD'), side: k('KeyE') - k('KeyQ'), up: k('Space') - k('ShiftLeft') } : {};
-    this.read = flyShip(s, input, this.land, Math.min(dt, 1 / 30));
-    { const r = Math.hypot(s.x, s.z); if (r < 24) { s.x *= 24 / r; s.z *= 24 / r; const vr = (s.vx * s.x + s.vz * s.z) / 24; if (vr < 0) { s.vx -= vr * s.x / 24 * 1.4; s.vz -= vr * s.z / 24 * 1.4; } }   /* (the camp wall: it bumps off, it never flies into the tents) */
-      if (r > 1500) { s.x *= 1500 / r; s.z *= 1500 / r; } }   /* (the Moon's edge for now: Earth is a trip, not a flight, until the drop is flown) */
-    this.body.position.set(s.x, s.y, s.z); this.body.rotation.set(s.pitch, s.yaw, s.roll, 'YXZ');
-    if (!this.on) return;
-    me.yaw += s.yaw - this.lastYaw; this.lastYaw = s.yaw; me.x = s.x; me.z = s.z; me.y = s.y;   // (you turn with the ship; the mouse still looks around the cockpit)
-    this.lag.r += (s.roll - this.lag.r) * Math.min(1, dt * 3.5); this.lag.p += (s.pitch - this.lag.p) * Math.min(1, dt * 3.5);
+  near(p, g) { const sv = g.ship; return !!sv && !sv.pilot && !this.on && Math.hypot(p.x - sv.x, p.z - sv.z) < 6; }
+  // every frame: the pilot flies their own copy and the world follows it; everyone else eases toward the host's copy
+  update(dt, keys, me, g, host) {
+    const sv = g.ship; if (!sv) return; const mine = sv.pilot === me.id;
+    if (mine && !this.on) { this.on = true; this.d = { ...sv }; me.yaw = sv.yaw + Math.PI; me.pitch = 0; this.lastYaw = sv.yaw; const h = document.getElementById('hud'); if (h) h.style.visibility = 'hidden'; this.cv.style.display = 'block'; }
+    if (!mine && this.on) { this.on = false; const h = document.getElementById('hud'); if (h) h.style.visibility = ''; this.cv.style.display = 'none'; }
+    const d = this.d = this.d || { ...sv };
+    if (mine) {
+      const k = c => keys[c] ? 1 : 0;
+      this.read = flyShip(d, { fwd: k('KeyW') - k('KeyS'), turn: k('KeyA') - k('KeyD'), side: k('KeyE') - k('KeyQ'), up: k('Space') - k('ShiftLeft') }, this.land, Math.min(dt, 1 / 30)); shipBounds(d);
+      if (host) Object.assign(sv, { x: d.x, y: d.y, z: d.z, yaw: d.yaw, roll: d.roll, pitch: d.pitch, vx: d.vx, vy: d.vy, vz: d.vz });
+      me.yaw += d.yaw - this.lastYaw; this.lastYaw = d.yaw; me.x = d.x; me.z = d.z; me.y = d.y;   // (you turn with the ship; the mouse still looks around the cockpit)
+      this.lag.r += (d.roll - this.lag.r) * Math.min(1, dt * 3.5); this.lag.p += (d.pitch - this.lag.p) * Math.min(1, dt * 3.5);
+    } else { const a = host ? 1 : Math.min(1, dt * 10); for (const q of ['x', 'y', 'z', 'roll', 'pitch', 'vx', 'vy', 'vz']) d[q] += (sv[q] - d[q]) * a; d.yaw += Math.atan2(Math.sin(sv.yaw - d.yaw), Math.cos(sv.yaw - d.yaw)) * a; }
+    this.body.position.set(d.x, d.y, d.z); this.body.rotation.set(d.pitch, d.yaw, d.roll, 'YXZ');
   }
+  sent() { const d = this.d; return [d.x, d.y, d.z, d.yaw, d.roll, d.pitch, d.vx, d.vz, d.vy].map(v => +v.toFixed(3)); }
   camera(cam, me) {   // (the cockpit: your eyes just behind the canopy; the hull banks and dips, and you with it)
-    const s = this.s, fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
+    const s = this.d, fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
     cam.position.set(s.x + fx * 1.6, s.y + 1.1, s.z + fz * 1.6); cam.rotation.set(me.pitch + s.pitch, me.yaw, -s.roll, 'YXZ');
   }
   hud(heading) {   // (mockups/cockpit.html look A: the visor curves around your face, readings on its curve settle a beat after the ship moves)
     const cv = this.cv, D = devicePixelRatio || 1, W = innerWidth, H = innerHeight, x = this.x; if (cv.width !== W * D || cv.height !== H * D) { cv.width = W * D; cv.height = H * D; }
-    x.setTransform(D, 0, 0, D, 0, 0); x.clearRect(0, 0, W, H); const U = Math.min(W, H) / 60, s = this.s;
+    x.setTransform(D, 0, 0, D, 0, 0); x.clearRect(0, 0, W, H); const U = Math.min(W, H) / 60, s = this.d;
     const text = (t, px, py, size, col, al = 'center') => { x.font = `400 ${size}px "Barlow Condensed", sans-serif`; x.textAlign = al; x.textBaseline = 'middle'; x.fillStyle = '#000'; x.fillText(t, px + 1, py + 1); x.fillStyle = col; x.fillText(t, px, py); };
     x.save(); x.translate(W / 2, H / 2); x.rotate((s.roll - this.lag.r) * 0.6); x.translate(0, (this.lag.p - s.pitch) * H * 0.4);
     x.fillStyle = '#000'; x.beginPath(); x.rect(-W, -H, W * 2, H * 2); x.ellipse(0, 0, W * 0.6, H * 0.64, 0, 0, Math.PI * 2, true); x.fill('evenodd');
