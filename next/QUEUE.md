@@ -9,7 +9,7 @@ Never stop working on the game; use REA and GitHub to learn from the best. Cyber
 3. Smart pistol: rounds curve onto a scanned shape.
 4. Eye HUD: the wrist hologram plus a Kiroshi frame (thin corner brackets, live readouts); learn from Venge.io's REA capture.
 5. Neon on wet ground: more puddles and the camp's signs reflected (the wet shader exists).
-6. Double jump and air dash (have: boost jump and dodge); sandevistan-style slow time only in solo.
+6. DONE v143: slow time (T or the mouse's back button, world at 25% for 6 s, 30 s recharge, solo only); double jump and air dash were already the boost jump and air dodge.
 7. DONE v142: the Earth air line was azure (read cyan under bloom), now blue-violet.
 8. DONE v141: item 1, the Kiroshi scan.
 

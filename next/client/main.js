@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=142';
-import { Ambience } from './ambience.js?v=142';
-import { Camp, BOARD } from './camp.js?v=142';
-import { Guide } from './guide.js?v=142';
-import { buildSites } from './earthsite.js?v=142';
-import { Truck } from './truck.js?v=142';
-import { ShipView } from './shipview.js?v=142';
-import { Crew } from './crew.js?v=142';
-import { Hands } from './hands.js?v=142';
-import { Wrist } from './wrist.js?v=142';
-import { FireCore } from './firecore.js?v=142';
+import * as C from '../core/game.js?v=143';
+import { Ambience } from './ambience.js?v=143';
+import { Camp, BOARD } from './camp.js?v=143';
+import { Guide } from './guide.js?v=143';
+import { buildSites } from './earthsite.js?v=143';
+import { Truck } from './truck.js?v=143';
+import { ShipView } from './shipview.js?v=143';
+import { Crew } from './crew.js?v=143';
+import { Hands } from './hands.js?v=143';
+import { Wrist } from './wrist.js?v=143';
+import { FireCore } from './firecore.js?v=143';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=142';
-import { FriendVoice } from './friendvoice.js?v=142';
-import { crewFrom } from '../core/habits.js?v=142';
-import { HudLook } from './hudlook.js?v=142';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=142';
-import { sound, GUNS } from '../../src/combat.js?v=142';
-import { FX } from '../../src/fx.js?v=142';
+import { think as friendThink } from './friend.js?v=143';
+import { FriendVoice } from './friendvoice.js?v=143';
+import { crewFrom } from '../core/habits.js?v=143';
+import { HudLook } from './hudlook.js?v=143';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=143';
+import { sound, GUNS } from '../../src/combat.js?v=143';
+import { FX } from '../../src/fx.js?v=143';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 142;   // (this copy's version; ./version.json says the newest)
+const BUILD = 143;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -43,16 +43,17 @@ const composer = new EffectComposer(renderer), bloom = new UnrealBloomPass(new T
 // the grade (LOOK.md change 1: Cyberpunk 2077 vibes inside his palette). One pass over the world only (the HUD is page, not picture): warm hues
 // rotate to red and pink so orange and yellow cannot appear on any model, shadows lean violet, fine grain lives in the dark, the colors split only
 // at the outer edge of the lens, and a light vignette. All math, no texture: three reads a pixel.
-const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uT: { value: 0 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float uT; varying vec2 vUv;
+const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uT: { value: 0 }, uS: { value: 0 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uT; uniform float uS; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-    void main(){ vec2 d = vUv - 0.5; float r = length(d) * 1.414, ca = smoothstep(0.7, 1.0, r) * 0.004;
+    void main(){ vec2 d = vUv - 0.5; float r = length(d) * 1.414, ca = smoothstep(0.7, 1.0, r) * (0.004 + 0.012 * uS);
       vec3 c = vec3(texture2D(tDiffuse, vUv - d * ca).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv + d * ca).b);
       float mx = max(c.r, max(c.g, c.b)), w = clamp((min(c.r, c.g) - c.b) / (mx + 1e-4), 0.0, 1.0) * step(c.g, c.r * 1.15);
       c.g = mix(c.g, c.b, w * 0.8); c.b += w * 0.22 * c.r;
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c += vec3(0.010, 0.0, 0.024) * (1.0 - smoothstep(0.0, 0.12, l));
       c += (h(vUv * 917.0 + fract(uT) * 37.0) - 0.5) * 0.018 * (1.0 - smoothstep(0.0, 0.35, l));
-      c *= 1.0 - 0.18 * smoothstep(0.55, 1.15, r); gl_FragColor = vec4(max(c, 0.0), 1.0); }` });
+      { float sl = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = mix(c, vec3(sl * 0.75, sl * 0.55, sl * 1.25), uS * 0.45); }   /* (slow time: the world drains toward violet, the edges split more) */
+      c *= 1.0 - (0.18 + 0.22 * uS) * smoothstep(0.55, 1.15, r); gl_FragColor = vec4(max(c, 0.0), 1.0); }` });
 composer.addPass(grade); composer.addPass(new OutputPass());
 const softDot = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();   // (round, soft points: embers and motes were square specks)
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
@@ -206,7 +207,13 @@ const seen = new Map();
 const SCAN = { r: 30, t: 2, cd: 8, color: 0x8a5cff }; let scanCd = 0;
 function scan() { if (!g || !me || me.ember || scanCd > 0) return; scanCd = SCAN.cd; let n = 0; for (const k of g.hollow) { if (Math.hypot(k.x - me.x, k.z - me.z) > SCAN.r) continue; const v = seen.get(k.id); if (v) { v.scan = SCAN.t; n++; } }
   say(n ? `Scan: ${n} shape${n > 1 ? 's' : ''} within ${SCAN.r} m.` : `Scan: nothing within ${SCAN.r} m. For now.`, 2); }
-addEventListener('keydown', e => { if (e.code === 'KeyZ' && !e.repeat && mode === 'play' && !panel) scan(); });
+addEventListener('keydown', e => { if (e.code === 'KeyZ' && !e.repeat && mode === 'play' && !panel) scan(); if (e.code === 'KeyT' && !e.repeat && mode === 'play' && !panel) sandy(); });
+// Slow time (Cyberpunk's Sandevistan, his north star): T or the mouse's back side button. The world runs at a quarter speed for 6 s while you move,
+// aim and fire at full speed; 30 s to recharge. Alone only: with friends, one person's slow time would be everyone's, so it stays off.
+const SANDY = { scale: 0.25, t: 6, cd: 30 }; let sandyT = 0, sandyCd = 0, tScale = 1;
+addEventListener('mouseup', e => { if (e.button === 3 || e.button === 4) e.preventDefault(); });   // (the back side button must not take the browser back a page)
+function sandy() { if (!g || !me || me.ember) return; if (net) return say('Slow time works alone only: with friends the world is shared.', 3); if (sandyCd > 0) return say(`Slow time recharging: ${Math.ceil(sandyCd)} s.`, 2);
+  sandyT = SANDY.t; sandyCd = SANDY.cd + SANDY.t; kick = Math.min(1, kick + 0.3); say('Slow time: 6 s.', 2); }
 const LOOK = { walker: ['mutant', 1.75, 0xb48cff], runner: ['mutant', 1.55, 0xff4fa0], giant: ['mutant', 3.0, 0xff2b40],   /* (the baseline zombie, his ask 2026-10-19: Mixamo's Mutant via mohsenheydari/three-fps, drawn as shadow like the rest) */
   watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
 function drawHollow(dt) {
@@ -316,7 +323,7 @@ function coldHands(dt) { if (!g || !me || me.ember) return; const warm = C.light
 const DEMO_RUN = [[0, 'look'], [4, 'gun ar'], [5, 'ads spam'], [11, 'fire hip'], [14, 'ads fire'], [18, 'reload'], [22, 'gun pistol'], [23, 'ads spam'], [27, 'reload'], [30, 'gun shotgun'], [31, 'fire hip'], [33, 'reload'], [37, 'gun lmg'], [38, 'move ads'], [42, 'reload'], [46, 'end']];
 // ?demo&night: a 45 s night run for recordings. It starts at the end of dusk, eases its aim onto the nearest shape (a camera operator, not a player
 // skill: test only), and uses every move: hip fire, aiming, boost jump and slam, dodges, sprint and slide, reloads, three guns
-const NIGHT_RUN = [[0, 'look'], [5, 'gun ar'], [6, 'ads fire'], [11, 'boost'], [11.3, 'boost2'], [12.1, 'slam'], [14, 'fire hip'], [18, 'reload'], [21, 'dodge L'], [22.2, 'dodge R'], [23.5, 'sprint'], [25.2, 'slide'], [26.5, 'ads fire'],
+const NIGHT_RUN = [[0, 'look'], [5, 'gun ar'], [6, 'ads fire'], [11, 'boost'], [11.3, 'boost2'], [12.1, 'slam'], [13, 'sandy'], [14, 'fire hip'], [18, 'reload'], [21, 'dodge L'], [22.2, 'dodge R'], [23.5, 'sprint'], [25.2, 'slide'], [26.5, 'ads fire'],
   [31, 'gun shotgun'], [32, 'fire hip'], [35, 'reload'], [37.5, 'gun lmg'], [38, 'boost'], [38.3, 'boost2'], [39.1, 'slam'], [40.5, 'ads fire'], [46, 'end']];
 const press = code => { dispatchEvent(new KeyboardEvent('keydown', { code })); dispatchEvent(new KeyboardEvent('keyup', { code })); };   // (down and up: a held key would keep jumping)
 function demoAim(dt) { let best = null, bd = 45; for (const k of g.hollow) { if (k.dead || C.onEarth(k)) continue; const d = Math.hypot(k.x - me.x, k.z - me.z); if (d < bd) { bd = d; best = k; } } if (!best) return false;
@@ -328,7 +335,7 @@ function demoNight(dt) { const d = demoNight; if (!d.t) g.clock = Math.max(g.clo
   if (what === 'ads fire') { aimOn = t - cur[0] > 0.4; mouse[0] = aimOn && on && t % 0.5 < 0.32; }
   if (what === 'fire hip') { aimOn = false; mouse[0] = on && t % 0.45 < 0.3; }
   if (what === 'reload' && fresh) { aimOn = false; ammo[gunKey].mag = Math.min(ammo[gunKey].mag, 2); reload(); }
-  if (what === 'boost' && fresh) { aimOn = false; jumpBuf = 0.15; } if (what === 'boost2' && fresh) press('Space'); if (what === 'slam' && fresh) press('KeyC');
+  if (what === 'boost' && fresh) { aimOn = false; jumpBuf = 0.15; } if (what === 'boost2' && fresh) press('Space'); if (what === 'slam' && fresh) press('KeyC'); if (what === 'sandy' && fresh) press('KeyT');
   if (what === 'dodge L' && fresh) { keys.KeyA = true; press('ShiftLeft'); keys.KeyA = false; } if (what === 'dodge R' && fresh) { keys.KeyD = true; press('ShiftLeft'); keys.KeyD = false; }
   if (what === 'sprint') { aimOn = false; keys.KeyW = true; keys.ShiftLeft = true; } if (what === 'slide') { keys.KeyW = true; if (fresh) { keys.ShiftLeft = true; press('KeyC'); } }
   if (what === 'end' && fresh) { aimOn = false; say('Night run over.', 3); } }
@@ -349,7 +356,7 @@ addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
 addEventListener('mousemove', e => { if (!locked() || !me) return; const k = 0.0022 * SET.sens * (1 - ads * (1 - SET.adsSens)); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k * (SET.invertY ? -1 : 1))); });
-addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 1) scan(); if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
+addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 1) scan(); if (e.button === 3) sandy(); if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
 addEventListener('mouseup', e => mouse[e.button] = false);
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
@@ -542,7 +549,7 @@ function hud() {
 // ---------------------------------------------------------------- the frame
 let last = performance.now(), fpsN = 0, fpsT = 0;
 function frame(now) {
-  requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now; sandyCd = Math.max(0, sandyCd - dt); sandyT = Math.max(0, sandyT - dt); tScale += ((sandyT > 0 ? SANDY.scale : 1) - tScale) * Math.min(1, dt * 8); const wdt = dt * tScale; grade.uniforms.uS.value = (1 - tScale) / (1 - SANDY.scale);   /* (wdt: the world's time; dt stays yours) */
   if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (DEMO && !panel) (/night/.test(location.search) ? demoNight : demoStep)(dt); if (!panel) move(dt);
@@ -550,12 +557,12 @@ function frame(now) {
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
   if (me.ember || (ship && ship.on)) aimOn = false; { const want = (SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0 && !mvSprint && readyT <= 0, T = MW.adsT[gunKey] || 0.25; ads = want ? Math.min(1, ads + dt / T) : Math.max(0, ads - dt / (T * 0.8)); }   /* (each gun reaches its sights in its own time, a straight line in, as in Modern Warfare) */
-  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { if (!(panel && !net)) { runFriends(dt); C.step(g, dt); } }   /* (alone, a menu pauses the world: the fire stops burning while you read) */ else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
+  if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { if (!(panel && !net)) { runFriends(wdt); C.step(g, wdt); } }   /* (alone, a menu pauses the world: the fire stops burning while you read) */ else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { growFire(); sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
-  drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
+  drawHollow(wdt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(wdt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
@@ -569,7 +576,7 @@ function frame(now) {
   if (gm && !me.ember && !(ship && ship.on)) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads);
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), 0); }
   hands.update(dt, { reloading: reloadT > 0 ? 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)) : -1, ads, kick, moving: onGround ? Math.min(1, vel.length() / 4.6) : 0, gun: gunKey });   /* (the arms: hands.js, the reload as a real hand motion; it hides itself when the gun is hidden) */
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) ship.update(dt, keys, me, g, isHost()); wrist.update(dt); { const k = Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85; if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) ship.update(dt, keys, me, g, isHost()); wrist.update(dt); { const k = Math.max(Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85, 0.75 * grade.uniforms.uS.value); if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free; { const o = free ? 0.4 : Math.max(0, 1 - ads * 2.5); if (Math.abs(o - (frame.xo ?? -1)) > 0.02) { frame.xo = o; $('cross').style.opacity = o.toFixed(2); } }   /* (one reticle: dim on standby, gone by 40% into the sights, where the gun's own sight takes over) */
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z, level: g.fire.level }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
