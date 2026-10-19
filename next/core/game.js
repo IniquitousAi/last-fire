@@ -285,7 +285,7 @@ export function hurt(g, p, n, from) {
 // the trip: down to Earth from the pad, back up from the landing site; the lander leaves when its time is up, with or without you
 // pick the site by its odds (INNOVATION.md, Earth trips): three districts around the landing; each holds different things, and your own
 // record turns the posted odds from a guess into reasoned (3 trips) into checked (10 trips)
-export const SITES = { city: { name: 'THE CITY', parts: 3, cells: 10, dir: 0, est: [0.3, 2.1] }, depot: { name: 'THE DEPOT', parts: 5, cells: 5, dir: Math.PI * 0.5, est: [2.0, 1.0] }, reservoir: { name: 'THE RESERVOIR', parts: 1, cells: 16, dir: Math.PI, est: [0.1, 3.0] } };   // (est: parts and cells a trip for a careful player, from sim/drop.mjs --sites, 20 robot trips each)
+export const SITES = { city: { name: 'THE CITY', parts: 3, cells: 10, dir: 0, est: [0.3, 2.1] }, depot: { name: 'THE DEPOT', parts: 6, cells: 5, dir: Math.PI * 0.5, est: [2.3, 1.0] }, reservoir: { name: 'THE RESERVOIR', parts: 1, cells: 16, dir: Math.PI, est: [0.1, 3.0] } };   // (est: parts and cells a trip for a careful player, from sim/drop.mjs --sites, 20 robot trips each)
 export function siteOdds(g, k) { const r = (g.sites || {})[k], S = SITES[k]; if (!r || r.trips < 3) return { parts: S.est[0], cells: S.est[1], label: 'guess: robots', trips: r ? r.trips : 0 };
   return { parts: r.parts / r.trips, cells: r.cells / r.trips, label: r.trips >= 10 ? 'checked' : 'reasoned', trips: r.trips }; }
 export function drop(g, p, site) {

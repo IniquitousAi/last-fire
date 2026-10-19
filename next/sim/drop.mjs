@@ -5,13 +5,13 @@
 //   tense (danger within 5 m) between 25% and 70% of the trip.
 import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK, fired, throwFlare, FLARE, loadOf, PARTS, MAX_LOAD } from '../core/game.js';
 
-const STYLES = {
+export const STYLES = {
   careful: { roam: 28, leaveAt: 35, full: 30, aim: 0.75 },
   greedy:  { roam: 60, leaveAt: 14, full: 70, aim: 0.6 },
   perfect: { roam: 45, leaveAt: 25, full: 50, aim: 0.95 },
 };
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
-function think(g, p, S, r, dt) {
+export function think(g, p, S, r, dt) {
   if (p.ember || !onEarth(p) || p.home) return;
   const goHome = g.earth.t < S.leaveAt + Math.hypot(p.x - EARTH.x, p.z - EARTH.z) / (4.4 * speedOf(p)) || p.carried >= S.full;
   let tx = EARTH.x, tz = EARTH.z;
