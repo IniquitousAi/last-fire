@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=87';
-import { Ambience } from './ambience.js?v=87';
-import { Camp, BOARD } from './camp.js?v=87';
-import { Guide } from './guide.js?v=87';
-import { buildSites } from './earthsite.js?v=87';
-import { Truck } from './truck.js?v=87';
-import { Wrist } from './wrist.js?v=87';
-import { FireCore } from './firecore.js?v=87';
+import * as C from '../core/game.js?v=88';
+import { Ambience } from './ambience.js?v=88';
+import { Camp, BOARD } from './camp.js?v=88';
+import { Guide } from './guide.js?v=88';
+import { buildSites } from './earthsite.js?v=88';
+import { Truck } from './truck.js?v=88';
+import { Wrist } from './wrist.js?v=88';
+import { FireCore } from './firecore.js?v=88';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=87';
-import { FriendVoice } from './friendvoice.js?v=87';
-import { crewFrom } from '../core/habits.js?v=87';
-import { HudLook } from './hudlook.js?v=87';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=87';
-import { sound, GUNS } from '../../src/combat.js?v=87';
-import { FX } from '../../src/fx.js?v=87';
+import { think as friendThink } from './friend.js?v=88';
+import { FriendVoice } from './friendvoice.js?v=88';
+import { crewFrom } from '../core/habits.js?v=88';
+import { HudLook } from './hudlook.js?v=88';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=88';
+import { sound, GUNS } from '../../src/combat.js?v=88';
+import { FX } from '../../src/fx.js?v=88';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 87;   // (this copy's version; ./version.json says the newest)
+const BUILD = 88;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -163,11 +163,11 @@ function drawHollow(dt) {
       v.mats = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
       scene.add(v.o); seen.set(k.id, v);
     }
-    { const want = C.solid(g, k) ? 1 : 0; v.sol += (want - v.sol) * Math.min(1, dt * 7);   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
+    { const want = C.solid(g, k) ? 1 : 0, was = v.sol; v.sol += (want - v.sol) * Math.min(1, dt * 7); if (was < 0.5 && v.sol >= 0.5) fx.burst(new THREE.Vector3(k.x, k.y + 1.3, k.z), 14, [0.85, 0.72, 1.0], 3.2, 0.35);   /* (a crack of light the moment the smoke is forced into a shape) */   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
       for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
       const w = (1 - v.sol) * 0.1, t = performance.now() / 1000 + k.id; v.o.scale.set(v.base * (1 + w * Math.sin(t * 11)), v.base * (1 + w * Math.sin(t * 7.3)), v.base * (1 + w * Math.cos(t * 9.1))); }
     const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;   // (no bob: they hold their height; the animation does the moving)
-    if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix && !(k.kind === 'watcher' && C.lookedAt(g, k))) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));   // (seen, it freezes mid-motion)
+    if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix && hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k))) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));   // (seen, it freezes mid-motion)
   }
   for (const [id, v] of seen) if (!alive.has(id)) { scene.remove(v.o); seen.delete(id); }
 }
@@ -294,7 +294,8 @@ function shoot() {
   me.pitch = Math.min(1.55, me.pitch + G.recoil * 0.4); me.yaw += (Math.random() - 0.5) * G.recoil * 0.3;
 }
 let hitT = 0;
-function showHit(r, head) { $('hit').className = r.kill ? 'kill' : r.shell ? 'shell' : 'on'; hitT = r.kill ? 0.25 : 0.12; r.kill ? sound.kill() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.hit(head); }
+let hitStop = 0;   // (hit stop, INNOVATION.md combat: the dark's own motion freezes for a few hundredths of a second when a hit lands; the world keeps running)
+function showHit(r, head) { hitStop = Math.max(hitStop, r.kill ? 0.075 : 0.035); kick = Math.min(1, kick + (r.kill ? 0.25 : 0.1)); $('hit').className = r.kill ? 'kill' : r.shell ? 'shell' : 'on'; hitT = r.kill ? 0.25 : 0.12; r.kill ? sound.kill() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.hit(head); }
 function tryGrow() {   // (growing the fire: your choice, and tonight the dark answers with what the new level wakes)
   if (!C.canGrow(g)) return; if (Math.hypot(me.x - g.fire.x, me.z - g.fire.z) > C.fireRadius(g.fire)) return say('Stand at the fire to grow it.');
   if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }
@@ -397,7 +398,7 @@ function frame(now) {
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
-  drawHollow(dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
+  drawHollow(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
