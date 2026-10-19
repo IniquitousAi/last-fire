@@ -1,19 +1,19 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=20';
-import { Ambience } from './ambience.js?v=20';
-import { Camp, BOARD } from './camp.js?v=20';
-import { Guide } from './guide.js?v=20';
-import { HudLook, LOOKS } from './hudlook.js?v=20';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=20';
-import { sound, GUNS } from '../../src/combat.js?v=20';
-import { FX } from '../../src/fx.js?v=20';
+import * as C from '../core/game.js?v=21';
+import { Ambience } from './ambience.js?v=21';
+import { Camp, BOARD } from './camp.js?v=21';
+import { Guide } from './guide.js?v=21';
+import { HudLook } from './hudlook.js?v=21';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=21';
+import { sound, GUNS } from '../../src/combat.js?v=21';
+import { FX } from '../../src/fx.js?v=21';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 20;   // (this copy's version; ./version.json says the newest)
+const BUILD = 21;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -490,9 +490,8 @@ function drawWorlds() {
   $('worlds').innerHTML = list.map(w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`).join('');
 }
 $('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
-const hudLook = new HudLook(() => SET.look, v => { SET.look = v; save(); });   // (three HUD looks on the same numbers; he picks in the Tab menu)
-function drawLooks() { $('looks').innerHTML = LOOKS.map(([k, n, d]) => `<button class="bk${hudLook.name === k ? ' on' : ''}" data-l="${k}">${n}<small>(${d})</small></button>`).join(''); }
-$('looks').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; hudLook.apply(b.dataset.l); drawLooks(); }); drawLooks();
+const hudLook = new HudLook(() => 'visor', () => {});   // (he kept VISOR, 2026-10-19; QUIET and GLASS stay in hudlook.js as variants, not on screen)
+
 let pendingWorld = null; drawWorlds(); setTimeout(() => { if (mode === 'menu') resume(); }, 50); setTimeout(flushQueue, 5000);
 $('solo').onclick = () => { myName(); sound.wake(); startWorld(null); };
 function crewCode() { if (!SET.crew) { SET.crew = roomCode(); save(); } return SET.crew; }   // (made once, kept forever in this browser: the link never changes)

@@ -122,7 +122,8 @@ export class Camp {
   yard(L, land) {
     const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url).then(r => { r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()); return { scene: r.scene, s }; }).catch(() => null));
     const put = (url, x, z, size, ry = 0, sink = 0) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(); o.scale.setScalar(size / Math.max(m.s.x, m.s.z)); o.position.set(x, land(x, z) - sink, z); o.rotation.y = ry;  this.scene.add(o); return o; });
-    const face = (x, z) => Math.atan2(-x, -z);   // (turns a thing's front toward the fire)
+    const face = (x, z) => Math.atan2(-x, -z);
+    const cloth = o => o && o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.map = null; q.material.color.setHex(0x505a70); q.material.roughness = 0.95; } });   // (the repainted canvas was near black: tents read as bare frames at night, so they get one plain cloth color)   // (turns a thing's front toward the fire)
     const R = 21, SEG = 2.7, n = Math.round(2 * Math.PI * R / SEG), GATE = Math.PI / 2;   // (the gate faces out past the hut's side)
     get('kit/fence-fortified.glb').then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, gap = Math.abs(Math.atan2(Math.sin(a - GATE), Math.cos(a - GATE))); if (gap < 0.12) continue;
@@ -133,7 +134,7 @@ export class Camp {
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
     [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {
-      const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z));
+      const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z)).then(cloth);
       const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2); });
     // the workshop: a bench, planks, barrels and a chest by the wall
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
