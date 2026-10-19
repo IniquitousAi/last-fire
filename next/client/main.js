@@ -1,22 +1,22 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=39';
-import { Ambience } from './ambience.js?v=39';
-import { Camp, BOARD } from './camp.js?v=39';
-import { Guide } from './guide.js?v=39';
-import { buildSites } from './earthsite.js?v=39';
-import { Truck } from './truck.js?v=39';
-import { Wrist } from './wrist.js?v=39';
-import { HudLook } from './hudlook.js?v=39';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=39';
-import { sound, GUNS } from '../../src/combat.js?v=39';
-import { FX } from '../../src/fx.js?v=39';
+import * as C from '../core/game.js?v=41';
+import { Ambience } from './ambience.js?v=41';
+import { Camp, BOARD } from './camp.js?v=41';
+import { Guide } from './guide.js?v=41';
+import { buildSites } from './earthsite.js?v=41';
+import { Truck } from './truck.js?v=41';
+import { Wrist } from './wrist.js?v=41';
+import { HudLook } from './hudlook.js?v=41';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=41';
+import { sound, GUNS } from '../../src/combat.js?v=41';
+import { FX } from '../../src/fx.js?v=41';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 39;   // (this copy's version; ./version.json says the newest)
+const BUILD = 41;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -323,7 +323,7 @@ function hud() {
 let last = performance.now(), fpsN = 0, fpsT = 0;
 function frame(now) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (mode !== 'play') { renderer.render(scene, camera); return; }
+  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 8, 0); camera.rotation.set(0.17 + Math.sin(t * 0.07) * 0.02, Math.atan2(-0.6, 0.78) + Math.sin(t * 0.05) * 0.12, 0, 'YXZ'); sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
@@ -528,7 +528,7 @@ async function begin(seed, id, saved = null) {
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); } });
   setTimeout(() => guide.start(), 1200);
-  mode = 'play'; $('menu').hidden = true; $('hud').hidden = false; drawBuild();
+  mode = 'play'; $('menu').hidden = true; $('menuLook').hidden = true; $('bootLog').hidden = true; $('hud').hidden = false; drawBuild();
   await ready; prepGun('pistol'); prepGun('ar');
 }
 // ---------------------------------------------------------------- your worlds: saved in this browser, every 20 seconds and when you leave
@@ -546,11 +546,18 @@ function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const
 function drawWorlds() {
   const list = worlds(); if (!list.length) { $('worlds').innerHTML = ''; return; }
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
-  $('worlds').innerHTML = list.map(w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`).join('');
+  const key = w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`;
+  $('worlds').innerHTML = key(list[0]) + (list.length > 1 ? `<button class="key" id="older">OLDER WORLDS (${list.length - 1})<small>(show the rest)</small></button><div id="olderList" hidden>${list.slice(1).map(key).join('')}</div>` : '');   // (the newest first; the rest one click away)
 }
-$('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
+$('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'older') { $('olderList').hidden = !$('olderList').hidden; return; } myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
 const hudLook = new HudLook(() => 'visor', () => {});   // (he kept VISOR, 2026-10-19; QUIET and GLASS stay in hudlook.js as variants, not on screen)
 
+{ const set = m => { document.body.classList.remove('menu-A', 'menu-B', 'menu-C'); document.body.classList.add('menu-' + m); SET.menuLook = m; save(); for (const b of document.querySelectorAll('#menuLook button')) b.classList.toggle('on', b.dataset.m === m); if (m === 'A') bootLog(); };
+  $('menuLook').addEventListener('click', e => { const b = e.target.closest('button'); if (b) set(b.dataset.m); }); set(SET.menuLook || 'A'); }
+function bootLog() {   // (A: the visor's boot, typed once: real numbers from this browser where there are any)
+  const lines = ['SUIT 07  ·  VISOR ONLINE', `WORLDS ON THIS SUIT  ·  ${worlds().length}`, 'MOON CAMP LINK  ·  OK', 'EARTH  ·  SIGNAL LOST', 'THE DARK  ·  NO SHAPE ON RECORD', `BUILD  ·  ${BUILD}`]; let i = 0, out = '';
+  clearInterval(bootLog.t); bootLog.t = setInterval(() => { if (i >= lines.length) return clearInterval(bootLog.t); out += lines[i++] + String.fromCharCode(10); $('bootLog').textContent = out; }, 260);
+}
 let pendingWorld = null; drawWorlds(); setTimeout(() => { if (mode === 'menu') resume(); }, 50); setTimeout(flushQueue, 5000);
 $('solo').onclick = () => { myName(); sound.wake(); startWorld(null); };
 function crewCode() { if (!SET.crew) { SET.crew = roomCode(); save(); } return SET.crew; }   // (made once, kept forever in this browser: the link never changes)

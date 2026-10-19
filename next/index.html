@@ -55,12 +55,30 @@
   #dev .key { margin: 0; }
   #fps { position: fixed; left: 18px; top: 70px; font-size: 13px; color: var(--meta); }
   #hurt { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 50%, #b0002280 100%); opacity: 0; transition: opacity .15s; }
+  /* the home screen: three rough looks for him to pick (rule: three versions, he picks). All show the live sky and Earth behind. */
+  body[class*=menu-] #menu { background: transparent; }
+  #menuLook { position: fixed; right: 16px; bottom: 14px; z-index: 11; display: flex; gap: 6px; align-items: center; font-size: 13px; letter-spacing: .14em; color: var(--meta); }
+  #menuLook button { font: 500 13px "Barlow Condensed", sans-serif; letter-spacing: .14em; color: #eef0f8; background: #0b0c14; border: 1px solid #2c2f4a; border-radius: 6px; padding: 4px 9px; cursor: pointer; } #menuLook button.on { border-color: var(--cyan); color: var(--cyan); }
+  /* A: BOOT, the visor powering on: menu in the left column under visor rims, a boot log typing once */
+  body.menu-A #menu { place-items: center start; padding-left: 7vw; } body.menu-A #menu .panel { background: transparent; width: min(420px, 100%); } body.menu-A #menu .panel::after { display: none; }
+  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 400 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #39e6ffb0; line-height: 1.7; white-space: pre; text-align: right; }
+  body.menu-A #menu .key { background: #05060bb0; }
+  /* B: MOON, nothing but the sky and thin holo tags on the right */
+  body.menu-B #menu { place-items: end end; padding: 0 6vw 12vh 0; } body.menu-B #menu .panel { background: transparent; width: min(360px, 100%); text-align: right; } body.menu-B #menu .panel::after { display: none; }
+  body.menu-B #menu h1 { font-size: 46px; letter-spacing: .4em; font-weight: 400; } body.menu-B #menu .key { text-align: right; background: rgba(4,14,24,.5); border: 0; box-shadow: none; border-left: 0; border-right: 2px solid #39e6ff; border-radius: 0; }
+  body.menu-B #menu .key:hover { box-shadow: none; border-right-color: #ff6fb1; }
+  /* C: HOLO, the menu is one big wrist-style hologram: corner marks, scanlines, light in the air */
+  body.menu-C #menu .panel { background: repeating-linear-gradient(0deg, rgba(57,230,255,.06) 0 1px, transparent 1px 4px), rgba(4,14,24,.62); border-radius: 0; }
+  body.menu-C #menu .panel::after { padding: 0; -webkit-mask: none; mask: none; background: linear-gradient(#39e6ff, #39e6ff) left top / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) left top / 1.5px 22px no-repeat, linear-gradient(#39e6ff, #39e6ff) right top / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) right top / 1.5px 22px no-repeat, linear-gradient(#39e6ff, #39e6ff) left bottom / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) left bottom / 1.5px 22px no-repeat, linear-gradient(#39e6ff, #39e6ff) right bottom / 22px 1.5px no-repeat, linear-gradient(#39e6ff, #39e6ff) right bottom / 1.5px 22px no-repeat; }
+  body.menu-C #menu h1 { color: #cfeeff; font-weight: 400; letter-spacing: .26em; } body.menu-C #menu .key { background: rgba(5,6,11,.6); }
   #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 20px; letter-spacing: .1em; }
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
 <script type="importmap">{ "imports": { "three": "../vendor/three.module.js" } }</script>
 </head>
 <body>
+<div id="bootLog"></div>
+<div id="menuLook">HOME SCREEN LOOK (try each, tell Claude)<button data-m="A">A  BOOT</button><button data-m="B">B  MOON</button><button data-m="C">C  HOLO</button></div>
 <div id="menu" class="over"><div class="panel">
   <h1>LAST FIRE</h1>
   <p class="tag">The dark has no edge. Push it back.</p>
@@ -112,6 +130,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--cyan)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=39"></script>
+<script type="module" src="./client/main.js?v=41"></script>
 </body>
 </html>
