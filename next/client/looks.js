@@ -50,11 +50,12 @@ export function applyLook(n, ctx) {
       float gWet = ${R.wet ? 'smoothstep(0.5, 0.62, gn(vW * 0.21))' : '0.0'};`);
     f = f.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(clamp(gRg * 1.05, 0.35, 1.0), 0.08, gWet);');
     f = f.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-      vec3 gWN = normalize((vec4(normal, 0.0) * viewMatrix).xyz); vec3 gT = gTN * (1.0 - 0.85 * gWet);
+      vec3 gWN = normalize((vec4(normal, 0.0) * viewMatrix).xyz); vec3 gT = vec3(gTN.xy * (1.0 - 0.85 * gWet), gTN.z);   /* (a puddle is flat: its stone relief fades) */
       vec3 gN2 = normalize(vec3(gWN.x + gT.x * 1.2, gWN.y * abs(gT.z), gWN.z + gT.y * 1.2));   /* (whiteout blend: tangent +x, bitangent +z, the way the texture is laid) */ normal = normalize((viewMatrix * vec4(gN2, 0.0)).xyz);
       vec3 gLd = normalize(vec3(uLights[0].x - vW.x, 2.2, uLights[0].y - vW.z));
       float gRel = clamp((0.3 + 0.7 * max(dot(gN2, gLd), 0.0)) / (0.3 + 0.7 * max(dot(gWN, gLd), 0.05)), 0.4, 1.8);   /* (the camp's light is painted on as glow; this lets the stone's relief shade it) */`);
     f = f.replace('min(L, 1.4) * 0.8;', 'min(L, 1.4) * 0.8 * gRel;');
+    if (!f.includes('gNR') || !f.includes('* gRel;')) console.warn('look ' + n + ': the ground shader in main.js moved; the PBR ground is only partly on');
     sh.fragmentShader = f;
   };
   groundMat.customProgramCacheKey = () => 'lfground' + n; groundMat.needsUpdate = true;

@@ -5,15 +5,16 @@ import * as THREE from 'three';
 
 const STEPS = [
   { id: 'desk', goal: 'Read your form, then go to the board by the fire', line: "That's your form. The council says ninety-two. The board by the fire says something else. Go look." },
-  { id: 'board', goal: 'Check the real odds at the board', line: 'Stand at the board and click CHECK. It costs nothing. That is the only free thing here.' },
+  { id: 'board', goal: 'Check the real odds at the board', line: 'Stand at the board and check it. It costs nothing. That is the only free thing here.' },
   { id: 'gate', goal: 'Walk to the gate', line: "Eighty-one. Nobody here says it out loud. The wall has one gate. That's where the dark comes in." },
   { id: 'fire', goal: 'Stand by the fire until dusk', line: 'Good. Now come back to the fire. Dusk is close. It always is.' },
   { id: 'shoot', goal: 'Let one into the light, shoot it, walk through what it drops', line: "Out in the dark they're smoke. Bullets go through. Let them into the light, then they have to be something. Then shoot." },
   { id: 'bank', goal: 'Bring the light into the fire\'s circle', line: 'Light in your hands keeps nothing warm. Walk it into the fire\'s circle.' },
   { id: 'build', goal: 'Build a relay: Q, or click RELAY, where you look', line: 'The fire only reaches so far. A relay carries its light out. Put one down where you look.' },
   { id: 'dawn', goal: 'Hold the light until dawn', line: "Now hold it until morning. Nobody has ever been told how. You're not the first." },
+  { id: 'drop', goal: 'Take the lander down to Earth', line: "Morning. You did the paperwork and lived. The lander is on the pad. Earth has the parts we need and none of the people." },
 ];
-const DONE = 'Morning. You did the paperwork and lived. The board updates at dawn. From here on, nobody tells you anything.';
+const DONE = 'That is everything I was told to tell you. From here on, nobody tells you anything.';
 
 export class Guide {
   constructor(scene, ctx) {
@@ -33,26 +34,31 @@ export class Guide {
     this.dusk.onclick = () => { this.ctx.bringDusk(); this.dusk.style.display = 'none'; }; this.skip.onclick = () => this.finish(true);
     row.append(this.dusk, this.skip); this.box.append(this.goal, this.dist, row); this.box.hidden = true; hud.append(this.box);
   }
-  start() { if (this.ctx.done()) return; this.go(0); this.box.hidden = false; }
+  start() { if (this.ctx.done()) return; this.lost0 = this.ctx.g().stats.lostNights || 0; this.go(0); this.box.hidden = false; }
   go(i) {
     this.i = i; this.t = 0; const S = STEPS[i], g = this.ctx.g(), me = this.ctx.me();
     this.base = g.nodes.length; this.banked = g.stats.banked;
     this.goal.innerHTML = `<span style="color:#ff4fd8">${i + 1} / ${STEPS.length}</span>&nbsp; ${S.goal}`;
-    this.ctx.speak('the Clerk', S.line, 9);
+    const lost = (g.stats.lostNights || 0) > (this.lost0 || 0);   // (the night was lost: the Clerk never says you lived when you did not; the robot player fell and heard that)
+    this.ctx.speak('the Clerk', S.id === 'drop' && lost ? "Morning. The dark took the night. It does that to everyone once. The lander is on the pad. Earth has the parts we need and none of the people." : S.line, 9);
+    if (S.id === 'fire' && this.ctx.nearDusk) this.ctx.nearDusk();   // (the Clerk says dusk is close, so it is: 20 s, not the rest of the day; the robot player stood 4 minutes here)
     if (S.id === 'shoot' && this.ctx.stage) this.ctx.stage();   // (the first one is staged: it walks slowly out of the dark into your light, smoke turning solid as it crosses: the rule, taught with no words. INNOVATION.md idea 5)
   }
-  finish(skipped) { this.i = -1; this.box.hidden = true; this.beam.visible = this.ring.visible = false; this.ctx.setDone(); if (!skipped) this.ctx.speak('the Clerk', DONE, 10); }
+  finish(skipped) { this.ctx.g().holdDay = false; this.i = -1; this.box.hidden = true; this.beam.visible = this.ring.visible = false; this.ctx.setDone(); if (!skipped) this.ctx.speak('the Clerk', DONE, 10); }
   target() {   // (where the line of light stands for this step; null when the step is about doing, not going)
     const g = this.ctx.g(), S = STEPS[this.i], B = this.ctx.board();
     if (S.id === 'desk' || S.id === 'board') return B;
+    if (S.id === 'drop') return this.ctx.pad();
     if (S.id === 'gate') return { x: 0, z: 20.2 };
     if (S.id === 'fire' || S.id === 'bank') return { x: g.fire.x, z: g.fire.z };
     if (S.id === 'shoot' && g.motes.length) { const me = this.ctx.me(); return g.motes.reduce((a, m) => Math.hypot(m.x - me.x, m.z - me.z) < Math.hypot(a.x - me.x, a.z - me.z) ? m : a); }
     return null;
   }
   update(dt) {
+    if (this.i >= 0 && STEPS[this.i].id === 'drop' && this.ctx.me().z > 3000) { this.finish(false); return; }   // (the last step ends when you land on Earth; added after the robot player got lost here)
     if (this.i < 0) return; const ph0 = this.ctx.phase ? this.ctx.phase() : 'day', away = this.ctx.me().z > 3000 || ph0 === 'night'; this.box.hidden = away;   /* (at night the guide steps aside: the night is the lesson) */ if (away) { this.beam.visible = this.ring.visible = false; return; }   // (on Earth the guide waits: its steps are all at the camp)
     this.t += dt; const g = this.ctx.g(), me = this.ctx.me(), S = STEPS[this.i], ph = this.ctx.phase();
+    g.holdDay = this.i < 3 && ph === 'day';   // (desk, board, gate: the sun waits for you)
     const d = (p) => Math.hypot(me.x - p.x, me.z - p.z), next = () => (this.i + 1 < STEPS.length ? this.go(this.i + 1) : this.finish(false));
     if (S.id === 'desk' && (this.t > 7 || d(this.ctx.board()) < 6)) next();
     else if (S.id === 'board' && this.ctx.checked()) next();
@@ -64,7 +70,7 @@ export class Guide {
     else if (S.id === 'dawn' && (ph === 'dawn' || ph === 'day')) next();
     if (this.i < 0) return;
     // if the night moves past a step (dawn came, the fire ran out), the guide moves along with it instead of asking for the impossible
-    if ((STEPS[this.i].id === 'shoot' || STEPS[this.i].id === 'bank' || STEPS[this.i].id === 'build') && (ph === 'dawn' || ph === 'day') && this.t > 3) this.finish(false);
+    if ((STEPS[this.i].id === 'shoot' || STEPS[this.i].id === 'bank' || STEPS[this.i].id === 'build') && (ph === 'dawn' || ph === 'day') && this.t > 3) this.go(STEPS.findIndex(q => q.id === 'drop'));
     if (this.i < 0) return;
     const tg = this.target(), atFire = STEPS[this.i].id === 'fire';
     this.beam.visible = this.ring.visible = !!tg;
