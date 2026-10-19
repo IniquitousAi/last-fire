@@ -132,7 +132,7 @@ export function tideRadius(g) {   // (how far out the dark holds back: far by da
   if (c < DAWN_AT) return inner; return inner + (rim - inner) * ((c - DAWN_AT) / (1 - DAWN_AT));
 }
 // each player's own light: a small glow, brighter for every friend within 6 m (shared glow), brighter again while carrying light
-export function glowOf(g, p) { if (p.ember) return 0; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 6) near++; return 3 + near * 2 + Math.min(4, p.carried * 0.08); }
+export function glowOf(g, p) { if (p.ember) return 0; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 6) near++; return (3 + near * 2 + Math.min(4, p.carried * 0.08)) * (0.45 + 0.55 * Math.max(0, p.hp) / 100); }   // (one light is your health, INNOVATION.md: hurt, you shine less, and the dark gets closer before it turns solid)
 export const NODE = { relay: { r: 7, reach: 22, hp: 120, cost: 15 }, lamp: { r: 11, reach: 0, hp: 80, cost: 25 } };   // (a relay carries light on; a lamp only shines)
 export function linkNetwork(g) {   // (which nodes are lit: walk outward from the fire through relays in reach of each other)
   const f = g.fire, lit = new Set(), open = [{ x: f.x, z: f.z, reach: 24 }, ...(g.earth ? [{ x: EARTH.x, z: EARTH.z, reach: EARTH.reach }] : [])];

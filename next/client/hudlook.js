@@ -12,7 +12,7 @@ const CSS = `
 body.look-visor { --rim: 10px; --ink: 30px; }
 body.look-visor #fireHud { left: var(--ink); top: var(--ink); } body.look-visor #phase { right: var(--ink); top: var(--ink); }
 body.look-visor #hp { left: var(--ink); bottom: var(--ink); } body.look-visor #ammo { right: var(--ink); bottom: var(--ink); }
-body.look-visor #hp div { height: 3px; background: #ffffff14; } body.look-visor #hp i { background: linear-gradient(90deg, #ff4f6d, #ff6fb1); }
+body.look-visor #hp div { height: 3px; background: #ffffff14; } body.look-visor #hp i { background: linear-gradient(90deg, #7b5cff, #f2e8ff); }   /* (one light is your health: violet to white, dimming as you are hurt) */
 body.look-visor #fireHud b, body.look-visor #phase b { font-weight: 400; font-size: 24px; letter-spacing: .14em; } body.look-visor #light span { letter-spacing: .2em; font-size: 13px; }
 body.look-visor #fireHud small, body.look-visor #phase small { font-size: 14px; }
 .vc { position: fixed; width: 240px; height: 120px; pointer-events: none; display: none; } body.look-visor .vc { display: block; }
