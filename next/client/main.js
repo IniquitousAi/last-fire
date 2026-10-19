@@ -1,17 +1,18 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=18';
-import { Ambience } from './ambience.js?v=18';
-import { Camp } from './camp.js?v=18';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=18';
-import { sound, GUNS } from '../../src/combat.js?v=18';
-import { FX } from '../../src/fx.js?v=18';
+import * as C from '../core/game.js?v=19';
+import { Ambience } from './ambience.js?v=19';
+import { Camp, BOARD } from './camp.js?v=19';
+import { Guide } from './guide.js?v=19';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=19';
+import { sound, GUNS } from '../../src/combat.js?v=19';
+import { FX } from '../../src/fx.js?v=19';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 18;   // (this copy's version; ./version.json says the newest)
+const BUILD = 19;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -46,7 +47,7 @@ const amb = new Ambience(() => SET.vol);
 const clickPlay = Object.assign(document.createElement('div'), { textContent: 'CLICK THE GAME TO PLAY  (your mouse is yours until you do)' }); clickPlay.hidden = true;
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '42%', transform: 'translateX(-50%)', padding: '10px 18px', font: '500 20px "Barlow Condensed", sans-serif', letterSpacing: '.12em', color: '#39e6ff', background: '#05060bcc', borderRadius: '8px', pointerEvents: 'none', zIndex: 3 });
 document.body.append(clickPlay);
-let camp = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
+let camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
 const keys = {}, mouse = [false, false, false];
 const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once: the fire, your glow, the nearest nodes)
@@ -289,7 +290,7 @@ function frame(now) {
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt);
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (guide) guide.update(dt);
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
@@ -464,6 +465,9 @@ async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
   if (!camp) camp = new Camp(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, name: () => SET.name, camera: () => camera });
+  if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
+    speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); } });
+  setTimeout(() => guide.start(), 1200);
   mode = 'play'; $('menu').hidden = true; $('hud').hidden = false; drawBuild();
   await ready; prepGun('pistol'); prepGun('ar');
 }

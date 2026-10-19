@@ -48,7 +48,7 @@ export class Camp {
       const walk = P.walk && r.animations.find(a => a.name.endsWith('|' + P.walk)), acts = { idle: clip ? mix.clipAction(clip) : null, walk: walk ? mix.clipAction(walk) : null };
       if (P.lamp === false) scene.remove(lamp); else if (P.walk) { scene.remove(lamp); }
       scene.add(o); this.people.push({ ...P, o, mix, acts, moving: false, ang: Math.atan2(P.z, P.x), line: '', lineT: 0 }); }).catch(() => {});
-    this.sub = Object.assign(document.createElement('div'), { id: 'sub' }); Object.assign(this.sub.style, { position: 'fixed', left: '50%', bottom: '150px', transform: 'translateX(-50%)', maxWidth: 'min(680px, 90vw)', textAlign: 'center', fontSize: '21px', lineHeight: '1.3', textShadow: '0 1px 3px #000, 0 0 2px #000', pointerEvents: 'none' }); this.sub.hidden = true; document.getElementById('hud').append(this.sub);
+    this.sub = Object.assign(document.createElement('div'), { id: 'sub' }); Object.assign(this.sub.style, { position: 'fixed', left: '50%', bottom: '172px', transform: 'translateX(-50%)', maxWidth: 'min(680px, 90vw)', textAlign: 'center', fontSize: '21px', lineHeight: '1.3', textShadow: '0 1px 3px #000, 0 0 2px #000', pointerEvents: 'none' }); this.sub.hidden = true; document.getElementById('hud').append(this.sub);
     this.yard(L, land);
   }
   // the honest numbers, from what really happened (labels say how sure)
@@ -115,6 +115,7 @@ export class Camp {
       const facing = ((P.o.position.x - me.x) * fx + (P.o.position.z - me.z) * fz) / Math.max(d, 0.01);
       if (d < 4.5 && facing > 0.5 && P.line && d < best) { best = d; talk = P; }
     }
+    if (this.voice && this.voice.until > performance.now()) { const t = `<span style="color:#b9a8ff">${this.voice.role[0].toUpperCase() + this.voice.role.slice(1)}</span>&nbsp; ${this.voice.line}`; this.sub.hidden = false; if (this.sub.innerHTML !== t) this.sub.innerHTML = t; return; }   // (the guide's voice comes first while it speaks)
     this.sub.hidden = !talk; if (talk) { const t = `<span style="color:#b9a8ff">${talk.role[0].toUpperCase() + talk.role.slice(1)}</span>&nbsp; ${talk.line.replace(/[<>&]/g, '')}`; if (this.sub.innerHTML !== t) this.sub.innerHTML = t; }
   }
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
@@ -154,6 +155,7 @@ export class Camp {
     for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = 24 + rnd() * 50, x = Math.cos(a) * r, z = Math.sin(a) * r; put('kit/stone.glb', x, z, 0.5 + rnd() * rnd() * 2.6, rnd() * 6.3, 0.15); }
     for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, r = 4 + rnd() * 15, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.hypot(x - HUT.x, z - HUT.z) < 5 || Math.hypot(x - BOARD.x, z - BOARD.z) < 3 || r < 5) continue; put('kit/stone.glb', x, z, 0.25 + rnd() * 0.35, rnd() * 6.3, 0.05); }
   }
+  speak(role, line, sec) { this.voice = { role, line: line.replace(/[<>&]/g, ''), until: performance.now() + sec * 1000 }; }
   // a new world starts you at your old desk, facing the two papers
   static startAt(me, land) { me.x = HUT.x + 0.3; me.z = HUT.z + 0.5; me.y = land(me.x, me.z); me.yaw = Math.atan2(-((HUT.x - 0.6) - me.x), -((HUT.z - 0.9) - me.z)); me.pitch = -0.72; }
 }
