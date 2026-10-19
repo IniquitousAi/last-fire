@@ -1,15 +1,15 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=6';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=6';
+import * as C from '../core/game.js?v=7';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=7';
 import { sound, GUNS } from '../../src/combat.js?v=11';
 import { FX } from '../../src/fx.js?v=11';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 6;   // (this copy's version; ./version.json says the newest)
+const BUILD = 7;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -47,7 +47,7 @@ const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once
 const uLights = { value: Array.from({ length: NODE_MAX }, () => new THREE.Vector4(0, 0, 0, 0)) };
 
 // ---------------------------------------------------------------- the land: endless, in 32 m tiles built around you as you walk
-const TILE = 32, RES = 33, VIEW = 6, tiles = new Map();
+const TILE = 32, RES = 33, VIEW = 4, NEAR = 1.6, tiles = new Map();   // (to 128 m: the fog hides everything past about 130 m; tiles past the first ring at a quarter of the detail)
 const groundMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
 groundMat.onBeforeCompile = sh => {   // (light from the network lights the ground: one loop over a small array, no extra lamps)
   sh.uniforms.uLights = uLights;
@@ -61,8 +61,8 @@ groundMat.onBeforeCompile = sh => {   // (light from the network lights the grou
       float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
       totalEmissiveRadiance += diffuseColor.rgb * vec3(0.75, 0.85, 1.25) * min(L, 1.6) * 1.15;`);
 };
-function buildTile(tx, tz) {
-  const geo = new THREE.PlaneGeometry(TILE, TILE, RES - 1, RES - 1); geo.rotateX(-Math.PI / 2);
+function buildTile(tx, tz, res = RES) {
+  const geo = new THREE.PlaneGeometry(TILE, TILE, res - 1, res - 1); geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i) + tx * TILE, z = pos.getZ(i) + tz * TILE, y = g.land(x, z); pos.setY(i, y);
@@ -75,9 +75,9 @@ function buildTile(tx, tz) {
 }
 function updateTiles() {   // (two tiles a frame at most, nearest first; tiles past the view are dropped)
   const cx = Math.round(me.x / TILE), cz = Math.round(me.z / TILE), want = [];
-  for (let dz = -VIEW; dz <= VIEW; dz++) for (let dx = -VIEW; dx <= VIEW; dx++) if (dx * dx + dz * dz <= VIEW * VIEW) { const k = (cx + dx) + ',' + (cz + dz); if (!tiles.has(k)) want.push([dx * dx + dz * dz, cx + dx, cz + dz, k]); }
-  want.sort((a, b) => a[0] - b[0]); for (const [, x, z, k] of want.slice(0, 2)) tiles.set(k, buildTile(x, z));
-  for (const [k, m] of tiles) { const [x, z] = k.split(',').map(Number); if ((x - cx) ** 2 + (z - cz) ** 2 > (VIEW + 1.5) ** 2) { scene.remove(m); m.geometry.dispose(); tiles.delete(k); } }
+  for (let dz = -VIEW; dz <= VIEW; dz++) for (let dx = -VIEW; dx <= VIEW; dx++) if (dx * dx + dz * dz <= VIEW * VIEW) { const k = (cx + dx) + ',' + (cz + dz), res = dx * dx + dz * dz <= NEAR * NEAR ? RES : 17, t = tiles.get(k); if (!t || t.res !== res) want.push([dx * dx + dz * dz, cx + dx, cz + dz, k, res]); }
+  want.sort((a, b) => a[0] - b[0]); for (const [, x, z, k, res] of want.slice(0, 2)) { const old = tiles.get(k); if (old) { scene.remove(old.m); old.m.geometry.dispose(); } tiles.set(k, { m: buildTile(x, z, res), res }); }
+  for (const [k, t] of tiles) { const [x, z] = k.split(',').map(Number); if ((x - cx) ** 2 + (z - cz) ** 2 > (VIEW + 1.5) ** 2) { scene.remove(t.m); t.m.geometry.dispose(); tiles.delete(k); } }
   return want.length;
 }
 

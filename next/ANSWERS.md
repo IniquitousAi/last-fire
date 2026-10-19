@@ -91,3 +91,4 @@ Extracted: the camp is a living economy of dues, chores and optional jobs; soft 
 - The road: max the browser game with the crew until the feedback runs out (boredom means not enough feedback), then Godot, then Steam. Visuals matter a lot, which is why Godot comes eventually.
 - One permanent link per crew: yes (built in next-6).
 - Always-on world: not needed. His words: "my friends always go to sleep before me anyways. So me turning my PC off doesn't matter for them or for me."
+- Correction (his, 2026-10-18 about 23:50): "no, this negates the daemon talk about using my uniqueness of my daemon". Skipping the always-on world was only about hosting. The daemon stays the dark's mind: it learns from recorded nights and certifies tactics whenever his PC is on (12+ hours most days), and the next session gets the result; Dalton's worlds feed it too (piece 4b). The learning never needed a live world.
