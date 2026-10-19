@@ -51,3 +51,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 10, tower shadows on Earth keep the dark smoke (v62).
 - Item 20, your bunk shows your dues (v63).
 - Item 22, fall traces and the cause on the wrist (v64).
+- v65: the smiling-dog model removed. v70: item 24 first pass, the Last Fire as a plasma core with bloom (kept open for more passes).
