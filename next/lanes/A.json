@@ -1,0 +1,375 @@
+{
+ "0": {
+  "built": {
+   "proof": "core/lore.js#pastDark",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#The honest number is the same",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-real.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#A lamp lit at the edge of the light lifts",
+   "at": "2026-10-19"
+  }
+ },
+ "21": {
+  "built": {
+   "proof": "core/lore.js#darkLearning",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Two calm nights with no falls",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-learning.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The dark learns only after two calm nights",
+   "at": "2026-10-19"
+  }
+ },
+ "28": {
+  "built": {
+   "proof": "core/lore.js#councilOdds",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#The worse the real number",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-council.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#Proving the council wrong",
+   "at": "2026-10-19"
+  }
+ },
+ "29": {
+  "built": {
+   "proof": "core/lore.js#nightEvent",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Every night has an event",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/wrist-night-news.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The night rolls over",
+   "at": "2026-10-19"
+  }
+ },
+ "31": {
+  "built": {
+   "proof": "core/lore.js#edgeSign",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#The edge sign counts",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/edge-sign.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The edge sign shows",
+   "at": "2026-10-19"
+  }
+ },
+ "32": {
+  "built": {
+   "proof": "client/camp.js#startAt",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/lanes/A/play.txt#A new world opens at your old desk",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/first-minute-desk.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#A new world opens at your old desk",
+   "at": "2026-10-19"
+  }
+ },
+ "33": {
+  "built": {
+   "proof": "client/camp.js#drawTheories",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#No theory is ever proven",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/theories-wall.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#Finding something moves the theory wall",
+   "at": "2026-10-19"
+  }
+ },
+ "34": {
+  "built": {
+   "proof": "core/camp.js#payDues",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Playing alone, the camp still keeps",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-dues.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#Banking light at the fire pays your dues",
+   "at": "2026-10-19"
+  }
+ },
+ "35": {
+  "built": {
+   "proof": "core/lore.js#pastDark",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#A lit lamp, a higher fire",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/light-and-dark.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#A lamp lit at the edge of the light lifts",
+   "at": "2026-10-19"
+  }
+ },
+ "36": {
+  "built": {
+   "proof": "core/lore.js#ENTROPY",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#The fire loses fuel at one fixed rate",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/wrist-fire-down.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#When the fire runs low",
+   "at": "2026-10-19"
+  }
+ },
+ "37": {
+  "built": {
+   "proof": "core/lore.js#holdLine",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#The score is only how long you hold",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/wrist-night-news.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The night rolls over",
+   "at": "2026-10-19"
+  }
+ },
+ "41": {
+  "seen": {
+   "proof": "playtests/lanes/A/board-dues.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#Banking light at the fire pays your dues",
+   "at": "2026-10-19"
+  }
+ },
+ "42": {
+  "seen": {
+   "proof": "playtests/lanes/A/wrist-no-lamps.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+   "at": "2026-10-19"
+  }
+ },
+ "43": {
+  "built": {
+   "proof": "core/jobs.js#turnIn",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Ninety tiny hauls",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/clerk-job.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#Turning in pays 1 gear credit",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "playtests/lanes/A/play.txt#The D-pad right takes the job",
+   "at": "2026-10-19"
+  }
+ },
+ "44": {
+  "seen": {
+   "proof": "playtests/lanes/A/board-wolf-back.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The lone wolf who did their part is welcome back",
+   "at": "2026-10-19"
+  }
+ },
+ "45": {
+  "seen": {
+   "proof": "playtests/lanes/A/board-pool.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#Grinding while a friend is away",
+   "at": "2026-10-19"
+  }
+ },
+ "46": {
+  "seen": {
+   "proof": "playtests/lanes/A/board-in-debt.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#A camp in debt hands out no lamps",
+   "at": "2026-10-19"
+  }
+ },
+ "53": {
+  "built": {
+   "proof": "core/lore.js#dawnLine",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Only someone who has checked",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/wrist-night-news.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The night rolls over",
+   "at": "2026-10-19"
+  },
+  "pad": {
+   "proof": "playtests/lanes/A/play.txt#The D-pad right checks the real odds",
+   "at": "2026-10-19"
+  }
+ },
+ "55": {
+  "built": {
+   "proof": "core/eras.js#eraAt",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Real feedback weighs more",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-real-1920.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The board reads the era",
+   "at": "2026-10-19"
+  }
+ },
+ "57": {
+  "built": {
+   "proof": "sim/lore_test.mjs#banned",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#No cyan, orange, gold or brown",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-real-1920.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#No screen is more than 1 percent",
+   "at": "2026-10-19"
+  }
+ },
+ "58": {
+  "built": {
+   "proof": "core/eras.js#techFor",
+   "at": "2026-10-19"
+  },
+  "tested": {
+   "proof": "playtests/checklist/test-lore_test.txt#Tech comes by era",
+   "at": "2026-10-19"
+  },
+  "seen": {
+   "proof": "playtests/lanes/A/board-real-1920.png",
+   "at": "2026-10-19"
+  },
+  "played": {
+   "proof": "playtests/lanes/A/play.txt#The board reads the era",
+   "at": "2026-10-19"
+  }
+ },
+ "notes": {
+  "0": "Number is core/lore.js#pastDark, shown on the board as 'past the dark: x% (guess)'; moves only with lit lamps, fire level and nights. Rough: tiny by design (3.1e-6 percent start).",
+  "21": "The rule (two calm nights, nobody fell) is core/habits.js#comfortable, now shown on the board as 'the dark is learning how you play (reasoned)'. LEFT: the live game does not yet re-tune its waves from it; that learning runs in sim/certify.mjs (learn_test2.mjs).",
+  "28": "Council number = real + a bonus that grows as the real number falls (core/lore.js#soften); after you check, the wrist says nobody cares (afterProof) and the Clerk's lines change. Rough: 'less welcome at dinner' is text only, no seating.",
+  "29": "Each dawn the wrist gives last night's dry event (10 events, never the same twice in a row). Mayhem itself is the existing night waves; the 'mayhem' event is a line, not a new spawn.",
+  "31": "Rough: an edge sign inside the gate (client/camp.js#drawEdge), numbers from g.lost. There is no new maze or Rift entrance yet (Rift is another lane or era).",
+  "32": "Already existed (Camp.startAt, both papers on the desk); this run moved the papers so both read clearly on the desk, and tested and saw it.",
+  "33": "Wall already existed; added the 'same ordinary Tuesday' line, a test that no theory passes 85 percent, and a played check that finding evidence moves it.",
+  "34": "Camp rules live in core/camp.js and game.js; solo run proven by sim/economy.mjs through lore_test and a browser run banking alone.",
+  "35": "Rough: light vs dark is the light rule (in the dark nothing can be killed) plus the board's honest number rising with every lit lamp (played: 3.1e-6 to 4.19e-6). No separate good-vs-evil text on purpose.",
+  "36": "Rough: the dark has one fixed rate (fuel loss, day 0.4/s, night 1.0/s), a malice-word test over every dark line, and the wrist line when the fire runs low.",
+  "37": "Rough: the board shows 'held N nights'; nothing says won. The fire decays to nothing without light (tested) and spending has diminishing returns (powerCurve, tested).",
+  "41": "Board shows 'the fire costs 30 light a day each' and your standing; seen at 1000x900.",
+  "42": "PAD: lamp placing had no controller path at all (D-pad down picked it, nothing placed it). Added RT to place and LT to put away in client/main.js, then played the debt message on the pad. This replaces the n/a PAD mark.",
+  "43": "Rough: two jobs from the Clerk (haul 90 light, light 2 more lamps), pay in gear credit, credit buys a full gun top-up (2 credit). PAD proof replaces the n/a mark (F is D-pad right). Credit and job state live on the player and are NOT saved across a reload yet.",
+  "44": "Seen as standing +400 with normal price and lamps back, played by setting paid above owed (sim/camp_sim.mjs is the 21-day proof).",
+  "45": "Seen as 'camp pool 340 light' after banking 400 alone with a friend away.",
+  "46": "Seen as the in-debt board (standing -70, morale 22 percent) next to the paid board (morale 100 percent).",
+  "53": "Dawn wrist line only for someone who has checked at least once (check count saved in localStorage). The wrist 'shows them anywhere' is that dawn line; no separate wrist odds screen. PAD proof replaces the n/a mark (the check is D-pad right).",
+  "55": "Rough: core/eras.js gate (robots 30 percent, your verdicts 70 percent, 3 to 5 verdicts needed) fed by sim/eras.mjs into next/era_state.json; next/feedback.json is empty, so the board says era 1 and 'needs 3 more verdicts from you'. Honest, not faked.",
+  "57": "Banned-hue and contrast tests in lore_test.mjs, and a per-screen pixel check (with a control) in lane_a_play.cjs over 20 screenshots. Also fixed one failing grey (#6f7188 to #8d90a8).",
+  "58": "Rough: the era table lists tech per era and the board shows the era; only era 1 (scavenged) content exists in the game. Nothing is gated yet because there is no era 2 content."
+ }
+}
