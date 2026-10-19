@@ -1,15 +1,16 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=7';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=7';
-import { sound, GUNS } from '../../src/combat.js?v=11';
-import { FX } from '../../src/fx.js?v=11';
+import * as C from '../core/game.js?v=8';
+import { Camp } from './camp.js?v=8';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=8';
+import { sound, GUNS } from '../../src/combat.js?v=8';
+import { FX } from '../../src/fx.js?v=8';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 7;   // (this copy's version; ./version.json says the newest)
+const BUILD = 8;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -40,7 +41,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
 scene.add(sky);
 
 // ---------------------------------------------------------------- the game (rules) and you
-let g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
+let camp = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
 const keys = {}, mouse = [false, false, false];
 const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once: the fire, your glow, the nearest nodes)
@@ -266,7 +267,7 @@ function frame(now) {
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
-  drawFriends(dt); sync(dt);
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt);
   hud();
   renderer.render(scene, camera);
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
@@ -431,6 +432,8 @@ $('name').value = SET.name || '';
 function myName() { SET.name = ($('name').value || 'Player').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Player'; save(); return SET.name; }
 async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
+  if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
+  if (!camp) camp = new Camp(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, name: () => SET.name });
   mode = 'play'; $('menu').hidden = true; $('hud').hidden = false; drawBuild(); renderer.domElement.requestPointerLock();
   await ready; prepGun('pistol'); prepGun('ar');
 }
