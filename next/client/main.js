@@ -1,39 +1,39 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=163';
-import { Ambience } from './ambience.js?v=163';
-import { Camp, BOARD } from './camp.js?v=163';
-import { Guide } from './guide.js?v=163';
-import { buildSites } from './earthsite.js?v=163';
-import { Truck } from './truck.js?v=163';
-import { ShipView } from './shipview.js?v=163';
-import { Crew } from './crew.js?v=163';
-import { Hands } from './hands.js?v=163';
-import { FpRig } from './fprig.js?v=163';
-import { farStep } from './farsound.js?v=163';
-import { Wrist } from './wrist.js?v=163';
-import { FireCore } from './firecore.js?v=163';
+import * as C from '../core/game.js?v=164';
+import { Ambience } from './ambience.js?v=164';
+import { Camp, BOARD } from './camp.js?v=164';
+import { Guide } from './guide.js?v=164';
+import { buildSites } from './earthsite.js?v=164';
+import { Truck } from './truck.js?v=164';
+import { ShipView } from './shipview.js?v=164';
+import { Crew } from './crew.js?v=164';
+import { Hands } from './hands.js?v=164';
+import { FpRig } from './fprig.js?v=164';
+import { farStep } from './farsound.js?v=164';
+import { Wrist } from './wrist.js?v=164';
+import { FireCore } from './firecore.js?v=164';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=163';
-import { FriendVoice } from './friendvoice.js?v=163';
-import { crewFrom } from '../core/habits.js?v=163';
-import { HudLook } from './hudlook.js?v=163';
-import { Rain } from './rain.js?v=163';
-import { VisorRain } from './visor.js?v=163';
-import { applyLook } from './looks.js?v=163';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=163';
-import { sound, GUNS } from '../../src/combat.js?v=163';
-import { FX } from '../../src/fx.js?v=163';
+import { think as friendThink } from './friend.js?v=164';
+import { FriendVoice } from './friendvoice.js?v=164';
+import { crewFrom } from '../core/habits.js?v=164';
+import { HudLook } from './hudlook.js?v=164';
+import { Rain } from './rain.js?v=164';
+import { VisorRain } from './visor.js?v=164';
+import { applyLook } from './looks.js?v=164';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=164';
+import { sound, GUNS } from '../../src/combat.js?v=164';
+import { FX } from '../../src/fx.js?v=164';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 163;   // (this copy's version; ./version.json says the newest)
+const BUILD = 164;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -167,8 +167,8 @@ groundMat.onBeforeCompile = sh => { sh.uniforms.uRock = uRock; sh.uniforms.uDark
     .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= 0.55 + gn(vW * 0.35) * 0.35 + gn(vW * 1.7) * 0.3 + gn(vW * 7.0) * 0.2; vec3 rk = mix(texture2D(uRock, vW.xz * 0.22).rgb, texture2D(uDark, vW.xz * 0.15).rgb * 1.3, smoothstep(0.35, 0.65, gn(vW * 0.05))); diffuseColor.rgb *= rk * 1.9;')
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       vec2 su = (vW.xz - uShadeBox.xy) / (2.0 * uShadeBox.z) + 0.5; float shd = (su.x > 0.0 && su.y > 0.0 && su.x < 1.0 && su.y < 1.0) ? texture2D(uShade, su).r : 1.0;   /* (the rule's shadows: on the fire and the nodes, never on your own glow, the truck's lamps or a flare) */
-      float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += (i == 0 || i >= 5 ? shd : 1.0) * q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
-      totalEmissiveRadiance += diffuseColor.rgb * vec3(0.7, 0.82, 1.25) * min(L, 1.4) * 0.8;
+      float L = 0.0, FLR = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; if (i == 3 || i == 4) { FLR += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - smoothstep(0.0, 0.5, d) * 0.5); continue; }   /* (a flare's light is its own red, not the network's white) */ L += (i == 0 || i >= 5 ? shd : 1.0) * q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
+      totalEmissiveRadiance += diffuseColor.rgb * vec3(0.7, 0.82, 1.25) * min(L, 1.4) * 0.8; totalEmissiveRadiance += diffuseColor.rgb * vec3(2.2, 0.25, 0.45) * min(FLR, 1.4);
       /* wet ground that doubles every light (LOOK.md change 3): coolant and condensation pool near the camp's lights; in a puddle each light lays a
          streak toward your eye, the way a wet street doubles a neon sign. No reflection pass: one more loop over the same few lights */
       float wet = smoothstep(0.44, 0.6, gn(vW * 0.21)) * smoothstep(0.04, 0.25, L), st = 0.0;
@@ -180,14 +180,15 @@ groundMat.onBeforeCompile = sh => { sh.uniforms.uRock = uRock; sh.uniforms.uDark
       vec3 hue = mix(vec3(0.48, 0.30, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */
       totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.0;   /* (rare mineral glints: the stars, underfoot) */`);
 };
-// the look: his pick, 2026-10-19, is look 3, the cinematic night (client/looks.js); ?look=0 is the old look, ?look=1 or 2 the others
-const lookFx = applyLook(+(new URLSearchParams(location.search).get('look') ?? 3), { THREE, renderer, scene, camera, composer, renderPass, bloom, grade, groundMat });
+// the look: dev light by default (his pick, 2026-10-19 10:27: plain readable light first); ?look=3 is the cinematic night, ?look=0 the old look
+C.DARK.off = !/[?&]enemies(&|=|$)/.test(location.search);   // (enemies out until rebuilt as real models, his call 2026-10-19; ?enemies brings the old ones back)
+const lookFx = applyLook(+(new URLSearchParams(location.search).get('look') ?? 4), { THREE, renderer, scene, camera, composer, renderPass, bloom, grade, groundMat });
 function buildTile(tx, tz, res = RES) {
   const geo = new THREE.PlaneGeometry(TILE, TILE, res - 1, res - 1); geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i) + tx * TILE, z = pos.getZ(i) + tz * TILE, y = g.land(x, z); pos.setY(i, y);
-    const far = Math.min(1, Math.hypot(x, z) / 1500), slope = Math.min(1, Math.abs(g.land(x + 1, z) - y) + Math.abs(g.land(x, z + 1) - y));
+    const far = Math.min(1, Math.min(Math.hypot(x, z), Math.hypot(x - C.EARTH.x, z - C.EARTH.z)) / 1500)   /* (from the nearest home: Earth sits 6 km out, so it had gone all violet, his 'everything purple' 2026-10-19) */, slope = Math.min(1, Math.abs(g.land(x + 1, z) - y) + Math.abs(g.land(x, z + 1) - y));
     const base = [0.12 + slope * 0.07, 0.135 + slope * 0.07, 0.17 + slope * 0.06];   // (cold ash and stone; far land drifts toward violet)
     col.set([base[0] + far * 0.08, base[1] - far * 0.03, base[2] + far * 0.12], i * 3);
   }
@@ -525,7 +526,7 @@ function build(p, kind, x, z) {   // (host only: the player must carry the light
 }
 function tryBuild() { if (buildPick === 'lamp' && SET.name && g.econ && !C.econ.lamps(g, SET.name)) return say(`You are ${C.econ.behind(g, SET.name).toFixed(1)} days behind on dues. The camp hands out no lamps until you catch up: bank light into the fire.`, 5); const K = C.NODE[buildPick]; if (me.carried < K.cost) return say(`A ${buildPick} costs ${K.cost} light. You carry ${Math.floor(me.carried)}.`); const s = buildSpot(); sound.buy();
   if (isHost()) { const n = build(me, buildPick, s.x, s.z); if (n) say(n.lit ? `The ${buildPick} takes the light.` : `Too far from the light: the ${buildPick} stays dark. Place it within reach of a lit relay.`, 3); } else net.send({ t: 'build', k: buildPick, x: +s.x.toFixed(2), z: +s.z.toFixed(2) }); }
-function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'carries light on, ' + K.reach + ' m' : 'shines wide, carries nothing'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: pulls the hunt and burns it, ${C.FLARE.life} s</small></button>`; }
+function drawBuild() { $('build').innerHTML = Object.entries(C.NODE).map(([k, K]) => `<button class="bk${buildPick === k ? ' on' : ''}${me && me.carried < K.cost ? ' off' : ''}" data-k="${k}">${k === 'relay' ? 'RELAY (Q)' : 'LAMP (E)'}<small>${K.cost} light: ${k === 'relay' ? 'carries light on, ' + K.reach + ' m' : 'shines wide, carries nothing'}</small></button>`).join('') + `<button class="bk${me && me.carried < C.FLARE.cost ? ' off' : ''}" data-k="flare">FLARE (G)<small>${C.FLARE.cost} light: lights the ground for ${C.FLARE.life} s${C.DARK.off ? '' : ', draws the dark in and burns it'}</small></button>`; }
 $('build').addEventListener('click', e => { const b = e.target.closest('.bk'); if (!b) return; if (b.dataset.k === 'flare') return throwFlare(); pickBuild(buildPick === b.dataset.k ? null : b.dataset.k); });
 function flareSpot() { const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), d = look(); for (let t = 1; t <= C.FLARE.reach; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z) + 0.1) return [x, z]; } return [o.x + d.x * 12, o.z + d.z * 12]; }   // (where you aim, on the ground, up to 16 m)
 function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const j = C.nextSeat(g, me); if (j >= 0) say(['You take the wheel.', 'You take the roof lamp. Look where it should shine.', 'You take the mounted gun.', 'You take the mounted gun.'][j], 2); } else net.send({ t: 'build', k: 'seat', x: 0, z: 0 }); }
@@ -630,7 +631,7 @@ function frame(now) {
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { growFire(); sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
   drawHollow(wdt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(wdt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0, c = g.clock, day = e ? (c < C.DUSK_AT ? 1 : c < C.NIGHT_AT ? 1 - (c - C.DUSK_AT) / (C.NIGHT_AT - C.DUSK_AT) : c < C.DAWN_AT ? 0 : (c - C.DAWN_AT) / (1 - C.DAWN_AT)) : 0;   /* (Earth has a real day and night, his ask 2026-10-19: overcast gray by day, the stars by night; the Moon has no air, so its sky stays black) */
-    sky.position.copy(camera.position); { const r = e ? 0.6 + 0.4 * Math.sin(now / 47000) : 0; rain.update(now / 1000, camera, r); visor.uniforms.uT.value = now / 1000; visor.uniforms.uAmt.value += (r - visor.uniforms.uAmt.value) * Math.min(1, dt * 0.5); visor.uniforms.uWipe.value = Math.max(0, visor.uniforms.uWipe.value - dt * 0.35); } sky.material.uniforms.uEarth.value = e; sky.material.uniforms.uDay.value = day;   /* (the dome follows you: it sat at the Moon camp, so on Earth, 6 km away, there was no sky at all, only black) */ scene.fog.color.copy(FOG_NIGHT).lerp(FOG_EARTH_DAY, day); hemi.intensity = 0.09 + 0.9 * day; hemi.color.setHex(day > 0.5 ? 0x8890a8 : 0x5a6fb0); scene.fog.density = (e ? 0.024 : 0.016) * (lookFx ? lookFx.fogK : 1); }
+    sky.position.copy(camera.position); { const r = e ? 0.6 + 0.4 * Math.sin(now / 47000) : 0; rain.update(now / 1000, camera, r); visor.uniforms.uT.value = now / 1000; visor.uniforms.uAmt.value += (r - visor.uniforms.uAmt.value) * Math.min(1, dt * 0.5); visor.uniforms.uWipe.value = Math.max(0, visor.uniforms.uWipe.value - dt * 0.35); } sky.material.uniforms.uEarth.value = e; sky.material.uniforms.uDay.value = day;   /* (the dome follows you: it sat at the Moon camp, so on Earth, 6 km away, there was no sky at all, only black) */ scene.fog.color.copy(FOG_NIGHT).lerp(FOG_EARTH_DAY, day); if (lookFx && lookFx.dev) { hemi.intensity = 0.7 + 0.5 * day; hemi.color.setHex(0xb4bcd4); hemi.groundColor.setHex(0x22242c); } else { hemi.intensity = 0.09 + 0.9 * day; hemi.color.setHex(day > 0.5 ? 0x8890a8 : 0x5a6fb0); } scene.fog.density = (e ? 0.024 : 0.016) * (lookFx ? lookFx.fogK : 1); }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
@@ -850,9 +851,32 @@ function applyState(m) {   // (a friend's copy of the world, from the host; thei
 const friendViews = new Map(), _v = new THREE.Vector3();
 // fall traces: the last ten seconds before a fall, in red on the ground, and a line from where it came (one draw call)
 const traceGeo = new THREE.BufferGeometry(), traceLines = new THREE.LineSegments(traceGeo, new THREE.LineBasicMaterial({ color: 0xff3b5c, transparent: true, opacity: 0.8, depthWrite: false })); traceLines.frustumCulled = false; scene.add(traceLines); let traceKey = '';
-const flareViews = new Map(), flareMat = new THREE.MeshBasicMaterial({ color: 0xffd8f6 });
-function drawFlares() { const live = new Set(); (g.flares || []).forEach((f, i) => { const key = f.x.toFixed(1) + ',' + f.z.toFixed(1); live.add(key); let o = flareViews.get(key); if (!o) { o = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), flareMat); o.position.set(f.x, g.land(f.x, f.z) + 0.16, f.z); scene.add(o); flareViews.set(key, o); } o.scale.setScalar(0.8 + Math.random() * 0.5); });   // (it sputters)
-  for (const [k, o] of flareViews) if (!live.has(k)) { scene.remove(o); flareViews.delete(k); } }
+// a flare is a real road flare (his eyes, 2026-10-19: "a floating, glowing moat"): a red paper stick lying on the ground, a crimson flame
+// spitting from its tip, sparks that arc and fall, a thread of smoke. Its light on the ground comes from the light network's slots, so no new lamps
+const FL = { stick: new THREE.CylinderGeometry(0.022, 0.022, 0.3, 10), cap: new THREE.CylinderGeometry(0.024, 0.024, 0.04, 10), red: new THREE.MeshStandardMaterial({ color: 0x7a0f1c, roughness: 0.7 }), ash: new THREE.MeshStandardMaterial({ color: 0x1a1a1e, roughness: 1 }),
+  flame: new THREE.MeshBasicMaterial({ color: 0xff2a4a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }), core: new THREE.MeshBasicMaterial({ color: 0xffd0dc, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }),
+  cone: new THREE.ConeGeometry(0.05, 0.22, 10, 1, true), N: 28 };
+FL.spark = new THREE.PointsMaterial({ color: 0xff5a78, size: 0.035, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+FL.smoke = new THREE.PointsMaterial({ map: softDot, color: 0x4a3a48, size: 0.9, transparent: true, opacity: 0.35, depthWrite: false });
+const flareViews = new Map();
+function makeFlare(f) { const o = new THREE.Group(), y = g.land(f.x, f.z), r = (f.x * 7.13 + f.z * 3.7) % 6.28;
+  const body = new THREE.Group(); body.add(new THREE.Mesh(FL.stick, FL.red)); const cap = new THREE.Mesh(FL.cap, FL.ash); cap.position.y = 0.16; body.add(cap); body.rotation.z = Math.PI / 2 - 0.18; body.position.y = 0.03;   /* (lying on the ground, the burning end tipped up a little) */
+  const tip = new THREE.Group(); tip.position.set(-0.15, 0.07, 0); const fl = new THREE.Mesh(FL.cone, FL.flame), co = new THREE.Mesh(FL.cone, FL.core); fl.position.y = 0.1; co.scale.setScalar(0.5); co.position.y = 0.06; tip.add(fl, co);
+  const sp = new THREE.BufferGeometry(); sp.setAttribute('position', new THREE.BufferAttribute(new Float32Array(FL.N * 3), 3)); const sparks = new THREE.Points(sp, FL.spark); sparks.frustumCulled = false;
+  const sm = new THREE.BufferGeometry(); sm.setAttribute('position', new THREE.BufferAttribute(new Float32Array(8 * 3), 3)); const smoke = new THREE.Points(sm, FL.smoke); smoke.frustumCulled = false;
+  o.add(body, tip); o.scale.setScalar(1.5); o.position.set(f.x, y, f.z); o.rotation.y = r; scene.add(o, sparks, smoke);
+  const seeds = Array.from({ length: FL.N }, (_, i) => [((i * 0.618) % 1), 0.6 + ((i * 0.37) % 1) * 0.9, (i * 2.399) % 6.28]);
+  const tw = new THREE.Vector3(); tip.updateWorldMatrix(true, false); tip.getWorldPosition(tw);
+  return { o, tip, fl, co, sparks, smoke, seeds, tw }; }
+function drawFlares() { const live = new Set(), now = performance.now() / 1000; (g.flares || []).forEach(f => { const key = f.x.toFixed(1) + ',' + f.z.toFixed(1); live.add(key); let v = flareViews.get(key); if (!v) { v = makeFlare(f); flareViews.set(key, v); }
+    const k = Math.min(1, f.t / 2), fk = k * (0.85 + 0.3 * Math.sin(now * 37 + v.seeds[0][2]) * Math.sin(now * 23));   /* (it sputters, then dies down over its last two seconds) */
+    v.fl.scale.set(fk, fk * (1 + 0.25 * Math.sin(now * 51)), fk); v.co.scale.setScalar(0.5 * fk); v.tip.visible = k > 0.02;
+    const sp = v.sparks.geometry.attributes.position, a = sp.array, T = v.tw;
+    for (let i = 0; i < FL.N; i++) { const [ph, sp0, ang] = v.seeds[i], t = (now * sp0 + ph) % 1, life = t * 0.7, h = Math.cos(ang) * 0.6, w = Math.sin(ang) * 0.6;   /* (each spark leaves the tip, arcs and falls under gravity) */
+      a[i * 3] = T.x + h * life * k; a[i * 3 + 1] = T.y + (1.6 * life - 4.9 * life * life) * k + 0.05; a[i * 3 + 2] = T.z + w * life * k; if (a[i * 3 + 1] < g.land(f.x, f.z)) a[i * 3 + 1] = -999; }
+    sp.needsUpdate = true; const sm = v.smoke.geometry.attributes.position.array;
+    for (let i = 0; i < 8; i++) { const t = (now * 0.35 + i / 8) % 1; sm[i * 3] = T.x + Math.sin(now * 0.7 + i) * 0.15 * t; sm[i * 3 + 1] = T.y + 0.2 + t * 2.2; sm[i * 3 + 2] = T.z + Math.cos(now * 0.5 + i) * 0.15 * t; } v.smoke.geometry.attributes.position.needsUpdate = true; v.smoke.material.opacity = 0.35 * k; });
+  for (const [key, v] of flareViews) if (!live.has(key)) { scene.remove(v.o, v.sparks, v.smoke); v.sparks.geometry.dispose(); v.smoke.geometry.dispose(); flareViews.delete(key); } }
 // the fire grows: a ring of light rolls out from the core across the yard to the new edge of its circle (one mesh, reused)
 const growRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); growRing.visible = false; scene.add(growRing); let growT = -1;
 // the breach shows before it pours (queue 68, sim/breach.mjs): violet smoke bulges up at the gap the dark has picked, until it comes through

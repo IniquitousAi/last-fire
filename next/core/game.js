@@ -8,6 +8,7 @@ import { newCamp, day as campDay, payDues, standing, daysBehind, priceOf, mayHav
 
 export const DAY = 300, DUSK_AT = 0.55, NIGHT_AT = 0.62, DAWN_AT = 0.97;   // (a day is 5 minutes; the Tide rolls in over dusk)
 export const MAX_HOLLOW = 32;
+export const DARK = { off: false };   // (his call, 2026-10-19 10:22: the enemies come out until they are rebuilt as real models; the client turns them off, the robots keep them)
 
 // ---------------------------------------------------------------- randomness: one named stream per system (eras 1 and 2 lesson)
 export function stream(seed, name) {
@@ -130,7 +131,7 @@ export function makeLand(seed) {
     const d = Math.hypot(x, z), far = Math.min(1, d / 1500), k = Math.min(1, Math.max(0, (d - 18) / 30)), home = 1 - k * k * (3 - 2 * k);
     const h = n1(x / 90, z / 90) * 22 + n2(x / 28, z / 28) * 5 + n3(x / 9, z / 9) * 0.8, ridge = Math.abs(n4(x / 160, z / 160) - 0.5) * 2;
     const yard = n1(0, 0) * 22 + n2(0, 0) * 5 + n3(x / 9, z / 9) * 0.2;   /* (the camp's yard: level, at the height the hills around it already have, so no bowl) */
-    const e = Math.hypot(x - EARTH.x, z - EARTH.z), ke = Math.min(1, Math.max(0, (e - 40) / 50)), site = 1 - ke * ke * (3 - 2 * ke);   /* (Earth's landing site: a flat dead city floor, rough hills past it) */
+    const e = Math.hypot(x - EARTH.x, z - EARTH.z), ke = Math.min(1, Math.max(0, (e - 62) / 45)), site = 1 - ke * ke * (3 - 2 * ke);   /* (Earth's landing site: a flat dead city floor, rough hills past it) */
     const wild = (h + (1 - ridge) ** 3 * 30 * far) * (1 - home) + yard * home;
     return site > 0 ? wild * (1 - site) + (n1(EARTH.x / 90, EARTH.z / 90) * 22 + n3(x / 4, z / 4) * 0.35) * site : wild;
   };
@@ -433,7 +434,7 @@ function wakeFaces(g) {   // (about a third of the towers hold one face each per
       g.hollow.push({ id: g.nextId++, kind: 'face', earth: true, x, z, y: heightAt(g.land, x, z), yaw: 0, hp: K.hp, max: K.hp, sh: K.shell[0], sb: K.shell[1], cd: 0.4, dead: false, speed: K.speed }); g.log.push([+g.t.toFixed(2), 'face', i]); evidence(g, 'heads', 1.06);   /* (a face in a wall: is it there, or are we seeing faces?) */ }); }
 }
 function spawnEarth(g, dt) {
-  if (!g.earth) return; wakeFaces(g); const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
+  if (!g.earth || DARK.off) return; wakeFaces(g); const down = g.players.filter(p => onEarth(p) && !p.ember); if (!down.length) return;
   const into = EARTH.stay - g.earth.t, want = Math.min(MAX_HOLLOW, EARTH_DARK.base + down.length * EARTH_DARK.perPlayer + Math.floor(into / 60 * EARTH_DARK.perMinute));
   g.spawnE = (g.spawnE || 0) - dt; if (g.spawnE > 0 || g.hollow.filter(k => k.earth).length >= want) return; g.spawnE = EARTH_DARK.every;
   const who = down[Math.floor(g.rSpawn() * down.length)], pool = into > 90 ? ['walker', 'walker', 'runner', 'runner', 'watcher', 'giant'] : into > 30 ? ['walker', 'walker', 'runner', 'watcher'] : ['walker', 'walker', 'runner'];
@@ -458,6 +459,7 @@ function director(g, dt) {
   if (!g.relaxT && I > D.peak) { g.relaxT = D.relax; g.log.push([+g.t.toFixed(2), 'relax', +I.toFixed(2)]); }
 }
 function spawn(g, dt, ph) {
+  if (DARK.off) { if (g.hollow.length) g.hollow = []; return; }
   if (ph !== 'night' && ph !== 'dusk') return; director(g, dt); if (g.relaxT > 0) return;   /* (a breath after a peak) */
   const night = g.night, want = Math.min(MAX_HOLLOW, 4 + night * 2 + g.players.length * 3), T = g.tactic;
   g.spawnT = (g.spawnT || 0) - dt; if (g.spawnT > 0 || g.hollow.length >= want) return;
