@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=10';
-import { Hollow, KINDS } from './hollow.js?v=10';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=10';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=10';
-import { FX } from './fx.js?v=10';
-import { modelsReady, model, gunModel } from './models.js?v=10';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=11';
+import { Hollow, KINDS } from './hollow.js?v=11';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=11';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=11';
+import { FX } from './fx.js?v=11';
+import { modelsReady, model, gunModel } from './models.js?v=11';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -63,7 +63,7 @@ const firePool = Array.from({ length: 6 }, () => { const l = new THREE.PointLigh
 const fireMeshes = new THREE.Group(); scene.add(fireMeshes);
 const torchLight = new THREE.PointLight(0xa6c4ff, 0, 7, 1.8); scene.add(torchLight);
 const beam = new THREE.SpotLight(0xe4ecff, 0, 34, 0.38, 0.5, 1.4); camera.add(beam); beam.position.set(0.12, -0.1, 0); beam.target.position.set(0, 0, -1); camera.add(beam.target);   // (the flashlight: always in the scene, off until held)
-const muzzleLight = new THREE.PointLight(0xdfe6ff, 0, 10, 2); scene.add(muzzleLight);   // (one light for every muzzle flash: always in the scene, so nothing recompiles)
+const muzzleLight = new THREE.PointLight(0xdfe6ff, 0, 6, 2); scene.add(muzzleLight);   // (one light for every muzzle flash: always in the scene, so nothing recompiles)
 scene.add(camera);
 // what you hold is drawn in its own pass after the world (a gun never pokes into a wall), lit to match where you stand
 const vscene = new THREE.Scene(), vhemi = new THREE.HemisphereLight(0xc8d4f0, 0x1a1c26, 1), vsun = new THREE.DirectionalLight(0xffffff, 0.7); vsun.position.set(0.6, 1, 0.8); vscene.add(vhemi, vsun);
@@ -76,7 +76,7 @@ const flashMat = new THREE.SpriteMaterial({ map: flashTex, blending: THREE.Addit
 const HAND = { campfire: 0.3, turret: 0.28, lantern: 0.6, planks: 0.8, cobble: 0.8, berries: 0.95, pickaxe: 0.62, torch: 1.7, knife: 1 };   // (how big each item sits in the hand)
 modelsReady.then(() => { modelsOk = true;
   for (const k of [...Object.keys(GUNS), ...Object.keys(HAND)]) { if (held[k]) continue; const m = model(k === 'torch' ? 'flashlight' : k); if (!m) continue; m.visible = false;
-    if (GUNS[k] && !GUNS[k].melee) { const f = new THREE.Sprite(flashMat); f.scale.setScalar(k === 'minigun' ? 0.3 : 0.18); f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; }
+    if (GUNS[k] && !GUNS[k].melee) { const f = new THREE.Sprite(flashMat); f.scale.setScalar({ pistol: 0.045, smg: 0.055, ar: 0.06, minigun: 0.08, shotgun: 0.075 }[k] || 0.065);   // (a star at the barrel's end, not a screen of light: his v6 report) f.position.copy(m.userData.muzzle); f.visible = false; m.add(f); m.userData.flash = f; }
     else m.scale.setScalar(HAND[k] || 1); view.add(m); held[k] = m; } });
 
 const coneGeo = new THREE.ConeGeometry(1.9, 9, 20, 1, true).translate(0, -4.5, 0).rotateX(-Math.PI / 2), coneMat = new THREE.MeshBasicMaterial({ color: 0xbcd0ff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: true });
@@ -98,7 +98,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Tab') { e.preventDefault(); if (mode === 'play' && world && world.ready) togglePanel('inv'); return; }
   keys[e.code] = true;
   if (mode !== 'play' || panel) return;
-  const n = parseInt(e.key); if (n >= 1 && n <= 9) slot = n - 1; if (e.key === '0') slot = 9;
+  const n = parseInt(e.key); if (n >= 0 && n <= 9) { const i = n === 0 ? 9 : n - 1; if (hasItem(i)) slot = i; else say(`Slot ${n} is empty.`, 1.2); }
   if (e.code === 'KeyV') melee();
   if (e.code === 'KeyQ') { const g = SLOTS[slot] === 'gun1' ? 1 : 0; if (me.guns[g]) slot = g; }   // (Q swaps guns)
   if (e.code === 'KeyC') craft('campfire');
@@ -108,7 +108,8 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouseDown.fill(false); });   // (alt-tab never leaves you running)
-addEventListener('wheel', e => { if (mode === 'play' && !panel) slot = (slot + (e.deltaY > 0 ? 1 : -1) + SLOTS.length) % SLOTS.length; });
+addEventListener('wheel', e => { if (mode !== 'play' || panel) return; const d = e.deltaY > 0 ? 1 : -1; for (let k = 1; k <= SLOTS.length; k++) { const i = (slot + d * k + SLOTS.length * 2) % SLOTS.length; if (hasItem(i)) { slot = i; break; } } });   // (the wheel skips empty slots)
+function hasItem(i) { const s = SLOTS[i]; if (s.startsWith('gun')) return !!gunIn(s); return s === 'pickaxe' || s === 'torch' || inv[s] > 0; }
 renderer.domElement.addEventListener('click', () => { if (mode === 'play' && !panel && !locked()) lockMouse(); });
 addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * SET.sens * (1 - ads * 0.35); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k)); swayX += e.movementX * 0.00006; swayY += e.movementY * 0.00006; });
 addEventListener('mousedown', e => { if (locked()) { mouseDown[e.button] = true; if (e.button === 2 && !gunIn(SLOTS[slot])) use(); if (e.button === 0) shotReady = true; if (e.button === 1) { e.preventDefault(); melee(); } } });
@@ -125,19 +126,32 @@ function nameOf(pid) { return pid === me.pid ? 'You' : (others.get(pid)?.name ||
 const RECIPES = { campfire: { needs: { planks: 4 }, says: 'Campfire: 4 planks' }, lantern: { needs: { planks: 2, cobble: 2 }, says: 'Lantern: 2 planks, 2 stone' } };
 function craft(k) { const R = RECIPES[k]; if (Object.entries(R.needs).every(([i, n]) => inv[i] >= n)) { for (const [i, n] of Object.entries(R.needs)) inv[i] -= n; inv[k]++; sound.buy(); say(`Crafted a ${k}.`); } else say(`A ${k} needs ${R.says.split(': ')[1]}.`); }
 function eat() { if (inv.berries > 0 && me.hunger < 100) { inv.berries--; me.hunger = Math.min(100, me.hunger + 25); me.hp = Math.min(100, me.hp + 5); say('Ate berries.'); } }
-function use() {   // right click: place what you hold, feed a fire, or eat
-  const it = SLOTS[slot], hit = world.ray(eye(), lookDir(), 6); if (gunIn(it)) return;
+const PLACE = { planks: 'block', cobble: 'block', campfire: 'flat', lantern: 'flat', turret: 'flat' };
+function placeTarget() {   // where the thing in your hand would go: the empty cell you look at (things that stand settle onto the block below)
+  const it = SLOTS[slot]; if (!PLACE[it] || !(inv[it] > 0)) return null;
+  const hit = world.ray(eye(), lookDir(), 6); if (!hit || !hit.place) return null;
+  let [x, y, z] = hit.place;
+  if (PLACE[it] === 'flat') { let k = 0; while (y > 1 && !world.solid(x + 0.5, y - 0.5, z + 0.5) && k++ < 6) y--; if (!world.solid(x + 0.5, y - 0.5, z + 0.5)) return null; }
+  const inMe = Math.abs(x + 0.5 - me.x) < 0.8 && Math.abs(z + 0.5 - me.z) < 0.8 && y + 1 > me.y && y < me.y + 1.8;
+  const taken = fires.some(f => Math.floor(f.x) === x && Math.floor(f.z) === z && Math.abs(f.y - y) < 1) || turrets.some(T => Math.floor(T.x) === x && Math.floor(T.z) === z && Math.abs(T.y - y) < 1);
+  return { x, y, z, it, ok: !inMe && !taken && !world.solid(x + 0.5, y + 0.5, z + 0.5) };
+}
+const ghost = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01, 1.01, 1.01)), new THREE.LineBasicMaterial({ color: 0x39e6ff, transparent: true, opacity: 0.85, depthTest: true }));
+ghost.visible = false; scene.add(ghost);
+function drawGhost() { const T = mode === 'play' && !panel && !me.dead && world && world.ready ? placeTarget() : null; ghost.visible = !!T; if (!T) return; const flat = PLACE[T.it] === 'flat';
+  ghost.scale.set(1, flat ? 0.15 : 1, 1); ghost.position.set(T.x + 0.5, T.y + (flat ? 0.075 : 0.5), T.z + 0.5); ghost.material.color.setHex(T.ok ? 0x39e6ff : 0xff5577); }
+function use() {   // right click: place what you hold (where the outline shows), feed a fire, or eat
+  const it = SLOTS[slot]; if (gunIn(it)) return;
   if (it === 'berries') return eat();
-  const near = fires.findIndex(f => !f.small && Math.hypot(f.x - me.x, f.z - me.z) < 3 && hit && Math.floor(f.x) === hit.x && Math.floor(f.z) === hit.z);
+  const hit = world.ray(eye(), lookDir(), 6), near = fires.findIndex(f => !f.small && Math.hypot(f.x - me.x, f.z - me.z) < 3.5 && hit && Math.floor(f.x) === hit.x && Math.floor(f.z) === hit.z);
   if (it === 'planks' && near >= 0) { if (inv.planks > 0) { inv.planks--; addFuel(near, 90); say('Fed the fire: +90 seconds.'); } return; }
-  if (!hit || !hit.place) return;
-  const [x, y, z] = hit.place;
-  if (Math.abs(x + 0.5 - me.x) < 0.8 && Math.abs(z + 0.5 - me.z) < 0.8 && y >= Math.floor(me.y) - 0.1 && y <= me.y + 1.8) return;   // (not inside yourself)
-  if (it === 'campfire' && inv.campfire > 0) { inv.campfire--; placeFire(x + 0.5, y, z + 0.5, 240, true, false); return; }
-  if (it === 'lantern' && inv.lantern > 0) { inv.lantern--; placeFire(x + 0.5, y, z + 0.5, 600, true, true); return; }
-  if (it === 'turret' && inv.turret > 0) { inv.turret--; if (!net || net.host) addTurret(x + 0.5, y, z + 0.5, me.pid); else net.send({ t: 'turret', p: [x + 0.5, y, z + 0.5] }); say('Sentry placed: 300 rounds, it picks its own targets.'); return; }
-  const blockOf = { planks: B.PLANKS, cobble: B.COBBLE };
-  if (blockOf[it] && inv[it] > 0) { inv[it]--; editBlock(x, y, z, blockOf[it]); }
+  const T = placeTarget(); if (!T) return; if (!T.ok) return say('Something is in the way.', 1.2);
+  const { x, y, z } = T;
+  if (it === 'campfire') { inv.campfire--; placeFire(x + 0.5, y, z + 0.5, 240, true, false); }
+  else if (it === 'lantern') { inv.lantern--; placeFire(x + 0.5, y, z + 0.5, 600, true, true); }
+  else if (it === 'turret') { inv.turret--; if (!net || net.host) addTurret(x + 0.5, y, z + 0.5, me.pid); else net.send({ t: 'turret', p: [x + 0.5, y, z + 0.5] }); say('Sentry placed: 300 rounds, it picks its own targets.'); }
+  else { inv[it]--; editBlock(x, y, z, it === 'planks' ? B.PLANKS : B.COBBLE); }
+  if (!hasItem(slot)) slot = me.guns[0] ? 0 : 2;   // (the last one placed: back to the gun)
 }
 function editBlock(x, y, z, b) { world.set(x, y, z, b); }   // (sent on by world.listen, set at start)
 function quietSet(x, y, z, b) { world.quiet = true; world.set(x, y, z, b); world.quiet = false; }   // (a change that came over the network is not sent back out)
@@ -151,9 +165,9 @@ function shoot() {
   if (!G.auto && !shotReady) return; shotReady = false;
   if (am.mag <= 0) { sound.click(); if (am.res > 0) reload(); shotCd = 0.25; return; }
   am.mag--; shotCd = 60 / G.rpm; sound.shot(key);
-  vmuzzle.intensity = 3; setTimeout(() => vmuzzle.intensity = 0, 45);
+  vmuzzle.intensity = 0.8; setTimeout(() => vmuzzle.intensity = 0, 45);
   const gm = held[key]; if (gm && gm.userData.flash) { gm.userData.flash.visible = true; gm.userData.flash.material.rotation = Math.random() * 6; setTimeout(() => gm.userData.flash.visible = false, 40); }
-  const o = eye(), m0 = muzzleWorld(); muzzleLight.position.copy(m0); muzzleLight.intensity = 7; setTimeout(() => muzzleLight.intensity = 0, 50);
+  const o = eye(), m0 = muzzleWorld(); muzzleLight.position.copy(m0); muzzleLight.intensity = 1.6; setTimeout(() => muzzleLight.intensity = 0, 50);
   const spread = G.spread * (ads > 0.5 ? 0.3 : 1) * (me.onGround ? 1 : 2), pellets = [], ends = [];
   for (let i = 0; i < (G.pellets || 1); i++) {
     const d = lookDir(); d.x += (Math.random() - 0.5) * spread * 2; d.y += (Math.random() - 0.5) * spread * 2; d.z += (Math.random() - 0.5) * spread * 2; d.normalize();
@@ -420,7 +434,7 @@ function onNet(m, from) {
   if (m.t === 'bang') {   // (someone else's shot: heard from where they stand, the flash and the tracers seen)
     const p = others.get(from); if (!p || !GUNS[m.g] || !Array.isArray(m.m) || !near(p, m.m[0], m.m[1], m.m[2], 4)) return;
     if (H && !bucket(p, 'bangs', 14, 20)) return;
-    const o = new THREE.Vector3(m.m[0], m.m[1], m.m[2]); sound.shot(m.g, o); muzzleLight.position.copy(o); muzzleLight.intensity = 5; setTimeout(() => muzzleLight.intensity = 0, 50);
+    const o = new THREE.Vector3(m.m[0], m.m[1], m.m[2]); sound.shot(m.g, o); muzzleLight.position.copy(o); muzzleLight.intensity = 1.6; setTimeout(() => muzzleLight.intensity = 0, 50);
     for (const e of (Array.isArray(m.e) ? m.e.slice(0, 8) : [])) if (Array.isArray(e) && e.length === 3 && e.every(fin)) { const v = new THREE.Vector3(...e); fx.tracer(o, v); fx.spark(v); }
     if (H) net.relay(m, from); return;
   }
@@ -511,7 +525,7 @@ function frame(now) {
   if (!net || net.host) for (const d of [...drops]) if ((d.t -= dt) <= 0) { removeDrop(d.id); if (net) net.send({ t: 'gone', id: d.id }); }
   const tl = SLOTS[slot] === 'torch' && !me.dead && !me.down; torchLight.intensity = tl ? 1.4 : 0; torchLight.position.set(me.x, me.y + 1.5, me.z); beam.intensity = tl ? 60 : 0;
   drawTurrets();
-  drawFriends(dt);
+  drawFriends(dt); drawGhost();
   if (mastLamp) mastLamp.visible = (t % 1.6) < 0.25;
   // the camera: no bob (his rule). Recoil and a flinch kick it and settle smoothly.
   kick += -kick * Math.min(1, dt * 10); flinch += -flinch * Math.min(1, dt * 6);
@@ -635,8 +649,8 @@ function drawBag() {
     <section><h3>MAKE</h3>${recipes}<button class="key${inv.berries > 0 && me.hunger < 100 ? '' : ' off'}" data-eat="1">EAT<small>(1 berry: food +25, health +5)</small></button>
       <h3>THIS GAME</h3><p class="perk">Round ${day}. ${me.kills} kills, ${me.heads} headshots. ${me.points.toLocaleString()} points.</p></section>`;
 }
-$('invBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.hold) { slot = +b.dataset.hold; } if (b.dataset.craft) craft(b.dataset.craft); if (b.dataset.eat) eat(); drawBag(); });
-$('slots').addEventListener('click', e => { const s = e.target.closest('.slot'); if (s) slot = +s.dataset.i; });
+$('invBody').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.hold && hasItem(+b.dataset.hold)) { slot = +b.dataset.hold; } if (b.dataset.craft) craft(b.dataset.craft); if (b.dataset.eat) eat(); drawBag(); });
+$('slots').addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && hasItem(+s.dataset.i)) slot = +s.dataset.i; });
 function drawPause() {
   const H = net && net.host, list = [...others.values()].map(p => `<div class="row"><span>${p.name.replace(/[<&>"]/g, '')}</span>${H ? `<button class="mini" data-kick="${p.pid}">REMOVE</button>` : ''}</div>`).join('');
   $('pauseNet').innerHTML = net ? `<div class="code">ROOM <b>${net.code}</b></div>
