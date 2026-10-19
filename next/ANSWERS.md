@@ -115,5 +115,6 @@ Extracted: the camp is a living economy of dues, chores and optional jobs; soft 
 | 15 | Who are you, to the camp? | You used to hide the odds: one of the leaders who softened the numbers. Now you check, and you know exactly how the lie works. (Answers 'who you are', open since round 1.) |
 | 16 | Why did you stop hiding the odds? | You saw the real number: one night, the odds for the whole camp over the long run, and you could not unsee it. |
 | 17 | What was the real number? | Not quite zero: a tiny chance, a decimal with too many zeros, that something is past the dark. The reason anyone keeps going. |
+| 18 | The not-quite-zero chance is a chance of what? | RAISING THE NUMBER IS THE GAME: nobody knows what is out there; everything you build, learn and survive nudges the decimal up on the honest board, era by era. The number is the score, the quest and the story; the simulators compute it, so it is never a fake progress bar. |
 
 His point while answering (about the dev paradox): "the more I play a non-polished game, the more I don't like it. But I have to build it non-polished as a dev. So it's a paradox." The way out (Era 1's own answer): robots play the rough dev copy; his copy only moves forward when the checks pass; build thin complete slices (one whole night, polished end to end), never wide rough layers.

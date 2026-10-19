@@ -2,6 +2,11 @@
  "about": "Every idea Daniel gave for Last Fire, and where it stands. The game shows this file (Esc, CHECKLIST). done = in the game and tested; in = in the game, not yet proven; next = being built now; later = agreed, not started; talk = still being discussed with him.",
  "items": [
   {
+   "s": "talk",
+   "idea": "THE GAME: raise the not-quite-zero number (the chance something is past the dark), honestly computed, era by era",
+   "where": "lore 18"
+  },
+  {
    "s": "done",
    "idea": "Hardcore, fun, grown-up; never Minecraft or kid-like (no block world)",
    "where": "piece 1: smooth endless land"
