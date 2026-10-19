@@ -74,7 +74,7 @@ Claude picks the order by the bottleneck: what he will see first and most.
 64. **The masks show intent** (13): the face turns before it lunges, the watcher's eyes brighten when it decides. Never words.
 65. **Behind you it moves, in front it strikes** (5): you hear it behind you; it attacks once in view or very close.
 66. **Draw calls under 100** (17, 18): measure renderer.info, instance the camp's repeated props, real lights only near you.
-67. **Bold and confident UI** (his ask: the Reactor is the bar, DESIGN.md's lessons): three rough versions of the HUD and home screen with heavy numbers, status chips and meaning-colored borders; he picks one.
+67. **Bold and confident UI** (his ask: the Reactor is the bar, DESIGN.md's lessons): three rough versions of the HUD and home screen with heavy numbers and status chips; saturated color only on the numbers and words that matter, keys and panels dark matte and heavy (his v115 correction); he picks one.
 
 ## Done
 - Item 1 so far: messages from a wrist hologram (v35), people's speech as HEARD on the wrist (v36), prompts as holo tags on their object (v38), click-to-play as the visor's aim link standby (v39). Item 2: three rough home screens to pick from (v41). Tracers are light (v36, INNOVATION.md idea 1). VISOR hugs the edges, mirrored (v24). The drop to Earth (v25). Truck parts and weight (v26). Solid towers (v27). The truck drives (v29). The watcher (v30).
