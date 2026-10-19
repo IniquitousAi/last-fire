@@ -130,7 +130,7 @@ export function step(g, dt) {
   if (ph === 'night' && Math.floor(g.t) !== Math.floor(g.t - dt)) { g.stats.beats++; if (g.players.some(p => !p.ember && (p.hurtT > 0 || g.hollow.some(k => Math.hypot(k.x - p.x, k.z - p.z) < 5)))) g.stats.tense++; }
 }
 function revive(g, e) {
-  const p = g.players.find(q => q.id === e.of); if (p) { p.ember = false; p.hp = 50; p.x = g.fire.x + 1; p.z = g.fire.z; p.y = heightAt(g.land, p.x, p.z); }
+  const p = g.players.find(q => q.id === e.of); if (p) { p.ember = false; p.hp = 50; p.x = g.fire.x + 1; p.z = g.fire.z; p.y = heightAt(g.land, p.x, p.z); p.tp = (p.tp || 0) + 1; }   // (tp: tells a friend's screen it was moved)
   const h = g.players.find(q => q.id === e.held); if (h) h.carrying = null;
   g.embers = g.embers.filter(q => q !== e); g.log.push([+g.t.toFixed(2), 'revive', e.of, e.held]);
 }
