@@ -9,6 +9,17 @@ import * as LO from '../core/lore.js?v=174';   // (the lore rules: the honest nu
 import * as JOB from '../core/jobs.js?v=174';
 import { stream } from '../core/game.js?v=174';
 
+/* (the palette guard, A2 look pass 2026-10-19: no orange, gold, rust, brown or olive may reach the screen from a scanned asset. Every loaded material's diffuse is checked in the shader: a hue from red-orange through yellow to green with real color in it is pulled to a cold blue-gray steel at the same brightness. Blues, violets and grays pass untouched; lamps and signs are emissive and are not touched.) */
+const GUARD_GLSL = `#include <map_fragment>
+{ vec3 c = diffuseColor.rgb; float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn, sat = d / max(mx, 1e-4); float h = 0.0;
+  if (d > 1e-4) { h = mx == c.r ? mod((c.g - c.b) / d, 6.0) : (mx == c.g ? (c.b - c.r) / d + 2.0 : (c.r - c.g) / d + 4.0); } h *= 60.0;
+  float warm = (h < 175.0 || h > 340.0) ? smoothstep(0.12, 0.3, sat) : 0.0; float l = dot(c, vec3(0.299, 0.587, 0.114));
+  diffuseColor.rgb = mix(c, vec3(0.78, 0.86, 1.0) * l * 1.04, warm); }`;
+const GUARDED = new WeakSet();
+export function paletteGuard(root) {
+  root.traverse(q => { if (!q.isMesh) return; for (const m of [].concat(q.material)) { if (!m || GUARDED.has(m) || !m.isMeshStandardMaterial) continue; GUARDED.add(m);
+    const prev = m.onBeforeCompile; m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', GUARD_GLSL); }; m.customProgramCacheKey = () => 'guard' + (m.map ? 1 : 0); m.needsUpdate = true; } });
+}
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 }, EDGE = { x: 3.4, z: 18.2 };   // (the edge sign stands inside the gate, which opens on the dark at 21 m)
 // the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
 // size, carries its planted foot back 0.55 m in 0.40 s: 1.39 m/s of ground per clip second, so the clip plays at pace / (1.39 x his scale)
@@ -72,7 +83,7 @@ export class Camp {
     for (const P of PEOPLE) L.loadAsync('../assets/' + P.url).then(r => {
       r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), o = skClone(r.scene); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y);   /* (measured on the original: a copy of an animated model measures wrong) */ o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
       const DARK = { Brown: 0x24262e, Brown2: 0x1c1e25, Green: 0x20232b, LightGreen: 0x2c303b, Gold: 0x5c1a33, Grey: 0x30333f };   /* (north star palette: dark grays and one muted crimson accent; no olive, brown or gold on a person) */
-      o.traverse(m => { if (m.isMesh || m.isSkinnedMesh) { m.material = m.material.clone(); const d = DARK[m.material.name]; if (d !== undefined) m.material.color.setHex(d); else m.material.color.lerp(new THREE.Color(0x2a2e38), 0.35); m.castShadow = false; } });   /* (worn, muted clothes: grounded near) */
+      o.traverse(m => { if (m.isMesh || m.isSkinnedMesh) { m.material = m.material.clone(); const d = DARK[m.material.name]; if (d !== undefined) m.material.color.setHex(d); else m.material.color.lerp(new THREE.Color(0x2a2e38), 0.6); m.castShadow = false; } });   /* (worn, muted clothes: grounded near) */
       const lamp = new THREE.PointLight(0xcfe0ff, 5, 6, 1.5); lamp.position.set(P.x + 0.6, land(P.x, P.z) + 1.4, P.z + 0.4); scene.add(lamp);   // (each person keeps a small lantern: you see who is talking)
       const mix = new THREE.AnimationMixer(o), find = n => n && r.animations.find(a => a.name.endsWith('|' + n)), clip = find(P.anim) || r.animations.find(a => a.name.endsWith(P.anim));
       const walk = find(P.walk), act = find(P.act), acts = { idle: clip ? mix.clipAction(clip) : null, walk: walk ? mix.clipAction(walk) : null, act: act ? mix.clipAction(act) : null };
@@ -301,7 +312,7 @@ export class Camp {
   }
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
   yard(L, land) {
-    const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url.split('#')[0]).then(r => { const part = url.split('#')[1]; if (part) { const n = r.scene.getObjectByName(part).clone(); n.position.set(0, 0, 0); r = { scene: new THREE.Group().add(n) }; } r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); return { scene: r.scene, s, c, y0: b.min.y }; }).catch(() => null));
+    const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url.split('#')[0]).then(r => { const part = url.split('#')[1]; if (part) { const n = r.scene.getObjectByName(part).clone(); n.position.set(0, 0, 0); r = { scene: new THREE.Group().add(n) }; } paletteGuard(r.scene); r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); return { scene: r.scene, s, c, y0: b.min.y }; }).catch(() => null));
     // every piece is measured: its footprint centered on (x, z) (the fence and metal wall pivots sit 1.3 m off the piece), its base on the ground
     // (the bedroll's base is 5 cm under its pivot), and set on the lowest ground under its footprint so no corner floats on a slope.
     // lie = a loose thing (a stone): tipped to rest on the slope's own plane and bedded a tenth of its height in, not balanced level on a hill
@@ -346,7 +357,7 @@ export class Camp {
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }
     { const [x, z] = W(40, 17); put('kit/planks.glb', x, z, 2.0, 0.4); }
-    for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put(BAR, x, z, 0.62, deg).then(o => o && o.traverse(q => { if (q.isMesh && !q.material.userData.steel) { q.material = q.material.clone(); q.material.color.setHex(0x5a6070); q.material.userData.steel = 1; } })); }   // (the scan is fire-red; red means danger here, so the paint is weathered steel)
+    for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put(BAR, x, z, 0.62, deg).then(o => o && o.traverse(q => { if (q.isMesh && !q.material.userData.steel) { q.material = q.material.clone(); q.material.color.setHex(0x5a6070); q.material.userData.steel = 1; paletteGuard(q); } })); }   // (the scan is fire-red; red means danger here, so the paint is weathered steel)
     { const [x, z] = W(47, 16.5); put('kit/chest.glb', x, z, 1.1, face(x, z)); }
     { const [x, z] = W(55, 17.2); put(CRATE, x, z, 1.7, 0.3); }
     // the store: metal walls by the wall, the camp's stock behind them

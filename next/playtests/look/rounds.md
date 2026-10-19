@@ -64,3 +64,68 @@ reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, 
 | outside-veins-7 | 0.05 | black -4 | 40.2 | 0.7 | 1.3 | 2.6 | 0.2 | 0.0 | 0.0 |
 
 fix next: black (+18 points, worst in mouth-day-7)
+
+## 2026-10-19 12:16
+reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, warm 0.0%
+
+| shot | gap | biggest | black | fog | red | violet | blue | green | warm |
+|---|---|---|---|---|---|---|---|---|---|
+| rift-console-1920 | 0.10 | violet +5 | 47.7 | 0.2 | 3.2 | 7.6 | 0.2 | 0.0 | 0.0 |
+| rift-inside-1920 | 0.17 | violet +12 | 39.5 | 0.1 | 1.8 | 14.6 | 0.5 | 0.0 | 0.0 |
+| rift-mouth-day-1920 | 0.26 | black +22 | 66.3 | 0.6 | 3.1 | 1.3 | 0.2 | 0.0 | 0.0 |
+| rift-mouth-night-1920 | 0.20 | black +16 | 60.4 | 0.4 | 3.4 | 1.4 | 0.1 | 0.0 | 0.0 |
+| rift-outside-veins-1920 | 0.15 | black +12 | 55.6 | 0.9 | 0.0 | 2.8 | 0.5 | 0.0 | 0.0 |
+
+fix next: black (+22 points, worst in rift-mouth-day-1920)
+
+## 2026-10-19 12:22
+reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, warm 0.0%
+
+| shot | gap | biggest | black | fog | red | violet | blue | green | warm |
+|---|---|---|---|---|---|---|---|---|---|
+| rift-console-1920 | 0.13 | black +8 | 52.3 | 0.2 | 2.1 | 7.2 | 0.3 | 0.0 | 0.0 |
+| rift-inside-1920 | 0.16 | violet +11 | 39.9 | 0.2 | 1.4 | 13.8 | 0.6 | 0.0 | 0.0 |
+| rift-mouth-day-1920 | 0.23 | black +20 | 63.9 | 0.5 | 3.0 | 1.2 | 0.2 | 0.0 | 0.0 |
+| rift-mouth-night-1920 | 0.18 | black +15 | 58.6 | 0.7 | 3.2 | 1.3 | 0.1 | 0.0 | 0.0 |
+| rift-outside-veins-1920 | 0.09 | black +5 | 49.4 | 1.8 | 0.1 | 2.8 | 0.2 | 0.0 | 0.0 |
+
+fix next: black (+20 points, worst in rift-mouth-day-1920)
+
+## 2026-10-19 12:26
+reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, warm 0.0%
+
+| shot | gap | biggest | black | fog | red | violet | blue | green | warm |
+|---|---|---|---|---|---|---|---|---|---|
+| rift-console-1920 | 0.12 | black +7 | 50.6 | 0.2 | 2.5 | 7.3 | 0.3 | 0.0 | 0.0 |
+| rift-inside-1920 | 0.12 | violet +9 | 42.3 | 0.2 | 1.3 | 11.8 | 0.4 | 0.0 | 0.0 |
+| rift-mouth-day-1920 | 0.28 | black +25 | 69.1 | 0.7 | 2.6 | 0.9 | 0.2 | 0.0 | 0.0 |
+| rift-mouth-night-1920 | 0.18 | black +15 | 59.2 | 0.3 | 2.4 | 1.2 | 0.1 | 0.0 | 0.0 |
+| rift-outside-veins-1920 | 0.06 | black +2 | 45.8 | 1.3 | 0.3 | 3.8 | 0.2 | 0.0 | 0.0 |
+
+fix next: black (+25 points, worst in rift-mouth-day-1920)
+
+## 2026-10-19 12:28
+reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, warm 0.0%
+
+| shot | gap | biggest | black | fog | red | violet | blue | green | warm |
+|---|---|---|---|---|---|---|---|---|---|
+| rift-console-1920 | 0.16 | black +8 | 51.6 | 0.2 | 3.5 | 8.8 | 0.3 | 0.0 | 0.0 |
+| rift-inside-1920 | 0.14 | violet +10 | 41.8 | 0.1 | 0.9 | 12.4 | 0.6 | 0.0 | 0.0 |
+| rift-mouth-day-1920 | 0.05 | red +2 | 42.8 | 0.4 | 3.5 | 1.2 | 0.2 | 0.0 | 0.0 |
+| rift-mouth-night-1920 | 0.18 | black +15 | 58.8 | 0.6 | 3.5 | 1.3 | 0.2 | 0.0 | 0.0 |
+| rift-outside-veins-1920 | 0.19 | black +16 | 59.5 | 0.7 | 0.0 | 2.4 | 0.3 | 0.0 | 0.0 |
+
+fix next: black (+16 points, worst in rift-outside-veins-1920)
+
+## 2026-10-19 12:35
+reference: black 43.9%, fog 0.0%, red 1.9%, violet 2.6%, blue 0.1%, green 0.0%, warm 0.0%
+
+| shot | gap | biggest | black | fog | red | violet | blue | green | warm |
+|---|---|---|---|---|---|---|---|---|---|
+| rift-console-1920 | 0.13 | black +6 | 49.8 | 0.2 | 3.2 | 8.3 | 0.2 | 0.0 | 0.0 |
+| rift-inside-1920 | 0.16 | violet +10 | 40.1 | 0.2 | 0.7 | 13.1 | 0.6 | 0.0 | 0.0 |
+| rift-mouth-day-1920 | 0.20 | black +17 | 60.6 | 0.6 | 3.5 | 1.3 | 0.2 | 0.0 | 0.0 |
+| rift-mouth-night-1920 | 0.17 | black +13 | 56.9 | 0.5 | 4.0 | 1.3 | 0.0 | 0.0 | 0.0 |
+| rift-outside-veins-1920 | 0.16 | black +11 | 55.1 | 2.0 | 0.0 | 1.9 | 0.2 | 0.0 | 0.0 |
+
+fix next: black (+17 points, worst in rift-mouth-day-1920)
