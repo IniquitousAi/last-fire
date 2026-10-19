@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=141';
-import { Ambience } from './ambience.js?v=141';
-import { Camp, BOARD } from './camp.js?v=141';
-import { Guide } from './guide.js?v=141';
-import { buildSites } from './earthsite.js?v=141';
-import { Truck } from './truck.js?v=141';
-import { ShipView } from './shipview.js?v=141';
-import { Crew } from './crew.js?v=141';
-import { Hands } from './hands.js?v=141';
-import { Wrist } from './wrist.js?v=141';
-import { FireCore } from './firecore.js?v=141';
+import * as C from '../core/game.js?v=142';
+import { Ambience } from './ambience.js?v=142';
+import { Camp, BOARD } from './camp.js?v=142';
+import { Guide } from './guide.js?v=142';
+import { buildSites } from './earthsite.js?v=142';
+import { Truck } from './truck.js?v=142';
+import { ShipView } from './shipview.js?v=142';
+import { Crew } from './crew.js?v=142';
+import { Hands } from './hands.js?v=142';
+import { Wrist } from './wrist.js?v=142';
+import { FireCore } from './firecore.js?v=142';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=141';
-import { FriendVoice } from './friendvoice.js?v=141';
-import { crewFrom } from '../core/habits.js?v=141';
-import { HudLook } from './hudlook.js?v=141';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=141';
-import { sound, GUNS } from '../../src/combat.js?v=141';
-import { FX } from '../../src/fx.js?v=141';
+import { think as friendThink } from './friend.js?v=142';
+import { FriendVoice } from './friendvoice.js?v=142';
+import { crewFrom } from '../core/habits.js?v=142';
+import { HudLook } from './hudlook.js?v=142';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=142';
+import { sound, GUNS } from '../../src/combat.js?v=142';
+import { FX } from '../../src/fx.js?v=142';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 141;   // (this copy's version; ./version.json says the newest)
+const BUILD = 142;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -109,7 +109,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
       }
       { vec2 qn = normalize(vec2(dot(d, t1), dot(d, t2)) + 1e-5); vec3 NL = qn.x * t1 + qn.y * t2; float sl = uT * 0.008; vec3 PL = vec3(NL.x * cos(sl) - NL.z * sin(sl), NL.y, NL.x * sin(sl) + NL.z * cos(sl));
         float gone = smoothstep(0.43, 0.48, fbm(PL * 1.5 + vec3(0.0, uT * 0.003, 0.0)));   /* (where the dark has eaten the limb, its air is gone too: the rim breaks, and you can see the takeover) */
-        col += mix(vec3(0.16, 0.4, 1.0), vec3(0.55, 0.18, 0.85) * 0.5, gone) * (1.0 - 0.85 * gone) * exp(-pow((a - R) * 230.0, 2.0)) * 0.6; }
+        col += mix(vec3(0.3, 0.2, 1.0), vec3(0.55, 0.18, 0.85) * 0.5, gone) * (1.0 - 0.85 * gone) * exp(-pow((a - R) * 230.0, 2.0)) * 0.6; }
       gl_FragColor = vec4(col, 1.0);
     }` }));
 scene.add(sky);
