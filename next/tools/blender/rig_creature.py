@@ -7,7 +7,7 @@ import bpy, sys, math, json
 import numpy as np
 from mathutils import Vector, Quaternion, Matrix
 
-a = sys.argv[sys.argv.index('--') + 1:]; SRC, OUT = a[0], a[1]; TRIS = int(a[2]) if len(a) > 2 else 14000; HEIGHT = float(a[3]) if len(a) > 3 else 2.9
+a = sys.argv[sys.argv.index('--') + 1:]; SRC, OUT = a[0], a[1]; LODS = [int(x) for x in (a[2] if len(a) > 2 else '14000,5000,1500').split(',')]; HEIGHT = float(a[3]) if len(a) > 3 else 2.9   # (three levels of detail on ONE skeleton: near, mid past 15 m, far past 40 m)
 FPS = 30
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=SRC)
 meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
@@ -19,15 +19,19 @@ for o in list(bpy.context.scene.objects):
     if o is not ob: bpy.data.objects.remove(o, do_unlink=True)
 ob.parent = None; bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 tris = sum(len(p.vertices) - 2 for p in ob.data.polygons); print('TRIS in', tris)
-md = ob.modifiers.new('d', 'DECIMATE'); md.ratio = min(1.0, TRIS / tris); bpy.ops.object.modifier_apply(modifier='d')
-print('TRIS out', sum(len(p.vertices) - 2 for p in ob.data.polygons))
-# keep the creature one-sided smooth, drop the generated texture and use one dark material the client re-tints
-ob.data.materials.clear(); m = bpy.data.materials.new('Body'); m.use_nodes = True; m.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (0.03, 0.025, 0.05, 1); ob.data.materials.append(m)
-for p in ob.data.polygons: p.use_smooth = True
-# size and place: tall HEIGHT metres, feet on z=0, centred on x,y
-vs = np.array([ob.matrix_world @ v.co for v in ob.data.vertices]); lo, hi = vs.min(0), vs.max(0); k = HEIGHT / (hi[2] - lo[2]); ctr = (lo + hi) / 2
-for v in ob.data.vertices: v.co = Vector(((v.co.x - ctr[0]) * k, (v.co.y - ctr[1]) * k, (v.co.z - lo[2]) * k))
-vs = np.array([v.co[:] for v in ob.data.vertices]); lo, hi = vs.min(0), vs.max(0); print('BOX', lo.round(2), hi.round(2))
+# measure once on the raw mesh so every level of detail lands in the same place
+vs0 = np.array([v.co[:] for v in ob.data.vertices]); lo0, hi0 = vs0.min(0), vs0.max(0); K = HEIGHT / (hi0[2] - lo0[2]); CTR = (lo0 + hi0) / 2
+raw = ob; ob = None; lods = []
+for li, target in enumerate(LODS):
+    o = raw.copy(); o.data = raw.data.copy(); o.name = f'Body_LOD{li}'; bpy.context.scene.collection.objects.link(o); bpy.context.view_layer.objects.active = o
+    md = o.modifiers.new('d', 'DECIMATE'); md.ratio = min(1.0, target / tris); bpy.ops.object.modifier_apply(modifier='d')
+    print('LOD', li, 'tris', sum(len(p.vertices) - 2 for p in o.data.polygons))
+    o.data.materials.clear(); m = bpy.data.materials.new('Body'); m.use_nodes = True; m.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (0.03, 0.025, 0.05, 1); o.data.materials.append(m)
+    for p in o.data.polygons: p.use_smooth = True
+    for v in o.data.vertices: v.co = Vector(((v.co.x - CTR[0]) * K, (v.co.y - CTR[1]) * K, (v.co.z - lo0[2]) * K))
+    lods.append(o)
+bpy.data.objects.remove(raw, do_unlink=True)
+vs = np.array([v.co[:] for v in lods[0].data.vertices]); lo, hi = vs.min(0), vs.max(0); print('BOX', lo.round(2), hi.round(2))
 # px (front view 520x720, ortho scale = 1.15 * the old height of 1.95) -> metres on the new mesh: 720 px = 1.15 * HEIGHT
 M_PER_PX = 1.15 * HEIGHT / 720; ZC = HEIGHT / 2
 
@@ -59,20 +63,21 @@ for name, (par, pts) in CH.items():
         n = f'{name}_{i}'; eb = ad.edit_bones.new(n); eb.head, eb.tail = pts[i], pts[i + 1]; eb.parent = ad.edit_bones[prev] if prev else ad.edit_bones[par]; prev = n; segs.append((n, pts[i], pts[i + 1]))
 bpy.ops.object.mode_set(mode='OBJECT')
 
-# weights: nearest bone segments by distance, top 3, falling off with distance cubed
+# weights: nearest bone segments by distance, top 3, falling off with distance cubed (same rule for every level of detail)
 A = np.array([s[1][:] for s in segs]); B = np.array([s[2][:] for s in segs]); AB = B - A; L2 = (AB ** 2).sum(1)
-for s in segs: ob.vertex_groups.new(name=s[0])
-ob.vertex_groups.new(name='root')
-vs = np.array([v.co[:] for v in ob.data.vertices]); W = []
-for i0 in range(0, len(vs), 2000):
-    v = vs[i0:i0 + 2000][:, None, :]; t = np.clip(((v - A) * AB).sum(2) / L2, 0, 1); d = np.linalg.norm(v - (A + AB * t[..., None]), axis=2)
-    top = np.argsort(d, 1)[:, :3]
-    for r in range(d.shape[0]):
-        ids = top[r]; ds = d[r, ids]; w = 1 / (ds + 0.03) ** 3; w /= w.sum(); W.append(list(zip(ids, w)))
-for vi, lst in enumerate(W):
-    for bi, w in lst:
-        if w > 0.02: ob.vertex_groups[segs[bi][0]].add([vi], float(w), 'ADD')
-ob.parent = arm; mod = ob.modifiers.new('Armature', 'ARMATURE'); mod.object = arm
+for ob in lods:
+    for s in segs: ob.vertex_groups.new(name=s[0])
+    ob.vertex_groups.new(name='root')
+    vs = np.array([v.co[:] for v in ob.data.vertices]); W = []
+    for i0 in range(0, len(vs), 2000):
+        v = vs[i0:i0 + 2000][:, None, :]; t = np.clip(((v - A) * AB).sum(2) / L2, 0, 1); d = np.linalg.norm(v - (A + AB * t[..., None]), axis=2)
+        top = np.argsort(d, 1)[:, :3]
+        for r in range(d.shape[0]):
+            ids = top[r]; ds = d[r, ids]; w = 1 / (ds + 0.03) ** 3; w /= w.sum(); W.append(list(zip(ids, w)))
+    for vi, lst in enumerate(W):
+        for bi, w in lst:
+            if w > 0.02: ob.vertex_groups[segs[bi][0]].add([vi], float(w), 'ADD')
+    ob.parent = arm; mod = ob.modifiers.new('Armature', 'ARMATURE'); mod.object = arm
 
 
 # ------------------------------------------------------------------ animation (same pose helper as dark_creatures.py: world-axis rotations in the rest frame)
