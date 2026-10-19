@@ -13,6 +13,7 @@ export const GUNS = {
   ar:      { name: 'M4',      ap: 0.3, dmg: 48,  head: 2.0,  rpm: 720, auto: true,  mag: 30, reserve: 210, reload: 2.2, spread: 0.014, recoil: 0.013, price: 1750, snd: [1.0, 0.24, 0.85, 120] },
   lmg:     { name: 'RPK',     ap: 0.4, dmg: 55,  head: 2.0, rpm: 600, auto: true,  mag: 45, reserve: 270, reload: 3.4, spread: 0.03,  recoil: 0.016, price: 3500, snd: [0.8, 0.3, 0.9, 100] },
   minigun: { name: 'Minigun', ap: 0.45, dmg: 42,  head: 1.8, rpm: 1500, auto: true, mag: 150, reserve: 450, reload: 4.6, spread: 0.045, recoil: 0.006, price: 5000, spin: 0.55, snd: [1.2, 0.12, 0.75, 130] },   // (spins up for half a second before it fires; you walk slower carrying it)
+  rail:    { name: 'RAIL',    ap: 1.0, dmg: 260, head: 4.0, rpm: 50,  auto: false, mag: 4,  reserve: 24,  reload: 2.3, spread: 0.0,   recoil: 0.11,  price: 0,    snd: [0.45, 0.7, 1.0, 55], charge: 0.4 },   // (Last Fire's tech sniper, Cyberpunk's Nekomata: hold to charge, a full charge pierces every body in line, x4 head)
   knife:   { name: 'Knife',   ap: 0.5, dmg: 150, head: 1.5, rpm: 140, auto: false, mag: 1, reserve: 0, reload: 0, spread: 0, recoil: 0, price: 0, melee: true, snd: [1, 0.1, 0.4, 200] },
   sentry:  { name: 'Sentry', ap: 0.35, dmg: 26, head: 1.5, rpm: 500, auto: true, mag: 300, reserve: 0, reload: 0, spread: 0.04, recoil: 0, price: 2500, hidden: true, snd: [1.25, 0.14, 0.45, 160] },
 };

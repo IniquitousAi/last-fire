@@ -232,6 +232,14 @@ export function aimPull(g, ox, oy, oz, dx, dy, dz) {
     const a = Math.acos(Math.min(1, (cx * dx + cy * dy + cz * dz) / L)); if (a < ba) { ba = a; best = [cx / L, cy / L, cz / L]; } }
   if (!best) return [dx, dy, dz]; const x = dx + (best[0] - dx) * PULL.k, y = dy + (best[1] - dy) * PULL.k, z = dz + (best[2] - dz) * PULL.k, n = Math.hypot(x, y, z); return [x / n, y / n, z / n];
 }
+// every shape along a line, nearest first, its closest part each (the rail's full charge goes through them all)
+export function hitAll(g, ox, oy, oz, dx, dy, dz, max = 80) {
+  const out = [];
+  for (const k of g.hollow) if (solid(g, k)) { let best = null; for (const [hy, r, part, mult] of KINDS[k.kind].hits) {
+    const cx = k.x - ox, cy = k.y + hy - oy, cz = k.z - oz, t = cx * dx + cy * dy + cz * dz; if (t < 0 || t > max) continue;
+    if (cx * cx + cy * cy + cz * cz - t * t < r * r && (!best || mult > best.mult)) best = { k, part, mult, t }; } if (best) out.push(best); }
+  return out.sort((a, b) => a.t - b.t);
+}
 export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
   let best = null, bt = max;
   for (const k of g.hollow) if (solid(g, k)) for (const [hy, r, part, mult] of KINDS[k.kind].hits) {
