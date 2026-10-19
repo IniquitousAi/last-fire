@@ -1,0 +1,5 @@
+PASS  out of every light the creature is smoke (shots pass through)  (light 0)
+PASS  a flare by it and it commits to a shape you can kill  (light 0.723)
+PASS  no errors in the page  (none)
+
+3 of 3 pass  (light rule, seen)
