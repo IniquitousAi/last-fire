@@ -1,5 +1,5 @@
 {
- "at": "2026-10-19T16:17:27.065Z",
+ "at": "2026-10-19T16:54:11.132Z",
  "steps": [
   {
    "name": "hud share 1000x900 (day, camp)",
@@ -18,7 +18,7 @@
   },
   {
    "name": "hud share 1000x900 (carrying light: build keys shown)",
-   "pct": 5.45,
+   "pct": 5.42,
    "seen": "cross,B,SMALL,SPAN,DIV,bk,fps,big,I"
   },
   {
@@ -37,15 +37,15 @@
    "lines": [
     "A Council member: Survival today is 88%. Officially. We round with compassion.",
     "A Council member: The real number upsets people. Upset people do not feed fires.",
-    "The Clerk: Night 1. The board says 88%. The board says a lot of things."
+    "The Clerk: I don't make the quotas. I laminate them."
    ]
   },
   {
    "name": "awareness moment",
-   "after_s": 26.4,
+   "after_s": 27.4,
    "got": [
     "aware:still",
-    "You noticed you stopped. Now you are noticing the noticing."
+    "Nothing is happening to you. You are watching it not happen."
    ]
   },
   {
@@ -66,7 +66,7 @@
   {
    "name": "far land spires drawn at 480 m out",
    "spires": 48,
-   "fog": 0.0096
+   "fog": 0.0182
   },
   {
    "name": "errors",

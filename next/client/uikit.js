@@ -13,6 +13,7 @@ const CSS = `
 /* (the small build keys in play are narrower so the HUD stays under 6 percent) */
 .bk { padding: 4px 8px 3px 22px !important; min-width: 0 !important; }
 .bk { background-size: calc(100% - 12px) 1px, calc(100% - 12px) 1px, 16px 100%, auto !important; }
+#build .bk { flex: none; white-space: nowrap; font-size: 14px !important; padding: 3px 6px 3px 20px !important; } #build .bk small { font-size: 11px !important; line-height: 1.15; } #build .bk:not(.on) small { max-width: 4.6em; overflow: hidden; }   /* (only the picked key shows its whole line; the rest show their cost: six keys fit under the 6 percent HUD rule) */
 /* ---- HUD panels get a thin steel double line (drawn as svg by uikit.js; the svg itself is never a box) */
 .stl { position: absolute; left: -10px; top: -8px; width: calc(100% + 20px); height: calc(100% + 16px); pointer-events: none; overflow: visible; }
 body #fireHud, body #hp, body #ammo, body #phase { padding: 8px 14px 7px; }
