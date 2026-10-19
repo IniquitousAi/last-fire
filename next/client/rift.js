@@ -3,7 +3,7 @@
 // cracks in the ground and spreads across the land outside the walls (green, clean patches left between); inside, a black plain cracked
 // everywhere, a deep crimson dark, and the console nobody understands. The rules are core/rift.js.
 import * as THREE from 'three';
-import { RIFT } from '../core/game.js?v=169';
+import { RIFT } from '../core/game.js?v=170';
 
 // the corruption in the ground: glowing cracks, crimson to violet, strongest at the mouth and in the Rift, patchy outside the walls
 const VEINS = `
