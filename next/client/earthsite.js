@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { PAD, EARTH, TOWERS, WALLS } from '../core/game.js?v=168';
 import { buildShip } from './shipmodel.js?v=168';
+import { buildRuins } from './ruins.js?v=168';
 
 function lander(scene, x, z, y) {   // (the pad, and on it the ship modeled in code: the old cylinder, cone and floating red window were gray-box stand-ins he saw up close, 2026-10-19)
   const g = new THREE.Group(), line = new THREE.MeshBasicMaterial({ color: 0xff3b5c });
@@ -26,4 +27,5 @@ export function buildSites(scene, land) {
   const towers = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.92, metalness: 0.1 }), TOWERS.length), m = new THREE.Matrix4(), e = new THREE.Euler(), s = new THREE.Vector3(), pos = new THREE.Vector3(), qt = new THREE.Quaternion();
   TOWERS.forEach((t, i) => { if (i < 8) { towers.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0)); return; } s.set(t.w, t.h, t.d); e.set(t.tx, t.ry, t.tz); qt.setFromEuler(e); const low = Math.min(land(t.x - t.w / 2, t.z - t.d / 2), land(t.x + t.w / 2, t.z - t.d / 2), land(t.x - t.w / 2, t.z + t.d / 2), land(t.x + t.w / 2, t.z + t.d / 2), land(t.x, t.z)) - 2.5, top = land(t.x, t.z) + t.h - 0.4; s.set(t.w, top - low, t.d); pos.set(t.x, (top + low) / 2, t.z); m.compose(pos, qt, s); towers.setMatrixAt(i, m); });
   scene.add(towers);
+  buildRuins(scene, land, TOWERS.slice(8), () => { towers.visible = false; });   // (the ruins outside the walls are a real CC0 facade kit; the gray boxes show only until it loads)
 }
