@@ -1,19 +1,19 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=23';
-import { Ambience } from './ambience.js?v=23';
-import { Camp, BOARD } from './camp.js?v=23';
-import { Guide } from './guide.js?v=23';
-import { HudLook } from './hudlook.js?v=23';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=23';
-import { sound, GUNS } from '../../src/combat.js?v=23';
-import { FX } from '../../src/fx.js?v=23';
+import * as C from '../core/game.js?v=24';
+import { Ambience } from './ambience.js?v=24';
+import { Camp, BOARD } from './camp.js?v=24';
+import { Guide } from './guide.js?v=24';
+import { HudLook } from './hudlook.js?v=24';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=24';
+import { sound, GUNS } from '../../src/combat.js?v=24';
+import { FX } from '../../src/fx.js?v=24';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 23;   // (this copy's version; ./version.json says the newest)
+const BUILD = 24;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);

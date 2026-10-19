@@ -7,14 +7,17 @@ export const LOOKS = [
   ['glass', 'GLASS', "Vigil's black glass"],
 ];
 const CSS = `
-body.look-visor #fireHud { left: 52px; top: 50px; transform-origin: left center; transform: perspective(700px) rotateY(16deg) translate(var(--sx), var(--sy)); }
-body.look-visor #phase { right: 52px; top: 50px; transform-origin: right center; transform: perspective(700px) rotateY(-16deg) translate(var(--sx), var(--sy)); }
-body.look-visor #hp { left: 52px; bottom: 50px; transform-origin: left center; transform: perspective(700px) rotateY(16deg) translate(var(--sx), var(--sy)); }
-body.look-visor #ammo { right: 52px; bottom: 44px; transform-origin: right center; transform: perspective(700px) rotateY(-16deg) translate(var(--sx), var(--sy)); }
+/* VISOR (his rule 82, 2026-10-19): the visor's rim hugs the screen corners; each corner's words sit tucked inside it; left and right mirror
+   exactly. One edge distance for every corner: the rim at --rim from the screen edge, the words at --ink. */
+body.look-visor { --rim: 10px; --ink: 30px; }
+body.look-visor #fireHud { left: var(--ink); top: var(--ink); } body.look-visor #phase { right: var(--ink); top: var(--ink); }
+body.look-visor #hp { left: var(--ink); bottom: var(--ink); } body.look-visor #ammo { right: var(--ink); bottom: var(--ink); }
 body.look-visor #hp div { height: 3px; background: #ffffff14; } body.look-visor #hp i { background: linear-gradient(90deg, #ff4f6d, #ff6fb1); }
-body.look-visor #fireHud b, body.look-visor #phase b { font-weight: 400; letter-spacing: .14em; } body.look-visor #light span { letter-spacing: .2em; font-size: 13px; }
-body.look-visor #light { transform: translateX(-50%) translate(var(--sx), var(--sy)); }
-#visor { position: fixed; inset: 0; pointer-events: none; display: none; } body.look-visor #visor { display: block; }
+body.look-visor #fireHud b, body.look-visor #phase b { font-weight: 400; font-size: 24px; letter-spacing: .14em; } body.look-visor #light span { letter-spacing: .2em; font-size: 13px; }
+body.look-visor #fireHud small, body.look-visor #phase small { font-size: 14px; }
+.vc { position: fixed; width: 240px; height: 120px; pointer-events: none; display: none; } body.look-visor .vc { display: block; }
+.vc.tl { left: var(--rim); top: var(--rim); } .vc.tr { right: var(--rim); top: var(--rim); transform: scaleX(-1); }
+.vc.bl { left: var(--rim); bottom: var(--rim); transform: scaleY(-1); } .vc.br { right: var(--rim); bottom: var(--rim); transform: scale(-1, -1); }
 #compass { position: fixed; left: 50%; top: 12px; width: 460px; height: 34px; margin-left: -230px; overflow: hidden; pointer-events: none; display: none;
   -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
 body.look-visor #compass { display: block; } body.look-visor #guide { top: 52px !important; }
@@ -38,12 +41,12 @@ export class HudLook {
     this.get = get; this.set = set; this.sx = 0; this.sy = 0; this.vx = 0; this.vy = 0; this.sig = {}; this.at = {};
     document.head.append(Object.assign(document.createElement('style'), { textContent: CSS }));
     const hud = document.getElementById('hud');
-    // the visor's edges: four thin lines of colored light bending in at the corners, like the inside of a helmet
-    this.visor = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); this.visor.id = 'visor'; this.visor.setAttribute('preserveAspectRatio', 'none'); this.visor.setAttribute('viewBox', '0 0 1000 1000');
-    this.visor.innerHTML = `<defs><linearGradient id="vg" x1="0" x2="1"><stop offset="0" stop-color="#29e6ff"/><stop offset=".5" stop-color="#8f7bff"/><stop offset="1" stop-color="#ff5fd2"/></linearGradient></defs>
-      <g fill="none" stroke="url(#vg)" stroke-width="1.2" vector-effect="non-scaling-stroke" opacity=".55">
-      <path d="M 18 200 Q 22 40 180 26" vector-effect="non-scaling-stroke"/><path d="M 982 200 Q 978 40 820 26" vector-effect="non-scaling-stroke"/>
-      <path d="M 18 800 Q 22 960 180 974" vector-effect="non-scaling-stroke"/><path d="M 982 800 Q 978 960 820 974" vector-effect="non-scaling-stroke"/></g>`;
+    // the visor's rim: one rounded corner of thin colored light in each screen corner, fading out along both edges; the same drawing mirrored
+    // four ways, so the corners match to the pixel (cyan on the left, pink on the right, as Vigil's keys run)
+    const corner = (cls, a, b) => { const el = document.createElement('div'); el.className = 'vc ' + cls; const id = 'v' + cls;
+      el.innerHTML = `<svg width="240" height="120" viewBox="0 0 240 120"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".45" stop-color="${b}" stop-opacity=".55"/><stop offset="1" stop-color="${b}" stop-opacity="0"/></linearGradient></defs>
+        <path d="M 1 120 L 1 22 Q 1 1 22 1 L 240 1" fill="none" stroke="url(#${id})" stroke-width="1.5"/></svg>`; return el; };
+    this.visor = document.createElement('div'); this.visor.append(corner('tl', '#29e6ff', '#8f7bff'), corner('tr', '#ff5fd2', '#8f7bff'), corner('bl', '#29e6ff', '#8f7bff'), corner('br', '#ff5fd2', '#8f7bff'));
     this.compass = Object.assign(document.createElement('div'), { id: 'compass' });
     this.ticks = []; for (let d = 0; d < 360; d += 15) { const big = d % 90 === 0, t = document.createElement('i'); if (big) t.className = 'big'; this.compass.append(t); this.ticks.push([d, t]); if (big) { const b = document.createElement('b'); b.textContent = ['N', 'E', 'S', 'W'][d / 90]; this.compass.append(b); this.ticks.push([d, b]); } }
     this.fire = Object.assign(document.createElement('div'), { className: 'fire' }); this.compass.append(this.fire);
