@@ -177,34 +177,34 @@
    "where": "proposed: commute into the dark, shifts at the fire, a school for the maze, smiling signs"
   },
   {
-   "s": "talk",
+   "s": "in",
    "idea": "Community life: work, fire dues, chores; what you get follows what you contribute",
-   "where": ""
+   "where": "core/camp.js: dues are your share of the burn on the days you are here"
   },
   {
-   "s": "talk",
+   "s": "in",
    "idea": "Soft punishment for never feeding the fire: no more lanterns, higher prices, lower morale; no forced rule, 'we know'",
-   "where": ""
+   "where": "robots: a free rider pays 3x and gets no lanterns; morale 0.80 with one free rider"
   },
   {
-   "s": "talk",
+   "s": "in",
    "idea": "Optional jobs for better gear and convenience; honest work only, never exploitable; all measured and logged",
-   "where": ""
+   "where": "exploit robots: tiny payments earn exactly what one big one does; dues cannot be paid with the camp's light (jobs themselves not built yet)"
   },
   {
-   "s": "talk",
+   "s": "in",
    "idea": "Contribution is credit the camp remembers (the lone wolf who did his part is welcome back)",
-   "where": ""
+   "where": "robots: the lone wolf back after 21 days pays normal prices, lanterns allowed"
   },
   {
-   "s": "talk",
+   "s": "in",
    "idea": "Grinding while friends are offline has a measured low impact, so nobody gets outscaled",
-   "where": "proposal: offline work mostly builds the shared camp; the absent friend's share waits"
+   "where": "robots: playing 3x a friend's hours puts you 8% ahead (was 66%); the hours past your friends' mostly build the shared camp"
   },
   {
-   "s": "talk",
+   "s": "in",
    "idea": "Every layer min-maxed by the simulators (prices, morale, dues)",
-   "where": ""
+   "where": "the camp robots tuned 3 knobs over 75 versions to pass 9 of 9 of his rules"
   },
   {
    "s": "in",

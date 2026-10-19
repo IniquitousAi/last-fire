@@ -1,0 +1,58 @@
+{
+ "at": "2026-10-19T04:33:30.207Z",
+ "knobs": {
+  "burnPerDay": 120,
+  "priceStep": 0.25,
+  "priceCap": 2,
+  "lanternDebt": 1,
+  "soloShare": 0.85,
+  "powerCurve": 0.25
+ },
+ "checks": [
+  [
+   "A free rider pays at least 1.5x a contributor",
+   true,
+   "3.00x"
+  ],
+  [
+   "A free rider gets no more lanterns",
+   true,
+   "none"
+  ],
+  [
+   "The lone wolf back after 21 days pays normal prices",
+   true,
+   "1.00x"
+  ],
+  [
+   "The lone wolf may still have lanterns",
+   true,
+   "yes"
+  ],
+  [
+   "The grinder (about 3x a friend hours) is at most 25% ahead of that friend",
+   true,
+   "8% ahead"
+  ],
+  [
+   "The grinder (about 12x the casual hours) is at most 75% ahead of the casual",
+   true,
+   "74% ahead"
+  ],
+  [
+   "Tiny payments earn exactly what one big one does",
+   true,
+   "gap 0"
+  ],
+  [
+   "Dues cannot be paid with the camp's light",
+   true,
+   "they cannot"
+  ],
+  [
+   "Morale with one free rider stays above half",
+   true,
+   "0.80"
+  ]
+ ]
+}
