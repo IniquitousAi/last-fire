@@ -23,10 +23,13 @@ export class Creatures {
 
   make(k) {
     const B = BODY[k.kind], src = this.models[B.model]; if (!src) return null;
-    const o = skClone(src.scene), mats = [], veins = []; o.scale.set(B.s * (B.sx || 1), B.s, B.s * (B.sx || 1));
-    o.traverse(q => { if (!q.isMesh) return; q.frustumCulled = false; q.castShadow = false;
+    const o = skClone(src.scene), mats = [], veins = [], lods = [], cache = new Map(); o.scale.set(B.s * (B.sx || 1), B.s, B.s * (B.sx || 1));
+    o.traverse(q => { if (!q.isMesh) return; q.castShadow = false; q.receiveShadow = false;
+      const L = /LOD(\d)/.exec(q.name); if (L) lods[+L[1]] = q;
+      // frustum culling stays on: the bind-pose sphere is grown once so swinging tendrils never pop out at the screen's edge
+      q.frustumCulled = true; const gm = q.geometry; if (!gm.userData.grown) { gm.computeBoundingSphere(); gm.boundingSphere.radius *= 1.6; gm.userData.grown = 1; }
       const list = Array.isArray(q.material) ? q.material : [q.material];
-      const out = list.map(m => { const n = m.clone();
+      const out = list.map(m => { if (cache.has(m)) return cache.get(m); const n = m.clone(); cache.set(m, n);
         if (/Vein/.test(m.name)) { n.color.setHex(0x120008); n.emissive = new THREE.Color(B.rim); n.emissiveIntensity = 0.9; n.roughness = 1; veins.push(n); }
         else { n.color.setHex(0x07060c); n.emissive = new THREE.Color(0x0a0c18); n.emissiveIntensity = 0.3; n.roughness = 0.9; n.metalness = 0; n.userData.rim = 1; n.defines = { ...(n.defines || {}), USE_RIM: '', RIM_COLOR: rimVec(B.rim, B.rimK) }; n.needsUpdate = true; mats.push(n); }
         return n; });
@@ -36,7 +39,7 @@ export class Creatures {
     for (const n of ['Idle', 'Walk', 'Run']) { act[n].setLoop(THREE.LoopRepeat); act[n].play(); }
     for (const n of ['Attack', 'HitReact', 'Death']) { act[n].setLoop(THREE.LoopOnce, 1); act[n].clampWhenFinished = true; }
     mix.update(Math.random() * 0.8);
-    return { o, mix, act, mats, veins, B, mix_t: 0, loco: 'Idle', w: { Idle: 1, Walk: 0, Run: 0 }, speed: 0, px: k.x, pz: k.z, hd: k.yaw, a: 0, h: 0, down: false, hpS: k.hp + k.sh + k.sb, flash: 0, tell: 0, cd: k.cd || 0, rt: 0, sol: 0, base: B.rim };
+    return { o, mix, act, mats, veins, lods, lod: 0, acc: 0, B, mix_t: 0, loco: 'Idle', w: { Idle: 1, Walk: 0, Run: 0 }, speed: 0, px: k.x, pz: k.z, hd: k.yaw, a: 0, h: 0, down: false, hpS: k.hp + k.sh + k.sb, flash: 0, tell: 0, cd: k.cd || 0, rt: 0, sol: 0, base: B.rim };
   }
 
   // Earth's dark comes out of spawner pods: a dark violet egg with a glowing red core and red root tendrils on the ground. The pod flashes, splits, and the body
@@ -119,7 +122,10 @@ export class Creatures {
         for (const m of v.mats) { if (m.userData.e0 === undefined) { m.userData.e0 = m.emissive.getHex(); } if (v.scan > 0) { m.emissive.setHex(X.smart.id === k.id && X.smart.t >= X.SMART.lock ? X.SMART.color : X.SCAN.color); m.emissiveIntensity = 0.9 * a; } else m.emissive.setHex(m.userData.e0); }
         v.scanned = v.scan > 0; }
       // the watcher holds perfectly still while anyone looks at it; hit stop freezes the dark for a few hundredths of a second
-      if (X.hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k))) { const every = d > 45 ? 2 : 1; if ((this.frame + k.id) % every === 0) v.mix.update(dt * every); }
+      // level of detail on one skeleton: 14k tris inside 15 m, 5k to 40 m, 1.5k past that; the pose updates at 30 Hz near, 10 Hz far, and not at all past 60 m
+      { const want = d < 15 ? 0 : d < 40 ? 1 : 2, lod = v.lods.length ? Math.min(want, v.lods.length - 1) : 0; if (lod !== v.lod || !v.lodSet) { v.lods.forEach((m, i) => { if (m) m.visible = i === lod; }); v.lod = lod; v.lodSet = true; } }
+      v.acc += dt; const rate = d < 20 ? 1 / 30 : d < 60 ? 1 / 10 : Infinity;
+      if (X.hitStop <= 0 && !(k.kind === 'watcher' && C.lookedAt(g, k)) && v.acc >= rate) { v.mix.update(v.acc); v.acc = 0; } else if (v.acc > 1) v.acc = 1;
     }
     for (const [id, v] of seen) if (!alive.has(id)) { seen.delete(id); if (v.mix && v.last && v.last.kind !== 'shard' && v.o.visible) this.startDeath(v); else this.scene.remove(v.o); }
     this.stepDying(dt);

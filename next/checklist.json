@@ -66,7 +66,10 @@
      "proof": "next/client/camp.js#yard",
      "at": "2026-10-19"
     },
-    "tested": null,
+    "tested": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    },
     "seen": {
      "proof": "next/playtests/lanes/D/camp-sheet.png",
      "at": "2026-10-19"
@@ -75,7 +78,10 @@
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -184,7 +190,10 @@
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -201,12 +210,18 @@
      "proof": "playtests/checklist/test-light_rule.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/checklist/lightrule-lit.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/checklist/test-lightrule_seen.txt#3 of 3 pass",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -227,7 +242,10 @@
      "proof": "next/playtests/lanes/D/guns-sheet.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "next/sim/basics.cjs#the mouse wheel cycles guns both ways",
      "at": "2026-10-19"
@@ -248,7 +266,10 @@
      "proof": "next/sim/lane_d_nobob.mjs",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/walk-strip.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
@@ -273,12 +294,18 @@
      "proof": "next/sim/lane_d_shots3d.cjs",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "next/playtests/lanes/D/friend-tracer.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -299,7 +326,10 @@
      "proof": "next/playtests/lanes/D/ar-ads-sky.png",
      "at": "2026-10-19"
     },
-    "pad": null,
+    "pad": {
+     "proof": "next/sim/lane_d_pass2.cjs",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "next/sim/lane_d_sights.cjs",
      "at": "2026-10-19"
@@ -316,13 +346,22 @@
      "proof": "client/main.js#lockRoom",
      "at": "2026-10-19"
     },
-    "tested": null,
-    "seen": null,
+    "tested": {
+     "proof": "sim/net_test.mjs#LOCKED",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/12-locked.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#LOCK THE ROOM locks it",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -335,9 +374,18 @@
      "proof": "client/main.js#startWorld",
      "at": "2026-10-19"
     },
-    "tested": null,
-    "seen": null,
-    "pad": null,
+    "tested": {
+     "proof": "sim/lane_b_browser.cjs#NEW WORLD starts another",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/13-new-world-2.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#the pad reaches CONTINUE",
+     "at": "2026-10-19"
+    },
     "played": {
      "proof": "playtests/autoplay/2026-10-19-14-22/run.json",
      "at": "2026-10-19"
@@ -350,11 +398,26 @@
    "task": "Marks, light and builds are still there after a reload",
    "where": "piece 3: saves, scars, light left lying out there",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "built": {
+     "proof": "core/game.js#saveWorld",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/lane_b.mjs#saves",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/14-after-reload-in-world.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#the pad reaches CONTINUE",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#CONTINUE drops straight back",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -371,7 +434,10 @@
      "proof": "playtests/checklist/test-director.txt",
      "at": "2026-10-19"
     },
-    "seen": null,
+    "seen": {
+     "proof": "playtests/lanes/B/15-night-lost-after.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
@@ -414,10 +480,22 @@
      "proof": "client/main.js#tryGrow",
      "at": "2026-10-19"
     },
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "tested": {
+     "proof": "sim/lane_b.mjs#grow",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/17-dark-answers.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#the pad use button",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#the dark answers: the new level wakes a runner",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -430,10 +508,22 @@
      "proof": "client/main.js#SKIP TO DUSK",
      "at": "2026-10-19"
     },
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "tested": {
+     "proof": "sim/lane_b_browser.cjs#every DEV item",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/18-dev-menu.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#the pad reaches DEV",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#every DEV item",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -442,11 +532,26 @@
    "task": "This list: five proven marks per item",
    "where": "this list, in the game",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "built": {
+     "proof": "client/main.js#openList",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/lane_b_browser.cjs#the in-game CHECKLIST opens",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/19-checklist.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#the pad reaches CHECKLIST",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#the in-game CHECKLIST opens",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -468,7 +573,10 @@
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#the learned friend plays on its own",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -505,8 +613,14 @@
    "task": "One daemon learns for every world from recorded nights",
    "where": "piece 4b; stays the plan (his correction): the daemon learns from recorded nights whenever the PC is on, no live world needed",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "tools/daemon.mjs",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/daemon_test.mjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -549,8 +663,14 @@
    "task": "Growth curves that flatten, tuned by robots for grinders and casuals",
    "where": "tuned by the robots",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/game.js#levelCost",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/growth.mjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -565,11 +685,26 @@
    "task": "Movement options unlock over the eras",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "built": {
+     "proof": "client/main.js#mvOk",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/lane_b.mjs#moves",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/25-locked-level-0.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#movement unlocks",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#fire level 4: slide, dodge, boost jump and slam all work",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1152,10 +1287,22 @@
      "proof": "index.html#SEND TO CLAUDE",
      "at": "2026-10-19"
     },
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "tested": {
+     "proof": "sim/lane_b_browser.cjs#SEND TO CLAUDE posts the note with a picture",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/47-picture-sent.jpg",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#PAD: A on SEND TO CLAUDE",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#PAD: Back (View) opens the feedback panel",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -1190,10 +1337,22 @@
      "proof": "client/main.js#version.json",
      "at": "2026-10-19"
     },
-    "tested": null,
-    "seen": null,
-    "pad": null,
-    "played": null
+    "tested": {
+     "proof": "sim/lane_b_browser.cjs#UPDATE READY pops up when a newer version is out",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/49-update-ready.png",
+     "at": "2026-10-19"
+    },
+    "pad": {
+     "proof": "sim/lane_b_browser.cjs#PAD: Start, then the D-pad reaches UPDATE NOW",
+     "at": "2026-10-19"
+    },
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#PAD: A on UPDATE NOW reloads",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -1224,14 +1383,26 @@
    "task": "A crew's room code is made once and kept",
    "where": "your room code is made once and kept; friends' browsers remember it (one click JOIN)",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/main.js#crewCode",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/lane_b_browser.cjs#a second visit, after a full reload, opens the SAME room code",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/B/51-friend-menu-remembers.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lane_b_browser.cjs#a friend's menu has the crew's code already filled in",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -1240,14 +1411,23 @@
    "task": "Browser first; core/ stays separate for a Godot port",
    "where": "the rules (core/) are already separate, so the move is a port, not a rewrite",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/game.js",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/lane_b.mjs#core",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "sim/lane_b.mjs#perfect",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1552,8 +1732,14 @@
    "task": "No clip twice in a row; something new every 4 beats",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "client/fresh.js#pickFresh",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/fresh_test.mjs",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",

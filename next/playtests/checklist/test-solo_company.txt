@@ -1,8 +1,8 @@
 PASS  a learned friend is at your fire from the first minute  (You, learned)
 PASS  the friend keeps the camp near you  (45 of 45 seconds within 35 m)
-PASS  the friend speaks from what happens (dusk, banking, kills)  (1 lines on the wrist in 45 s)
+PASS  the friend speaks from what happens (dusk, banking, kills)  (2 lines on the wrist in 45 s)
 PASS  nothing on screen says you are alone  (45 s of screen text read)
 PASS  started on the controller  (D-pad and A reached PLAY)
 PASS  no errors in the page  (none)
 
-6 of 6 pass  (solo_company, 2026-10-19T15:44)
+6 of 6 pass  (solo_company, 2026-10-19T16:49)

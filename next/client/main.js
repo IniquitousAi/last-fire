@@ -1,44 +1,44 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=170';
-import { Ambience } from './ambience.js?v=170';
-import { Camp, BOARD } from './camp.js?v=170';
-import { Guide } from './guide.js?v=170';
-import { buildSites } from './earthsite.js?v=170';
-import { RiftView, riftGround } from './rift.js?v=170';
-import { FogBank } from './fogbank.js?v=170';
-import { Truck } from './truck.js?v=170';
-import { ShipView } from './shipview.js?v=170';
-import { Crew } from './crew.js?v=170';
-import { Hands } from './hands.js?v=170';
-import { FpRig } from './fprig.js?v=170';
-import { farStep } from './farsound.js?v=170';
-import { OpticsView } from './optics.js?v=170';
-import { Wrist } from './wrist.js?v=170';
-import { FireCore } from './firecore.js?v=170';
+import * as C from '../core/game.js?v=173';
+import { Ambience } from './ambience.js?v=173';
+import { Camp, BOARD } from './camp.js?v=173';
+import { Guide } from './guide.js?v=173';
+import { buildSites } from './earthsite.js?v=173';
+import { RiftView, riftGround } from './rift.js?v=173';
+import { FogBank } from './fogbank.js?v=173';
+import { Truck } from './truck.js?v=173';
+import { ShipView } from './shipview.js?v=173';
+import { Crew } from './crew.js?v=173';
+import { Hands } from './hands.js?v=173';
+import { FpRig } from './fprig.js?v=173';
+import { farStep } from './farsound.js?v=173';
+import { OpticsView } from './optics.js?v=173';
+import { Wrist } from './wrist.js?v=173';
+import { FireCore } from './firecore.js?v=173';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=170';
-import { FriendVoice } from './friendvoice.js?v=170';
-import { crewFrom } from '../core/habits.js?v=170';
-import { HudLook } from './hudlook.js?v=170';
-import { UI } from './uikit.js?v=170';
-import { Rain } from './rain.js?v=170';
-import { Immersion } from './immersion.js?v=170';
-import { VisorRain } from './visor.js?v=170';
-import { applyLook } from './looks.js?v=170';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=170';
-import { sound, GUNS } from '../../src/combat.js?v=170';
-import { FX } from '../../src/fx.js?v=170';
+import { think as friendThink } from './friend.js?v=173';
+import { FriendVoice } from './friendvoice.js?v=173';
+import { crewFrom } from '../core/habits.js?v=173';
+import { HudLook } from './hudlook.js?v=173';
+import { UI } from './uikit.js?v=173';
+import { Rain } from './rain.js?v=173';
+import { Immersion } from './immersion.js?v=173';
+import { VisorRain } from './visor.js?v=173';
+import { applyLook } from './looks.js?v=173';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=173';
+import { sound, GUNS } from '../../src/combat.js?v=173';
+import { FX } from '../../src/fx.js?v=173';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { Creatures } from './creatures.js?v=170';
+import { Creatures } from './creatures.js?v=173';
 
 const $ = id => document.getElementById(id);
-const BUILD = 170;   // (this copy's version; ./version.json says the newest)
+const BUILD = 173;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true, moveEras: false };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -186,7 +186,7 @@ groundMat.onBeforeCompile = sh => { sh.uniforms.uRock = uRock; sh.uniforms.uDark
       totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.0;   /* (rare mineral glints: the stars, underfoot) */`);
 };
 // the look: dev light by default (his pick, 2026-10-19 10:27: plain readable light first); ?look=3 is the cinematic night, ?look=0 the old look
-C.DARK.off = !/[?&]enemies(&|=|$)/.test(location.search);   // (enemies out until rebuilt as real models, his call 2026-10-19; ?enemies brings the old ones back)
+C.DARK.off = /[?&]noenemies(&|=|$)/.test(location.search);   // (the dark is back, 2026-10-19: rebuilt from his sheet with Hunyuan3D-2, real steering and limits, at most 10% of the frame rate; ?noenemies hides it)
 const lookFx = applyLook(+(new URLSearchParams(location.search).get('look') ?? 4), { THREE, renderer, scene, camera, composer, renderPass, bloom, grade, groundMat });
 const uRT = { value: 0 }; riftGround(groundMat, uRT); let riftView = null, fogBank = null;   // (the Rift's corruption in the ground: client/rift.js)
 function buildTile(tx, tz, res = RES) {
@@ -301,7 +301,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
-if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, get wrist() { return wrist; }, get camp() { return camp; }, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
+if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, camera, get fx() { return fx; }, get wrist() { return wrist; }, get camp() { return camp; }, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
   sight: () => { const gm = held[gunKey]; if (!gm || !gm.visible) return null; vcam.updateMatrixWorld(true); gm.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(gm), c = bx.getCenter(new THREE.Vector3()), p = new THREE.Vector3(c.x, bx.max.y, c.z).applyMatrix4(vcam.matrixWorldInverse).applyMatrix4(vcam.projectionMatrix); return { x: p.x * innerWidth / 2, y: p.y * innerHeight / 2, ads }; },   /* (test: where the held gun's sight point lands, in pixels from screen center) */ info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,

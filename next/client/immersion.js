@@ -2,15 +2,15 @@
 // the strange sky and far land, the dark's edge, fog that thickens at dusk, the mirror realm's signs, moments of hyper-awareness,
 // and the morning after (what last night left, said once at dawn through the wrist).
 import * as THREE from 'three';
-import { fogAt, edgeOf, consequences } from '../core/immersion.js?v=170';
-import { awareStep } from '../core/awareness.js?v=170';
-import { Strange } from './strange.js?v=170';
-import { Edge } from './edge.js?v=170';
-import { MirrorSigns } from './mirror.js?v=170';
-import { Details } from './details.js?v=170';
-import { Forest } from './forest.js?v=170';
-import { BOARD } from './camp.js?v=170';
-import { onEarth, phase, EARTH } from '../core/game.js?v=170';
+import { fogAt, edgeOf, consequences } from '../core/immersion.js?v=173';
+import { awareStep } from '../core/awareness.js?v=173';
+import { Strange } from './strange.js?v=173';
+import { Edge } from './edge.js?v=173';
+import { MirrorSigns } from './mirror.js?v=173';
+import { Details } from './details.js?v=173';
+import { Forest } from './forest.js?v=173';
+import { BOARD } from './camp.js?v=173';
+import { onEarth, phase, EARTH } from '../core/game.js?v=173';
 
 const note = (kind, text) => { if (window.__lf) (window.__imm = window.__imm || []).push([kind, text]); };   // (the test hook ?shot reads these: what was said and when)
 export class Immersion {
@@ -21,8 +21,9 @@ export class Immersion {
   update(dt, t) {
     const { g, me, camera, say } = this.ctx, earth = onEarth(me), land = (x, z) => g.land(x, z);
     if (!this.signs && earth) this.signs = new MirrorSigns(this.scene, land);   // (built the first time you stand on Earth: the signs belong there)
-    if (!this.details) { this.details = new Details(this.scene, land, BOARD); this.forest = new Forest(this.scene, land); }   // (small details in the camp, the Wilds' trees on Earth)
-    this.details.update(g); this.forest.update(me);
+    if (!this.details) { this.details = new Details(this.scene, land, BOARD); }
+    if (!this.forest && earth) { const t0 = performance.now(); this.forest = new Forest(this.scene, land); note('forest', `baked ${this.forest.stats.variants} variants, ${this.forest.stats.tris} triangles [${this.forest.stats.v.join('; ')}], ${(performance.now() - t0).toFixed(0)} ms`); }   // (grown once, the first time you stand on Earth)   // (small details in the camp, the Wilds' trees on Earth)
+    this.details.update(g); if (this.forest) this.forest.update(me);
     this.strange.update(camera, me, t, land);
     this.edge.mesh.visible = !me.ember; this.edge.update(t, edgeOf(g, earth), earth ? land(EARTH.x, EARTH.z) : land(g.fire.x, g.fire.z), earth ? 22 : 14);
     this.ctx.fog().density *= fogAt(g.clock, earth);   // (main.js set the base density this frame; dusk thickens it)

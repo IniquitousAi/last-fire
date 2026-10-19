@@ -3,7 +3,8 @@ Prints triangle count and size; renders front, 3/4, side, back with a flat grey 
 import bpy, sys, math, mathutils
 a = sys.argv[sys.argv.index('--') + 1:]; src, pre = a[0], a[1]; target = int(a[2]) if len(a) > 2 else 0
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=src)
-meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+import os
+meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH' and (not os.environ.get('KEEP') or os.environ['KEEP'] in o.name)]   # KEEP=LOD2 renders one level of detail alone
 for o in meshes:
     bpy.context.view_layer.objects.active = o
     bpy.ops.object.mode_set(mode='OBJECT')

@@ -6,7 +6,7 @@ export const WILDS = {
   from: 60, to: 240, gate: 14, count: 1100, cell: 12,
   green: { dx: 150, dz: -125, r: 38, clear: 9 },     // (the calm patch: live trees, a clearing in the middle to build in)
   hazard: { dx: -135, dz: 120, r: 30, dps: 3.5 },    // (the spore bog: bare black trunks and a drifting damage zone; the light you carry does not help)
-  kinds: { deadpine: { r: 0.34, h: 11 }, bare: { r: 0.26, h: 7 }, live: { r: 0.4, h: 9 } },
+  kinds: { deadpine: { r: 0.35, h: 18 }, bare: { r: 0.25, h: 11 }, live: { r: 0.3, h: 14 } },   // (r matches the grown trees' trunk feet: client/forest.js logs the measured foot radii)
 };
 export function makeTrees(E, W, ruins) {
   let s = 90210; const rnd = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296), out = [], G = WILDS.green, H = WILDS.hazard;
