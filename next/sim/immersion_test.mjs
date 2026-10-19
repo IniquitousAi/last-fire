@@ -106,7 +106,7 @@ const TABLES = { KINDS: G.KINDS, NODE: G.NODE, PARTS: G.PARTS, CAR: G.CAR, CAMP,
 
 // ---- 68: every placed object has a reason
 { const srcs = fs.readdirSync(path.join(next, 'client')).filter(f => f.endsWith('.js')).map(f => read('client/' + f)).join('\n');
-  const used = new Set([...srcs.matchAll(/['"`]((?:kit|c|m|fp|zombie)\/[A-Za-z0-9_-]+\.glb)['"`]/g)].map(m => m[1])); const phDirs = fs.readdirSync(path.join(next, '..', 'assets', 'ph')); for (const d of phDirs) if (srcs.includes(d)) used.add('ph:' + d);
+  const used = new Set([...srcs.matchAll(/['"`]((?:kit|c|m|fp|zombie|camp)\/[A-Za-z0-9_-]+\.glb)['"`]/g)].map(m => m[1])); const phDirs = fs.readdirSync(path.join(next, '..', 'assets', 'ph')); for (const d of phDirs) if (srcs.includes(d)) used.add('ph:' + d);
   const noReason = [...used].filter(u => !PLACED[u]), unused = Object.keys(PLACED).filter(k => !used.has(k));
   check(`all ${used.size} placed models have a reason and a story, and no reason is for something absent`, !noReason.length && !unused.length && Object.values(PLACED).every(p => p.why.length > 20 && p.story.length > 10), `without a reason: ${noReason.join() || 'none'}; unused: ${unused.join() || 'none'}`); }
 

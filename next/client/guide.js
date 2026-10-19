@@ -74,7 +74,7 @@ export class Guide {
     if (this.i < 0) return;
     const tg = this.target(), atFire = STEPS[this.i].id === 'fire';
     this.beam.visible = this.ring.visible = !!tg;
-    if (tg) { const y = this.ctx.land(tg.x, tg.z); this.beam.position.set(tg.x, y + 15, tg.z); this.ring.position.set(tg.x, y + 0.06, tg.z); this.beam.material.opacity = 0.3 + Math.sin(this.t * 2.2) * 0.12; this.dist.textContent = `${Math.round(d(tg))} m`; }
+    if (tg) { const y = this.ctx.land(tg.x, tg.z); const side = this.ctx.board && Math.hypot(tg.x - this.ctx.board().x, tg.z - this.ctx.board().z) < 0.1 ? 2.3 : 0; this.beam.position.set(tg.x + side, y + 15, tg.z);   /* (at the board the beam stands beside it, never through its words) */ this.ring.position.set(tg.x, y + 0.06, tg.z); this.beam.material.opacity = 0.3 + Math.sin(this.t * 2.2) * 0.12; this.dist.textContent = `${Math.round(d(tg))} m`; }
     else this.dist.textContent = STEPS[this.i].id === 'build' ? `you carry ${Math.floor(me.carried)} light` : '';
     this.dusk.style.display = atFire && ph === 'day' && this.ctx.isHost() && d(g.fire) < this.ctx.fireRadius() ? '' : 'none';
   }

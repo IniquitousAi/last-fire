@@ -1,4 +1,4 @@
-PASS  The loading bar shows real progress while the world builds  (5 readings, 0,37,57,61,69%, last: building the ground, 15 tiles left)
+PASS  The loading bar shows real progress while the world builds  (7 readings, 0,37,41,61,65,73,86%, last: building the ground, 7 tiles left)
 PASS  The dial needle follows the clock  (rotate(270.0))
 PASS  Low health cracks the visor  (opacity 0.818)
 PASS  The cracks fade as you heal  (opacity 0)
