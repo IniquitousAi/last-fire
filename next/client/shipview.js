@@ -3,8 +3,8 @@
 // The model: assets/ship.glb when it exists (made by TRELLIS.2 from a concept), else a gray-box stand-in, the way the lander started.
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { SHIP, flyShip } from '../core/ship.js?v=114';
-import { shipBounds } from '../core/game.js?v=114';
+import { SHIP, flyShip } from '../core/ship.js?v=115';
+import { shipBounds } from '../core/game.js?v=115';
 
 export class ShipView {
   constructor(scene, land) {
@@ -21,7 +21,7 @@ export class ShipView {
   standIn() {   // (gray box until the generated model arrives: a low black wedge with two seams of light)
     const sh = new THREE.Shape(); sh.moveTo(0, 4.5); sh.lineTo(3.6, -3.2); sh.lineTo(1.2, -2.4); sh.lineTo(0, -3.4); sh.lineTo(-1.2, -2.4); sh.lineTo(-3.6, -3.2); sh.closePath();
     const hull = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.7, bevelEnabled: true, bevelSize: 0.25, bevelThickness: 0.2, bevelSegments: 3 }).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0b0c12, roughness: 0.3, metalness: 0.8 }));
-    hull.position.y = -0.4; const seam = new THREE.LineSegments(new THREE.EdgesGeometry(hull.geometry, 30), new THREE.LineBasicMaterial({ color: 0xff4fd8 })); seam.position.copy(hull.position); this.body.add(hull, seam);
+    hull.position.y = -0.4; const seam = new THREE.LineSegments(new THREE.EdgesGeometry(hull.geometry, 30), new THREE.LineBasicMaterial({ color: 0xff2a8d })); seam.position.copy(hull.position); this.body.add(hull, seam);
   }
   near(p, g) { const sv = g.ship; return !!sv && !sv.pilot && !this.on && Math.hypot(p.x - sv.x, p.z - sv.z) < 6; }
   // every frame: the pilot flies their own copy and the world follows it; everyone else eases toward the host's copy
@@ -50,16 +50,16 @@ export class ShipView {
     const text = (t, px, py, size, col, al = 'center') => { x.font = `400 ${size}px "Barlow Condensed", sans-serif`; x.textAlign = al; x.textBaseline = 'middle'; x.fillStyle = '#000'; x.fillText(t, px + 1, py + 1); x.fillStyle = col; x.fillText(t, px, py); };
     x.save(); x.translate(W / 2, H / 2); x.rotate((s.roll - this.lag.r) * 0.6); x.translate(0, (this.lag.p - s.pitch) * H * 0.4);
     x.fillStyle = '#000'; x.beginPath(); x.rect(-W, -H, W * 2, H * 2); x.ellipse(0, 0, W * 0.6, H * 0.64, 0, 0, Math.PI * 2, true); x.fill('evenodd');
-    x.lineWidth = 1.2; x.strokeStyle = '#7b5cff'; x.beginPath(); x.ellipse(0, 0, W * 0.6, H * 0.64, 0, Math.PI * 0.62, Math.PI * 1.38); x.stroke(); x.strokeStyle = '#ff6fb1'; x.beginPath(); x.ellipse(0, 0, W * 0.6, H * 0.64, 0, -Math.PI * 0.38, Math.PI * 0.38); x.stroke();
-    x.lineWidth = 1.5; x.strokeStyle = '#ff4fd8'; x.beginPath(); x.arc(0, 0, 15 * U, Math.PI * 0.82, Math.PI * 1.18); x.stroke(); x.strokeStyle = '#7b5cff'; x.beginPath(); x.arc(0, 0, 15 * U, -Math.PI * 0.18, Math.PI * 0.18); x.stroke();
-    const sp = this.read.speed, sk = Math.min(1, sp / SHIP.top * 3); x.strokeStyle = '#ff4fd8'; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 15 * U + 6, Math.PI * 1.18 - sk * Math.PI * 0.36, Math.PI * 1.18); x.stroke();
-    text(Math.round(sp * 3.6), -15 * U - 14, -U * 0.5, 54, '#ff4fd8', 'right'); text('KM AN HOUR', -15 * U - 14, U * 2.6, 15, '#eef0f8', 'right');
-    text(this.read.height.toFixed(1), 15 * U + 14, -U * 0.5, 34, '#7b5cff', 'left'); text('METERS UP', 15 * U + 14, U * 2, 15, '#eef0f8', 'left');
+    x.lineWidth = 1.2; x.strokeStyle = '#b026ff'; x.beginPath(); x.ellipse(0, 0, W * 0.6, H * 0.64, 0, Math.PI * 0.62, Math.PI * 1.38); x.stroke(); x.strokeStyle = '#ff3df0'; x.beginPath(); x.ellipse(0, 0, W * 0.6, H * 0.64, 0, -Math.PI * 0.38, Math.PI * 0.38); x.stroke();
+    x.lineWidth = 1.5; x.strokeStyle = '#ff2a8d'; x.beginPath(); x.arc(0, 0, 15 * U, Math.PI * 0.82, Math.PI * 1.18); x.stroke(); x.strokeStyle = '#b026ff'; x.beginPath(); x.arc(0, 0, 15 * U, -Math.PI * 0.18, Math.PI * 0.18); x.stroke();
+    const sp = this.read.speed, sk = Math.min(1, sp / SHIP.top * 3); x.strokeStyle = '#ff2a8d'; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 15 * U + 6, Math.PI * 1.18 - sk * Math.PI * 0.36, Math.PI * 1.18); x.stroke();
+    text(Math.round(sp * 3.6), -15 * U - 14, -U * 0.5, 54, '#ff2a8d', 'right'); text('KM AN HOUR', -15 * U - 14, U * 2.6, 15, '#eef0f8', 'right');
+    text(this.read.height.toFixed(1), 15 * U + 14, -U * 0.5, 34, '#b026ff', 'left'); text('METERS UP', 15 * U + 14, U * 2, 15, '#eef0f8', 'left');
     const hd = ((-heading * 180 / Math.PI) % 360 + 360) % 360;
     for (let d = -30; d <= 30; d += 5) { const hh = Math.round(hd / 5) * 5 + d, off = hh - hd, a = -Math.PI / 2 + off * Math.PI / 180 * 0.9, r = 24 * U, big = ((hh % 15) + 15) % 15 === 0; if (Math.abs(off) > 30) continue;
       x.strokeStyle = '#a3a6bb'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(Math.cos(a) * r, Math.sin(a) * r); x.lineTo(Math.cos(a) * (r - (big ? 10 : 5)), Math.sin(a) * (r - (big ? 10 : 5))); x.stroke();
       if (big) text(String(((hh % 360) + 360) % 360).padStart(3, '0'), Math.cos(a) * (r + 12), Math.sin(a) * (r + 12), 14, '#eef0f8'); }
-    text('FLIGHT', 0, 20 * U, 17, '#ff6fb1'); text('W S thrust   A D turn   SPACE up   SHIFT down   F leave the ship', 0, 21.6 * U, 14, '#a3a6bb');
+    text('FLIGHT', 0, 20 * U, 17, '#ff3df0'); text('W S thrust   A D turn   SPACE up   SHIFT down   F leave the ship', 0, 21.6 * U, 14, '#a3a6bb');
     x.restore();
     // the flight path marker: where the ship is really going (it slides), against the nose at the center
     const fwdV = s.vx * Math.sin(s.yaw) + s.vz * Math.cos(s.yaw), sideV = s.vx * Math.cos(s.yaw) - s.vz * Math.sin(s.yaw), drift = sp > 1 ? Math.atan2(sideV, Math.max(1, fwdV)) : 0;

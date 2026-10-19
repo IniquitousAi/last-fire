@@ -31,7 +31,7 @@ export class Camp {
     this.bc = document.createElement('canvas'); this.bc.width = 768; this.bc.height = 480; this.btex = new THREE.CanvasTexture(this.bc); this.btex.colorSpace = THREE.SRGBColorSpace;
     const by = land(BOARD.x, BOARD.z); const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.2, 0.16), new THREE.MeshStandardMaterial({ color: 0x2b2f38, roughness: 0.7 })); post.position.set(BOARD.x, by + 1.1, BOARD.z);
     this.board = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.25), new THREE.MeshBasicMaterial({ map: this.btex, color: 0xc4c4c4 }));   /* (a hair under the bloom threshold: no halo behind its big numbers, his rule) */ this.board.position.set(BOARD.x, by + 2.7, BOARD.z); this.board.rotation.y = Math.atan2(-BOARD.x, -BOARD.z);
-    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(post, this.board, glow);
+    const glow = new THREE.PointLight(0xff2a8d, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(post, this.board, glow);
     // the CHECK key: shown only when you stand at the board (click it, or press C)
     this.btn = Object.assign(document.createElement('button'), { className: 'bk', innerHTML: 'CHECK THE REAL ODDS<small>(the board shows what the council approved)</small>' });
     Object.assign(this.btn.style, { position: 'fixed', left: '50%', top: '64%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
@@ -94,14 +94,14 @@ export class Camp {
   check() { this.checkedNight = this.ctx.g().night; this.drawn = ''; this.ctx.say('The real odds. Nobody else came to check.', 4); }
   draw() {
     const g = this.ctx.g(), o = this.odds(), real = this.checkedNight === g.night, st = this.ctx.stakes ? this.ctx.stakes() : null, ec = this.ctx.econ ? this.ctx.econ() : null, key = [real, o.surv, o.past.toPrecision(2), g.night, this.footnote(), st && st.n, ec && ec.key].join('|'); if (key === this.drawn) return; this.drawn = key;
-    const c = this.bc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 480); c.strokeStyle = real ? '#ff4fd8' : '#b9a8ff'; c.lineWidth = 8; c.strokeRect(8, 8, 752, 464);
-    c.fillStyle = real ? '#ff4fd8' : '#b9a8ff'; c.font = '500 46px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `THE REAL ODDS, DAY ${g.night}` : `SURVIVAL TODAY, DAY ${g.night}`, 36, 76);
+    const c = this.bc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 480); c.strokeStyle = real ? '#ff2a8d' : '#c77dff'; c.lineWidth = 8; c.strokeRect(8, 8, 752, 464);
+    c.fillStyle = real ? '#ff2a8d' : '#c77dff'; c.font = '500 46px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `THE REAL ODDS, DAY ${g.night}` : `SURVIVAL TODAY, DAY ${g.night}`, 36, 76);
     c.fillStyle = '#fff'; c.font = '500 170px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`${real ? o.surv : o.council}%`, 36, 250);
     c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillStyle = '#a3a6bb'; c.fillText(real ? `(${o.label}: from the last ${Math.min(3, g.history.length) || 'no'} nights)` : '(approved by the council)', 40, 300);
-    c.fillStyle = '#ff6fb1'; c.font = '400 34px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(this.footnote().slice(0, 52), 40, 362);
+    c.fillStyle = '#ff3df0'; c.font = '400 34px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(this.footnote().slice(0, 52), 40, 362);
     c.fillStyle = real ? '#3dff9a' : '#6f7188'; c.font = '400 32px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(real ? `past the dark: ${(o.past).toFixed(7)}%  (guess)` : 'have a nice day.', 40, 430);
-    if (ec) { c.fillStyle = '#a3a6bb'; c.font = '400 24px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`each person the fire lights owes ${ec.burn} light a day`, 728, 150); c.fillStyle = ec.standing >= 0 ? '#b9a8ff' : '#ff3b5c'; c.fillText(`your standing ${ec.standing >= 0 ? '+' : ''}${ec.standing}   camp morale ${ec.morale}%`, 728, 180); if (ec.pool > 0) { c.fillStyle = '#ff6fb1'; c.fillText(`camp pool ${ec.pool} light: into the fire when friends are back`, 728, 210); } c.textAlign = 'left'; }   /* (the camp economy, in the open) */
-    if (st) { c.fillStyle = '#b9a8ff'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`your trip guesses: ${st.n}, came back ${st.back}`, 728, 76); c.fillText(`how true: ${st.brier.toFixed(2)} (0 is perfect, 0.25 is a coin)`, 728, 108); c.textAlign = 'left'; }   // (the Brier score of your own stakes: checked math, your own record)
+    if (ec) { c.fillStyle = '#a3a6bb'; c.font = '400 24px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`each person the fire lights owes ${ec.burn} light a day`, 728, 150); c.fillStyle = ec.standing >= 0 ? '#c77dff' : '#ff3b5c'; c.fillText(`your standing ${ec.standing >= 0 ? '+' : ''}${ec.standing}   camp morale ${ec.morale}%`, 728, 180); if (ec.pool > 0) { c.fillStyle = '#ff3df0'; c.fillText(`camp pool ${ec.pool} light: into the fire when friends are back`, 728, 210); } c.textAlign = 'left'; }   /* (the camp economy, in the open) */
+    if (st) { c.fillStyle = '#c77dff'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`your trip guesses: ${st.n}, came back ${st.back}`, 728, 76); c.fillText(`how true: ${st.brier.toFixed(2)} (0 is perfect, 0.25 is a coin)`, 728, 108); c.textAlign = 'left'; }   // (the Brier score of your own stakes: checked math, your own record)
     this.btex.needsUpdate = true;
   }
   bunkLight() {   // (your bunk shows your dues, INNOVATION.md: each bunk burns as bright as what its sleeper has fed the fire; no rule, only light)
@@ -111,12 +111,12 @@ export class Camp {
   bunkNear(me) { for (const b of this.bunks || []) if (b.name && Math.hypot(me.x - b.x, me.z - b.z) < 2.6) return b; return null; }
   drawTheories(T) {
     const g = this.ctx.g(), th = g.theories || { mind: 0.25, creatures: 0.25, us: 0.25, heads: 0.25 }, key = Object.values(th).map(v => v.toFixed(3)).join('|'); if (key === this.tdrawn) return; this.tdrawn = key;
-    const c = this.tc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 512); c.fillStyle = '#b9a8ff'; c.font = '500 40px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('WHAT IS THE DARK?', 32, 62);
+    const c = this.tc.getContext('2d'); c.fillStyle = '#05060b'; c.fillRect(0, 0, 768, 512); c.fillStyle = '#c77dff'; c.font = '500 40px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('WHAT IS THE DARK?', 32, 62);
     c.fillStyle = '#a3a6bb'; c.font = '400 26px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('nobody knows. these are guesses. what you find moves them.', 32, 98);
     Object.entries(th).sort((a, b) => b[1] - a[1]).forEach(([k, v], i) => { const y = 160 + i * 86, who = T[k].who;
       c.fillStyle = '#eef0f8'; c.font = '400 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(T[k].says, 32, y);   // (the theory on its own line, who holds it under it: nothing overlaps)
       c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText(`held by ${who}`, 32, y + 28);
-      c.fillStyle = '#ff4fd8'; c.fillRect(520, y + 22, Math.round(110 * v / 0.85), 6);   /* (the bar sits by the number, never over the words) */ c.fillStyle = '#eef0f8'; c.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`${Math.round(v * 100)}%`, 712, y + 2);
+      c.fillStyle = '#ff2a8d'; c.fillRect(520, y + 22, Math.round(110 * v / 0.85), 6);   /* (the bar sits by the number, never over the words) */ c.fillStyle = '#eef0f8'; c.font = '500 30px "Barlow Condensed", "Arial Narrow", sans-serif'; c.textAlign = 'right'; c.fillText(`${Math.round(v * 100)}%`, 712, y + 2);
       c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('(guess)', 712, y + 30); c.textAlign = 'left'; });
     this.ttex.needsUpdate = true;
   }
@@ -160,7 +160,7 @@ export class Camp {
     [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {
       const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z)).then(cloth);
       const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2);
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), new THREE.MeshStandardMaterial({ color: 0x07070c, emissive: 0xb9a8ff, emissiveIntensity: 0 })); lamp.position.set(bx, land(bx, bz) + 0.5, bz); this.scene.add(lamp); (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (no real light per bunk: 5 more lights would cost every surface; the lamp's own glow is the receipt)
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), new THREE.MeshStandardMaterial({ color: 0x07070c, emissive: 0xc77dff, emissiveIntensity: 0 })); lamp.position.set(bx, land(bx, bz) + 0.5, bz); this.scene.add(lamp); (this.bunks = this.bunks || []).push({ x: bx, z: bz, lamp }); });   // (no real light per bunk: 5 more lights would cost every surface; the lamp's own glow is the receipt)
     // the workshop: a bench, planks, barrels and a chest by the wall
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }

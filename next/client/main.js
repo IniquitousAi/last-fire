@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=114';
-import { Ambience } from './ambience.js?v=114';
-import { Camp, BOARD } from './camp.js?v=114';
-import { Guide } from './guide.js?v=114';
-import { buildSites } from './earthsite.js?v=114';
-import { Truck } from './truck.js?v=114';
-import { ShipView } from './shipview.js?v=114';
-import { Wrist } from './wrist.js?v=114';
-import { FireCore } from './firecore.js?v=114';
+import * as C from '../core/game.js?v=115';
+import { Ambience } from './ambience.js?v=115';
+import { Camp, BOARD } from './camp.js?v=115';
+import { Guide } from './guide.js?v=115';
+import { buildSites } from './earthsite.js?v=115';
+import { Truck } from './truck.js?v=115';
+import { ShipView } from './shipview.js?v=115';
+import { Wrist } from './wrist.js?v=115';
+import { FireCore } from './firecore.js?v=115';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=114';
-import { FriendVoice } from './friendvoice.js?v=114';
-import { crewFrom } from '../core/habits.js?v=114';
-import { HudLook } from './hudlook.js?v=114';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=114';
-import { sound, GUNS } from '../../src/combat.js?v=114';
-import { FX } from '../../src/fx.js?v=114';
+import { think as friendThink } from './friend.js?v=115';
+import { FriendVoice } from './friendvoice.js?v=115';
+import { crewFrom } from '../core/habits.js?v=115';
+import { HudLook } from './hudlook.js?v=115';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=115';
+import { sound, GUNS } from '../../src/combat.js?v=115';
+import { FX } from '../../src/fx.js?v=115';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 114;   // (this copy's version; ./version.json says the newest)
+const BUILD = 115;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -97,7 +97,7 @@ scene.add(sky);
 // ---------------------------------------------------------------- the game (rules) and you
 const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); };   // (what you hear and what you see agree: each crackle makes the flame jump)
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
-clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(255,79,216,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
+clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(255,42,141,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#ff2a8d"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#ff2a8d"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#ff2a8d"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#ff2a8d"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#ff2a8d">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
 let truck = null, ship = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
@@ -155,7 +155,7 @@ function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near 
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
 const seen = new Map();
-const LOOK = { walker: ['wraith', 1.6, 0xb48cff], runner: ['wraith', 1.1, 0xff4fa0], giant: ['wraith', 3.4, 0xff2b40], watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff4fd8] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
+const LOOK = { walker: ['wraith', 1.6, 0xb48cff], runner: ['wraith', 1.1, 0xff4fa0], giant: ['wraith', 3.4, 0xff2b40], watcher: ['wraith', 2.4, 0xffffff], face: ['wraith', 1.3, 0xff2a8d] };   // (no more clawed model: he saw a smiling dog. Until real masks, every mask is the faceless ghost, stretched into its own shape)   // (eye color = the mask's own edge color)
 function drawHollow(dt) {
   const alive = new Set();
   for (const k of g.hollow) {
@@ -214,7 +214,7 @@ const MARKS = 600, markMesh = new THREE.InstancedMesh(new THREE.RingGeometry(0.3
 markMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MARKS * 3), 3); markMesh.count = 0; markMesh.frustumCulled = false; scene.add(markMesh);
 let marksDrawn = -1; const _m = new THREE.Matrix4(), _c = new THREE.Color();
 function drawMarks() { if (g.marks.length === marksDrawn) return; marksDrawn = g.marks.length; markMesh.count = Math.min(MARKS, g.marks.length);
-  g.marks.slice(-MARKS).forEach((m, i) => { _m.makeTranslation(m.x, g.land(m.x, m.z) + 0.04, m.z); markMesh.setMatrixAt(i, _m); markMesh.setColorAt(i, _c.setHex(m.k === 'fall' ? 0xb9a8ff : 0x39407a)); });
+  g.marks.slice(-MARKS).forEach((m, i) => { _m.makeTranslation(m.x, g.land(m.x, m.z) + 0.04, m.z); markMesh.setMatrixAt(i, _m); markMesh.setColorAt(i, _c.setHex(m.k === 'fall' ? 0xc77dff : 0x39407a)); });
   markMesh.instanceMatrix.needsUpdate = true; markMesh.instanceColor.needsUpdate = true; }
 // embers off the fire: a few dozen sparks rising and fading (one draw call)
 const EMB = 60, embPos = new Float32Array(EMB * 3), embVel = new Float32Array(EMB * 3), embLife = new Float32Array(EMB), embMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ map: softDot, alphaTest: 0.01, color: 0xffc8f2, size: 0.09, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -312,8 +312,8 @@ function tryGrow() {   // (growing the fire: your choice, and tonight the dark a
   if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }
 function trip(k) { sound.buy(); const site = SET.site || 'city'; if (isHost()) { if (k === 'drop') C.drop(g, me, site); else C.rise(g, me); } else net.send({ t: 'build', k, x: 0, z: 0, s: site }); }
 function siteRow() {   // (pick the site by its odds: what your own record says each district holds; a guess until 3 trips, checked after 10)
-  return `<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">land at (click one):${Object.entries(C.SITES).map(([k, S]) => { const o = C.siteOdds(g, k), on = (SET.site || 'city') === k;
-    return `<span style="display:block"><b class="site" data-s="${k}" style="cursor:pointer;font-weight:500;color:${on ? '#ff4fd8' : '#eef0f8'}">${on ? '> ' : ''}${S.name}</b>  <small style="color:#a3a6bb">${o.parts.toFixed(1)} parts, ${o.cells.toFixed(1)} cells (${o.label}${o.trips ? ', ' + o.trips + ' trips' : ''})</small>${o.lost && (o.lost.falls || o.lost.left) ? `<small style="display:block;color:#ff6fb1">after what it cost: ${o.lost.falls.toFixed(1)} falls a trip${o.lost.left ? ', ' + o.lost.left.toFixed(1) + ' left behind' : ''}, ${o.lost.cells.toFixed(1)} cells and ${o.lost.parts.toFixed(1)} parts gone</small>` : ''}</span>`; }).join('')}</span>`; }
+  return `<span style="display:block;margin-top:5px;font-size:14px;color:#c77dff">land at (click one):${Object.entries(C.SITES).map(([k, S]) => { const o = C.siteOdds(g, k), on = (SET.site || 'city') === k;
+    return `<span style="display:block"><b class="site" data-s="${k}" style="cursor:pointer;font-weight:500;color:${on ? '#ff2a8d' : '#eef0f8'}">${on ? '> ' : ''}${S.name}</b>  <small style="color:#a3a6bb">${o.parts.toFixed(1)} parts, ${o.cells.toFixed(1)} cells (${o.label}${o.trips ? ', ' + o.trips + ' trips' : ''})</small>${o.lost && (o.lost.falls || o.lost.left) ? `<small style="display:block;color:#ff3df0">after what it cost: ${o.lost.falls.toFixed(1)} falls a trip${o.lost.left ? ', ' + o.lost.left.toFixed(1) + ' left behind' : ''}, ${o.lost.cells.toFixed(1)} cells and ${o.lost.parts.toFixed(1)} parts gone</small>` : ''}</span>`; }).join('')}</span>`; }
 const atPad = () => !C.onEarth(me) && Math.hypot(me.x - C.PAD.x, me.z - C.PAD.z) < 4, atSite = () => C.onEarth(me) && Math.hypot(me.x - C.EARTH.x, me.z - C.EARTH.z) < 4;
 const STORE = { x: 15.8, z: -2.5 }, atStore = () => !C.onEarth(me) && Math.hypot(me.x - STORE.x, me.z - STORE.z) < 4;   // (the camp's store, behind the metal walls: the ammo lives there)
 const shortAmmo = () => Object.keys(ammo).some(k => ammo[k].res < GUNS[k].reserve);
@@ -325,7 +325,7 @@ function fitPart() { if (isHost()) { const k = C.fit(g, me); if (k) { sound.buy(
 function bayLine() { const k = C.PART_ORDER.find(k => C.canFit(g, k)); if (k) return `F  ·  FIT THE ${k.toUpperCase()} (${g.stash[k]} in the stash; how it sits: ${(g.learned || {})[k] ? 'checked, you took one apart' : 'reasoned'})`; if (C.truckDone(g)) return 'The truck is whole. (driving it comes next)';
   const need = C.PART_ORDER.find(k => C.fitted(g, k) < C.PARTS[k].n); const blocked = C.PARTS[need].after.find(a => C.fitted(g, a) < C.PARTS[a].n); return `THE TRUCK: needs ${blocked ? `the ${blocked} before the ${need}` : `a ${need}`} (find parts on Earth)`; }
 const nearCar = () => g.car && (C.seatOf(g, me.id) >= 0 || Math.hypot(me.x - g.car.x, me.z - g.car.z) < 3.8);
-function carLine() { const c = g.car, kg = C.storeKg(c); const mySeat = C.seatOf(g, me.id); if (mySeat >= 0) return `F  ·  GET OUT   ·   ${['DRIVING', 'ROOF LAMP', 'MOUNTED GUN', 'MOUNTED GUN'][mySeat]}   ·   ${Math.round(Math.abs(c.v) * 3.6)} km/h   ·   load ${kg} of ${C.CAR.store} kg<span style="display:block;margin-top:4px;font-size:14px"><b class="seatnext" style="cursor:pointer;color:#ff4fd8;font-weight:500">X  ·  NEXT SEAT</b></span>`;
+function carLine() { const c = g.car, kg = C.storeKg(c); const mySeat = C.seatOf(g, me.id); if (mySeat >= 0) return `F  ·  GET OUT   ·   ${['DRIVING', 'ROOF LAMP', 'MOUNTED GUN', 'MOUNTED GUN'][mySeat]}   ·   ${Math.round(Math.abs(c.v) * 3.6)} km/h   ·   load ${kg} of ${C.CAR.store} kg<span style="display:block;margin-top:4px;font-size:14px"><b class="seatnext" style="cursor:pointer;color:#ff2a8d;font-weight:500">X  ·  NEXT SEAT</b></span>`;
   return (me.pack || []).length ? `F  ·  LOAD YOUR PACK INTO THE TRUCK (${kg} of ${C.CAR.store} kg)` : !c.seats.includes(null) ? 'The truck is full.' : `F  ·  GET IN${c.seats[0] === null ? ' AND DRIVE (W, S, A, D)' : ''}`; }
 function useShip() { if (isHost()) C.useShip(g, me); else net.send({ t: 'build', k: 'ship' }); }   // (the host seats the pilot: two people can never fly one ship)
 function useCar() { if (isHost()) { const r = C.useCar(g, me); if (r === 'stowed') { sound.drop(); say('Loaded into the truck.', 2); } else if (r === 'full') say('The truck is full.', 2); } else net.send({ t: 'build', k: 'car', x: 0, z: 0 }); }
@@ -342,7 +342,7 @@ let stake = null; function settleStake(back) { if (stake === null) return; SET.s
 const stakeScore = () => { const st = SET.stakes || []; return st.length ? { n: st.length, brier: st.reduce((a, [p, o]) => a + (p - o) ** 2, 0) / st.length, back: st.filter(x => x[1]).length } : null; }; $('prompt').style.pointerEvents = 'auto'; $('prompt').style.cursor = 'pointer';
 function pickBuild(k) { buildPick = k; drawBuild(); }
 function buildSpot() { const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), d = look(); for (let t = 1; t < 9; t += 0.25) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y <= g.land(x, z)) return { x, z }; } return { x: o.x + d.x * 5, z: o.z + d.z * 5 }; }
-const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
+const ghost = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff2a8d, transparent: true, opacity: 0.8, depthTest: false })); ghost.visible = false; scene.add(ghost);
 function build(p, kind, x, z) {   // (host only: the player must carry the light, and stand within 9 m of where it goes)
   const K = C.NODE[kind]; if (!K || !Number.isFinite(x) || !Number.isFinite(z) || p.ember || p.carried < K.cost || Math.hypot(p.x - x, p.z - z) > 9) return null;
   p.carried -= K.cost; return C.placeNode(g, kind, x, z, p.id);
@@ -383,11 +383,11 @@ function hud() {
   const f = g.fire, next = C.FIRE_COST[f.level + 1];
   txt('fireHud', `<b>FIRE ${f.level}</b><small>${next ? `${Math.floor(f.light)} of ${next} light to grow it` : 'as big as it gets'}  ·  fuel ${Math.ceil(f.fuel)} s</small>`, true);
   const [a, b] = PHASE[C.phase(g.clock)]; if (C.onEarth(me) && g.earth) { const t = Math.max(0, Math.ceil(g.earth.t)); txt('phase', `<b>EARTH</b><small>the lander leaves in ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</small>`, true); } else txt('phase', `<b>${a}</b><small>${b}  ·  night ${g.night}</small>`, true);
-  { const kg = C.loadOf(me); txt('light', `<b>${Math.floor(me.carried)}</b><span>LIGHT CARRIED (bring it to the fire, or build with it)</span>${kg ? `<span style="display:block;color:#b9a8ff">PACK ${kg} kg: ${(me.pack || []).join(', ')} (${Math.round(C.speedOf(me) * 100)}% speed; drop it at the truck bay)</span>` : ''}`, true); }
+  { const kg = C.loadOf(me); txt('light', `<b>${Math.floor(me.carried)}</b><span>LIGHT CARRIED (bring it to the fire, or build with it)</span>${kg ? `<span style="display:block;color:#c77dff">PACK ${kg} kg: ${(me.pack || []).join(', ')} (${Math.round(C.speedOf(me) * 100)}% speed; drop it at the truck bay)</span>` : ''}`, true); }
   $('hpBar').style.width = Math.max(0, me.hp) + '%'; $('hpBar').style.opacity = (0.35 + 0.65 * Math.max(0, me.hp) / 100).toFixed(2);
   const am = ammo[gunKey]; if (mounted()) txt('ammo', `<b>${Math.round(heat * 100)}%</b><span>heat</span><small>${overheat ? 'TOO HOT, COOLING' : 'MOUNTED GUN, endless rounds'}</small>`, true); else txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
-  txt('prompt', ship && ship.near(me, g) && !me.ember ? 'F  ·  BOARD THE SHIP' : me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
+  txt('prompt', ship && ship.near(me, g) && !me.ember ? 'F  ·  BOARD THE SHIP' : me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#c77dff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff2a8d;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
   { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : atStore() ? [STORE.x, g.land(STORE.x, STORE.z) + 2.6, STORE.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
     let tx = innerWidth / 2, ty = innerHeight * 0.6;   // (the tag hangs over the thing it belongs to; off screen, it waits low in the middle)
     if (at) { _v.set(...at).project(camera); if (_v.z < 1 && Math.abs(_v.x) < 0.95 && Math.abs(_v.y) < 0.95) { tx = (_v.x * 0.5 + 0.5) * innerWidth; ty = (-_v.y * 0.5 + 0.5) * innerHeight; } }
@@ -621,7 +621,7 @@ const flareViews = new Map(), flareMat = new THREE.MeshBasicMaterial({ color: 0x
 function drawFlares() { const live = new Set(); (g.flares || []).forEach((f, i) => { const key = f.x.toFixed(1) + ',' + f.z.toFixed(1); live.add(key); let o = flareViews.get(key); if (!o) { o = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), flareMat); o.position.set(f.x, g.land(f.x, f.z) + 0.16, f.z); scene.add(o); flareViews.set(key, o); } o.scale.setScalar(0.8 + Math.random() * 0.5); });   // (it sputters)
   for (const [k, o] of flareViews) if (!live.has(k)) { scene.remove(o); flareViews.delete(k); } }
 // the fire grows: a ring of light rolls out from the core across the yard to the new edge of its circle (one mesh, reused)
-const growRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff4fd8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); growRing.visible = false; scene.add(growRing); let growT = -1;
+const growRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff2a8d, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); growRing.visible = false; scene.add(growRing); let growT = -1;
 function growFire() { growT = 0; growRing.visible = true; if (fireObj) fireObj.flare(1.5); }
 function drawGrowRing(dt) { if (growT < 0) return; growT += dt; const k = Math.min(1, growT / 1.8), r = 1 + (C.fireRadius(g.fire) - 1) * (1 - Math.pow(1 - k, 3)); growRing.scale.set(r, 1, r); growRing.position.set(g.fire.x, g.land(g.fire.x, g.fire.z) + 0.12, g.fire.z); growRing.material.opacity = 0.85 * (1 - k); if (k >= 1) { growT = -1; growRing.visible = false; } }
 function drawTraces() { const ts = g.traces || [], key = ts.map(t => t.of + ':' + t.x + ':' + Math.ceil(t.t / 10)).join('|'); if (key === traceKey) return; traceKey = key; const v = [];

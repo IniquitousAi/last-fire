@@ -53,7 +53,7 @@ export class FireCore {
     const metal = new THREE.MeshStandardMaterial({ color: 0x0c0d12, roughness: 0.35, metalness: 0.85 });
     const bowl = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.5, 0.42, 48, 1, true), metal); bowl.position.y = 0.21;
     const floor = new THREE.Mesh(new THREE.CircleGeometry(1.25, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x050508, emissive: 0x2a0a40, emissiveIntensity: 1 })); floor.position.y = 0.05;
-    this.lines = [0.43, 0.08].map((y, i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(i ? 1.52 : 1.27, 0.012, 6, 96), new THREE.MeshBasicMaterial({ color: i ? 0x7b5cff : 0xff4fd8 })); m.rotation.x = Math.PI / 2; m.position.y = y; return m; });
+    this.lines = [0.43, 0.08].map((y, i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(i ? 1.52 : 1.27, 0.012, 6, 96), new THREE.MeshBasicMaterial({ color: i ? 0xb026ff : 0xff2a8d })); m.rotation.x = Math.PI / 2; m.position.y = y; return m; });
     this.base.add(bowl, floor, ...this.lines); scene.add(this.base, this.vol);
     this.pulse = 0;
   }

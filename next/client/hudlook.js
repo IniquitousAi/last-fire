@@ -12,7 +12,7 @@ const CSS = `
 body.look-visor { --rim: 10px; --ink: 30px; }
 body.look-visor #fireHud { left: var(--ink); top: var(--ink); } body.look-visor #phase { right: var(--ink); top: var(--ink); }
 body.look-visor #hp { left: var(--ink); bottom: var(--ink); } body.look-visor #ammo { right: var(--ink); bottom: var(--ink); }
-body.look-visor #hp div { height: 3px; background: #ffffff14; } body.look-visor #hp i { background: linear-gradient(90deg, #7b5cff, #f2e8ff); }   /* (one light is your health: violet to white, dimming as you are hurt) */
+body.look-visor #hp div { height: 3px; background: #ffffff14; } body.look-visor #hp i { background: linear-gradient(90deg, #b026ff, #f2e8ff); }   /* (one light is your health: violet to white, dimming as you are hurt) */
 body.look-visor #fireHud b, body.look-visor #phase b { font-weight: 400; font-size: 24px; letter-spacing: .14em; } body.look-visor #light span { letter-spacing: .2em; font-size: 13px; }
 body.look-visor #fireHud small, body.look-visor #phase small { font-size: 14px; }
 .vc { position: fixed; width: 240px; height: 120px; pointer-events: none; display: none; } body.look-visor .vc { display: block; }
@@ -23,14 +23,14 @@ body.look-visor #fireHud small, body.look-visor #phase small { font-size: 14px; 
 body.look-visor #compass { display: block; } body.look-visor #guide { top: 52px !important; }
 #compass i { position: absolute; top: 0; width: 1px; height: 7px; background: #a3a6bb; } #compass i.big { height: 12px; background: #eef0f8; }
 #compass b { position: absolute; top: 13px; font: 400 14px "Barlow Condensed", sans-serif; color: #a3a6bb; transform: translateX(-50%); letter-spacing: .1em; }
-#compass .fire { position: absolute; top: 0; transform: translateX(-50%); text-align: center; color: #b9a8ff; font: 400 14px "Barlow Condensed", sans-serif; letter-spacing: .08em; white-space: nowrap; }
+#compass .fire { position: absolute; top: 0; transform: translateX(-50%); text-align: center; color: #c77dff; font: 400 14px "Barlow Condensed", sans-serif; letter-spacing: .08em; white-space: nowrap; }
 #compass i.ping { top: 18px; width: 5px; height: 5px; margin-left: -2px; background: #ff3b5c; border-radius: 50%; } #compass i.ping.behind { width: 3px; height: 12px; top: 14px; border-radius: 0; }
-#compass .fire::before { content: ''; display: block; width: 0; height: 0; margin: 0 auto 1px; border: 6px solid transparent; border-top-color: #b9a8ff; border-bottom: 0; }
+#compass .fire::before { content: ''; display: block; width: 0; height: 0; margin: 0 auto 1px; border: 6px solid transparent; border-top-color: #c77dff; border-bottom: 0; }
 body.look-quiet #fireHud, body.look-quiet #phase, body.look-quiet #ammo, body.look-quiet #light, body.look-quiet #hp, body.look-quiet #build { opacity: 0; transition: opacity .8s; }
 body.look-quiet .fresh { opacity: 1 !important; transition: opacity .2s !important; }
 body.look-glass #fireHud, body.look-glass #phase, body.look-glass #ammo, body.look-glass #hp, body.look-glass #light { background: #05060be0; border-radius: 10px; padding: 10px 16px 9px; text-shadow: none; }
 body.look-glass #fireHud::after, body.look-glass #phase::after, body.look-glass #ammo::after, body.look-glass #hp::after, body.look-glass #light::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
-  background: linear-gradient(90deg, #7b5cff, #8f7bff, #ff5fd2); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  background: linear-gradient(90deg, #b026ff, #8f7bff, #ff5fd2); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
 body.look-glass #hp { width: 232px; } body.look-glass #light { bottom: 18px; min-width: 300px; } body.look-glass #fireHud, body.look-glass #phase { top: 16px; }
 body.look-glass #fireHud { left: 16px; } body.look-glass #phase { right: 16px; } body.look-glass #ammo { right: 16px; bottom: 16px; } body.look-glass #hp { left: 16px; bottom: 16px; }
 body.look-glass #build { bottom: 112px; }
@@ -47,7 +47,7 @@ export class HudLook {
     const corner = (cls, a, b) => { const el = document.createElement('div'); el.className = 'vc ' + cls; const id = 'v' + cls;
       el.innerHTML = `<svg width="240" height="120" viewBox="0 0 240 120"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".45" stop-color="${b}" stop-opacity=".55"/><stop offset="1" stop-color="${b}" stop-opacity="0"/></linearGradient></defs>
         <path d="M 1 120 L 1 22 Q 1 1 22 1 L 240 1" fill="none" stroke="url(#${id})" stroke-width="1.5"/></svg>`; return el; };
-    this.visor = document.createElement('div'); this.visor.append(corner('tl', '#7b5cff', '#c34dff'), corner('tr', '#ff3b8d', '#c34dff'), corner('bl', '#7b5cff', '#c34dff'), corner('br', '#ff3b8d', '#c34dff'));
+    this.visor = document.createElement('div'); this.visor.append(corner('tl', '#b026ff', '#c34dff'), corner('tr', '#ff3b8d', '#c34dff'), corner('bl', '#b026ff', '#c34dff'), corner('br', '#ff3b8d', '#c34dff'));
     this.compass = Object.assign(document.createElement('div'), { id: 'compass' });
     this.ticks = []; for (let d = 0; d < 360; d += 15) { const big = d % 90 === 0, t = document.createElement('i'); if (big) t.className = 'big'; this.compass.append(t); this.ticks.push([d, t]); if (big) { const b = document.createElement('b'); b.textContent = ['N', 'E', 'S', 'W'][d / 90]; this.compass.append(b); this.ticks.push([d, b]); } }
     this.fire = Object.assign(document.createElement('div'), { className: 'fire' }); this.compass.append(this.fire);
