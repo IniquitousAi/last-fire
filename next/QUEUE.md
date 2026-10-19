@@ -144,3 +144,4 @@ Claude picks the order by the bottleneck: what he will see first and most.
 - Item 55, the loss goes on the board: site odds drop by exactly what trips lost, with a pink footnote (v107).
 - Items 56 and 57, first pass: the ship flies (hover physics: drop test 4% bob, settled 3.15 s; robot pilot lands 300 m away in 8.1 s, 2.2 m off) with the HELMET HUD he picked (v109). Still open: the generated model (TRELLIS.2 retrying every 30 min: the free quota ran out), shared in co-op, flying the drop to Earth.
 - GAMEDEV-TRICKS.md: 26 tricks researched (14 searches, 2 articles); v111 shipped two (careful falls 0.13 to 0), 60 to 66 queued.
+- 2026-10-19: REA's Venge.io capture hung 16 min and saved nothing (empty file); stopped. Retry only with a 3-minute limit.
