@@ -4,11 +4,22 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
-import { pickFresh } from '../core/lines.js?v=173';
-import * as LO from '../core/lore.js?v=173';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
-import * as JOB from '../core/jobs.js?v=173';
-import { stream } from '../core/game.js?v=173';
+import { pickFresh } from '../core/lines.js?v=174';
+import * as LO from '../core/lore.js?v=174';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
+import * as JOB from '../core/jobs.js?v=174';
+import { stream } from '../core/game.js?v=174';
 
+/* (the palette guard, A2 look pass 2026-10-19: no orange, gold, rust, brown or olive may reach the screen from a scanned asset. Every loaded material's diffuse is checked in the shader: a hue from red-orange through yellow to green with real color in it is pulled to a cold blue-gray steel at the same brightness. Blues, violets and grays pass untouched; lamps and signs are emissive and are not touched.) */
+const GUARD_GLSL = `#include <map_fragment>
+{ vec3 c = diffuseColor.rgb; float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn, sat = d / max(mx, 1e-4); float h = 0.0;
+  if (d > 1e-4) { h = mx == c.r ? mod((c.g - c.b) / d, 6.0) : (mx == c.g ? (c.b - c.r) / d + 2.0 : (c.r - c.g) / d + 4.0); } h *= 60.0;
+  float warm = (h < 175.0 || h > 340.0) ? smoothstep(0.12, 0.3, sat) : 0.0; float l = dot(c, vec3(0.299, 0.587, 0.114));
+  diffuseColor.rgb = mix(c, vec3(0.78, 0.86, 1.0) * l * 1.04, warm); }`;
+const GUARDED = new WeakSet();
+export function paletteGuard(root) {
+  root.traverse(q => { if (!q.isMesh) return; for (const m of [].concat(q.material)) { if (!m || GUARDED.has(m) || !m.isMeshStandardMaterial) continue; GUARDED.add(m);
+    const prev = m.onBeforeCompile; m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', GUARD_GLSL); }; m.customProgramCacheKey = () => 'guard' + (m.map ? 1 : 0); m.needsUpdate = true; } });
+}
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 }, EDGE = { x: 3.4, z: 18.2 };   // (the edge sign stands inside the gate, which opens on the dark at 21 m)
 // the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
 // size, carries its planted foot back 0.55 m in 0.40 s: 1.39 m/s of ground per clip second, so the clip plays at pace / (1.39 x his scale)
@@ -55,8 +66,10 @@ export class Camp {
     // the board: a dark panel on a post at the edge of the fire's light, redrawn only when what it shows changes
     this.bc = document.createElement('canvas'); this.bc.width = 768; this.bc.height = 480; this.btex = new THREE.CanvasTexture(this.bc); this.btex.colorSpace = THREE.SRGBColorSpace;
     const by = land(BOARD.x, BOARD.z); 
-    this.board = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.25), new THREE.MeshBasicMaterial({ map: this.btex, color: 0xc4c4c4 }));   /* (a hair under the bloom threshold: no halo behind its big numbers, his rule) */ this.board.position.set(BOARD.x, by + 2.7, BOARD.z); this.board.rotation.y = Math.atan2(-BOARD.x, -BOARD.z);
-    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 2.7, BOARD.z + 0.6); scene.add(this.board, glow);
+    this.board = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.25), new THREE.MeshBasicMaterial({ map: this.btex, color: 0xc4c4c4 }));   /* (a hair under the bloom threshold: no halo behind its big numbers, his rule) */ this.board.position.set(BOARD.x, by + 3.4, BOARD.z); this.board.rotation.y = Math.atan2(-BOARD.x, -BOARD.z);
+    const glow = new THREE.PointLight(0xff4fd8, 3, 6, 1.6); glow.position.set(BOARD.x, by + 3.4, BOARD.z + 0.6); scene.add(this.board, glow);
+    { const nl = Math.hypot(BOARD.x, BOARD.z), nx = -BOARD.x / nl, nz = -BOARD.z / nl, tx = -nz, tz = nx;   // (two steel posts at the board's edges, just behind it: the words have nothing in front of them)
+      for (const sd of [-1, 1]) { const px = BOARD.x + tx * sd * 1.9 - nx * 0.1, pz = BOARD.z + tz * sd * 1.9 - nz * 0.1, gy = land(px, pz), m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 4.6, 0.12), new THREE.MeshStandardMaterial({ color: 0x2b2f38, roughness: 0.7, metalness: 0.6 })); m.position.set(px, gy + 2.3, pz); scene.add(m); } }
     // the CHECK key: shown only when you stand at the board (click it, or press C)
     this.btn = Object.assign(document.createElement('button'), { className: 'bk', innerHTML: 'CHECK THE REAL ODDS<small>(the board shows what the council approved)</small>' });
     Object.assign(this.btn.style, { position: 'fixed', left: '63%', top: '74%', transform: 'translateX(-50%)', display: 'none', zIndex: 4 }); document.getElementById('hud').append(this.btn);
@@ -64,12 +77,13 @@ export class Camp {
     // camp people: each speaks from what really happened, one line at a time, never repeating while a fresh one is left (IMMERSION.md)
     this.people = []; this.heard = new Set(); this.said = {};
     // (the soldier's Idle_Gun and Idle hold a rifle he does not carry: Idle_Neutral has his arms at rest; Interact reaches out to check a thing)
-    const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75, chain: [['Spine2', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Spine1', yawMax: 1.05 },
+    const PEOPLE = [{ role: 'the Clerk', url: 'camp/man.glb', x: 3.2, z: -5.2, anim: 'Man_Sitting', sit: true, h: 1.75, chain: [['Torso', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Abdomen', yawMax: 1.05 },
       { role: 'the Night worker', url: 'c/soldier.glb', x: 0, z: -17, anim: 'Idle_Neutral', walk: 'Walk', act: 'Interact', h: 1.8, chain: [['Chest', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Chest', yawMax: 1.2 },
-      { role: 'a Council member', url: 'c/survivor.glb', x: -10.8, z: 7.2, anim: 'Idle', h: 1.7 }];
+      { role: 'a Council member', url: 'camp/soldier2.glb', x: -10.8, z: 7.2, anim: 'Idle_Neutral', h: 1.75, chain: [['Chest', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Chest', yawMax: 1.0 }];
     for (const P of PEOPLE) L.loadAsync('../assets/' + P.url).then(r => {
       r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), o = skClone(r.scene); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y);   /* (measured on the original: a copy of an animated model measures wrong) */ o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
-      o.traverse(m => { if (m.isMesh || m.isSkinnedMesh) { m.material = m.material.clone(); m.material.color.lerp(new THREE.Color(0x2a2e38), 0.55); m.castShadow = false; } });   /* (worn, muted clothes: grounded near) */
+      const DARK = { Brown: 0x24262e, Brown2: 0x1c1e25, Green: 0x20232b, LightGreen: 0x2c303b, Gold: 0x5c1a33, Grey: 0x30333f };   /* (north star palette: dark grays and one muted crimson accent; no olive, brown or gold on a person) */
+      o.traverse(m => { if (m.isMesh || m.isSkinnedMesh) { m.material = m.material.clone(); const d = DARK[m.material.name]; if (d !== undefined) m.material.color.setHex(d); else m.material.color.lerp(new THREE.Color(0x2a2e38), 0.6); m.castShadow = false; } });   /* (worn, muted clothes: grounded near) */
       const lamp = new THREE.PointLight(0xcfe0ff, 5, 6, 1.5); lamp.position.set(P.x + 0.6, land(P.x, P.z) + 1.4, P.z + 0.4); scene.add(lamp);   // (each person keeps a small lantern: you see who is talking)
       const mix = new THREE.AnimationMixer(o), find = n => n && r.animations.find(a => a.name.endsWith('|' + n)), clip = find(P.anim) || r.animations.find(a => a.name.endsWith(P.anim));
       const walk = find(P.walk), act = find(P.act), acts = { idle: clip ? mix.clipAction(clip) : null, walk: walk ? mix.clipAction(walk) : null, act: act ? mix.clipAction(act) : null };
@@ -77,7 +91,7 @@ export class Camp {
       if (acts.act) { acts.act.setLoop(THREE.LoopOnce, 1); acts.act.clampWhenFinished = true; }
       const bone = n => o.getObjectByName(n), chain = (P.chain || []).map(([n, w]) => [bone(n), w]).filter(c => c[0]), chest = P.chest && bone(P.chest);
       const rest = [...chain.map(c => c[0]), chest].filter(Boolean).map(b => [b, b.quaternion.clone()]);   /* (bones a clip leaves alone, like the soldier's neck, go back to rest each frame so the look never adds up) */
-      if (P.anim === 'SitIdle') { const ry = o.rotation.y; put('kit/box-large.glb', P.x, P.z, 1.6, ry + Math.PI / 2).then(bx => {   /* (something to sit on: its 0.4 m depth runs along her facing, a crate bench) */
+      if (P.sit) { const ry = o.rotation.y; put('kit/box-large.glb', P.x, P.z, 1.6, ry + Math.PI / 2).then(bx => {   /* (something to sit on: its 0.4 m depth runs along her facing, a crate bench) */
         if (!bx) return; mix.update(0); o.updateMatrixWorld(true); const top = _b.setFromObject(bx).max.y, hips = bone('Hips').getWorldPosition(new THREE.Vector3()); let low = 1e9;
         o.traverse(m => { if (!m.isSkinnedMesh) return; for (let i = 0, n = m.geometry.attributes.position.count; i < n; i++) { m.getVertexPosition(i, _v).applyMatrix4(m.matrixWorld); if (Math.hypot(_v.x - hips.x, _v.z - hips.z) < 0.12 && _v.y < low) low = _v.y; } });
         if (low < 1e8) o.position.y += top - low; }); }   /* (her seat is the lowest skin under her hips, measured once in the clip's own pose and set on the box top: she sat 3 cm into it) */
@@ -205,7 +219,7 @@ export class Camp {
   }
   update(dt = 1 / 60) {   // (dt is the real frame time: a fixed 1/60 walked him 1.7 m/s at 82 fps and 3 m/s on a 144 Hz screen)
     const me = this.ctx.me(); if (!me) return; if (this.ctx.theories) this.drawTheories(this.ctx.theories); if (!this.bunkT || (this.bunkT -= dt) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
-    this.btn.style.display = this.near ? 'block' : 'none'; this.draw(); this.drawEdge(); this.nightNews();
+    this.btn.style.display = this.near && !(this.ctx.pad && this.ctx.pad()) ? 'block' : 'none'; this.draw(); this.drawEdge(); this.nightNews();
     { const g1 = this.ctx.g(); if (g1.fire.fuel < 60 && this.fireSaid !== g1.night) { this.fireSaid = g1.night; this.ctx.say(LO.DARK_LINES.fire, 5); } }   // (the fire going down is nobody's doing: the dark has no wants, only a rate)
     const cam = this.ctx.camera();
     let talk = null, best = 1e9; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw);
@@ -298,7 +312,7 @@ export class Camp {
   }
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
   yard(L, land) {
-    const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url.split('#')[0]).then(r => { const part = url.split('#')[1]; if (part) { const n = r.scene.getObjectByName(part).clone(); n.position.set(0, 0, 0); r = { scene: new THREE.Group().add(n) }; } r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); return { scene: r.scene, s, c, y0: b.min.y }; }).catch(() => null));
+    const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url.split('#')[0]).then(r => { const part = url.split('#')[1]; if (part) { const n = r.scene.getObjectByName(part).clone(); n.position.set(0, 0, 0); r = { scene: new THREE.Group().add(n) }; } paletteGuard(r.scene); r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); return { scene: r.scene, s, c, y0: b.min.y }; }).catch(() => null));
     // every piece is measured: its footprint centered on (x, z) (the fence and metal wall pivots sit 1.3 m off the piece), its base on the ground
     // (the bedroll's base is 5 cm under its pivot), and set on the lowest ground under its footprint so no corner floats on a slope.
     // lie = a loose thing (a stone): tipped to rest on the slope's own plane and bedded a tenth of its height in, not balanced level on a hill
@@ -321,6 +335,7 @@ export class Camp {
       for (const list of groups.values()) { const f = list[0], im = new THREE.InstancedMesh(f.geometry, f.material, list.length); list.forEach((q, i) => im.setMatrixAt(i, q.matrixWorld)); im.castShadow = f.castShadow; im.receiveShadow = f.receiveShadow; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); this.scene.add(im); } };
     const face = (x, z) => Math.atan2(-x, -z);
     const cloth = o => o && o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.map = null; q.material.color.setHex(0x505a70); q.material.roughness = 0.95; } });   // (the repainted canvas was near black: tents read as bare frames at night, so they get one plain cloth color)   // (turns a thing's front toward the fire)
+    const tentTint = o => o && o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.color.lerp(new THREE.Color(0x5a6178), 0.65); q.material.roughness = 0.95; } });   // (the Quaternius tent's olive pulled toward the north star's cold gray)
     const R = 21, SEG = 1.95, n = Math.round(2 * Math.PI * R / SEG), GATE = Math.PI / 2;   // (the gate faces out past the hut's side)
     const fenceP = get(FEN).then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;   // (a real chain-link panel, 1.9 m by 2.4 m, at its own size, with a post at every joint)
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, gap = Math.abs(Math.atan2(Math.sin(a - GATE), Math.cos(a - GATE))); if (gap < 0.12) continue;
@@ -331,8 +346,8 @@ export class Camp {
     for (const s of [-1, 1]) put(PH('concrete_road_barrier'), gx + s * 3.6, gz + 1.6, 1.6, Math.PI / 2 + s * 0.15);   // (barriers flank the gate outside)   // (the gate heads glow white-violet: they read cyan, his rule is no cyan)
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
-    [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {
-      const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z)).then(cloth);
+    [[200, 'camp/tent.glb', 4.6], [228, 'camp/tent.glb', 4.2], [256, 'camp/tent.glb', 4.6], [284, 'camp/tent.glb', 4.2], [170, 'camp/tent.glb', 4.2]].forEach(([deg, url, w]) => {
+      const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z) + Math.PI / 2).then(tentTint);
       const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2);
       const lx = bx - Math.sin(a) * 0.8, lz = bz + Math.cos(a) * 0.8;   /* (the bunk lantern stands on the ground beside the bedroll: it hung in the air half a meter up) */
       const lamp = { material: {} }; { let ei = 0; const mats = []; Object.defineProperty(lamp.material, 'emissiveIntensity', { get: () => ei, set: v => { ei = v; for (const m of mats) m.emissiveIntensity = v; } });
@@ -342,7 +357,7 @@ export class Camp {
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }
     { const [x, z] = W(40, 17); put('kit/planks.glb', x, z, 2.0, 0.4); }
-    for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put(BAR, x, z, 0.62, deg).then(o => o && o.traverse(q => { if (q.isMesh && !q.material.userData.steel) { q.material = q.material.clone(); q.material.color.setHex(0x5a6070); q.material.userData.steel = 1; } })); }   // (the scan is fire-red; red means danger here, so the paint is weathered steel)
+    for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put(BAR, x, z, 0.62, deg).then(o => o && o.traverse(q => { if (q.isMesh && !q.material.userData.steel) { q.material = q.material.clone(); q.material.color.setHex(0x5a6070); q.material.userData.steel = 1; paletteGuard(q); } })); }   // (the scan is fire-red; red means danger here, so the paint is weathered steel)
     { const [x, z] = W(47, 16.5); put('kit/chest.glb', x, z, 1.1, face(x, z)); }
     { const [x, z] = W(55, 17.2); put(CRATE, x, z, 1.7, 0.3); }
     // the store: metal walls by the wall, the camp's stock behind them
@@ -362,7 +377,7 @@ export class Camp {
     let q = 7; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = 24 + rnd() * 50, x = Math.cos(a) * r, z = Math.sin(a) * r; put('kit/stone.glb', x, z, 0.5 + rnd() * rnd() * 2.6, rnd() * 6.3, 0, true); }
     for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, r = 4 + rnd() * 15, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.hypot(x - HUT.x, z - HUT.z) < 5 || Math.hypot(x - BOARD.x, z - BOARD.z) < 3 || r < 5) continue; put('kit/stone.glb', x, z, 0.25 + rnd() * 0.35, rnd() * 6.3, 0, true); }
-    putH(LAMPPOST, BOARD.x, BOARD.z - 0.1, 2.5); putH('kit/signpost.glb', -7, 13.3, 1.5); putH('kit/signpost.glb', EDGE.x, EDGE.z - 0.1, 2.0);   // (the board's post and the theory wall's stand: real models)
+    putH(LAMPPOST, BOARD.x + 2.9, BOARD.z - 0.3, 2.5); putH('kit/signpost.glb', -7, 13.3, 1.0); putH('kit/signpost.glb', EDGE.x, EDGE.z - 0.1, 1.0);   /* (the lamp stands beside the board and the sign posts stop under their boards: nothing stands in front of the words; the board hangs between two steel posts at its edges) */   // (the board's post and the theory wall's stand: real models)
     fenceP.then(() => Promise.all(pend)).then(fold);
   }
   speak(role, line, sec) { this.voice = { role, line: line.replace(/[<>&]/g, ''), until: performance.now() + sec * 1000 }; }

@@ -3,7 +3,8 @@
 // cracks in the ground and spreads across the land outside the walls (green, clean patches left between); inside, a black plain cracked
 // everywhere, a deep crimson dark, and the console nobody understands. The rules are core/rift.js.
 import * as THREE from 'three';
-import { RIFT } from '../core/game.js?v=173';
+import { RIFT, EARTH } from '../core/game.js?v=174';
+import { WILDS } from '../core/wilds.js?v=174';
 
 // the corruption in the ground: glowing cracks, crimson to violet, strongest at the mouth and in the Rift, patchy outside the walls
 const VEINS = `
@@ -11,7 +12,8 @@ float lfCorrupt(vec3 w) { if (w.z < 3000.0) return 0.0; if (w.z > 8500.0) return
   float out0 = smoothstep(56.0, 78.0, max(abs(w.x), abs(w.z - 6000.0)));                       /* (outside the walls) */
   float patchy = smoothstep(0.38, 0.62, gn(vec3(w.xz * 0.011, 3.0)));                            /* (green, uncorrupted pockets survive between) */
   float mouth = 1.0 - smoothstep(3.0, 40.0, length(w.xz - vec2(${RIFT.x.toFixed(1)}, ${RIFT.z.toFixed(1)})));   /* (it devours outward from the Rift) */
-  return max(mouth, out0 * patchy * 0.85); }
+  float clean = 1.0 - smoothstep(${(WILDS.green.r - 8).toFixed(1)}, ${WILDS.green.r.toFixed(1)}, length(w.xz - vec2(${(EARTH.x + WILDS.green.dx).toFixed(1)}, ${(EARTH.z + WILDS.green.dz).toFixed(1)})));   /* (the calm green patch of the Wilds, core/wilds.js: no corruption inside it) */
+  return max(mouth, out0 * patchy * 0.85) * (1.0 - clean); }
 vec2 lfH2(vec2 p) { p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p) * 43758.5453); }
 float lfEdge(vec2 p) { vec2 i = floor(p), f = fract(p); float d1 = 8.0, d2 = 8.0;   /* (cell edges: the distance between the nearest two cell centers, F2 - F1: a cracked-mud network) */
   for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec2 g = vec2(float(x), float(y)), o = lfH2(i + g); float d = length(g + o - f); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; }

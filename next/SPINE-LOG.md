@@ -8,3 +8,4 @@
 - v171 serves A: The dark is back: creatures made from your sheet, with real walking, turning and steering (no more sliding holograms), smoke in the dark and solid in your light
 - v172 serves A: A forest of black pines outside the walls, a green patch that survived, a spore bog that costs light
 - v173 serves B,C: Saves hold after a reload, your room code is kept, the pad's Back button sends feedback, sounds never repeat back to back, the dev menu lists every item
+- v174 serves B: Item 52: the night rules run the same in the browser and headless

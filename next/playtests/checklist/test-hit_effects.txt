@@ -1,0 +1,1 @@
+PASS  hit effects: 8 of 8

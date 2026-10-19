@@ -102,6 +102,15 @@ export const sound = {
     if (!ac && level <= 0) return; const a = ctx(); if (!whirO) { whirO = a.createOscillator(); whirO.type = 'sawtooth'; whirG = a.createGain(); whirG.gain.value = 0; const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; whirO.connect(f).connect(whirG).connect(out); whirO.start(); }
     whirO.frequency.setTargetAtTime(40 + level * 160, a.currentTime, 0.05); whirG.gain.setTargetAtTime(level > 0.01 ? 0.05 + level * 0.06 : 0, a.currentTime, 0.06); },
   kill() { const d = dest(null), v = pickFresh([0.9, 1, 1.12], heard, 'kill'); tone(d, 900 * v, 300 * v, 0.12, 0.08, 'triangle'); },
+  // a round into a body (his v163 complaint: no weight): a wet crunch over a low thump, a head hit adds a hard tick; a kill is lower and longer
+  impact(head, heavy) { const d = dest(null), j = 0.9 + Math.random() * 0.2;
+    play(buf.crack, d, { rate: 0.6 * j, gain: 0.5, type: 'bandpass', freq: 1100 + Math.random() * 500, q: 1.1 }); play(buf.body, d, { rate: 1.7 * j, gain: 0.32, type: 'lowpass', freq: 950 });
+    tone(d, 430 * j, 140, 0.07, 0.11, 'sawtooth'); tone(d, 98 * j, 42, 0.15, heavy ? 0.55 : 0.38);
+    if (head) { tone(d, 2300, 1500, 0.04, 0.07, 'square'); play(buf.crack, d, { rate: 1.1, gain: 0.3, type: 'highpass', freq: 2200, at: 0.005 }); } },
+  slay() { const d = dest(null), j = 0.92 + Math.random() * 0.16;
+    play(buf.crack, d, { rate: 0.5 * j, gain: 0.65, type: 'bandpass', freq: 900, q: 0.9 }); play(buf.body, d, { rate: 0.55 * j, gain: 0.6, type: 'lowpass', freq: 520 });
+    tone(d, 72 * j, 26, 0.38, 0.62); tone(d, 270 * j, 60, 0.26, 0.12, 'sawtooth', 0.01); play(buf.breath, d, { rate: 0.7, gain: 0.22, type: 'bandpass', freq: 700, q: 0.8, at: 0.12 }); },   // (the last one: a deeper thump, a long wet fall, then the hiss of it coming apart)
+  puff() { const d = dest(null); play(buf.body, d, { rate: 1.9, gain: 0.16, type: 'lowpass', freq: 700 }); },   // (a round through smoke: a dull breath of air, no hit)
   click() { const d = dest(null); play(buf.rattle, d, { rate: 3, gain: 0.25, type: 'bandpass', freq: 2600, q: 4 }); },
   magOut() { const d = dest(null); play(buf.rattle, d, { rate: 1.4, gain: 0.35, type: 'bandpass', freq: 1500, q: 2 }); },
   magIn() { const d = dest(null); play(buf.rattle, d, { rate: 1.8, gain: 0.45, type: 'bandpass', freq: 1900, q: 2 }); tone(d, 500, 380, 0.05, 0.05, 'square', 0.05); },

@@ -20,22 +20,25 @@
   .key small { display: block; font: 400 14px/1.25 "Barlow Condensed", sans-serif; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
   .key:hover, .key:focus-visible, .bk:focus-visible { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--neon) inset; outline: none; } .key:active { transform: translateY(1px); }
   .over { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10; }
-  #list, #dev { background: #000000d8; z-index: 30; } #list .panel, #dev .panel { background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgb(3,6,12); }   /* (a reading page is solid: nothing of the game shows through or overlaps it) */
+  #list, #dev, #codex { background: #000000d8; z-index: 30; } #list .panel, #dev .panel, #codex .panel { background: repeating-linear-gradient(0deg, rgba(255,79,216,.035) 0 1px, transparent 1px 4px), rgb(3,6,12); }   /* (a reading page is solid: nothing of the game shows through or overlaps it) */
   #menu { background: radial-gradient(circle at 50% 35%, #0b1022 0%, #000 70%); }
   #menu .panel { width: min(460px, 100%); }
   h1 { margin: 0 0 2px; font: 500 56px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; } .tag { color: var(--meta); margin: 0 0 18px; font-size: 18px; }
   #name { width: 100%; margin-bottom: 10px; font: 500 22px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0b0c14; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; outline: none; }
   .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--neon); font-weight: 500; }
-  #paused { background: radial-gradient(circle at 50% 50%, #00000060, #000000c0); } #paused .panel { width: min(420px, 100%); }
+  #paused { background: radial-gradient(circle at 50% 50%, #000000a0, #000000e0); z-index: 30; } #paused .panel { width: min(420px, 100%); }
   .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 14px; } .opts .key { margin: 0; font-size: 16px; padding: 8px 12px 6px; } .opts .key b { color: var(--neon); font-weight: 500; }
   label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--neon); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #ff4fd8; }
   /* the HUD */
   /* one reticle, the Halo battle rifle / DMR shape (his pick, 2026-10-19): a thin ring, four short ticks pointing in, a center dot. White on a dark edge so it reads on any ground; it sizes with the screen (21 px across at 900 tall, was 26 px of ticks) and fades out as the sights come up */
   #cross { position: fixed; left: 50%; top: 50%; width: clamp(18px, 2.35vh, 26px); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; } #cross svg { display: block; width: 100%; height: 100%; overflow: visible; }
-  #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
-  #hit::before, #hit::after { content: ''; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); } #hit::after { transform: rotate(-45deg); }
-  #hit.on { opacity: .9; } #hit.shell::before, #hit.shell::after { background: var(--neon); height: 18px; top: 2px; } #hit.shell { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); }
-  #light { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); text-align: center; text-shadow: 0 1px 3px #000; }
+  #hit { position: fixed; left: 50%; top: 50%; width: 0; height: 0; opacity: 0; pointer-events: none; }
+  #hit i { position: absolute; width: 9px; height: 9px; border: solid #fff; border-width: 0 0 2px 2px; filter: drop-shadow(0 0 1px #000); }
+  #hit i:nth-child(1) { left: -22px; top: -22px; transform: rotate(135deg); } #hit i:nth-child(2) { left: 13px; top: -22px; transform: rotate(225deg); } #hit i:nth-child(3) { left: -22px; top: 13px; transform: rotate(45deg); } #hit i:nth-child(4) { left: 13px; top: 13px; transform: rotate(-45deg); }
+  #hit.on, #hit.head, #hit.shell, #hit.kill { opacity: 1; animation: hitTick .14s ease-out; } #hit.shell i { border-color: var(--neon); } #hit.head i { width: 11px; height: 11px; }
+  #hit.kill { animation: hitTickK .3s ease-out; } #hit.kill i { border-color: var(--red); border-width: 0 0 4px 4px; width: 12px; height: 12px; }
+  @keyframes hitTick { from { transform: scale(1.7); } to { transform: scale(1); } } @keyframes hitTickK { from { transform: scale(2.1); } 40% { transform: scale(1); } to { transform: scale(1); } }
+  #light { position: fixed; left: 36%; max-width: 260px; bottom: 22px; transform: translateX(-50%); text-align: center; text-shadow: 0 1px 3px #000; }
   #light b { display: block; font: 500 44px/1 "Barlow Condensed", sans-serif; color: var(--neon); } #light span { font-size: 15px; color: var(--meta); letter-spacing: .14em; }
   #fireHud { position: fixed; left: 18px; top: 14px; text-shadow: 0 1px 3px #000; } #fireHud b { font: 500 26px "Barlow Condensed", sans-serif; color: var(--violet); } #fireHud small { display: block; color: var(--meta); font-size: 15px; }
   #phase { position: fixed; right: 18px; top: 14px; text-align: right; text-shadow: 0 1px 3px #000; } #phase b { font: 500 24px "Barlow Condensed", sans-serif; } #phase small { display: block; color: var(--meta); font-size: 15px; }
@@ -93,7 +96,7 @@
   <div id="menuNote" style="min-height:22px;color:var(--neon)"></div>
 </div></div>
 <div id="hud" hidden>
-  <div id="cross"><svg viewBox="-12 -12 24 24"><g fill="none" stroke-linecap="round"><g stroke="#000" stroke-opacity=".55" stroke-width="3.2"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g><g stroke="#fff" stroke-width="1.3"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g></g><circle r="1.9" fill="#000" fill-opacity=".55"/><circle r="1.1" fill="#fff"/></svg></div><div id="hit"></div>
+  <div id="cross"><svg viewBox="-12 -12 24 24"><g fill="none" stroke-linecap="round"><g stroke="#000" stroke-opacity=".55" stroke-width="3.2"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g><g stroke="#fff" stroke-width="1.3"><circle r="9.5"/><path d="M0 -9.5V-6M0 9.5V6M-9.5 0H-6M9.5 0H6"/></g></g><circle r="1.9" fill="#000" fill-opacity=".55"/><circle r="1.1" fill="#fff"/></svg></div><div id="hit"><i></i><i></i><i></i><i></i></div>
   <div id="fireHud"></div><div id="phase"></div>
   <div id="hp"><span>YOUR LIGHT</span><div><i id="hpBar"></i></div></div>
   <div id="light"></div><div id="ammo"></div><div id="build"></div>
@@ -109,6 +112,7 @@
   <div id="opts" class="opts"></div>
   <div id="room"></div>
   <button class="key" id="openDev">DEV<small>(restart the night, skip ahead, test things, then back to playing)</small></button>
+  <button class="key" id="openCodex">CODEX<small>(every rule and why it is in the world, what each era teaches, how it should feel)</small></button>
   <button class="key" id="openList">CHECKLIST<small>(every idea you gave, and where it stands)</small></button>
   <button class="key" id="leave">LEAVE<small>(saves your world first)</small></button>
 </div></div>
@@ -120,6 +124,10 @@
 <div id="list" class="over" hidden><div class="panel" style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto">
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">CHECKLIST</b><button class="key" id="listBack" style="width:auto;margin:0">BACK</button></div>
   <div id="listBody"></div>
+</div></div>
+<div id="codex" class="over" hidden><div class="panel" id="codexPanel" style="width:min(820px,100%);max-height:calc(100vh - 32px);overflow:auto">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">CODEX</b><button class="key" id="codexBack" style="width:auto;margin:0">BACK</button></div>
+  <div id="codexBody"></div>
 </div></div>
 <div id="tabmenu" class="over" hidden><div class="panel" style="width:min(560px,100%)">
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><b style="font:500 28px 'Barlow Condensed';letter-spacing:.16em">MENU</b><button class="key" id="tabBack" style="width:auto;margin:0">BACK<small>(Tab)</small></button></div>
@@ -136,6 +144,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=173"></script>
+<script type="module" src="./client/main.js?v=174"></script>
 </body>
 </html>

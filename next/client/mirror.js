@@ -3,8 +3,8 @@
 // ordinary hour here has become. Unlit and a hair under the bloom threshold, like the board: no glow, no halo.
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { EARTH, WALLS } from '../core/game.js?v=173';
-import { SIGNS, signLine, mirrorDay } from '../core/mirror.js?v=173';
+import { EARTH, WALLS } from '../core/game.js?v=174';
+import { SIGNS, signLine, mirrorDay } from '../core/mirror.js?v=174';
 
 export class MirrorSigns {
   constructor(scene, land) {

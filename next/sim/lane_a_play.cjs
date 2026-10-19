@@ -34,7 +34,7 @@ const lines = [];
   await E(() => { for (const b of __pad.buttons) { b.pressed = false; b.value = 0; } });
   // ---- the board: the council's number first
   await at(2.4, -1.4, 5, -4, 0.28); await p.waitForTimeout(1500); await shot('board-council'); await shot('board-council-1920', [1920, 908]);
-  const pr0 = await prompt(); check('At the board the prompt offers the real odds', /CHECK THE REAL ODDS/.test(pr0), pr0);
+  const pr0 = await prompt(), key0 = await E(() => lastfire2.camp.btn.style.display); check('With a mouse at the board the clickable key carries the idea and the prompt line stays quiet (one idea, one control)', key0 === 'block' && !/CHECK THE REAL ODDS/.test(pr0), `key ${key0}, prompt "${pr0}"`);
   const before = await E(() => ({ c: lastfire2.camp.checks, n: lastfire2.g.night }));
   await pad(15, 200); await p.waitForTimeout(500);
   const after = await E(() => ({ c: lastfire2.camp.checks, ck: lastfire2.camp.checkedNight, n: lastfire2.g.night }));
@@ -95,6 +95,16 @@ const lines = [];
   const edge = await E(() => lastfire2.camp.edrawn), era = await E(() => lastfire2.camp.era);
   check('The edge sign shows what the camp knows about the dark past the wall', /THE EDGE/.test(edge), edge.slice(0, 60));
   check('The board reads the era and what it needs from you', era && era.era === 1 && /verdicts/.test(era.next), JSON.stringify(era));
+  // ---- the camp's people and tents (CC0 Quaternius models, pulled to dark grays), and the board with nothing in front of its words
+  await E(() => { lastfire2.g.clock = 0.3; });
+  await at(-8.2, 4.8, -10.8, 7.2, 0.05); await p.waitForTimeout(1500); await shot('people-council'); await shot('people-council-1920', [1920, 908]);
+  await at(2.6, -7.6, 3.2, -5.2, -0.2); await shot('people-clerk'); await shot('people-clerk-1920', [1920, 908]);
+  await at(-8.6, -2.0, -13.2, -4.8, 0.12); await shot('tents'); await shot('tents-1920', [1920, 908]);
+  await E(() => { const c = lastfire2.camp; c.checkedNight = -1; c.drawn = ''; });
+  await at(2.4, -1.4, 5, -4, 0.28); await p.waitForTimeout(1200); await shot('board-clear'); await shot('board-clear-1920', [1920, 908]);
+  const lp = await E(() => { const c = lastfire2.camp; return [c.btn.style.display, document.getElementById('prompt').innerText.replace(/\s+/g, ' ').trim(), [...document.body.children].some(e => /FREE|AIM LINK/.test(e.textContent) && e.style.display !== 'none' && !e.hidden && e.style.position === 'fixed' && /MOUSE IS FREE/.test(e.textContent))]; });
+  check('With a controller in hand the key hides and the one prompt line says it', lp[0] === 'none' && /CHECK THE REAL ODDS/.test(lp[1]), `key ${lp[0]}, prompt "${lp[1]}"`);
+  check('No AIM LINK sign is shown in the test run (it only shows when the mouse is really free)', !lp[2], 'hidden');
   // ---- the dark learns only after two calm nights
   const learn0 = await LORE('darkLearning');
   await E(() => { const g = lastfire2.g; g.history.push({ night: 1, tense: 0.1, falls: 0, players: {} }, { night: 2, tense: 0.1, falls: 0, players: {} }); lastfire2.camp.drawn = ''; });

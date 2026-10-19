@@ -1,44 +1,46 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=173';
-import { Ambience } from './ambience.js?v=173';
-import { Camp, BOARD } from './camp.js?v=173';
-import { Guide } from './guide.js?v=173';
-import { buildSites } from './earthsite.js?v=173';
-import { RiftView, riftGround } from './rift.js?v=173';
-import { FogBank } from './fogbank.js?v=173';
-import { Truck } from './truck.js?v=173';
-import { ShipView } from './shipview.js?v=173';
-import { Crew } from './crew.js?v=173';
-import { Hands } from './hands.js?v=173';
-import { FpRig } from './fprig.js?v=173';
-import { farStep } from './farsound.js?v=173';
-import { OpticsView } from './optics.js?v=173';
-import { Wrist } from './wrist.js?v=173';
-import { FireCore } from './firecore.js?v=173';
+import * as C from '../core/game.js?v=174';
+import { Ambience } from './ambience.js?v=174';
+import { Camp, BOARD } from './camp.js?v=174';
+import { Guide } from './guide.js?v=174';
+import { buildSites } from './earthsite.js?v=174';
+import { RiftView, riftGround } from './rift.js?v=174';
+import { FogBank } from './fogbank.js?v=174';
+import { Truck } from './truck.js?v=174';
+import { ShipView } from './shipview.js?v=174';
+import { Crew } from './crew.js?v=174';
+import { Hands } from './hands.js?v=174';
+import { FpRig } from './fprig.js?v=174';
+import { farStep } from './farsound.js?v=174';
+import { OpticsView } from './optics.js?v=174';
+import { Wrist } from './wrist.js?v=174';
+import { FireCore } from './firecore.js?v=174';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=173';
-import { FriendVoice } from './friendvoice.js?v=173';
-import { crewFrom } from '../core/habits.js?v=173';
-import { HudLook } from './hudlook.js?v=173';
-import { UI } from './uikit.js?v=173';
-import { Rain } from './rain.js?v=173';
-import { Immersion } from './immersion.js?v=173';
-import { VisorRain } from './visor.js?v=173';
-import { applyLook } from './looks.js?v=173';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=173';
-import { sound, GUNS } from '../../src/combat.js?v=173';
-import { FX } from '../../src/fx.js?v=173';
+import { think as friendThink } from './friend.js?v=174';
+import { FriendVoice } from './friendvoice.js?v=174';
+import { crewFrom } from '../core/habits.js?v=174';
+import { HudLook } from './hudlook.js?v=174';
+import { UI } from './uikit.js?v=174';
+import { Rain } from './rain.js?v=174';
+import { Immersion } from './immersion.js?v=174';
+import { codexHtml } from './codex.js?v=174';
+import { VisorRain } from './visor.js?v=174';
+import { applyLook } from './looks.js?v=174';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=174';
+import { sound, GUNS } from '../../src/combat.js?v=174';
+import { FX } from '../../src/fx.js?v=174';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { Creatures } from './creatures.js?v=173';
+import { Creatures } from './creatures.js?v=174';
+import { Impact, smokeHit } from './impact.js?v=174';
 
 const $ = id => document.getElementById(id);
-const BUILD = 173;   // (this copy's version; ./version.json says the newest)
+const BUILD = 174;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true, moveEras: false };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -132,8 +134,8 @@ scene.add(sky);
 // ---------------------------------------------------------------- the game (rules) and you
 const amb = new Ambience(() => SET.vol); amb.onCrackle = () => { if (fireObj) fireObj.flare(0.55); }; if (/[?&](test|shot)(&|$)/.test(location.search)) window.__amb = amb;   // (what you hear and what you see agree: each crackle makes the flame jump)
 const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (mouse free: the suit's aim link is on standby; a click links it again. A reason in the world, not a sign on the glass)
-clickPlay.innerHTML = '<div style="font-size:12px;letter-spacing:.22em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:12px;letter-spacing:.06em;color:#a3a6bb;margin-top:1px">click to link your aim</div>';   /* (the reticle itself dims on standby: his note, 2026-10-19, a second ring here made a double crosshair) */
-Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, 22px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
+clickPlay.innerHTML = '<div style="font-size:15px;letter-spacing:.12em;color:#eef0f8">YOUR MOUSE IS FREE</div><div style="font-size:14px;letter-spacing:.04em;color:#a3a6bb;margin-top:1px">click the game to aim again</div>';   /* (shown only when the mouse really is unlinked, for over a second, never while a menu is up or a controller is in use; the test run's ?shot never shows it, headless has no mouse lock) */
+Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, 64px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
 let truck = null, ship = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
@@ -216,7 +218,7 @@ load('lamppost', 'ph/street_lamp_02/street_lamp_02_1k.gltf');   // (the real sca
 const ready = Promise.all([load('stalker', 'm/dark/stalker.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), ...(/[?&]nofp(&|$)/.test(location.search) ? [] : [load('fp_rifle', 'fp/rifle_fp.glb')]),   /* (the Blender rifle and arms are the default since v155, his rule: the newest rig is never behind a switch) */ load('fp_rail', 'fp/sniper_fp.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 
 // ---------------------------------------------------------------- the Hollow as you see them: a pool of animated wraiths, one per Hollow
-const seen = new Map(); const creatures = new Creatures({ scene, models, fx, sound, C });
+const seen = new Map(); const impact = new Impact(scene, (x, z) => g ? g.land(x, z) : 0), creatures = new Creatures({ scene, models, fx, sound, C, impact });
 // the Kiroshi scan (Cyberpunk 2077, his north star, 2026-10-19): middle mouse or Z pings the dark; every shape within 30 m shows as a violet outline
 // for 2 s, 8 s between scans. Seeing is not hitting: out of the light they stay smoke
 const SCAN = { r: 30, t: 2, cd: 8, color: 0x8a5cff }; let scanCd = 0;
@@ -237,7 +239,7 @@ const smartTarget = () => smart.t >= SMART.lock ? g.hollow.find(k => k.id === sm
 addEventListener('mouseup', e => { if (e.button === 3 || e.button === 4) e.preventDefault(); });   // (the back side button must not take the browser back a page)
 function sandy() { if (!g || !me || me.ember) return; if (net) return say('Slow time works alone only: with friends the world is shared.', 3); if (sandyCd > 0) return say(`Slow time recharging: ${Math.ceil(sandyCd)} s.`, 2);
   sandyT = SANDY.t; sandyCd = SANDY.cd + SANDY.t; kick = Math.min(1, kick + 0.3); say('Slow time: 6 s.', 2); }
-function drawHollow(dt) { creatures.draw(g, dt, { seen, hitStop, smart, SMART, SCAN, camera, g }); }   // (the bodies: client/creatures.js; their rules: core moveHollow and bodyStep)
+function drawHollow(dt) { creatures.draw(g, dt, { seen, hitStop, smart, SMART, SCAN, camera, g }); impact.update(dt); }   // (the bodies: client/creatures.js; their rules: core moveHollow and bodyStep)
 
 // ---------------------------------------------------------------- the fire and the network's nodes
 const fireLight = new THREE.PointLight(0x9fc0ff, 0, 30, 1.6); scene.add(fireLight);
@@ -301,7 +303,7 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 
 // ---------------------------------------------------------------- input: click to take the mouse; Esc for the menu
 const TEST = /[?&]test(&|$)/.test(location.search), DEMO = /[?&]demo(&|$)/.test(location.search), locked = () => DEMO || padOn || document.pointerLockElement === renderer.domElement;   // (?demo: a 45 s test run that plays itself, so a run can be recorded with no mouse lock; never on for players)
-if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, camera, get fx() { return fx; }, get wrist() { return wrist; }, get camp() { return camp; }, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
+if (DEMO || /[?&]shot(&|$)/.test(location.search)) window.__lf = { impact, creatures, fire: () => shoot(), refill: () => { ammo[gunKey].mag = 30; }, get yawpitch() { return [me.yaw, me.pitch]; }, get g() { return g; }, get me() { return me; }, get heard() { return heardN; }, scene, renderer, composer, camera, get fx() { return fx; }, get wrist() { return wrist; }, get camp() { return camp; }, gun: k => switchGun(k), aim: v => { aimOn = v; }, ads: () => ads, gunKey: () => gunKey,
   sight: () => { const gm = held[gunKey]; if (!gm || !gm.visible) return null; vcam.updateMatrixWorld(true); gm.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(gm), c = bx.getCenter(new THREE.Vector3()), p = new THREE.Vector3(c.x, bx.max.y, c.z).applyMatrix4(vcam.matrixWorldInverse).applyMatrix4(vcam.projectionMatrix); return { x: p.x * innerWidth / 2, y: p.y * innerHeight / 2, ads }; },   /* (test: where the held gun's sight point lands, in pixels from screen center) */ info: () => lookFx && lookFx.info ? lookFx.info() : null };   // (a test hook for still screenshots: read and aim only)
 // the cold is in your hands (INNOVATION.md idea 6, one rule with idea 9's sound: light makes you sharp, the dark makes you soft). No meter:
 // out of light your hands chill over about 25 s and your aim drifts, slow and smooth (never a jitter), less in the sights; the fire, a lamp,
@@ -400,7 +402,8 @@ function padStep(dt) { const gp = [...(navigator.getGamepads ? navigator.getGame
   now.forEach((v, i) => padPrev[i] = v); }
 // menus on the pad (found by the robot player: SOLO needed a mouse): the D-pad or left stick walks the visible keys in reading order, A presses
 // the selected one. The selected key gets the same thin pink edge as a mouse hover; nothing glows.
-function padMenu(edge, ax) { const keys = [...document.querySelectorAll('button')].filter(b => b.offsetParent && !b.disabled && getComputedStyle(b).visibility !== 'hidden'); if (!keys.length) return;
+function padMenu(edge, ax) { if (panel === 'codex') { const el = $('codexPanel'), ry = ax(3); if (Math.abs(ry) > 0.2) el.scrollTop += ry * 20; if (edge(1)) { $('codexBack').click(); return; } }   // (the codex scrolls with the right stick; B goes back)
+  const keys = [...document.querySelectorAll('button')].filter(b => b.offsetParent && !b.disabled && getComputedStyle(b).visibility !== 'hidden'); if (!keys.length) return;
   const st = padMenu.st = padMenu.st || { t: 0 }, y = ax(1), x = ax(0), t = performance.now(); let step = edge(13) || edge(15) ? 1 : edge(12) || edge(14) ? -1 : 0;
   if (!step && Math.max(Math.abs(x), Math.abs(y)) > 0.6 && t - st.t > 220) step = (Math.abs(y) > Math.abs(x) ? y : x) > 0 ? 1 : -1; if (step) st.t = t;
   const cur = keys.indexOf(document.activeElement);
@@ -446,7 +449,11 @@ function shoot() {
     const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z, mount ? 'mount' : gunKey) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
     const rc = G.charge ? shoot.c || 0 : 1, all = G.charge && rc >= 0.75 ? C.hitAll(g, o.x, o.y, o.z, d.x, d.y, d.z, 120) : null, h = all ? all[0] : C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), e = o.clone().addScaledVector(d, all && all.length ? all[all.length - 1].t + 30 : h ? h.t : 60); if (!end) end = e;
     fx.tracer(muzzle, e); if (lit || G.charge) burn(muzzle, o.clone().addScaledVector(d, h && !all ? h.t : C.TRACER.len));
-    for (const q of all || (h ? [h] : [])) { const qe = o.clone().addScaledVector(d, q.t); if ((q.part ? q.k.sb : q.k.sh) > 0) fx.spark(qe); else fx.ichor(qe, q.mult > 1); if (isHost()) showHit(C.damage(g, q.k, q.part, G.dmg * (0.5 + 0.5 * rc) * (q.mult > 1 ? G.head : 1), G.ap, me.id), q.mult > 1); }   /* (the rail: half damage uncharged; from 75% charge it goes through every shape in line, Cyberpunk's own bar) */
+    for (const q of all || (h ? [h] : [])) { const qe = o.clone().addScaledVector(d, q.t), shell = (q.part ? q.k.sb : q.k.sh) > 0, dmg = G.dmg * (0.5 + 0.5 * rc) * (q.mult > 1 ? G.head : 1), heavy = dmg >= q.k.max * 0.2;
+      if (shell) fx.spark(qe); const r = isHost() ? C.damage(g, q.k, q.part, dmg, G.ap, me.id) : null;
+      if (!shell) impact.ichor(qe, d, q.mult > 1, heavy, !!(r && r.kill));   // (dark ichor with crimson specks from the exact hit point, along the shot)
+      creatures.hit(q.k.id, qe, d, { head: q.mult > 1, heavy }); if (r) showHit(r, q.mult > 1, heavy); }
+    { const sm = smokeHit(g, C, o.x, o.y, o.z, d.x, d.y, d.z, h ? h.t : 60); if (sm) { impact.puff(sm, d); if (n === 0) sound.puff(); } }   // (out of every light the dark is smoke: the shot goes through, a gray puff, no blood)   /* (the rail: half damage uncharged; from 75% charge it goes through every shape in line, Cyberpunk's own bar) */
   }
   if (!isHost()) net.send({ t: 'shot', g: mount ? 'lmg' : gunKey, o: [o.x, o.y, o.z], d: ds[0], ds, c: G.charge ? +(shoot.c || 0).toFixed(2) : 1 });
   if (net) net.send({ t: 'bang', p: me.id, g: gunKey, x: +me.x.toFixed(2), y: +(me.y + 1.5).toFixed(2), z: +me.z.toFixed(2), e: [+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)] });
@@ -454,7 +461,7 @@ function shoot() {
 }
 let hitT = 0;
 let hitStop = 0;   // (hit stop, INNOVATION.md combat: the dark's own motion freezes for a few hundredths of a second when a hit lands; the world keeps running)
-function showHit(r, head) { hitStop = Math.max(hitStop, r.kill ? 0.075 : 0.035); kick = Math.min(1, kick + (r.kill ? 0.25 : 0.1)); $('hit').className = r.kill ? 'kill' : r.shell ? 'shell' : 'on'; hitT = r.kill ? 0.25 : 0.12; r.kill ? sound.kill() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.hit(head); }
+function showHit(r, head, heavy) { hitStop = Math.max(hitStop, r.kill ? 0.075 : 0.035); kick = Math.min(1, kick + (r.kill ? 0.25 : 0.1)); { const el = $('hit'); el.className = ''; void el.offsetWidth; el.className = r.kill ? 'kill' : r.shell ? 'shell' : head ? 'head' : 'on'; } hitT = r.kill ? 0.3 : 0.14; r.kill ? sound.slay() : r.broke ? sound.shatter() : r.shell ? sound.plate() : sound.impact(head, heavy); }   /* (the marker: four chevrons tick inward, heavier and crimson on a kill) */
 function tryGrow() {   // (growing the fire: your choice, and tonight the dark answers with what the new level wakes)
   if (!C.canGrow(g)) return; if (Math.hypot(me.x - g.fire.x, me.z - g.fire.z) > C.fireRadius(g.fire)) return say('Stand at the fire to grow it.');
   if (isHost()) C.grow(g, me); else net.send({ t: 'build', k: 'grow', x: 0, z: 0 }); }
@@ -585,7 +592,7 @@ function hud() {
   $('hpBar').style.width = Math.max(0, me.hp) + '%'; $('hpBar').style.opacity = (0.35 + 0.65 * Math.max(0, me.hp) / 100).toFixed(2);
   const am = ammo[gunKey]; if (mounted()) txt('ammo', `<b>${Math.round(heat * 100)}%</b><span>heat</span><small>${overheat ? 'TOO HOT, COOLING' : 'MOUNTED GUN, endless rounds'}</small>`, true); else txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.wakesOf(f.level + 1);
-  txt('prompt', !me.ember && C.inRift(me) ? riftLine() : !me.ember && C.onEarth(me) && Math.hypot(me.x - C.RIFT.x, me.z - C.RIFT.z) < 32 && me.z < C.RIFT.z ? 'THE RIFT  ·  nobody who walked in has come back' : ship && ship.near(me, g) && !me.ember ? 'F  ·  BOARD THE SHIP' : me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.near ? 'F  ·  CHECK THE REAL ODDS (free)' : camp && camp.jobNear() ? camp.jobLine() : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? (padOn ? 'RT to place, LT to put it away' : 'Left click to place, right click to cancel') : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
+  txt('prompt', !me.ember && C.inRift(me) ? riftLine() : !me.ember && C.onEarth(me) && Math.hypot(me.x - C.RIFT.x, me.z - C.RIFT.z) < 32 && me.z < C.RIFT.z ? 'THE RIFT  ·  nobody who walked in has come back' : ship && ship.near(me, g) && !me.ember ? 'F  ·  BOARD THE SHIP' : me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.near ? (padOn ? 'F  ·  CHECK THE REAL ODDS (free)' : '')   /* (one idea, one control: the clickable key carries it on a mouse; the line only on a controller) */ : camp && camp.jobNear() ? camp.jobLine() : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? (padOn ? 'RT to place, LT to put it away' : 'Left click to place, right click to cancel') : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
   { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : atStore() ? [STORE.x, g.land(STORE.x, STORE.z) + 2.6, STORE.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
     let tx = innerWidth / 2, ty = innerHeight * 0.6;   // (the tag hangs over the thing it belongs to; off screen, it waits low in the middle)
     if (at) { _v.set(...at).project(camera); if (_v.z < 1 && Math.abs(_v.x) < 0.95 && Math.abs(_v.y) < 0.95) { tx = (_v.x * 0.5 + 0.5) * innerWidth; ty = (-_v.y * 0.5 + 0.5) * innerHeight; } }
@@ -640,7 +647,7 @@ function frame(now) {
   if (models.fp_rail && !railRig) railRig = new FpRig(THREE, vcam, models.fp_rail); if (railRig) { const on = !!(gm && gm.visible && gunKey === 'rail'); if (on) gm.visible = false; railRig.update(dt, on, ads, kick, railC); }   /* (the rail sniper is only ever the Blender rig) */   /* (?fp: the Blender rifle stands in for the M4 and its arms) */
   hands.update(dt, { reloading: reloadT > 0 ? 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)) : -1, ads, kick, moving: onGround ? Math.min(1, vel.length() / 4.6) : 0, gun: gunKey });   /* (the arms: hands.js, the reload as a real hand motion; it hides itself when the gun is hidden) */
   drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) { if (ship.on && padOn) { const gp = [...navigator.getGamepads()].find(x => x && x.connected), tv = i => gp && gp.buttons[i] ? gp.buttons[i].value : 0; Object.assign(keys, { KeyW: padMove.f > 0.3, KeyS: padMove.f < -0.3, KeyA: padMove.s < -0.3, KeyD: padMove.s > 0.3, Space: tv(7) > 0.3, ShiftLeft: tv(6) > 0.3 }); frame.padShip = true; } else if (frame.padShip) { frame.padShip = false; for (const k of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft']) keys[k] = false; } ship.update(dt, keys, me, g, isHost()); }   /* (flying on the pad: left stick flies and turns, RT climbs, LT descends) */ wrist.update(dt, { era: camp && camp.era ? Math.max(0, Math.min(2, (camp.era.era | 0) - 1)) : 0,   /* (the wrist grows with the real era from era_state.json: 1 scavenged = words, 2 light = the map, 3 the dark's own = the schematic) */ a: Math.atan2(g.fire.x - me.x, -(g.fire.z - me.z)) + me.yaw, d: Math.hypot(g.fire.x - me.x, g.fire.z - me.z) }); { const k = Math.max(Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85, 0.75 * grade.uniforms.uS.value); if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ ui.frame(dt, me.hp); ui.clock(g.clock); if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
-  const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free; { const o = free ? 0.4 : Math.max(0, 1 - ads * 2.5); if (Math.abs(o - (frame.xo ?? -1)) > 0.02) { frame.xo = o; $('cross').style.opacity = o.toFixed(2); } }   /* (one reticle: dim on standby, gone by 40% into the sights, where the gun's own sight takes over) */
+  const free0 = !locked() && !panel; frame.freeT = free0 ? (frame.freeT || 0) + dt : 0; const free = free0, show = free0 && frame.freeT > 1.2 && !/[?&]shot(&|$)/.test(location.search); if (clickPlay.hidden === show) clickPlay.hidden = !show; { const o = free ? 0.4 : Math.max(0, 1 - ads * 2.5); if (Math.abs(o - (frame.xo ?? -1)) > 0.02) { frame.xo = o; $('cross').style.opacity = o.toFixed(2); } }   /* (one reticle: dim on standby, gone by 40% into the sights, where the gun's own sight takes over) */
   { const ph = C.phase(g.clock), nt = ph === 'night' ? 1 : ph === 'dusk' || ph === 'dawn' ? 0.5 : 0, onE = C.onEarth(me);   // (far sounds: each from a real shape, wreck or part out there)
     const causes = [...g.hollow.filter(k => !k.dead && !!k.earth === onE).map(k => ({ x: k.x, z: k.z, dark: true })), ...(onE ? [...((g.earth && g.earth.wrecks) || []), ...(g.parts || [])].map(w => ({ x: w.x, z: w.z })) : [])];
     const e = !me.ember && farStep(frame.far = frame.far || {}, dt, me, nt, causes); if (e) { amb.far(e.voice, e.x, g.land(e.x, e.z) + 1, e.z, frame.muf || 0); if (TEST) (window.__far = window.__far || []).push(e.voice); } }
@@ -697,6 +704,8 @@ $('openList').onclick = async () => { $('paused').hidden = true; $('list').hidde
     const n = it => K.filter(([k]) => it.checks[k]).length, done = d.items.filter(it => n(it) === 5).length;   // (five proven marks per item, his rule 2026-10-19; sim/checklist_verify.mjs erases any mark without its proof)
     $('listBody').innerHTML = `<p class="note" style="margin:0 0 10px">${done} of ${d.items.length} done. Each idea has a task and five marks; a mark only counts with its proof.</p>` + d.items.slice().sort((a, b) => n(b) - n(a)).map(it => `<div class="ck"><b class="${n(it) === 5 ? 'done' : n(it) ? 'in' : 'later'}">${n(it)} / 5</b><span>${esc(it.task)}<small>${esc(it.idea)}</small><small>serves ${({ B: 'B, the curiosity machine', C: 'C, the hangout', A: 'A, the scale' })[it.spine] || 'nothing yet'}</small><small>${K.map(([k, w]) => `<i style="font-style:normal;margin-right:10px;color:${it.checks[k] ? '#ff4fd8' : '#5a5d72'}">${it.checks[k] ? '&#10003;' : '&#9675;'} ${w}</i>`).join('')}</small></span></div>`).join(''); }
   catch (e) { $('listBody').textContent = 'The checklist could not load.'; } };
+$('openCodex').onclick = () => { $('paused').hidden = true; $('codex').hidden = false; panel = 'codex'; $('codexBody').innerHTML = codexHtml(); $('codexPanel').scrollTop = 0; };   // (the codex: what play never says out loud, read from the game's own tables)
+$('codexBack').onclick = () => { $('codex').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 $('listBack').onclick = () => { $('list').hidden = true; $('paused').hidden = false; panel = 'pause'; };
 function reloadWorld(d) {   // (the world as it was at dusk; everyone here now stays, back at the fire)
   const keepers = g.players.map(p => ({ id: p.id, name: p.name, gun: p.gun, bot: p.bot, style: p.style, homeX: p.homeX, homeZ: p.homeZ })), w = C.loadWorld(d); if (!w) return;
@@ -902,7 +911,7 @@ let immersion = null;   // (lane C: the strange sky, the dark's edge, dusk fog, 
 async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
-  if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale + ':' + e.pool }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100), pool: Math.round(g.econ.pool || 0) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => { if (window.__lf) (window.__heard = window.__heard || []).push(who + ': ' + line); wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who); }, name: () => SET.name, camera: () => camera, resupply: () => resupply(), shortAmmo: () => shortAmmo() });
+  if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale + ':' + e.pool }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100), pool: Math.round(g.econ.pool || 0) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => { if (window.__lf) (window.__heard = window.__heard || []).push(who + ': ' + line); wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who); }, name: () => SET.name, camera: () => camera, pad: () => padOn, resupply: () => resupply(), shortAmmo: () => shortAmmo() });
   if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); ship = new ShipView(scene, (x, z) => g.land(x, z)); riftView = new RiftView(scene, (x, z) => g.land(x, z)); fogBank = new FogBank(scene, (x, z) => g.land(x, z), (() => { const A = C.WALLS.half, out = []; for (let k = -A + 6; k <= A - 6; k += 12) for (const d of [-7, 7]) out.push([C.EARTH.x + k, C.EARTH.z + A + d], [C.EARTH.x + k, C.EARTH.z - A + d], [C.EARTH.x + A + d, C.EARTH.z + k], [C.EARTH.x - A + d, C.EARTH.z + k]); return out; })()); }
   if (!immersion) immersion = new Immersion(scene, { get g() { return g; }, get me() { return me; }, camera, say, fog: () => scene.fog, lit: () => C.lightAt(g, me.x, me.z) });
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, pad: () => C.PAD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
