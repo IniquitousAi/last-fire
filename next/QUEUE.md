@@ -5,7 +5,7 @@
 1. **The truck**: SHIPPED v130, a smooth code-modeled body that grows part by part. Open: wrecks are heavy (14.6k triangles each), the roof lamp housing not seen by eye yet.
 2. **The spaceship**: body shipped v128, flight works; open: fly the drop to Earth, check the cockpit view from inside.
 3. **The HUD, crosshair included**: crosshair and aim-link ring fixed v129; open: the rest of the HUD pass (gauntlet findings).
-4. **The character model**: the free soldier as the crew suit for friends and bots (helper, crew.js + mockups/crew.html), to be wired into main.js.
+4. **The character model**: SHIPPED v131 (crew.js). Open: shots from friends do not trigger their recoil yet (the bang message has no player id); hits show only from health drops.
 5. **The hands and reload**: first-person arms and a real reload (helper, hands.js + mockups/hands.html), to be wired into main.js.
 - **Next helpers, one at a time (his PC):** the full-game gauntlet with screenshots (stopped 05:55 to lighten the load; restart first), then the realism audit (REALISM.md: why it does not feel real, lighting, shadows, ground detail).
 

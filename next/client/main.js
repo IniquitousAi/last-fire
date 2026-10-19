@@ -1,32 +1,33 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=130';
-import { Ambience } from './ambience.js?v=130';
-import { Camp, BOARD } from './camp.js?v=130';
-import { Guide } from './guide.js?v=130';
-import { buildSites } from './earthsite.js?v=130';
-import { Truck } from './truck.js?v=130';
-import { ShipView } from './shipview.js?v=130';
-import { Wrist } from './wrist.js?v=130';
-import { FireCore } from './firecore.js?v=130';
+import * as C from '../core/game.js?v=131';
+import { Ambience } from './ambience.js?v=131';
+import { Camp, BOARD } from './camp.js?v=131';
+import { Guide } from './guide.js?v=131';
+import { buildSites } from './earthsite.js?v=131';
+import { Truck } from './truck.js?v=131';
+import { ShipView } from './shipview.js?v=131';
+import { Crew } from './crew.js?v=131';
+import { Wrist } from './wrist.js?v=131';
+import { FireCore } from './firecore.js?v=131';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=130';
-import { FriendVoice } from './friendvoice.js?v=130';
-import { crewFrom } from '../core/habits.js?v=130';
-import { HudLook } from './hudlook.js?v=130';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=130';
-import { sound, GUNS } from '../../src/combat.js?v=130';
-import { FX } from '../../src/fx.js?v=130';
+import { think as friendThink } from './friend.js?v=131';
+import { FriendVoice } from './friendvoice.js?v=131';
+import { crewFrom } from '../core/habits.js?v=131';
+import { HudLook } from './hudlook.js?v=131';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=131';
+import { sound, GUNS } from '../../src/combat.js?v=131';
+import { FX } from '../../src/fx.js?v=131';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 130;   // (this copy's version; ./version.json says the newest)
+const BUILD = 131;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -671,22 +672,21 @@ function drawTraces() { const ts = g.traces || [], key = ts.map(t => t.of + ':' 
   traceGeo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); }
 const dirName = (dx, dz) => ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round((((Math.atan2(-dx, -dz) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)) * 8) % 8];
 const emberMat = new THREE.MeshBasicMaterial({ color: 0xbfe0ff }), emberGeo = new THREE.OctahedronGeometry(0.25), emberViews = new Map();
+let crew = null; const crewList = [];   // (friends drawn as the crew suit: crew.js, the free soldier made into his black nanite suit, 2026-10-19)
 function drawFriends(dt) {
-  const live = new Set(), f = Math.min(1, dt * 12);
+  const live = new Set(), f = Math.min(1, dt * 12); crewList.length = 0; if (!crew && models.soldier) crew = new Crew(scene, models.soldier, { gun: models.ar });
   if (!isHost()) for (const k of g.hollow) if (k.tx !== undefined) { k.x += (k.tx - k.x) * f; k.y += (k.ty - k.y) * f; k.z += (k.tz - k.z) * f; let d = k.tyaw - k.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); k.yaw += d * f; }
   for (const p of g.players) {
     if (p === me) continue; live.add(p.id); let v = friendViews.get(p.id);
-    if (!v && models.soldier) { models.soldier.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(models.soldier.scene), o = skClone(models.soldier.scene); o.scale.setScalar(1.8 / b.getSize(new THREE.Vector3()).y); const mix = new THREE.AnimationMixer(o), A = n => { const c = models.soldier.animations.find(a => a.name.endsWith('|' + n) || a.name === n); return c ? mix.clipAction(c) : null; };
-      v = { o, mix, run: A('Run'), idle: A('Idle_Gun'), mark: Object.assign(document.createElement('div'), { className: 'mark' }), px: p.x, pz: p.z }; v.idle?.play(); scene.add(o); $('hud').append(v.mark); friendViews.set(p.id, v); }
+    if (!v && crew) { v = { mark: Object.assign(document.createElement('div'), { className: 'mark' }) }; $('hud').append(v.mark); friendViews.set(p.id, v); }
     if (!v) continue;
     if (p.tx !== undefined) { p.x += (p.tx - p.x) * f; p.y += (p.ty - p.y) * f; p.z += (p.tz - p.z) * f; }
-    const speed = Math.hypot(p.x - v.px, p.z - v.pz) / Math.max(dt, 0.001); v.px = p.x; v.pz = p.z;
-    const running = speed > 1.2; if (running !== v.running) { v.running = running; const a = running ? v.run : v.idle, b = running ? v.idle : v.run; if (a) { a.reset().fadeIn(0.15).play(); } if (b) b.fadeOut(0.15); }
-    v.mix.update(dt); v.o.visible = !p.ember; v.o.position.set(p.x, p.y, p.z); v.o.rotation.y = (p.yaw || 0) + Math.PI;
+    crewList.push({ id: p.id, x: p.x, y: p.y, z: p.z, yaw: p.yaw || 0, pitch: p.pitch || 0, hp: p.hp, fallen: !!p.ember, seat: g.ship && g.ship.pilot === p.id ? 'fly' : C.seatOf(g, p.id) >= 0 ? 'drive' : undefined });
     _v.set(p.x, p.y + 2.2, p.z).project(camera); const vis = _v.z < 1 && Math.abs(_v.x) < 1.1 && Math.abs(_v.y) < 1.1;
     v.mark.hidden = !vis; if (vis) { v.mark.style.transform = `translate(${(_v.x * 0.5 + 0.5) * innerWidth}px, ${(-_v.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -100%)`; const t = `${p.name || 'Friend'}  ${Math.round(Math.hypot(p.x - me.x, p.z - me.z))} m${p.ember ? '  EMBER: carry it to the fire' : ''}`; if (v.mark.textContent !== t) v.mark.textContent = t; v.mark.classList.toggle('down', !!p.ember); }
   }
-  for (const [id, v] of friendViews) if (!live.has(id)) { scene.remove(v.o); v.mark.remove(); friendViews.delete(id); }
+  if (crew) crew.update(dt, crewList);
+  for (const [id, v] of friendViews) if (!live.has(id)) { v.mark.remove(); friendViews.delete(id); }
   const el = new Set(); for (const e of g.embers) { el.add(e.id); let o = emberViews.get(e.id); if (!o) { o = new THREE.Mesh(emberGeo, emberMat); scene.add(o); emberViews.set(e.id, o); } o.position.set(e.x, g.land(e.x, e.z) + (e.held ? 1.3 : 0.4), e.z); o.rotation.y = performance.now() / 500; }
   for (const [id, o] of emberViews) if (!el.has(id)) { scene.remove(o); emberViews.delete(id); }
 }

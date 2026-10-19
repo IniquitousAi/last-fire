@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v131** Friends drawn as the crew suit (crew.js from the free soldier: black nanite suit, violet seams, open helmet with a magenta HUD line, layered walk/run/aim/shoot); 8.4k triangles each.
 - **v130** The truck modeled in code (truckmodel.js): each fitted part appears; 24.6k triangles, 5 draw calls; wrecks as burnt tipped trucks.
 - **v129** Small precise crosshair; the aim-link ring 132 px to 34 px.
 - **v128** The ship modeled in code (shipmodel.js): smooth flying-wing hull, canopy, four pods, thin light seams; 18.7k triangles, 6 draw calls (about 5 more in view).
