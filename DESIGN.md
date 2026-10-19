@@ -2,6 +2,10 @@
 
 For Daniel and Dalton, two players, one link. Started 2026-10-18.
 
+## The core (his words, 2026-10-18): Call of Duty Zombies, open world
+
+CoD Zombies' feel (guns with weight, aiming down sights, recoil, hit markers; points for every hit, 10 a hit, 60 a kill, 100 for a headshot kill; wall-buys and perks at the base; rounds that get harder; reviving your friend) inside an open-world survival game.
+
 ## The loop (7 Days to Die's, the part that works)
 
 Prepare by day, survive the night, recover, and every 7th night a siege. Every day is a choice of what to spend daylight on:

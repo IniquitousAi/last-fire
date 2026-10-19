@@ -46,6 +46,18 @@
   #fps { position: fixed; left: 16px; top: 34px; color: var(--meta); font-size: 11px; }
   #hurt { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 50%, #b0002280 100%); opacity: 0; transition: opacity .15s; }
   #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 14px; }
+  #hit { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; pointer-events: none; opacity: 0; }
+  #hit::before, #hit::after { content: ''; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); } #hit::after { transform: rotate(-45deg); }
+  #hit.on { opacity: .9; } #hit.kill { opacity: 1; } #hit.kill::before, #hit.kill::after { background: var(--red); } #hit.head { opacity: 1; } #hit.head::before, #hit.head::after { background: var(--pink); width: 3px; }
+  #points { position: fixed; right: 18px; bottom: 84px; font: 400 34px Orbitron, sans-serif; color: #fff; text-shadow: 0 2px 3px #000; }
+  #ammo { position: fixed; right: 18px; bottom: 18px; text-align: right; font-size: 16px; color: var(--meta); text-shadow: 0 1px 2px #000; } #ammo b { font: 400 30px Orbitron, sans-serif; color: #fff; } #ammo small { display: block; font-size: 12px; color: var(--cyan); }
+  #round { position: fixed; left: 18px; top: 52px; font: 400 54px Orbitron, sans-serif; color: var(--red); text-shadow: 0 2px 4px #000; }
+  #roundBig { position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%) scale(.9); font: 400 76px Orbitron, sans-serif; color: var(--red); letter-spacing: .1em; opacity: 0; transition: opacity .6s, transform .6s; text-shadow: 0 3px 6px #000; pointer-events: none; }
+  #roundBig.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  #prompt { position: fixed; left: 50%; top: 58%; transform: translateX(-50%); font-size: 15px; color: #fff; text-shadow: 0 1px 3px #000; white-space: nowrap; }
+  #perks { position: fixed; right: 18px; bottom: 128px; font-size: 12px; color: var(--pink); letter-spacing: .06em; text-shadow: 0 1px 2px #000; }
+  .pts { position: fixed; top: 46%; color: #ffe6f2; font-size: 16px; text-shadow: 0 1px 2px #000; pointer-events: none; animation: rise .9s ease-out forwards; }
+  @keyframes rise { to { transform: translateY(-40px); opacity: 0; } }
   #paused { position: fixed; inset: 0; display: grid; place-items: center; background: #00000088; z-index: 5; } #paused .panel { padding: 22px 26px; width: min(380px, calc(100vw - 32px)); }
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -59,16 +71,17 @@
   <button class="key" id="host">HOST A GAME<small>(you get a 4-letter code to send your friend)</small></button>
   <div class="join"><input id="code" maxlength="4" placeholder="CODE" aria-label="Room code"><button class="key" id="join">JOIN<small>(type the host's code)</small></button></div>
   <div id="menuNote"></div>
-  <div class="how"><b>Move</b> WASD, Shift to run, Space to jump. <b>Left click</b> mine or shoot, <b>right click</b> place a block or feed a fire.
-    <b>1 to 7</b> or the wheel pick what you hold. <b>C</b> crafts a campfire from 4 planks, <b>E</b> eats.<br>
-    <b>The Hollow</b> come at night. They cannot stand firelight, they take apart walls left in the dark, and a big fire calls them from far away.
-    Every 7th night is the Long Night.</div>
+  <div class="how"><b>Move</b> WASD, Shift to run, Space to jump. <b>Left click</b> shoot or mine, <b>right click</b> aim (or place a block, or feed a fire). <b>R</b> reloads, <b>F</b> buys or revives.
+    <b>1 to 8</b> or the wheel pick what you hold. <b>C</b> crafts a campfire from 4 planks, <b>E</b> eats.<br>
+    <b>Every night is a round.</b> The Hollow come, a little tougher each night: every hit earns points, and points buy guns and perks at the base.
+    They cannot stand firelight, they take apart walls left in the dark, and a big fire calls them from far away. Every 7th night is the Long Night.</div>
 </div></div>
 <div id="hud" hidden>
   <div id="cross"></div><div id="mineBar"><div id="mine"></div></div>
   <div class="bars panel"><div class="bar"><span>HEALTH</span><div><i id="hp"></i></div></div><div class="bar"><span>STAMINA</span><div><i id="st"></i></div></div><div class="bar"><span>FOOD</span><div><i id="hu"></i></div></div></div>
   <div id="slots"></div>
   <div id="clock" class="panel"></div>
+  <div id="hit"></div><div id="points">500</div><div id="ammo"></div><div id="round"></div><div id="roundBig"></div><div id="prompt"></div><div id="perks"></div>
   <div id="count"></div><div id="fire"></div><div id="msg"></div><div id="mp"></div><div id="fps"></div><div id="hurt"></div>
   <div id="loading">Building the world...</div>
 </div>
