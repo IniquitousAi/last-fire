@@ -1,16 +1,17 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=14';
-import { Camp } from './camp.js?v=14';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=14';
-import { sound, GUNS } from '../../src/combat.js?v=14';
-import { FX } from '../../src/fx.js?v=14';
+import * as C from '../core/game.js?v=15';
+import { Ambience } from './ambience.js?v=15';
+import { Camp } from './camp.js?v=15';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=15';
+import { sound, GUNS } from '../../src/combat.js?v=15';
+import { FX } from '../../src/fx.js?v=15';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 14;   // (this copy's version; ./version.json says the newest)
+const BUILD = 15;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -41,6 +42,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
 scene.add(sky);
 
 // ---------------------------------------------------------------- the game (rules) and you
+const amb = new Ambience(() => SET.vol);
 let camp = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
 const keys = {}, mouse = [false, false, false];
@@ -143,6 +145,13 @@ let marksDrawn = -1; const _m = new THREE.Matrix4(), _c = new THREE.Color();
 function drawMarks() { if (g.marks.length === marksDrawn) return; marksDrawn = g.marks.length; markMesh.count = Math.min(MARKS, g.marks.length);
   g.marks.slice(-MARKS).forEach((m, i) => { _m.makeTranslation(m.x, g.land(m.x, m.z) + 0.04, m.z); markMesh.setMatrixAt(i, _m); markMesh.setColorAt(i, _c.setHex(m.k === 'fall' ? 0xb9a8ff : 0x39407a)); });
   markMesh.instanceMatrix.needsUpdate = true; markMesh.instanceColor.needsUpdate = true; }
+// embers off the fire: a few dozen sparks rising and fading (one draw call)
+const EMB = 60, embPos = new Float32Array(EMB * 3), embVel = new Float32Array(EMB * 3), embLife = new Float32Array(EMB), embMesh = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xcfe4ff, size: 0.09, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+embMesh.geometry.setAttribute('position', new THREE.BufferAttribute(embPos, 3)); embMesh.frustumCulled = false; scene.add(embMesh);
+function embers(dt) { if (!g) return; const f = g.fire, y0 = g.land(f.x, f.z) + 0.5, on = f.fuel > 0;
+  for (let i = 0; i < EMB; i++) { if ((embLife[i] -= dt) <= 0) { if (!on) { embPos[i * 3 + 1] = -999; continue; } embLife[i] = 1.2 + Math.random() * 2.2; embPos.set([f.x + (Math.random() - 0.5) * 0.6, y0, f.z + (Math.random() - 0.5) * 0.6], i * 3); embVel.set([(Math.random() - 0.5) * 0.4, 0.9 + Math.random() * 1.4, (Math.random() - 0.5) * 0.4], i * 3); }
+    embVel[i * 3] += (Math.random() - 0.5) * dt * 1.5; embVel[i * 3 + 2] += (Math.random() - 0.5) * dt * 1.5; for (let k = 0; k < 3; k++) embPos[i * 3 + k] += embVel[i * 3 + k] * dt; }
+  embMesh.geometry.attributes.position.needsUpdate = true; }
 // motes of light: a few hundred points in one draw call; they drift toward you when you walk close
 const MOTES = 400, motePos = new Float32Array(MOTES * 3), motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xbfe0ff, size: 0.35, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
 motes.geometry.setAttribute('position', new THREE.BufferAttribute(motePos, 3)); motes.frustumCulled = false; scene.add(motes);
@@ -163,7 +172,7 @@ addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.
   if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') tryGrow(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouse.fill(false); });
-renderer.domElement.addEventListener('click', () => { if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
+renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) renderer.domElement.requestPointerLock(); });
 addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * SET.sens * (1 - ads * 0.35); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k)); });
 addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); });
 addEventListener('mouseup', e => mouse[e.button] = false);
@@ -268,6 +277,7 @@ function frame(now) {
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
   drawFriends(dt); sync(dt); if (camp) camp.update(dt);
+  amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt);
   hud();
   renderer.render(scene, camera);
   const here = C.lightAt(g, me.x, me.z); vhemi.intensity = 0.35 + 2 * here; vsun.intensity = 0.25 + here; vcam.fov = 54 - 8 * ads; vcam.updateProjectionMatrix();
