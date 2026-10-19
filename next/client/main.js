@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=118';
-import { Ambience } from './ambience.js?v=118';
-import { Camp, BOARD } from './camp.js?v=118';
-import { Guide } from './guide.js?v=118';
-import { buildSites } from './earthsite.js?v=118';
-import { Truck } from './truck.js?v=118';
-import { ShipView } from './shipview.js?v=118';
-import { Wrist } from './wrist.js?v=118';
-import { FireCore } from './firecore.js?v=118';
+import * as C from '../core/game.js?v=120';
+import { Ambience } from './ambience.js?v=120';
+import { Camp, BOARD } from './camp.js?v=120';
+import { Guide } from './guide.js?v=120';
+import { buildSites } from './earthsite.js?v=120';
+import { Truck } from './truck.js?v=120';
+import { ShipView } from './shipview.js?v=120';
+import { Wrist } from './wrist.js?v=120';
+import { FireCore } from './firecore.js?v=120';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=118';
-import { FriendVoice } from './friendvoice.js?v=118';
-import { crewFrom } from '../core/habits.js?v=118';
-import { HudLook } from './hudlook.js?v=118';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=118';
-import { sound, GUNS } from '../../src/combat.js?v=118';
-import { FX } from '../../src/fx.js?v=118';
+import { think as friendThink } from './friend.js?v=120';
+import { FriendVoice } from './friendvoice.js?v=120';
+import { crewFrom } from '../core/habits.js?v=120';
+import { HudLook } from './hudlook.js?v=120';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=120';
+import { sound, GUNS } from '../../src/combat.js?v=120';
+import { FX } from '../../src/fx.js?v=120';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 118;   // (this copy's version; ./version.json says the newest)
+const BUILD = 120;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -404,7 +404,7 @@ function hud() {
 let last = performance.now(), fpsN = 0, fpsT = 0;
 function frame(now) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
+  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 90, 0); camera.rotation.set(0.133 + Math.sin(t * 0.07) * 0.004, Math.atan2(-0.6, 0.78) + 0.029 + Math.sin(t * 0.05) * 0.005, 0, 'YXZ'); if (camera.fov !== 52) { camera.fov = 52; camera.updateProjectionMatrix(); }   /* (Earth dead center and big: the main character, his ask) */   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
@@ -682,13 +682,26 @@ function startWorld(id) { worldId = id || ('w' + Date.now().toString(36)); const
 function drawWorlds() {
   const list = worlds(); if (!list.length) { $('worlds').innerHTML = ''; return; }
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
-  const key = w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`;
+  const key = w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}  ·  fire ${w.level}  ·  ${ago(w.at)})</small></button>`;
   $('worlds').innerHTML = key(list[0]) + (list.length > 1 ? `<button class="key" id="older">OLDER WORLDS (${list.length - 1})<small>(show the rest)</small></button><div id="olderList" hidden>${list.slice(1).map(key).join('')}</div>` : '');   // (the newest first; the rest one click away)
 }
 $('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'older') { $('olderList').hidden = !$('olderList').hidden; return; } myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
 const hudLook = new HudLook(() => 'visor', () => {});   // (he kept VISOR, 2026-10-19; QUIET and GLASS stay in hudlook.js as variants, not on screen)
 
-document.body.classList.add('menu-A'); bootLog();   // (BOOT: his pick of three home screens, 2026-10-19)
+document.body.classList.add('menu-B'); bootLog(); suitMenu();   // (THE SUIT: his pick of three looks, 2026-10-19)
+// the suit's readings, all from this browser's own record (never a made-up number). The odds: the chance the camp holds the next 100 nights,
+// each night's chance taken from your record with one held and one lost assumed up front (so a new suit starts at one half, and 100 nights of
+// one half is a decimal with too many zeros: the lore's number). Every night you hold pulls it up.
+function suitMenu() {
+  $('buildNo').textContent = BUILD; const w = worlds()[0]; let d = null; try { d = w && JSON.parse(localStorage.getItem('lastfire2-w-' + w.id) || 'null'); } catch (e) {}
+  const S = (d && d.stats) || {}, played = Math.max(0, ((d && d.night) || 1) - 1), held = Math.max(0, played - (S.lostNights || 0)), p = (held + 1) / (played + 2), pct = Math.pow(p, 100) * 100;
+  const z = pct >= 1 ? 0 : Math.floor(-Math.log10(pct)), sig = (pct * Math.pow(10, z + 2)).toFixed(0);
+  $('odds').innerHTML = pct >= 0.01 ? pct.toFixed(2) + '<small>%</small>' : z <= 9 ? '0.' + '0'.repeat(z) + sig + '<small>%</small>' : '0.000000000' + String.fromCharCode(8230) + sig + '<small>%</small>';
+  $('oddsFine').innerHTML = `The posted board says <b>81%</b>. Footnote 4: figures may be rounded toward comfort. This one is not${z > 9 ? `: <b>${z}</b> zeros after the point` : ''}, from your record: <b>${held}</b> of <b>${played}</b> nights held.`;
+  const sites = d && d.sites ? Object.entries(d.sites).sort((a, b) => b[1].trips - a[1].trips) : [], fav = sites[0] && sites[0][1].trips >= 2 ? sites[0] : null;
+  $('you').innerHTML = `<div class="lbl">From your nights</div>` + (played && S.bestKills ? `<div class="mem">Your best night: night ${S.bestNight}.<span class="num">${S.bestKills}<small>BURNED</small></span>${held === played ? 'Not one night lost.' : `The dark took ${played - held} of ${played} nights. It keeps count too.`}<span class="also">${fav ? `You always go for ${C.SITES[fav[0]].name}. <b>${fav[1].trips}</b> trips.` : `Fire level <b>${w.level}</b>. <b>${w.nodes}</b> lights built.`}</span></div>`
+    : `<div class="sell">The board says 81%. <span>It is lying.</span> Go check.</div><div class="mem"><span class="also">One fire on the Moon. Earth went dark. The real number has too many zeros.</span></div>`);
+}
 if (new URLSearchParams(location.search).has('sky')) { document.body.classList.add('sky-only'); document.head.append(Object.assign(document.createElement('style'), { textContent: 'body.sky-only #menu, body.sky-only #bootLog, body.sky-only #ver { display: none !important; }' })); }   /* (?sky: just the live sky and Earth, for UI mockups to sit on) */
 function bootLog() {   // (A: the visor's boot, typed once: real numbers from this browser where there are any)
   const lines = ['SUIT 07  ·  VISOR ONLINE', `WORLDS ON THIS SUIT  ·  ${worlds().length}`, 'MOON CAMP LINK  ·  OK', 'EARTH  ·  SIGNAL LOST', 'THE DARK  ·  NO SHAPE ON RECORD', `BUILD  ·  ${BUILD}`]; let i = 0, out = '';

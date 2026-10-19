@@ -155,3 +155,5 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - Claude's note: v23's light rule already closes half of it (in the dark nothing can be killed). The proposal: warmth IS the light you carry (one meter, not three).
 
 - 2026-10-19 (Daniel): cockpit HUD look: A HELMET. Ship model: generate one (TRELLIS.2), download approved.
+
+- 2026-10-19 (Daniel): UI look: B, THE SUIT (armored visor, status chips, heavy odds on a dark plate, cut-corner keys). Build it live.

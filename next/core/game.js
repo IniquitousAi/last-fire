@@ -236,7 +236,8 @@ function die(g, k, by) {   // (a Hollow bursts into motes of light where it fell
 // ---------------------------------------------------------------- one step of the world (the host runs this; robots and the daemon run it headless)
 export function step(g, dt) {
   g.t += dt; const prev = g.clock; if (g.tracers && g.tracers.length) { for (const t of g.tracers) t.t -= dt; g.tracers = g.tracers.filter(t => t.t > 0); } if (g.flares && g.flares.length) { for (const f of g.flares) f.t -= dt; g.flares = g.flares.filter(f => f.t > 0); } g.clock += dt / DAY;
-  if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); campTrips(g); }
+  if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); campTrips(g);
+    { const S = g.stats, k = (S.kills || 0) - (S.killsMark || 0); S.killsMark = S.kills || 0; if (k > (S.bestKills || 0)) { S.bestKills = k; S.bestNight = g.night - 1; } } }   /* (the menu remembers your best night: his rule, it learned from you) */
   if (prev < 0.97 && g.clock >= 0.97) { g.history.push(summarize(g.rec, g.night)); if (g.history.length > 30) g.history.shift(); g.rec = newRecord(); g.log.push([+g.t.toFixed(2), 'learned-night', g.night]); }   // (at the ebb, the night is written down)
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
   const f = g.fire, ph = phase(g.clock); f.fuel = Math.max(0, f.fuel - dt * (ph === 'night' ? 1 : 0.4));   // (the fire eats its fuel fast at night: a crew that never leaves its circle starves it)
@@ -341,7 +342,7 @@ export function hurt(g, p, n, from) {
     const killer = g.hollow.filter(k => !k.dead && k.kind === from).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];   // (your Ember shows how you fell, INNOVATION.md: the last 10 s and what came for you)
     (g.traces = g.traces || []).push({ of: p.id, pts: (p.trail || []).slice(), x: p.x, z: p.z, cause: from || 'the dark', fx: killer ? killer.x : p.x, fz: killer ? killer.z : p.z, t: 120 }); if (g.traces.length > 6) g.traces.shift(); p.trail = [];
     p.carried = 0; g.embers.push({ id: g.nextId++, of: p.id, x: p.x, z: p.z, held: null, t: 0, cause: from || 'the dark' }); mark(g, 'fall', p.x, p.z, p.name); g.log.push([+g.t.toFixed(2), 'fall', p.id, from || '']);
-    if (g.players.every(q => q.ember)) {   // (everyone down: the dark took what it came for. The night is lost, what you carried lies where you fell, and it draws back to dawn; the fire keeps every level)
+    if (g.players.every(q => q.ember)) { g.stats.lostNights = (g.stats.lostNights || 0) + 1;   // (everyone down: the dark took what it came for. The night is lost, what you carried lies where you fell, and it draws back to dawn; the fire keeps every level)
       for (const q of g.players) revive(g, g.embers.find(e => e.of === q.id) || { of: q.id }); g.hollow = []; if (g.earth) endTrip(g); if (g.clock > 0.5 && g.clock < 0.97) g.clock = 0.97;   /* (a trip that ends in everyone falling is still recorded and cleared) */ g.log.push([+g.t.toFixed(2), 'allfell', g.night]); }
   }
 }
