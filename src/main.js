@@ -1,11 +1,11 @@
 // Last Fire: the game. Up to four players, light, day and night (each night a round), building, crafting, the Hollow, guns and drops.
 import * as THREE from 'three';
-import { World, B, HARD, DROP, SIZE } from './world.js?v=7';
-import { Hollow, KINDS } from './hollow.js?v=7';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=7';
-import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=7';
-import { FX } from './fx.js?v=7';
-import { modelsReady, model, gunModel } from './models.js?v=7';
+import { World, B, HARD, DROP, SIZE } from './world.js?v=8';
+import { Hollow, KINDS } from './hollow.js?v=8';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=8';
+import { GUNS, PERKS, POINTS, DROPS, sound, makeStation } from './combat.js?v=8';
+import { FX } from './fx.js?v=8';
+import { modelsReady, model, gunModel } from './models.js?v=8';
 
 const $ = id => document.getElementById(id);
 const DAY = 360, NIGHT_AT = 0.62, LONG_EVERY = 7;   // (a day is 6 minutes; night starts 62% in; every 7th night is the Long Night)
@@ -48,7 +48,7 @@ float vn(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
 
 // ---------------------------------------------------------------- state
 let world = null, hollow = new Hollow(scene), fx = new FX(scene), net = null, mode = 'menu', seed = 0, panel = null;
-const me = { pid: 0, name: '', x: 80, y: 30, z: 80, vy: 0, yaw: 0, pitch: 0, hp: 100, stamina: 100, hunger: 100, dead: false, down: false, isPlayer: true, onGround: false, points: 500, perks: new Set(), guns: ['pistol', null], ammo: { pistol: { mag: 8, res: 64 } }, kills: 0, heads: 0 };
+const me = { pid: 0, name: '', x: 80, y: 30, z: 80, vy: 0, yaw: 0, pitch: 0, hp: 100, stamina: 100, hunger: 100, dead: false, down: false, isPlayer: true, onGround: false, points: 500, perks: new Set(), guns: ['pistol', null], ammo: { pistol: { mag: 8, res: 64 } }, kills: 0, heads: 0, forged: new Set() };
 const others = new Map();   // (player number -> what we know of that friend)
 const inv = { pickaxe: 1, torch: 1, planks: 6, cobble: 0, dirt: 0, sand: 0, berries: 3, campfire: 1, lantern: 0, turret: 0 };
 const SLOTS = ['gun1', 'gun2', 'pickaxe', 'torch', 'planks', 'cobble', 'campfire', 'lantern', 'turret', 'berries'];   // (keys 1 to 9, then 0)
@@ -157,11 +157,11 @@ function shoot() {
     const d = lookDir(); d.x += (Math.random() - 0.5) * spread * 2; d.y += (Math.random() - 0.5) * spread * 2; d.z += (Math.random() - 0.5) * spread * 2; d.normalize();
     const wall = world.ray(o, d, 80), max = wall ? wall.dist : 80, h = hollow.hit(o, d, max), end = o.clone().addScaledVector(d, h ? h.t : max);
     fx.tracer(m0, end); if (h) { if ((h.part ? h.k.ab : h.k.ah) > 0) fx.spark(end); else fx.ichor(end, h.mult > 1); } else if (wall) fx.spark(end);   // (armor throws sparks; flesh comes apart as light)
-    if (!net || net.host) { const r = applyShot(o, d, max, key, me.pid); if (r) award(r); }
+    if (!net || net.host) { const r = applyShot(o, d, max, key, me.pid, me.forged.has(key)); if (r) award(r); }
     else pellets.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
     if (ends.length < 8) ends.push([+end.x.toFixed(2), +end.y.toFixed(2), +end.z.toFixed(2)]);
   }
-  if (net && !net.host) net.send({ t: 'shot', g: key, o: [o.x, o.y, o.z], p: pellets });
+  if (net && !net.host) net.send({ t: 'shot', g: key, u: me.forged.has(key), o: [o.x, o.y, o.z], p: pellets });
   if (net) net.send({ t: 'bang', g: key, m: [+m0.x.toFixed(2), +m0.y.toFixed(2), +m0.z.toFixed(2)], e: ends });
   kick = Math.min(1, kick + 0.5 + G.recoil * 6);
   me.pitch = Math.min(1.55, me.pitch + G.recoil * 0.4 * (ads > 0.5 ? 0.6 : 1)); me.yaw += (Math.random() - 0.5) * G.recoil * 0.3;   // (some of the kick stays: you pull the gun down, like the real thing)
@@ -210,13 +210,13 @@ function drawTurrets() {
 }
 function reload() {
   const key = gunIn(SLOTS[slot]); if (!key || reloadT > 0) return; const G = GUNS[key], am = me.ammo[key];
-  if (am.mag >= G.mag || am.res <= 0) return; reloadT = G.reload * (me.perks.has('quick') ? 0.5 : 1); me.reloadOf = reloadT; sound.magOut(); setTimeout(() => sound.magIn(), reloadT * 700);
+  if (am.mag >= magOf(key) || am.res <= 0) return; reloadT = G.reload * (me.perks.has('quick') ? 0.5 : 1); me.reloadOf = reloadT; sound.magOut(); setTimeout(() => sound.magIn(), reloadT * 700);
 }
-function finishReload() { const key = gunIn(SLOTS[slot]); if (!key) return; const G = GUNS[key], am = me.ammo[key], n = Math.min(G.mag - am.mag, am.res); am.mag += n; am.res -= n; }
+function finishReload() { const key = gunIn(SLOTS[slot]); if (!key) return; const am = me.ammo[key], n = Math.min(magOf(key) - am.mag, am.res); am.mag += n; am.res -= n; }
 const SPECIAL = { sentry: { dmg: 26, head: 1.5, ap: 0.35 } };   // (the sentry's rounds: not a gun anyone holds)
-function applyShot(o, d, max, key, shooter) {   // the host's word on a shot: what it hit, whether it killed; a kill may leave a drop
+function applyShot(o, d, max, key, shooter, forged = false) {   // the host's word on a shot: what it hit, whether it killed; a kill may leave a drop
   const h = hollow.hit(o, d, max); if (!h) return null;
-  const head = h.mult > 1, G = GUNS[key] || SPECIAL[key], hr = buffs.oneshot > 0 ? (h.k.hp = 0, { armor: false, broke: false }) : hollow.damage(h.k, h.part, G.dmg * (head ? G.head : 1), G.ap); h.k.x += d.x * 0.25; h.k.z += d.z * 0.25;
+  const head = h.mult > 1, G = GUNS[key] || SPECIAL[key], hr = buffs.oneshot > 0 ? (h.k.hp = 0, { armor: false, broke: false }) : hollow.damage(h.k, h.part, G.dmg * (head ? G.head : 1) * (forged ? 2 : 1), Math.min(0.95, G.ap + (forged ? 0.25 : 0))); h.k.x += d.x * 0.25; h.k.z += d.z * 0.25;
   const kill = h.k.hp <= 0;
   if (kill) { if (Math.random() < 1 / 40 && drops.length < 3) spawnDrop(h.k.x, h.k.y, h.k.z); killFeed(shooter, head, h.k.kind); if (net) net.send({ t: 'kf', w: shooter, h: head, k: h.k.kind }); }
   return { head, kill, armor: hr.armor, broke: hr.broke };
@@ -234,10 +234,15 @@ function killFeed(pid, head, kind) {
   e.append(who, document.createTextNode(head ? '  headshot  ' : '  killed  '), Object.assign(document.createElement('i'), { textContent: { hollow: 'a Hollow', shade: 'a Runner', warden: 'a Giant', snuffer: 'a Shard' }[kind] || 'a Hollow' }));
   const f = $('feed'); f.prepend(e); while (f.children.length > 5) f.lastChild.remove(); setTimeout(() => e.remove(), 4500);
 }
-function giveGun(k) { const have = me.guns.indexOf(k); const at = have >= 0 ? have : me.guns[1] === null ? 1 : (SLOTS[slot] === 'gun2' ? 1 : 0); me.guns[at] = k; me.ammo[k] = { mag: GUNS[k].mag, res: GUNS[k].reserve }; slot = at; sound.buy(); }   // (a new gun takes the empty hand, or the one you hold)
+function magOf(g) { return Math.round(GUNS[g].mag * (me.forged.has(g) ? 1.5 : 1)); }
+function giveGun(k) { const have = me.guns.indexOf(k); const at = have >= 0 ? have : me.guns[1] === null ? 1 : (SLOTS[slot] === 'gun2' ? 1 : 0); me.guns[at] = k; me.ammo[k] = { mag: magOf(k), res: Math.round(GUNS[k].reserve * (me.forged.has(k) ? 1.5 : 1)) }; slot = at; sound.buy(); }   // (a new gun takes the empty hand, or the one you hold)
 let boxT = 0;
 function interact() {   // F: buy what you look at
   if (!prompt || !prompt.station) return; const st = prompt.station.userData;
+  if (st.kind === 'forge') {   // (the Forge: 5000 makes the gun in your hands a Mark II: double damage, half again the rounds, pierces armor better)
+    const g = gunIn(SLOTS[slot]); if (!g) return say('Hold the gun you want forged.'); if (me.forged.has(g)) return say(`Your ${GUNS[g].name} is already a Mark II.`);
+    if (me.points < 5000) return say('Not enough points.'); me.points -= 5000; me.forged.add(g); me.ammo[g] = { mag: magOf(g), res: Math.round(GUNS[g].reserve * 1.5) }; sound.drop(); say(`${GUNS[g].name} MARK II: double damage, more rounds, cuts through armor.`, 4); return;
+  }
   if (st.kind === 'box') {   // (the mystery box: 950 for a random gun after a short roll; the minigun is the rare one)
     if (boxT > 0) return; if (me.points < 950) return say('Not enough points.'); me.points -= 950; boxT = 2.4; sound.buy();
     const roll = Math.random(), pool = ['smg', 'shotgun', 'ar', 'rifle', 'lmg'], got = roll < 0.08 ? 'minigun' : pool[Math.floor(Math.random() * pool.length)];
@@ -257,7 +262,7 @@ function interact() {   // F: buy what you look at
 }
 function placeStations(f) {   // the base: wall-buys and perk machines in a ring round the first fire (the same for every player: built from the fire)
   if (stations.length || !world) return;
-  const ring = [['gun', 'smg'], ['gun', 'shotgun'], ['gun', 'ar'], ['perk', 'iron'], ['gun', 'rifle'], ['kit', 'turret'], ['gun', 'lmg'], ['perk', 'quick'], ['gun', 'minigun'], ['perk', 'fleet'], ['box', 'box']];
+  const ring = [['gun', 'smg'], ['gun', 'shotgun'], ['gun', 'ar'], ['perk', 'iron'], ['gun', 'rifle'], ['kit', 'turret'], ['gun', 'lmg'], ['perk', 'quick'], ['gun', 'minigun'], ['perk', 'fleet'], ['box', 'box'], ['forge', 'forge']];
   ring.forEach(([kind, key], i) => { const a = i / ring.length * Math.PI * 2, x = f.x + Math.cos(a) * 6, z = f.z + Math.sin(a) * 6, y = world.height(Math.floor(x), Math.floor(z));
     const st = makeStation(kind, key, x, y, z, Math.atan2(f.x - x, f.z - z)); scene.add(st); stations.push(st); });
 }
@@ -291,7 +296,7 @@ function takeDrop(id, pid) {   // (host only: checks the player really stands on
 function boon(k, by) {
   if (k === 'empty') return say('Your sentry is out of rounds.');
   if (!DROPS[k]) return; sound.drop(); say(`${nameOf(by) === 'You' ? 'You' : nameOf(by)} got ${DROPS[k].name}: ${DROPS[k].says}.`, 4);
-  if (k === 'resupply') for (const g of me.guns) if (g) me.ammo[g] = { mag: GUNS[g].mag, res: GUNS[g].reserve };
+  if (k === 'resupply') for (const g of me.guns) if (g) me.ammo[g] = { mag: magOf(g), res: Math.round(GUNS[g].reserve * (me.forged.has(g) ? 1.5 : 1)) };
   if (k === 'double') buffs.double = 30;
   if (k === 'oneshot') buffs.oneshot = 30;
   if (k === 'flare') { me.points += 400; floatPoints('+400'); if (!net || net.host) for (const z of hollow.z) z.hp = 0; }
@@ -421,7 +426,7 @@ function onNet(m, from) {
     const p = others.get(from); if (!p || p.dead || p.down || !GUNS[m.g] || (GUNS[m.g].melee && !bucket(p, 'knifeB', 3, 3)) || !Array.isArray(m.o) || !Array.isArray(m.p) || !near(p, m.o[0], m.o[1], m.o[2], 3.5)) return;
     const n = Math.min(m.p.length, GUNS[m.g].pellets || 1); if (!bucket(p, 'ammoB', 22, 30, n)) return;
     const o = new THREE.Vector3(m.o[0], m.o[1], m.o[2]), out = [];
-    for (const d of m.p.slice(0, n)) { if (!Array.isArray(d) || d.length !== 3 || !d.every(fin)) continue; const v = new THREE.Vector3(...d); if (v.lengthSq() < 0.5) continue; v.normalize(); const range = GUNS[m.g].melee ? 2.6 : 80, w = world.ray(o, v, range), r = applyShot(o, v, w ? w.dist : range, m.g, from); if (r) out.push(r); }
+    for (const d of m.p.slice(0, n)) { if (!Array.isArray(d) || d.length !== 3 || !d.every(fin)) continue; const v = new THREE.Vector3(...d); if (v.lengthSq() < 0.5) continue; v.normalize(); const range = GUNS[m.g].melee ? 2.6 : 80, w = world.ray(o, v, range), r = applyShot(o, v, w ? w.dist : range, m.g, from, m.u === true); if (r) out.push(r); }
     if (out.length) net.sendTo(from, { t: 'pts', r: out }); return;
   }
   if (m.t === 'pts' && !H && from === 0) { for (const r of (Array.isArray(m.r) ? m.r.slice(0, 8) : [])) if (r && typeof r === 'object') award({ head: !!r.head, kill: !!r.kill, armor: !!r.armor, broke: !!r.broke, tur: !!r.tur }); return; }
@@ -585,7 +590,7 @@ function hud(L, dt) {
   const sig = SLOTS.map((s, i) => `${i === slot}${s.startsWith('gun') ? gunIn(s) : inv[s]}`).join();
   if (last$.slots !== sig) { last$.slots = sig; $('slots').innerHTML = SLOTS.map((s, i) => { const g = s.startsWith('gun') ? gunIn(s) : null, n = s.startsWith('gun') || ['pickaxe', 'torch'].includes(s) ? '' : inv[s]; return `<div class="slot${i === slot ? ' on' : ''}${n === 0 ? ' none' : ''}" data-i="${i}"><b>${i + 1}</b><span>${s.startsWith('gun') ? (g ? GUNS[g].name : 'empty') : SLOT_NAME[s]}</span><i>${n}</i></div>`; }).join(''); }
   const gk = gunIn(SLOTS[slot]), am = gk && me.ammo[gk];
-  html('ammo', gk ? `<b class="${am.mag <= Math.ceil(GUNS[gk].mag * 0.25) ? 'low' : ''}">${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gk].name}</small>` : '');
+  html('ammo', gk ? `<b class="${am.mag <= Math.ceil(magOf(gk) * 0.25) ? 'low' : ''}">${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gk].name}${me.forged.has(gk) ? ' MARK II' : ''}</small>` : '');
   txt('warn', gk === 'minigun' && spin < GUNS.minigun.spin && spin > 0 ? 'SPINNING UP' : gk && reloadT <= 0 ? (am.mag === 0 && am.res === 0 ? 'NO AMMO' : am.mag <= Math.ceil(GUNS[gk].mag * 0.25) && am.res > 0 ? 'RELOAD (R)' : '') : reloadT > 0 ? 'RELOADING' : '');
   txt('prompt', prompt ? prompt.text : (me.down ? `Down: ${Math.ceil(me.bleed)} s until you bleed out` : ''));
   txt('perks', [...me.perks].map(k => PERKS[k].name).join('   '));
