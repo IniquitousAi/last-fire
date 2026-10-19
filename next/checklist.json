@@ -1,32 +1,180 @@
 {
  "about": "Every idea Daniel gave for Last Fire, and where it stands. The game shows this file (Esc, CHECKLIST). done = in the game and tested; in = in the game, not yet proven; next = being built now; later = agreed, not started; talk = still being discussed with him.",
  "items": [
-  { "s": "done", "idea": "Hardcore, fun, grown-up; never Minecraft or kid-like (no block world)", "where": "piece 1: smooth endless land" },
-  { "s": "done", "idea": "Feels brand new: no mechanic copied from another game, only the feelings", "where": "the design: light as currency, the network, Embers" },
-  { "s": "done", "idea": "Real models for every gun, item and character (CC0)", "where": "Quaternius and Kenney, assets/CREDITS.txt" },
-  { "s": "done", "idea": "Nothing bobs", "where": "camera and wraiths hold their height" },
-  { "s": "done", "idea": "Hear your own and your friends' gunshots, from where they are", "where": "piece 2" },
-  { "s": "done", "idea": "Smooth, clear, centered sights on every gun", "where": "guns drawn in their own pass" },
-  { "s": "done", "idea": "Multiplayer from a link, up to 4, safe from strangers", "where": "piece 2: host checks every message, 6-letter codes, lock" },
-  { "s": "done", "idea": "Endless world, drop in anytime", "where": "piece 1 and 3" },
-  { "s": "done", "idea": "The world remembers everything", "where": "piece 3: saves, scars, light left lying out there" },
-  { "s": "done", "idea": "No babysitting, logic wins", "where": "a lost night spills your light and ends; nothing is reset" },
-  { "s": "done", "idea": "Deaths that feel fair (no unavoidable death)", "where": "robots: a perfect crew survives 12 of 12 nights" },
-  { "s": "next", "idea": "Growing the fire is your choice (you decide when to provoke the dark)", "where": "GROW at the fire" },
-  { "s": "next", "idea": "Dev tools: restart, skip ahead, test, keep playing (like Era 1 and 2)", "where": "Esc, DEV" },
-  { "s": "next", "idea": "A checklist I can see, so no idea gets lost", "where": "this list, in the game" },
-  { "s": "in", "idea": "The dark learns you, unsettling, never says what it learned", "where": "piece 4: recorded habits, robots that play like you; certification refuses what it cannot prove (not live yet)" },
-  { "s": "in", "idea": "Only adapts when you get too comfortable", "where": "two calm nights with no falls" },
-  { "s": "later", "idea": "One mind for every world (your daemon learns for Dalton's worlds too, free)", "where": "piece 4b" },
-  { "s": "later", "idea": "Clever engineering: mirrors, lenses, prisms that bend and focus light", "where": "piece 5" },
-  { "s": "later", "idea": "Infinite progression, scaled by logic; grinders and casuals both fine", "where": "tuned by the robots" },
-  { "s": "later", "idea": "Movement that grows (more options as you go)", "where": "" },
-  { "s": "later", "idea": "Awe: cosmic, unknowable; the sky and the far land get stranger", "where": "the ringed disc is the first piece" },
-  { "s": "talk", "idea": "Hyper-awareness", "where": "" },
-  { "s": "talk", "idea": "A villain who is iniquitous by nature", "where": "" },
-  { "s": "talk", "idea": "Random elements, dry dark humor, lots of mayhem", "where": "" },
-  { "s": "talk", "idea": "Hanging out with the guys, yet surviving alone in the dark", "where": "" },
-  { "s": "talk", "idea": "Maze Runner vibe, but not trapped: the maze is the obvious lore, so dark that people want to learn before entering", "where": "" },
-  { "s": "talk", "idea": "Who you are", "where": "undecided" }
+  {
+   "s": "done",
+   "idea": "Hardcore, fun, grown-up; never Minecraft or kid-like (no block world)",
+   "where": "piece 1: smooth endless land"
+  },
+  {
+   "s": "done",
+   "idea": "Feels brand new: no mechanic copied from another game, only the feelings",
+   "where": "the design: light as currency, the network, Embers"
+  },
+  {
+   "s": "done",
+   "idea": "Real models for every gun, item and character (CC0)",
+   "where": "Quaternius and Kenney, assets/CREDITS.txt"
+  },
+  {
+   "s": "done",
+   "idea": "Nothing bobs",
+   "where": "camera and wraiths hold their height"
+  },
+  {
+   "s": "done",
+   "idea": "Hear your own and your friends' gunshots, from where they are",
+   "where": "piece 2"
+  },
+  {
+   "s": "done",
+   "idea": "Smooth, clear, centered sights on every gun",
+   "where": "guns drawn in their own pass"
+  },
+  {
+   "s": "done",
+   "idea": "Multiplayer from a link, up to 4, safe from strangers",
+   "where": "piece 2: host checks every message, 6-letter codes, lock"
+  },
+  {
+   "s": "done",
+   "idea": "Endless world, drop in anytime",
+   "where": "piece 1 and 3"
+  },
+  {
+   "s": "done",
+   "idea": "The world remembers everything",
+   "where": "piece 3: saves, scars, light left lying out there"
+  },
+  {
+   "s": "done",
+   "idea": "No babysitting, logic wins",
+   "where": "a lost night spills your light and ends; nothing is reset"
+  },
+  {
+   "s": "done",
+   "idea": "Deaths that feel fair (no unavoidable death)",
+   "where": "robots: a perfect crew survives 12 of 12 nights"
+  },
+  {
+   "s": "in",
+   "idea": "Growing the fire is your choice (you decide when to provoke the dark)",
+   "where": "GROW at the fire"
+  },
+  {
+   "s": "in",
+   "idea": "Dev tools: restart, skip ahead, test, keep playing (like Era 1 and 2)",
+   "where": "Esc, DEV"
+  },
+  {
+   "s": "in",
+   "idea": "A checklist I can see, so no idea gets lost",
+   "where": "this list, in the game"
+  },
+  {
+   "s": "in",
+   "idea": "The dark learns you, unsettling, never says what it learned",
+   "where": "piece 4: recorded habits, robots that play like you; certification refuses what it cannot prove (not live yet)"
+  },
+  {
+   "s": "in",
+   "idea": "Only adapts when you get too comfortable",
+   "where": "two calm nights with no falls"
+  },
+  {
+   "s": "later",
+   "idea": "One mind for every world (your daemon learns for Dalton's worlds too, free)",
+   "where": "piece 4b"
+  },
+  {
+   "s": "later",
+   "idea": "Clever engineering: mirrors, lenses, prisms that bend and focus light",
+   "where": "piece 5"
+  },
+  {
+   "s": "later",
+   "idea": "Infinite progression, scaled by logic; grinders and casuals both fine",
+   "where": "tuned by the robots"
+  },
+  {
+   "s": "later",
+   "idea": "Movement that grows (more options as you go)",
+   "where": ""
+  },
+  {
+   "s": "later",
+   "idea": "Awe: cosmic, unknowable; the sky and the far land get stranger",
+   "where": "the ringed disc is the first piece"
+  },
+  {
+   "s": "talk",
+   "idea": "Hyper-awareness",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "A villain who is iniquitous by nature",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "Random elements, dry dark humor, lots of mayhem",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "Hanging out with the guys, yet surviving alone in the dark",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "Maze Runner vibe, but not trapped: the maze is the obvious lore, so dark that people want to learn before entering",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "Who you are",
+   "where": "undecided"
+  },
+  {
+   "s": "talk",
+   "idea": "The origin is honestly unknown, like humanity's own",
+   "where": "proposed: everyone remembers the same ordinary Tuesday, then the dark"
+  },
+  {
+   "s": "talk",
+   "idea": "Trapped by need, not walls: a community bound to the fire, punishing anyone who doesn't contribute",
+   "where": "his answer: the camp itself keeps the rules (people of the camp, not players), so it works alone or with friends. proposed: the fire is a commons; free riders are cut out of its light"
+  },
+  {
+   "s": "talk",
+   "idea": "Light against dark (good vs evil frame), made interesting by the truth",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "The dark doesn't care: you're meaningless on its scale (entropy, not malice)",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "The game tells the truth: statistically, winning is never on your side",
+   "where": "proposed: decay, diminishing returns, no forever-win; the score is how long you hold"
+  },
+  {
+   "s": "talk",
+   "idea": "Teaches entropy, diminishing returns, scale, existential dread, logic, suspense, psychological payoff",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "Feeling real matters more than being real",
+   "where": ""
+  },
+  {
+   "s": "talk",
+   "idea": "The mirror realm: the most stereotypical day on Earth, flipped only where it's cool",
+   "where": "proposed: commute into the dark, shifts at the fire, a school for the maze, smiling signs"
+  }
  ]
 }
