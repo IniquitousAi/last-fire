@@ -157,3 +157,14 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - 2026-10-19 (Daniel): cockpit HUD look: A HELMET. Ship model: generate one (TRELLIS.2), download approved.
 
 - 2026-10-19 (Daniel): UI look: B, THE SUIT (armored visor, status chips, heavy odds on a dark plate, cut-corner keys). Build it live.
+
+## The skeleton and Earth (his words, 2026-10-19 about 10:30, summarized closely)
+- **Why we never ship:** "We never had a skeleton. We never build skeletons. We just kind of vibe code like in the middle, and then we go
+  backwards and we go forwards, and we never actually get to ship the product to ourselves because we're constantly making tweaks because
+  we're perfectionists." So: build the entire mock-up first; he runs through it and says yes or no to what he sees.
+- **What the game is for:** it scales infinitely; "the whole entire point of the game is to mathematically satisfy you until you die in real
+  life." It evolves from true numbers found by playing and learning from him (mostly him). It stays a super simple browser game his friends
+  can play with him, but it is for him. Simulators pick the mathematically correct choice in building the game itself; he says yes or no.
+- **Earth:** a normal day and night cycle (we never talked about lighting since we started on the Moon). A clean Earth map: Maze Runner
+  turned to life with black walls instead of white, walls you can tell were white once but got consumed by the dark. Outside the walls,
+  dark gray, fog mixed with dark in most spots, but some green, uncorrupted spots remain. Lore needs discussing.
