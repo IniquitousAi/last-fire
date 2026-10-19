@@ -1,0 +1,2 @@
+PASS  the in-game checklist shows what every item serves  (69 rows say serves B, C or A)
+PASS  no errors in the page

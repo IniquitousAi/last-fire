@@ -1,6 +1,6 @@
 // The Simulator page (queue 51): the game's own robot tests, run in the browser, rows filling in live.
 import { play, STYLES } from './sim/robots.mjs';
-import { BASE_TACTIC, newGame, addPlayer, step, heightAt } from './core/game.js';
+import { BASE_TACTIC } from './core/game.js';
 import { trip } from './sim/drop.mjs';
 import { campaign } from './sim/truckbuild.mjs';
 import { play as cplay } from './sim/certify.mjs';
@@ -29,15 +29,6 @@ const TESTS = [
     cols: ['seed', 'Daniel alone, worst', 'Dalton after', 'pool reached the fire', 'fair'], steps: 3,
     async *run() { for (const seed of [1, 2, 3]) { await wait(); const log = campWeek(seed), solo = log.filter(d => d.day >= 2 && d.day <= 4), worst = Math.max(...solo.map(d => d.danielBehind)), poolOk = log.some(d => d.poolMax > 0) && log[log.length - 1].pool === 0, last = log[log.length - 1];
       yield [seed, worst.toFixed(2) + ' days behind', `standing ${last.dalton >= 0 ? '+' : ''}${last.dalton}`, poolOk ? 'yes' : 'no', worst <= 1 && poolOk && last.daltonBehind <= 1]; } } },
-  { id: 'why', name: 'WHY IS THIS NOT GOOD', asks: 'One number for every system: what it measures right now, the line it has to meet, and how far off it is. "How far off" is the answer to "why is this not good": 0 means it is not the problem. Small runs, so it takes a few seconds; the long tests above are the full versions.',
-    cols: ['system', 'measured now', 'the line', 'how far off', 'in line'], steps: 6,
-    async *run() { const off = (v, lo, hi) => v < lo ? lo - v : v > hi ? v - hi : 0;
-      { let t = 0; for (let seed = 1; seed <= 4; seed++) { t += play(BASE_TACTIC, 'careful', seed).tense; await wait(); } t /= 4; const o = off(t, 0.25, 0.7); yield ['the nights (danger close)', pct(t), '25% to 70%', o ? pct(o) + ' outside' : 'none', o === 0]; }
-      { let b = 0, t = 0; for (let seed = 1; seed <= 8; seed++) { const r = trip('careful', seed, 1); b += r.back; t += r.tense; await wait(); } b /= 8; t /= 8; const o = off(t, 0.25, 0.7); yield ['trips to Earth (danger close)', pct(t) + ', back ' + pct(b), '25% to 70%', o ? pct(o) + ' outside' : 'none', o === 0]; }
-      { const ts = []; for (let sd = 1; sd <= 4; sd++) { ts.push(campaign('depot', sd)); await wait(); } ts.sort((a, b) => a - b); const m = ts[2], o = off(m, 5, 8); yield ['the truck (trips, depot)', m + ' trips', '5 to 8 trips', o ? o + ' trips outside' : 'none', o === 0]; }
-      { const log = campWeek(1), solo = log.filter(d => d.day >= 2 && d.day <= 4), w = Math.max(...solo.map(d => d.danielBehind)); await wait(); yield ["the camp's books (days behind)", w.toFixed(2) + ' days', 'at most 1 day', w <= 1 ? 'none' : (w - 1).toFixed(2) + ' days over', w <= 1]; }
-      { const careful = { name: 'Careful', roam: 8, greed: 8, bankAt: 12, aim: 0.7, together: 0.7, blind: 3 }, bold = { name: 'Bold', roam: 22, greed: 20, bankAt: 30, aim: 0.5, together: 0.3, blind: 6 }, src = crewFrom(cplay(undefined, [careful, bold], 11).history); await wait(); const fr = crewFrom(cplay(undefined, src, 511).history), a = src.find(q => q.name === 'Careful'), m = fr.find(q => q.name === 'Careful'), e = Math.abs(m.roam - a.roam) / a.roam; await wait(); yield ['the learned friend (roam error)', pct(e), 'under 25%', e < 0.25 ? 'none' : pct(e - 0.25) + ' over', e < 0.25]; }
-      { const g = newGame(1, BASE_TACTIC), p = addPlayer(g, 1, 'R'); p.x = g.fire.x; p.z = g.fire.z + 3; p.y = heightAt(g.land, p.x, p.z); g.clock = 0.5; let w = 0; for (let i = 0; i < 1500; i++) { step(g, 0.1); for (const k of g.hollow) if (!k.dead) w = Math.max(w, Math.abs(k.y - heightAt(g.land, k.x, k.z))); } await wait(); yield ['creatures bobbing (height error)', w.toExponential(1) + ' m', '0 m', w < 1e-9 ? 'none' : w.toFixed(3) + ' m', w < 1e-9]; } } },
 ];
 for (const T of TESTS) {
   const el = document.createElement('section'); el.className = 'test';
@@ -50,3 +41,9 @@ for (const T of TESTS) {
     say.textContent = `${pass} of ${judged} in line, in ${((performance.now() - t0) / 1000).toFixed(1)} s. Same rules as the game (core/game.js), run in your browser.`; btn.disabled = false;
   };
 }
+// "why is this not good", answered with a number for every system (checklist item 5): sim/why.mjs reads the robots' result files into why.json
+(async () => { try { const d = await (await fetch('./why.json?t=' + Date.now())).json(), esc = x => String(x || '').replace(/[<&>]/g, ''), rows = d.rows.slice().sort((a, b) => a.good - b.good);
+  const box = document.createElement('div'); box.className = 'test'; box.id = 'why';
+  box.innerHTML = `<div class="head"><span><b>WHY IS THIS NOT GOOD</b><small>Every system, one number, the bar it must clear. From the robots' last runs (${esc(d.at)}).</small></span></div>
+    <table><tr><th>system</th><th>the number</th><th>the bar</th><th></th></tr>${rows.map(r => `<tr><td>${esc(r.name)}<div class="say" style="margin:2px 0 0">${esc(r.what)}</div></td><td class="n">${esc(r.shown)}</td><td>${esc(r.bar)}</td><td class="${r.good ? 'pass' : 'fail'}">${r.good ? 'GOOD' : 'NOT GOOD: ' + esc(r.why)}</td></tr>`).join('')}</table>`;
+  const t = $('#tests'); t.parentNode.insertBefore(box, t); } catch (e) { /* (no why.json yet: run node next/sim/why.mjs) */ } })();

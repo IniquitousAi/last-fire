@@ -1,0 +1,15 @@
+GOOD  The basics a player expects: 11 of 11 (bar: all pass)
+GOOD  The nights feel tense, never hopeless: danger close 54% of the night, 0 falls (bar: 25% to 70%, no falls)
+GOOD  Light is the rule: tension 0.403 to 0.511 (+0.11) (bar: the rule moves tension by 0.05 or more)
+GOOD  The flood warns before it pours: 100% warned (bar: 95% or more)
+GOOD  The ship flies true: 2% overshoot (bar: 5% or less)
+GOOD  The camp keeps its own rules: 9 of 9 (bar: all pass)
+GOOD  The lore is rules: 49 of 49 (bar: all pass)
+GOOD  The Rift: 9 of 9 (bar: all pass)
+GOOD  Solo is never lonely: 6 of 6 (bar: all pass)
+GOOD  Every feature says what it serves: 4 of 4 (bar: all pass)
+GOOD  Far sounds have a cause: 13 of 13 (bar: all pass)
+GOOD  The checklist shows its proof: 2 of 2 (bar: all pass)
+NOT GOOD  The checklist: 30 of 69 done (bar: all done)  why: 39 ideas still miss a proven mark
+
+PASS  every system has a number  (13 of 13)
