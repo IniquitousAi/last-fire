@@ -1,30 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=107';
-import { Ambience } from './ambience.js?v=107';
-import { Camp, BOARD } from './camp.js?v=107';
-import { Guide } from './guide.js?v=107';
-import { buildSites } from './earthsite.js?v=107';
-import { Truck } from './truck.js?v=107';
-import { Wrist } from './wrist.js?v=107';
-import { FireCore } from './firecore.js?v=107';
+import * as C from '../core/game.js?v=109';
+import { Ambience } from './ambience.js?v=109';
+import { Camp, BOARD } from './camp.js?v=109';
+import { Guide } from './guide.js?v=109';
+import { buildSites } from './earthsite.js?v=109';
+import { Truck } from './truck.js?v=109';
+import { ShipView } from './shipview.js?v=109';
+import { Wrist } from './wrist.js?v=109';
+import { FireCore } from './firecore.js?v=109';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=107';
-import { FriendVoice } from './friendvoice.js?v=107';
-import { crewFrom } from '../core/habits.js?v=107';
-import { HudLook } from './hudlook.js?v=107';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=107';
-import { sound, GUNS } from '../../src/combat.js?v=107';
-import { FX } from '../../src/fx.js?v=107';
+import { think as friendThink } from './friend.js?v=109';
+import { FriendVoice } from './friendvoice.js?v=109';
+import { crewFrom } from '../core/habits.js?v=109';
+import { HudLook } from './hudlook.js?v=109';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=109';
+import { sound, GUNS } from '../../src/combat.js?v=109';
+import { FX } from '../../src/fx.js?v=109';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 107;   // (this copy's version; ./version.json says the newest)
+const BUILD = 109;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -89,7 +90,7 @@ const clickPlay = document.createElement('div'); clickPlay.hidden = true;   // (
 clickPlay.innerHTML = '<div style="width:132px;height:132px;margin:0 auto;border:1px solid rgba(255,79,216,.55);border-radius:50%;position:relative"><i style="position:absolute;left:50%;top:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;left:50%;bottom:-6px;width:1px;height:12px;background:#ff4fd8"></i><i style="position:absolute;top:50%;left:-6px;width:12px;height:1px;background:#ff4fd8"></i><i style="position:absolute;top:50%;right:-6px;width:12px;height:1px;background:#ff4fd8"></i></div><div style="margin-top:12px;font-size:15px;letter-spacing:.24em;color:#ff4fd8">AIM LINK  ·  STANDBY</div><div style="font-size:14px;letter-spacing:.08em;color:#a3a6bb;margin-top:2px">click to link your aim</div>';
 Object.assign(clickPlay.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -66px)', textAlign: 'center', font: '400 15px "Barlow Condensed", sans-serif', pointerEvents: 'none', zIndex: 3, textShadow: '0 1px 3px #000' });
 document.body.append(clickPlay);
-let truck = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
+let truck = null, ship = null, sitesBuilt = false, camp = null, guide = null, g = null, me = null, mode = 'menu', panel = null, fx = new FX(scene), net = null, myId = 1;
 const isHost = () => !net || net.host;
 const keys = {}, mouse = [false, false, false];
 const NODE_MAX = 24;   // (the ground shader lights from up to 24 lights at once: the fire, your glow, the nearest nodes)
@@ -323,7 +324,7 @@ function friendSign() {   // (the world keeps your friends: walk past what someo
   if (node) return `${node.who}'s ${node.kind}  ·  built night ${node.n || '?'}${node.lit ? ', still carrying light' : ', dark now'}`;
   const m = g.marks.find(m => m.k === 'fall' && !mine(m.who) && Math.hypot(me.x - m.x, me.z - m.z) < 1.6); return m ? `${m.who} fell here  ·  night ${m.n}` : '';
 }
-function act() { if (me.ember) return; if (nearCar()) return useCar(); if (nearWreck()) return stripWreck(); if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); if (atStore() && shortAmmo()) return resupply(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
+function act() { if (me.ember) return; if (ship && (ship.on || ship.near(me))) return ship.on ? ship.leave(me) : ship.board(me); if (nearCar()) return useCar(); if (nearWreck()) return stripWreck(); if (atPad()) return trip('drop'); if (atSite()) return trip('rise'); if (atBay() && C.PART_ORDER.some(k => C.canFit(g, k))) return fitPart(); if (atStore() && shortAmmo()) return resupply(); tryGrow(); }   // (F, or a click on the prompt: whatever is in front of you)
 $('prompt').addEventListener('click', e => { if (e.target.closest('.seatnext')) return nextSeat(); const st = e.target.closest('.site'); if (st) { SET.site = st.dataset.s; save(); return; } const b = e.target.closest('.bet'); if (b && atPad()) { stake = +b.dataset.p / 100; say(`Staked: you said ${b.dataset.p}% you come back. The board keeps score.`, 4); trip('drop'); return; } act(); });
 // staking your own odds (INNOVATION.md idea 4): a guess before a trip, scored by what happened; the board shows how true your guesses run
 let stake = null; function settleStake(back) { if (stake === null) return; SET.stakes = [...(SET.stakes || []), [stake, back ? 1 : 0]].slice(-200); save(); stake = null; }
@@ -346,7 +347,7 @@ function throwFlare() { if (me.ember) return; const cost = C.flareCost(g, me); i
 // ---------------------------------------------------------------- moving: grounded but sharp (fast to start and stop, real weight on slopes)
 const vel = new THREE.Vector2(); let vy = 0, onGround = true;
 function move(dt) {
-  if (me.ember) return;
+  if (me.ember) return; if (ship && ship.on) { vel.x = vel.y = 0; vy = 0; onGround = true; return; }   /* (flying: the ship moves you) */
   const seat = C.seatOf(g, me.id); if (seat >= 0 && g.car) {   // (in the truck: you ride; the driver's W/S and A/D are throttle and steering)
     me.drive = seat === 0 ? { th: (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), st: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) } : null;
     [me.x, me.z] = C.seatPos(g.car, seat); me.y = g.land(me.x, me.z) + 0.9; vel.x = vel.y = 0; vy = 0; onGround = true; return; }
@@ -375,7 +376,7 @@ function hud() {
   $('hpBar').style.width = Math.max(0, me.hp) + '%'; $('hpBar').style.opacity = (0.35 + 0.65 * Math.max(0, me.hp) / 100).toFixed(2);
   const am = ammo[gunKey]; if (mounted()) txt('ammo', `<b>${Math.round(heat * 100)}%</b><span>heat</span><small>${overheat ? 'TOO HOT, COOLING' : 'MOUNTED GUN, endless rounds'}</small>`, true); else txt('ammo', `<b>${am.mag}</b><span>/ ${am.res}</span><small>${GUNS[gunKey].name}${reloadT > 0 ? '  reloading' : ''}</small>`, true);
   const nearFire = Math.hypot(me.x - f.x, me.z - f.z) < C.fireRadius(f), wakes = C.WAKES[Math.min(f.level + 1, C.WAKES.length - 1)];
-  txt('prompt', me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
+  txt('prompt', ship && ship.near(me) && !me.ember ? 'F  ·  BOARD THE SHIP' : me.ember ? (C.onEarth(me) ? 'You fell. A friend can carry your Ember to the lander.' : 'You fell. A friend can carry your Ember to the fire.') : nearCar() ? carLine() : nearWreck() ? `F  ·  STRIP THE WRECK (${nearWreck().left} part${nearWreck().left > 1 ? 's' : ''} left in it)` : atPad() ? `F  ·  DROP TO EARTH${g.earth ? ` (the lander waits ${Math.ceil(g.earth.t)} s)` : ' (150 s down there)'}${g.earth ? '' : siteRow()}<span style="display:block;margin-top:5px;font-size:14px;color:#b9a8ff">or stake your odds of coming back, then drop: ${[90, 70, 50, 30].map(n => `<b class="bet" data-p="${n}" style="cursor:pointer;color:#ff4fd8;margin:0 6px;font-weight:500">${n}%</b>`).join('')}</span>` : atSite() ? 'F  ·  RIDE UP (bring what you carry home)' : atBay() ? bayLine() : atStore() ? (shortAmmo() ? 'F  ·  RESUPPLY FROM THE CAMP STORE' : 'The store: your guns are full.') : camp && camp.bunkNear(me) ? (b => `${b.name}'s bunk  ·  fed the fire ${b.dues} light`)(camp.bunkNear(me)) : friendSign() ? friendSign() : buildPick ? 'Left click to place, right click to cancel' : nearFire && C.canGrow(g) ? `F  ·  GROW THE FIRE to level ${f.level + 1}${wakes.length ? '. Tonight the dark answers' : ''}` : '', true);
   { const at = me.ember ? null : nearCar() ? [g.car.x, g.land(g.car.x, g.car.z) + 2.6, g.car.z] : atPad() ? [C.PAD.x, g.land(C.PAD.x, C.PAD.z) + 4.6, C.PAD.z - 1.6] : atSite() ? [C.EARTH.x, g.land(C.EARTH.x, C.EARTH.z) + 4.6, C.EARTH.z - 1.6] : atBay() ? [C.BAY.x, g.land(C.BAY.x, C.BAY.z) + 2.4, C.BAY.z] : atStore() ? [STORE.x, g.land(STORE.x, STORE.z) + 2.6, STORE.z] : nearFire ? [f.x, g.land(f.x, f.z) + 2.4, f.z] : null;
     let tx = innerWidth / 2, ty = innerHeight * 0.6;   // (the tag hangs over the thing it belongs to; off screen, it waits low in the middle)
     if (at) { _v.set(...at).project(camera); if (_v.z < 1 && Math.abs(_v.x) < 0.95 && Math.abs(_v.y) < 0.95) { tx = (_v.x * 0.5 + 0.5) * innerWidth; ty = (-_v.y * 0.5 + 0.5) * innerHeight; } }
@@ -408,11 +409,12 @@ function frame(now) {
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
     camera.position.set(c.x + Math.sin(me.yaw) * back, cy + up, c.z + Math.cos(me.yaw) * back); camera.lookAt(c.x, cy + 1.6, c.z); }
+  if (ship && ship.on) { ship.camera(camera, me); ship.hud(me.yaw); }
   sound.listen(me.x, me.y + 1.62, me.z, -Math.sin(me.yaw), 0, -Math.cos(me.yaw));
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
-  if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)))) : 0;
+  if (gm && !me.ember && !(ship && ship.on)) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)))) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt); wrist.update(dt); { const k = Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85; if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) ship.update(dt, keys, me); wrist.update(dt); { const k = Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85; if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z, level: g.fire.level }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
@@ -640,7 +642,7 @@ async function begin(seed, id, saved = null) {
   g = saved || C.newGame(seed); if (!saved) g.clock = 0.3; me = C.addPlayer(g, id, SET.name); if (saved && g.startAt) { me.x = g.startAt[0]; me.z = g.startAt[1]; } me.y = g.land(me.x, me.z); myId = id;
   if (!saved && id === 1) { Camp.startAt(me, g.land); setTimeout(() => say('Your old desk. The form you signed, and the number you cannot unsee.', 7), 2500); }   // (a new world opens at your desk: LORE.md, the first minute)
   if (!camp) camp = new Camp(scene, { econ: () => SET.name && g.econ ? (e => ({ ...e, key: e.standing + ':' + e.morale + ':' + e.pool }))({ burn: C.econ.burn, standing: Math.round(C.econ.standing(g, SET.name)), morale: Math.round(C.econ.morale(g) * 100), pool: Math.round(g.econ.pool || 0) }) : null, theories: C.THEORIES, stakes: () => stakeScore(), g: () => g, me: () => me, land: (x, z) => g.land(x, z), say, hear: (who, line) => wrist.say(line, Math.min(9, 3 + line.length / 18), 'heard  ·  ' + who), name: () => SET.name, camera: () => camera });
-  if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); }
+  if (!sitesBuilt) { sitesBuilt = true; buildSites(scene, (x, z) => g.land(x, z)); truck = new Truck(scene, (x, z) => g.land(x, z)); ship = new ShipView(scene, (x, z) => g.land(x, z)); }
   if (!guide) guide = new Guide(scene, { g: () => g, me: () => me, land: (x, z) => g.land(x, z), board: () => BOARD, checked: () => camp.checkedNight === g.night, phase: () => C.phase(g.clock), fireRadius: () => C.fireRadius(g.fire), isHost,
     speak: (r, l, s) => camp.speak(r, l, s), bringDusk: () => { if (isHost() && C.phase(g.clock) === 'day') g.clock = C.DUSK_AT - 0.002; }, done: () => !!SET.guided, setDone: () => { SET.guided = 1; save(); },
     stage: () => { if (!isHost()) return; const f = g.fire, a = Math.atan2(me.z - f.z, me.x - f.x) + 0.35, r = C.fireRadius(f) + 7, x = f.x + Math.cos(a) * r, z = f.z + Math.sin(a) * r, K = C.KINDS.walker;
@@ -685,4 +687,4 @@ function drawJoinAgain() { const c = SET.lastJoin; if (c && c.length === CODE_LE
 function readInvite() { const c = cleanCode((location.hash.match(/join=([A-Za-z]+)/) || [])[1]); if (c.length === CODE_LEN && mode === 'menu') { $('code').value = c; $('menuNote').textContent = `Your friend's room ${c} is filled in: type your name, then click JOIN.`; } }
 readInvite(); drawJoinAgain(); addEventListener('hashchange', readInvite);
 requestAnimationFrame(frame);
-window.lastfire2 = { get camp() { return camp; }, get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)
+window.lastfire2 = { get camp() { return camp; }, get ship() { return ship; }, get g() { return g; }, get me() { return me; }, get net() { return net; }, shoot, renderer };   // (a handle for the automated test)

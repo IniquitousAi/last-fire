@@ -153,3 +153,5 @@ His point while answering (about the dev paradox): "the more I play a non-polish
 - Heat and light should be part of survival. Right now the dark is almost perfect (super dark without a flashlight), but you could technically play the whole game without lights, with a lot of skill.
 - Undecided on a warmth mechanic. 7 Days to Die's eating, drinking, hot and cold annoyed him but brought immersion; innovation should find something cool.
 - Claude's note: v23's light rule already closes half of it (in the dark nothing can be killed). The proposal: warmth IS the light you carry (one meter, not three).
+
+- 2026-10-19 (Daniel): cockpit HUD look: A HELMET. Ship model: generate one (TRELLIS.2), download approved.
