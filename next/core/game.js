@@ -27,9 +27,16 @@ export const PAD = { x: 11, z: -13 };   // (the lander's pad inside the camp wal
 export const EARTH = { x: 0, z: 6000, stay: 150, light: 9, reach: 16, cells: 10 };   // (the landing site: the lander waits 150 s, its lamp holds 9 m)
 export const onEarth = p => p.z > 3000;
 // the dead city around the landing site: the same towers on every screen (drawn by the client, walked into by everyone)
-export const TOWERS = (() => { let q = 33; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647, out = [];
-  for (let i = 0; i < 60; i++) { const a = rnd() * Math.PI * 2, r = 16 + rnd() * 80, w = 3 + rnd() * 7, d = 3 + rnd() * 7, h = 3 + rnd() * rnd() * 30, tx = (rnd() - 0.5) * 0.12, ry = rnd() * Math.PI, tz = (rnd() - 0.5) * 0.12;
-    out.push({ x: EARTH.x + Math.cos(a) * r, z: EARTH.z + Math.sin(a) * r, w, d, h, tx, ry, tz }); } return out; })();
+export const WALLS = { half: 50, h: 30, t: 2.2, gate: 8 };   // (Earth's community lives walled in, the one thing taken from Maze Runner (his words, 2026-10-19): giant walls, once white, eaten black by the dark; the rest is ours)
+export const TOWERS = (() => { let q = 33; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647, out = [], { half: A, h, t, gate: G } = WALLS;
+  // the walls: a 100 m square around the landing site, a gate in the middle of every side. They are boxes in the towers' own format, so
+  // light, shadows, the faces in the walls and collision all work on them unchanged.
+  const seg = (x, z, w, d) => out.push({ x: EARTH.x + x, z: EARTH.z + z, w, d, h, tx: 0, ry: 0, tz: 0 }), L = A - G / 2;
+  for (const s of [-1, 1]) { seg(-A / 2 - G / 4, s * A, L, t); seg(A / 2 + G / 4, s * A, L, t); seg(s * A, -A / 2 - G / 4, t, L); seg(s * A, A / 2 + G / 4, t, L); }
+  // outside the walls: the old world's ruins in the corrupted land, never inside the community
+  for (let i = 0; i < 60; i++) { const a = rnd() * Math.PI * 2, r = 72 + rnd() * 90, w = 3 + rnd() * 7, d = 3 + rnd() * 7, hh = 3 + rnd() * rnd() * 30, tx = (rnd() - 0.5) * 0.12, ry = rnd() * Math.PI, tz = (rnd() - 0.5) * 0.12;
+    out.push({ x: EARTH.x + Math.cos(a) * r, z: EARTH.z + Math.sin(a) * r, w, d, h: hh, tx, ry, tz }); }
+  return out; })();
 // camp pieces are solid to light too (his pick, 2026-10-19: lamp shadows, INNOVATION.md idea 2): each client hands in the same pieces from the
 // same camp layout, so every machine agrees on where the shadows fall. {x, z, w, d, ry}: a box, turned like the towers
 const OCC = []; export function setOccluders(list) { OCC.length = 0; for (const o of list) OCC.push(o); }
