@@ -2,7 +2,7 @@
 // is (strangeAt); this file draws it: a ringed disc in the sky that grows and tilts, and thin dark spires on the horizon that appear only
 // where the land is strange. Nothing glows, nothing floats near you, and the spires sit in the fog so they only ever read as far away.
 import * as THREE from 'three';
-import { strangeAt, skyOf, spiresNear } from '../core/immersion.js?v=172';
+import { strangeAt, skyOf, spiresNear } from '../core/immersion.js?v=173';
 
 const bands = (w, h, rows, lo, hi) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
   for (let i = 0; i < rows; i++) { const t = i / rows, a = lo + (hi - lo) * (0.5 + 0.5 * Math.sin(i * 2.1) * Math.cos(i * 0.7)); x.fillStyle = `rgb(${Math.round(a * 70)},${Math.round(a * 44)},${Math.round(a * 104)})`; x.fillRect(0, t * h, w, h / rows + 1); }

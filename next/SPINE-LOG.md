@@ -7,3 +7,4 @@
 - v170 serves A: Thinner fog lying against the walls; the creature from his sheet is in the game files but stays off until it is cheap enough; the look is measured against his picture
 - v171 serves A: The dark is back: creatures made from your sheet, with real walking, turning and steering (no more sliding holograms), smoke in the dark and solid in your light
 - v172 serves A: A forest of black pines outside the walls, a green patch that survived, a spore bog that costs light
+- v173 serves B,C: Saves hold after a reload, your room code is kept, the pad's Back button sends feedback, sounds never repeat back to back, the dev menu lists every item
