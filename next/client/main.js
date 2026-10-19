@@ -1,34 +1,35 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=144';
-import { Ambience } from './ambience.js?v=144';
-import { Camp, BOARD } from './camp.js?v=144';
-import { Guide } from './guide.js?v=144';
-import { buildSites } from './earthsite.js?v=144';
-import { Truck } from './truck.js?v=144';
-import { ShipView } from './shipview.js?v=144';
-import { Crew } from './crew.js?v=144';
-import { Hands } from './hands.js?v=144';
-import { Wrist } from './wrist.js?v=144';
-import { FireCore } from './firecore.js?v=144';
+import * as C from '../core/game.js?v=145';
+import { Ambience } from './ambience.js?v=145';
+import { Camp, BOARD } from './camp.js?v=145';
+import { Guide } from './guide.js?v=145';
+import { buildSites } from './earthsite.js?v=145';
+import { Truck } from './truck.js?v=145';
+import { ShipView } from './shipview.js?v=145';
+import { Crew } from './crew.js?v=145';
+import { Hands } from './hands.js?v=145';
+import { FpRig } from './fprig.js?v=145';
+import { Wrist } from './wrist.js?v=145';
+import { FireCore } from './firecore.js?v=145';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=144';
-import { FriendVoice } from './friendvoice.js?v=144';
-import { crewFrom } from '../core/habits.js?v=144';
-import { HudLook } from './hudlook.js?v=144';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=144';
-import { sound, GUNS } from '../../src/combat.js?v=144';
-import { FX } from '../../src/fx.js?v=144';
+import { think as friendThink } from './friend.js?v=145';
+import { FriendVoice } from './friendvoice.js?v=145';
+import { crewFrom } from '../core/habits.js?v=145';
+import { HudLook } from './hudlook.js?v=145';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=145';
+import { sound, GUNS } from '../../src/combat.js?v=145';
+import { FX } from '../../src/fx.js?v=145';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 144;   // (this copy's version; ./version.json says the newest)
+const BUILD = 145;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -194,7 +195,7 @@ function updateTiles() {   // (two tiles a frame at most, nearest first; tiles p
 // ---------------------------------------------------------------- models (every one CC0: assets/CREDITS.txt)
 const loader = new GLTFLoader(), models = {};
 const load = (k, url) => loader.loadAsync('../assets/' + url).then(r => { models[k] = r; }).catch(e => console.warn('model', k, e));
-const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('mutant', 'zombie/mutant.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
+const ready = Promise.all([load('wraith', 'c/wraith.glb'), load('mutant', 'zombie/mutant.glb'), load('clawed', 'c/clawed.glb'), load('shard', 'c/shard.glb'), load('pistol', 'm/pistol.glb'), load('ar', 'm/ar.glb'), ...(/[?&]fp(&|$)/.test(location.search) ? [load('fp_rifle', 'fp/rifle_fp.glb')] : []), load('shotgun', 'm/shotgun.glb'), load('lmg', 'm/lmg.glb'), load('campfire', 'kit/campfire.glb'), load('lantern', 'm/lantern.glb'), load('soldier', 'c/soldier.glb')]);
 const MASK_RIM = { walker: 'vec3(0.62, 0.38, 1.0)', runner: 'vec3(1.0, 0.25, 0.65)', watcher: 'vec3(0.85, 0.85, 1.0)', face: 'vec3(1.0, 0.3, 0.85)', giant: 'vec3(1.0, 0.18, 0.25)' };
 function darken(root, eyes, kind) {   // (the wraiths are drawn as shadow: near black, pale where their eyes are)
   root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; const m = o.material = o.material.clone(); if (/Eye_White|Secondary/.test(m.name)) { m.color.setHex(0x030305); m.emissive = new THREE.Color(0); m.emissiveIntensity = 0; }   /* (no cartoon eyeballs or grins: black, so the face reads as a hollow) */ else if (/Eye_Black/.test(m.name)) { m.color.setHex(eyes); m.emissive = new THREE.Color(eyes); m.emissiveIntensity = 3; }   /* (only the pupils burn: pinpoint eyes, like the stars) */ else { m.color.setHex(0x07070c); m.emissive = new THREE.Color(0x0a0c18); m.emissiveIntensity = 0.3; m.roughness = 0.9; if (MASK_RIM[kind]) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '', RIM_COLOR: MASK_RIM[kind] }; m.needsUpdate = true; } } /* (a faint cold rim so a shape reads against the dark) */ });
@@ -305,7 +306,7 @@ function drawMotes() { let i = 0; for (const m of g.motes) { if (i >= MOTES) bre
 // ---------------------------------------------------------------- what you hold: the gun in its own pass (never through a wall)
 const vscene = new THREE.Scene(), vcam = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.01, 10), view = new THREE.Group(); vcam.add(view); vscene.add(vcam); const hands = new Hands(THREE, vcam);
 const vhemi = new THREE.HemisphereLight(0xc8d4f0, 0x1a1c26, 1); vscene.add(vhemi); const vsun = new THREE.DirectionalLight(0xffffff, 0.8); vsun.position.set(0.6, 1, 0.8); vscene.add(vsun);
-const held = {}; let gunKey = 'pistol', ammo = { pistol: { mag: 8, res: 72 }, ar: { mag: 30, res: 210 }, shotgun: { mag: 2, res: 40 }, lmg: { mag: 45, res: 270 } }, reloadT = 0, shotCd = 0, kick = 0, ads = 0;
+let fpRig = null; const held = {}; let gunKey = 'pistol', ammo = { pistol: { mag: 8, res: 72 }, ar: { mag: 30, res: 210 }, shotgun: { mag: 2, res: 40 }, lmg: { mag: 45, res: 270 } }, reloadT = 0, shotCd = 0, kick = 0, ads = 0;
 function prepGun(k) { const src = models[k]; if (!src) return; const inner = src.scene.clone(), holder = new THREE.Group(); inner.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); if (/Wood/.test(o.material.name)) o.material.color.setHex(0x1d1f25); if (/Metal/.test(o.material.name)) { o.material.metalness = 0.25; o.material.color.multiplyScalar(1.35); } } });
   inner.rotation.y = Math.PI / 2; holder.add(inner); let b = new THREE.Box3().setFromObject(holder), s = b.getSize(new THREE.Vector3()); inner.scale.multiplyScalar(({ pistol: 0.24, ar: 0.82, shotgun: 0.86, lmg: 0.86 })[k] / s.z); b = new THREE.Box3().setFromObject(holder); const c = b.getCenter(new THREE.Vector3()); inner.position.sub(c);
   b = new THREE.Box3().setFromObject(holder); holder.userData = { len: b.max.z - b.min.z, top: b.max.y, muzzle: new THREE.Vector3(0, b.max.y * 0.35, b.min.z) }; holder.visible = false; view.add(holder); held[k] = holder; }
@@ -388,7 +389,7 @@ function switchGun(k) { if (k === gunKey) return; gunKey = k; reloadT = 0; aimOn
 const practiced = k => (SET.practice && SET.practice[k]) || 0, reloadSpeed = k => 0.65 + 0.35 * Math.pow(1 + practiced(k) / 8, -0.5);
 function practice(k) { SET.practice = SET.practice || {}; const n = SET.practice[k] = practiced(k) + 1; save();
   if ([10, 25, 50, 100, 200, 400].includes(n)) say(`Your hands know the ${GUNS[k].name} now: reloads ${Math.round((1 - reloadSpeed(k)) * 100)}% faster than your first (${n} reloads).`, 5); }
-function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; aimOn = false; reloadT = G.reload * reloadSpeed(gunKey); practice(gunKey); sound.magOut(); setTimeout(() => sound.magIn(), G.reload * reloadSpeed(gunKey) * 700); }
+function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; aimOn = false; reloadT = G.reload * reloadSpeed(gunKey); if (fpRig && gunKey === 'ar') fpRig.reload(a.mag === 0, reloadT); practice(gunKey); sound.magOut(); setTimeout(() => sound.magIn(), G.reload * reloadSpeed(gunKey) * 700); }
 // a tracer's burn: the whole line it flew stays lit in the air for a third of a second, fading (the light that made the smoke solid)
 const BURN = 8, burnGeo = new THREE.BufferGeometry(), burnPos = new Float32Array(BURN * 6), burnCol = new Float32Array(BURN * 6), burnLife = new Float32Array(BURN); let burnI = 0;
 burnGeo.setAttribute('position', new THREE.BufferAttribute(burnPos, 3)); burnGeo.setAttribute('color', new THREE.BufferAttribute(burnCol, 3));
@@ -402,7 +403,7 @@ function shoot() {
   const mount = mounted(), G = mount ? MOUNT : GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || (!mount && (reloadT > 0 || mvSprint || readyT > 0)) || me.ember) return;   /* (sprinting, the gun is down; it comes up in the sprint-to-fire time) */
   if (mount) { if (overheat) { if (!shoot.hot) { sound.click(); shoot.hot = true; } return; } shoot.hot = false; heat = Math.min(1, heat + 0.045); if (heat >= 1) { overheat = true; say('The mount is red hot. Let it cool.', 2); } }
   else { if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; } a.mag--; if (!a.mag && SET.autoReload) setTimeout(() => { if (!ammo[gunKey].mag) reload(); }, 250); }
-  shotCd = 60 / G.rpm; sound.shot(mount ? 'lmg' : gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6 * (crouch ? 0.85 : 1));
+  shotCd = 60 / G.rpm; sound.shot(mount ? 'lmg' : gunKey); if (fpRig && !mount && gunKey === 'ar') fpRig.fire(); kick = Math.min(1, kick + 0.5 + G.recoil * 6 * (crouch ? 0.85 : 1));
   const o = new THREE.Vector3(me.x, me.y + eyeH, me.z), sp = G.spread * (ads > 0.5 ? 0.3 : 1) * (onGround ? 1 : 3) * (crouch || slideT > 0 ? 0.8 : 1), ds = [], gm = held[gunKey]; let end = null;
   if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
   const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
@@ -576,6 +577,7 @@ function frame(now) {
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember && !(ship && ship.on)) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads);
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), 0); }
+  if (models.fp_rifle && !fpRig) { fpRig = new FpRig(THREE, vcam, models.fp_rifle); if (DEMO) window.__fp = fpRig; } if (fpRig) { const on = !!(gm && gm.visible && gunKey === 'ar'); if (on) gm.visible = false; fpRig.update(dt, on, ads, kick); }   /* (?fp: the Blender rifle stands in for the M4 and its arms) */
   hands.update(dt, { reloading: reloadT > 0 ? 1 - reloadT / (GUNS[gunKey].reload * reloadSpeed(gunKey)) : -1, ads, kick, moving: onGround ? Math.min(1, vel.length() / 4.6) : 0, gun: gunKey });   /* (the arms: hands.js, the reload as a real hand motion; it hides itself when the gun is hidden) */
   drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (ship) ship.update(dt, keys, me, g, isHost()); wrist.update(dt); { const k = Math.max(Math.max(0, 1 - C.lightAt(g, me.x, me.z, true) * 3) * 0.85, 0.75 * grade.uniforms.uS.value); if (Math.abs(k - (frame.muf ?? -1)) > 0.03) { frame.muf = k; sound.muffle(k); } }   /* (sound is sharp only in light: out in the dark the world goes muffled. INNOVATION.md idea 9) */ if (guide) guide.update(dt); if (truck) truck.update(g); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free; { const o = free ? 0.4 : Math.max(0, 1 - ads * 2.5); if (Math.abs(o - (frame.xo ?? -1)) > 0.02) { frame.xo = o; $('cross').style.opacity = o.toFixed(2); } }   /* (one reticle: dim on standby, gone by 40% into the sights, where the gun's own sight takes over) */
