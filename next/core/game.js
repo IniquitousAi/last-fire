@@ -77,6 +77,15 @@ function driveCar(g, dt) {
   for (const k of g.hollow) if (k.earth && !k.dead && Math.abs(c.v) > 5 && Math.hypot(k.x - c.x, k.z - c.z) < 2.2 && solid(g, k)) { damage(g, k, 0, CAR.ram * Math.abs(c.v) / CAR.speed, 1, d ? d.id : 0); c.v *= 0.85; }
   c.seats.forEach((id, i) => { if (id === null) return; const q = g.players.find(p => p.id === id); if (!q) return; [q.x, q.z] = seatPos(c, i); q.y = heightAt(g.land, q.x, q.z) + 0.9; });
 }
+// take it apart to learn it (INNOVATION.md idea 7): dead machines on Earth; stripping one hands you a part the truck still lacks, and a kind
+// you took apart yourself is known (checked) from then on, the rest only reasoned
+export function strip(g, p) {
+  if (!g.earth || !p || p.ember) return null; const w = (g.earth.wrecks || []).find(w => w.left > 0 && Math.hypot(p.x - w.x, p.z - w.z) < 3.2); if (!w) return null;
+  const lack = PART_ORDER.filter(k => PARTS[k].n - fitted(g, k) - (g.stash[k] || 0) - (p.pack || []).filter(q => q === k).length > 0), pool = lack.length ? lack : PART_ORDER, r = stream(g.seed, 'wreck-' + w.id + '-' + w.left);
+  const kind = pool[Math.floor(r() * pool.length)]; w.left--; (g.learned = g.learned || {})[kind] = 1;
+  p.pack = p.pack || []; if (loadOf(p) + PARTS[kind].kg <= MAX_LOAD) p.pack.push(kind); else g.parts.push({ id: g.nextId++, kind, x: w.x + 1, z: w.z });
+  if (g.earth.found) g.earth.found.parts++; g.log.push([+g.t.toFixed(2), 'strip', p.id, kind]); return kind;
+}
 export function fit(g, p) {
   if (!p || p.ember || Math.hypot(p.x - BAY.x, p.z - BAY.z) > 5) return null; const k = PART_ORDER.find(k => canFit(g, k)); if (!k) return null;
   g.stash[k]--; g.truck[k] = fitted(g, k) + 1; g.log.push([+g.t.toFixed(2), 'fit', k]); return k;
@@ -225,7 +234,7 @@ export function mark(g, k, x, z, who) { g.marks.push({ k, x: Math.round(x * 10) 
 export function saveWorld(g) {
   for (const p of g.players) if (p.name) g.keep[p.name] = Math.floor(p.carried);
   return { v: 1, seed: g.seed, t: g.t, clock: g.clock, night: g.night, tactic: g.tactic, nextId: g.nextId, fire: { level: g.fire.level, light: Math.floor(g.fire.light), fuel: Math.round(g.fire.fuel) },
-    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, sites: g.sites || {}, voice: g.voice || {}, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
+    nodes: g.nodes.filter(n => !onEarth(n)).map(n => [n.id, n.kind, +n.x.toFixed(2), +n.z.toFixed(2), Math.round(n.hp), n.who || '', n.n || 0]), motes: g.motes.filter(m => !onEarth(m)).map(m => [+m.x.toFixed(1), +m.z.toFixed(1), m.v]), stash: g.stash, truck: g.truck, learned: g.learned || {}, sites: g.sites || {}, voice: g.voice || {}, dues: g.dues || {}, gaze: g.gaze || {}, theories: g.theories || null, lost: g.lost || [], out: g.out || null, parts: g.parts.filter(q => !onEarth(q)).map(q => [q.kind, +q.x.toFixed(1), +q.z.toFixed(1)]), marks: g.marks, keep: g.keep, stats: g.stats, history: g.history,
     host: g.players[0] && !onEarth(g.players[0]) ? [+g.players[0].x.toFixed(2), +g.players[0].z.toFixed(2)] : [PAD.x - 1.5, PAD.z + 1.5] };
 }
 export function loadWorld(d) {
@@ -239,6 +248,7 @@ export function loadWorld(d) {
   if (d.theories && typeof d.theories === 'object' && Object.keys(THEORIES).every(k => ok(d.theories[k]))) { g.theories = {}; for (const k of Object.keys(THEORIES)) g.theories[k] = Math.max(0.01, Math.min(0.85, d.theories[k])); }
   g.gaze = {}; if (d.gaze && typeof d.gaze === 'object') for (const k of Object.keys(KINDS)) if (ok(d.gaze[k]) && d.gaze[k] >= 0) g.gaze[k] = Math.round(d.gaze[k]);
   g.voice = {}; if (d.voice && typeof d.voice === 'object') for (const [k, v] of Object.entries(d.voice).slice(0, 16)) if (k.length <= 24 && Array.isArray(v)) g.voice[k] = v.filter(l => typeof l === 'string').map(l => l.replace(/[<>&]/g, '').slice(0, 70)).slice(0, 12);
+  g.learned = {}; if (d.learned && typeof d.learned === 'object') for (const k of PART_ORDER) if (d.learned[k]) g.learned[k] = 1;
   g.sites = {}; if (d.sites && typeof d.sites === 'object') for (const k of Object.keys(SITES)) { const v = d.sites[k]; if (v && [v.trips, v.parts, v.cells].every(ok)) g.sites[k] = { trips: v.trips | 0, parts: v.parts | 0, cells: v.cells | 0 }; }
   g.dues = {}; if (d.dues && typeof d.dues === 'object') for (const [k, v] of Object.entries(d.dues).slice(0, 32)) if (typeof k === 'string' && k.length <= 24 && ok(v) && v >= 0) g.dues[k] = Math.round(v);
   g.lost = Array.isArray(d.lost) ? d.lost.filter(w => CAMP_OUT.includes(w)) : []; g.out = d.out && CAMP_OUT.includes(d.out.who) ? { who: d.out.who, night: d.out.night | 0 } : null;
@@ -294,6 +304,8 @@ export function drop(g, p, site) {
   if (!g.earth) { const S = SITES[site] ? site : 'city'; g.earth = { t: EARTH.stay, n: (g.trips = (g.trips || 0) + 1), site: S, found: { parts: 0, cells: 0 } }; const r = stream(g.seed, 'earth-' + g.earth.n);
     for (let i = 0; i < SITES[S].cells; i++) { const a = SITES[S].dir + (r() - 0.5) * 2.2, d = 14 + r() * 50; g.motes.push({ id: g.nextId++, x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d, v: 8, t: 1e9, cell: true }); } }
   if (g.earth && !g.car && truckDone(g)) g.car = { x: EARTH.x + 7, z: EARTH.z - 3, yaw: 0, v: 0, seats: [null, null, null, null], store: [] };
+  if (g.earth && !g.earth.wrecks) { const r = stream(g.seed, 'wrecks-' + g.earth.n), S = SITES[g.earth.site]; g.earth.wrecks = [];   /* (two dead machines a trip, three at the depot) */
+    for (let i = 0; i < (g.earth.site === 'depot' ? 3 : 2); i++) { const a = S.dir + (r() - 0.5) * 1.6, d = 18 + r() * 26; const [x, z] = pushOut(EARTH.x + Math.cos(a) * d, EARTH.z + Math.sin(a) * d, 2.5); g.earth.wrecks.push({ id: g.nextId++, x, z, ry: r() * 6.3, left: 2 }); } }
   if (g.earth && !g.earth.parts) { g.earth.parts = true; const r = stream(g.seed, 'parts-' + g.earth.n), lack = PART_ORDER.flatMap(k => Array(Math.max(0, PARTS[k].n - fitted(g, k) - (g.stash[k] || 0))).fill(k)), pool = lack.length ? lack : PART_ORDER;
     for (let i = 0; i < SITES[g.earth.site].parts; i++) { const a = SITES[g.earth.site].dir + (r() - 0.5) * 2.2, d = g.earth.site === 'depot' ? 14 + r() * 30 : 22 + r() * 48;   /* (a depot keeps its stock close) */ g.parts.push({ id: g.nextId++, kind: pool[Math.floor(r() * pool.length)], x: EARTH.x + Math.cos(a) * d, z: EARTH.z + Math.sin(a) * d }); } }
   for (const q of [...g.motes, ...g.parts]) if (onEarth(q)) [q.x, q.z] = pushOut(q.x, q.z, 1);   // (nothing lies inside a tower)

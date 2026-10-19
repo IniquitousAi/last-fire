@@ -1,7 +1,7 @@
 // Parts lying out on Earth, and the truck at the bay in camp, drawn as it is really fitted (gray boxes first, PLAN-SPACE.md: real models
 // come once his hands say the building feels right). Each part has a shape you can read from far away, so you know what you found.
 import * as THREE from 'three';
-import { BAY, PARTS } from '../core/game.js?v=94';
+import { BAY, PARTS } from '../core/game.js?v=96';
 
 const steel = new THREE.MeshStandardMaterial({ color: 0x3a3f4b, roughness: 0.5, metalness: 0.6 }), rubber = new THREE.MeshStandardMaterial({ color: 0x15161b, roughness: 0.95 });
 const cell = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xff4fd8, emissiveIntensity: 1.2 }), body = new THREE.MeshStandardMaterial({ color: 0x2b303a, roughness: 0.7, metalness: 0.35 });
@@ -36,8 +36,15 @@ export class Truck {
     const gunner = c.seats[1] !== undefined && g.players.find(q => q.id === c.seats[1]); if (gunner) { this.roof.visible = true; this.roof.position.set(c.x, this.land(c.x, c.z) + 2.3, c.z); this.roof.rotation.set(0, gunner.yaw || 0, 0); }
     this.carRig.position.set(c.x, this.land(c.x, c.z), c.z); this.carRig.rotation.y = c.yaw + Math.PI;   // (the truck's front is +z in its own drawing, -z in the rules)
   }
+  wrecks(g) {   // (dead machines on Earth: a tipped, burnt-out hull you strip for parts; gray boxes until real models)
+    this.wv = this.wv || new Map(); const live = new Set();
+    for (const w of (g.earth && g.earth.wrecks) || []) { live.add(w.id); let o = this.wv.get(w.id);
+      if (!o) { o = new THREE.Group(); const hull = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.3, 4.2), body); hull.position.y = 0.55; hull.rotation.z = 0.35; const cab = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.0, 1.4), body); cab.position.set(0.25, 1.3, -1.2); cab.rotation.z = 0.35;
+        const tire = SHAPE.wheel(); tire.position.set(1.4, 0.25, 1.5); tire.rotation.z = 1.2; o.add(hull, cab, tire); o.position.set(w.x, this.land(w.x, w.z), w.z); o.rotation.y = w.ry || 0; this.scene.add(o); this.wv.set(w.id, o); } }
+    for (const [id, o] of this.wv) if (!live.has(id)) { this.scene.remove(o); this.wv.delete(id); }
+  }
   update(g) {
-    this.car(g);
+    this.car(g); this.wrecks(g);
     // parts lying out there
     const live = new Set();
     for (const q of g.parts) { live.add(q.id); let o = this.lying.get(q.id); if (!o) { o = SHAPE[q.kind](); o.position.set(q.x, this.land(q.x, q.z) + 0.35, q.z); o.rotation.y = q.id; this.scene.add(o); this.lying.set(q.id, o); } }
