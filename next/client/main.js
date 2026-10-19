@@ -1,31 +1,31 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=111';
-import { Ambience } from './ambience.js?v=111';
-import { Camp, BOARD } from './camp.js?v=111';
-import { Guide } from './guide.js?v=111';
-import { buildSites } from './earthsite.js?v=111';
-import { Truck } from './truck.js?v=111';
-import { ShipView } from './shipview.js?v=111';
-import { Wrist } from './wrist.js?v=111';
-import { FireCore } from './firecore.js?v=111';
+import * as C from '../core/game.js?v=112';
+import { Ambience } from './ambience.js?v=112';
+import { Camp, BOARD } from './camp.js?v=112';
+import { Guide } from './guide.js?v=112';
+import { buildSites } from './earthsite.js?v=112';
+import { Truck } from './truck.js?v=112';
+import { ShipView } from './shipview.js?v=112';
+import { Wrist } from './wrist.js?v=112';
+import { FireCore } from './firecore.js?v=112';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=111';
-import { FriendVoice } from './friendvoice.js?v=111';
-import { crewFrom } from '../core/habits.js?v=111';
-import { HudLook } from './hudlook.js?v=111';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=111';
-import { sound, GUNS } from '../../src/combat.js?v=111';
-import { FX } from '../../src/fx.js?v=111';
+import { think as friendThink } from './friend.js?v=112';
+import { FriendVoice } from './friendvoice.js?v=112';
+import { crewFrom } from '../core/habits.js?v=112';
+import { HudLook } from './hudlook.js?v=112';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=112';
+import { sound, GUNS } from '../../src/combat.js?v=112';
+import { FX } from '../../src/fx.js?v=112';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 111;   // (this copy's version; ./version.json says the newest)
+const BUILD = 112;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -54,9 +54,9 @@ THREE.ShaderChunk.emissivemap_fragment += `
 #endif`;
 function rimAll() { scene.traverse(o => { if (!o.isMesh || !o.material || o.material === groundMat) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.isMeshStandardMaterial && !m.userData.rim) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '' }; m.needsUpdate = true; } }); }
 setInterval(() => { if (g) rimAll(); }, 2000);   // (new things get their edge within two seconds; a material is changed once)
-const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uEarth: { value: 0 } },
+const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uEarth: { value: 0 }, uFog: { value: scene.fog.color } },
   vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `varying vec3 vD; uniform float uT; uniform float uEarth;
+  fragmentShader: `varying vec3 vD; uniform float uT; uniform float uEarth; uniform vec3 uFog;
     float h(vec3 p){ p = fract(p * 0.3183 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float n(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y), mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
     float fbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * n(p); p *= 2.03; a *= 0.5; } return s; }
@@ -65,7 +65,8 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
       vec3 col = mix(vec3(0.006, 0.008, 0.02), vec3(0.0, 0.0, 0.004), up);
       float neb = fbm(d * 2.6 + vec3(0.0, uT * 0.004, 0.0)), band = exp(-pow((d.y - 0.25 + 0.3 * d.x) * 2.6, 2.0));
       col += band * (vec3(0.05, 0.03, 0.14) * smoothstep(0.35, 0.8, neb) + vec3(0.0, 0.05, 0.09) * smoothstep(0.5, 0.9, fbm(d * 5.0 + 3.0)) + vec3(0.09, 0.01, 0.06) * smoothstep(0.62, 0.95, fbm(d * 3.3 - 7.0)));
-      float st = h(floor(d * 420.0)); col += vec3(0.85, 0.9, 1.0) * step(0.9975, st) * (0.5 + 0.5 * h(floor(d * 420.0) + 7.0)) * smoothstep(-0.05, 0.2, d.y);
+      float st = h(floor(d * 420.0)); col += vec3(0.85, 0.9, 1.0) * step(0.9975, st) * (0.5 + 0.5 * h(floor(d * 420.0) + 7.0)) * smoothstep(0.0, 0.45, d.y);
+      col = mix(uFog, col, smoothstep(-0.03, 0.24, d.y));   /* (the horizon is the fog's own color, so far ground and sky are one haze: no seam where the stars stop, his note 2026-10-19) */
       // Earth, seen from the Moon: blue where it is still itself, black where the dark has taken it, thin violet where the two meet (PLAN-SPACE.md)
       vec3 E = normalize(vec3(0.6, 0.22, -0.78)); float R = 0.13, a = acos(clamp(dot(d, E), -1.0, 1.0));
       vec3 t1 = normalize(cross(E, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, E); vec2 q = vec2(dot(d, t1), dot(d, t2)) / sin(R); float r2 = dot(q, q);
@@ -284,7 +285,7 @@ function shoot() {
   if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
   const muzzle = gm ? camera.localToWorld(gm.localToWorld(gm.userData.muzzle.clone())) : o.clone();
   for (let n = 0; n < (G.pellets || 1); n++) {   // (a shotgun throws a handful of pellets: each is its own line through the air)
-    const d = look(); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize(); ds.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
+    const d = look(); d.x += (Math.random() - 0.5) * sp * 2; d.y += (Math.random() - 0.5) * sp * 2; d.z += (Math.random() - 0.5) * sp * 2; d.normalize(); if (n === 0) { const q = C.aimPull(g, o.x, o.y, o.z, d.x, d.y, d.z); d.set(q[0], q[1], q[2]); } ds.push([+d.x.toFixed(4), +d.y.toFixed(4), +d.z.toFixed(4)]);
     const lit = n === 0 && (isHost() ? C.fired(g, me, o.x, o.z, d.x, d.z) : ((me.shots = (me.shots || 0) + 1) % C.TRACER.every === 0));   // (every fourth round is a tracer: it lights its path)
     const h = C.hitRay(g, o.x, o.y, o.z, d.x, d.y, d.z, 80), e = o.clone().addScaledVector(d, h ? h.t : 60); if (!end) end = e;
     fx.tracer(muzzle, e); if (lit) burn(muzzle, o.clone().addScaledVector(d, h ? h.t : C.TRACER.len));
@@ -391,7 +392,7 @@ function hud() {
 let last = performance.now(), fpsN = 0, fpsT = 0;
 function frame(now) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 8, 0); camera.rotation.set(0.17 + Math.sin(t * 0.07) * 0.02, Math.atan2(-0.6, 0.78) + Math.sin(t * 0.05) * 0.12, 0, 'YXZ'); sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
+  if (mode !== 'play') { const t = now / 1000; camera.position.set(0, 34, 0); camera.rotation.set(0.38 + Math.sin(t * 0.07) * 0.015, Math.atan2(-0.6, 0.78) + 0.2 + Math.sin(t * 0.05) * 0.035, 0, 'YXZ');   /* (Earth sits right of the menu and never drifts behind it) */ sky.material.uniforms.uT.value = t; renderer.render(scene, camera); return; }   // (the home screen looks at Earth, drifting slowly)
   const left = updateTiles(); if (!g.ready) { if (left > 0) { $('loading').textContent = `Lighting the fire: ${left} tiles left`; camera.position.set(me.x, me.y + 1.6, me.z); renderer.render(scene, camera); return; } g.ready = true; $('loading').hidden = true; say('The dark has no edge. Gather its light and push it back.', 5); }
   if (!panel) move(dt);
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }

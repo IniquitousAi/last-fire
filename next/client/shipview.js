@@ -3,8 +3,8 @@
 // The model: assets/ship.glb when it exists (made by TRELLIS.2 from a concept), else a gray-box stand-in, the way the lander started.
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { SHIP, flyShip } from '../core/ship.js?v=111';
-import { shipBounds } from '../core/game.js?v=111';
+import { SHIP, flyShip } from '../core/ship.js?v=112';
+import { shipBounds } from '../core/game.js?v=112';
 
 export class ShipView {
   constructor(scene, land) {

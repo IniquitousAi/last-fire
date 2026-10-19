@@ -10,7 +10,7 @@ Status: **HAS** = Last Fire already does it. **SHIPPED** = added tonight. **QUEU
 
 ## Your health bar is lying to you (and that is a good thing)
 1. **The last sliver is worth more.** Doom and Assassin's Creed give the bottom of the bar more real health than it shows: every fight feels like a close call. **SHIPPED v111** (under 25% light you take 60% damage).
-2. **One hit never kills you from healthy.** Control leaves you at 1 if you were not already dying. **SHIPPED v111** (above 40, a killing hit leaves 1). Robots: careful players 0.13 falls a game to 0; reckless still fall (4.25, 6).
+2. **One hit never kills you from healthy.** Control leaves you at 1 if you were not already dying. **SHIPPED v111** (above 40, a killing hit leaves 1). Robots, 32 seeds: careful 0.19 falls a game before, 0.16 after; inside the noise. It is a fairness floor, not a measured gain.
 3. **A couple of seconds of invincibility at the brink.** BioShock. **NO** for now: v111 already covers it; stacking mercies makes the dark toothless.
 
 ## Enemies are told to miss
@@ -19,7 +19,7 @@ Status: **HAS** = Last Fire already does it. **SHIPPED** = added tonight. **QUEU
 6. **They "reposition" so you can heal.** Combat designers fake a flank so you get a breath. **QUEUED** with the Director (#12).
 
 ## Your aim is better than you think
-7. **Bullet magnetism.** Shots bend a little toward a target near the crosshair; it is on the gun, not the enemy (The Astronauts, Destiny). **QUEUED**: a small pull for shots within a few degrees, more on the shotgun's center pellet.
+7. **Bullet magnetism.** Shots bend a little toward a target near the crosshair; it is on the gun, not the enemy (The Astronauts, Destiny). **SHIPPED v112**: the first bullet or pellet within about 3 degrees of a solid enemy bends 65% of the way to its body (never the head).
 8. **Your sword is longer than it looks; theirs is shorter.** Shadow of Mordor stretches the player's hitbox and shrinks the enemy's. **QUEUED**: the dark's reach a little shorter than its claws look.
 9. **The last bullet hits harder.** System Shock: the last round in the mag hits 4 times harder. **QUEUED**: a last-round crack (with its own sound, so it is a feeling, not a secret).
 10. **Bad luck is quietly paid back.** XCOM gives a hidden bonus after misses in a row; RoboQuest raises a perk's odds each time it fails. **QUEUED** for wreck parts and Earth finds: a dry run is followed by a better one.

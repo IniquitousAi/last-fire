@@ -201,6 +201,15 @@ export function throwFlare(g, p, x, z) { const cost = flareCost(g, p); if (!p ||
 export function flareCost(g, p) { return p && p.name && !p.bot && g.econ ? Math.round(econ.price(g, p.name, FLARE.cost)) : FLARE.cost; }   // (behind on dues, the camp's flares cost more)
 export const SOLID_AT = 0.02;   // (the dark has no shape of its own: out of every light it is smoke, and shots pass through; light makes it commit to a shape you can kill. PLAN-SPACE.md)
 export const solid = (g, k) => lightAt(g, k.x, k.z) > (g.solidAt ?? SOLID_AT);   /* (g.solidAt: the simulator turns the rule off for its control) */
+// bullet pull (GAMEDEV-TRICKS.md 7): a shot within about 3 degrees of a solid enemy bends most of the way to it. It lives on the gun, not the
+// enemy (The Astronauts, Destiny), so cover still blocks it; it only rewards aim that was nearly right.
+export const PULL = { cone: 0.05, max: 60, k: 0.65 };
+export function aimPull(g, ox, oy, oz, dx, dy, dz) {
+  let best = null, ba = PULL.cone;
+  for (const k of g.hollow) { if (k.dead || !solid(g, k)) continue; const hy = KINDS[k.kind].hits.find(h => h[3] === 1)[0], cx = k.x - ox, cy = k.y + hy - oy, cz = k.z - oz, L = Math.hypot(cx, cy, cz); if (L > PULL.max || L < 0.5) continue;
+    const a = Math.acos(Math.min(1, (cx * dx + cy * dy + cz * dz) / L)); if (a < ba) { ba = a; best = [cx / L, cy / L, cz / L]; } }
+  if (!best) return [dx, dy, dz]; const x = dx + (best[0] - dx) * PULL.k, y = dy + (best[1] - dy) * PULL.k, z = dz + (best[2] - dz) * PULL.k, n = Math.hypot(x, y, z); return [x / n, y / n, z / n];
+}
 export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
   let best = null, bt = max;
   for (const k of g.hollow) if (solid(g, k)) for (const [hy, r, part, mult] of KINDS[k.kind].hits) {
@@ -440,7 +449,7 @@ function moveHollow(g, dt, ph) {
     if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; }
     if (K.watched && (k.still = lookedAt(g, k))) { k.y = heightAt(g.land, k.x, k.z); continue; }   // (seen: it holds perfectly still, wherever it was caught)
     k.yaw = Math.atan2(dx, dz);
-    if (d < K.reach) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind); k.cd = K.wait; } }
+    if (d < K.reach * 0.88) { if ((k.cd -= dt) <= 0) { hurt(g, target, K.bite, k.kind);   /* (its claws look longer than they reach: a near miss you can see, GAMEDEV-TRICKS.md 8) */ k.cd = K.wait; } }
     else { k.x += dx * k.speed * dt; k.z += dz * k.speed * dt; }
     k.y = heightAt(g.land, k.x, k.z);
   }

@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#04060c">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap">
 <style>
-  :root { --ink: #eef0f8; --meta: #a3a6bb; --neon: #ff4fd8; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
+  :root { --ink: #eef0f8; --meta: #c6c8dc; --neon: #ff4fd8; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff4f6d; --line: #262a44; }
   * { box-sizing: border-box; } [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--ink); font: 400 17px/1.35 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; user-select: none; }
   canvas { display: block; }
@@ -59,8 +59,15 @@
   body[class*=menu-] #menu { background: transparent; }
   /* A: BOOT, the visor powering on: menu in the left column under visor rims, a boot log typing once */
   body.menu-A #menu { place-items: center start; padding-left: 7vw; } body.menu-A #menu .panel { background: transparent; width: min(420px, 100%); } body.menu-A #menu .panel::after { display: none; }
-  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 400 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #ff4fd8b0; line-height: 1.7; white-space: pre; text-align: right; }
-  body.menu-A #menu .key { background: #05060bb0; }
+  body.menu-A #menu h1 { font-size: 64px; letter-spacing: .3em; font-weight: 400; } #bootLog { display: none; } body.menu-A #bootLog { display: block; position: fixed; right: 6vw; top: 18vh; font: 400 13px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #ff4fd8; line-height: 1.7; font-size: 15px; white-space: pre; text-align: right; }
+  body.menu-A #menu .key { background: #05060bd0; box-shadow: none; position: relative; }
+  /* accents that pop (his note 2026-10-19): a razor-thin violet to pink line round every key and box, bright words on black glass */
+  body.menu-A #menu .key::before { content: ''; position: absolute; inset: 0; border-radius: 9px; padding: 1.2px; background: linear-gradient(120deg, #7b5cff, #ff4fd8 55%, #ff6fb1); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+  body.menu-A #menu .key:hover::before { background: #ff4fd8; } body.menu-A #menu .key small { color: #d4d6e8; }
+  body.menu-A #name, body.menu-A #code { border-color: #7b5cff !important; background: #05060bd0 !important; } body.menu-A #name::placeholder, body.menu-A #code::placeholder { color: #9d8fe0; }
+  body.menu-A #menu .tag { color: #eef0f8; } body.menu-A #menu h1 { color: #fff; }
+  label.tick { color: #d4d6e8 !important; cursor: pointer; } label.tick input { display: inline-block; width: 18px; height: 18px; margin: 0 9px 0 0; vertical-align: -3px; appearance: none; -webkit-appearance: none; border: 1.5px solid #ff4fd8; background: #05060b; cursor: pointer; }
+  label.tick input:checked { background: #ff4fd8; box-shadow: inset 0 0 0 3px #05060b; }
   #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 20px; letter-spacing: .1em; }
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
@@ -121,6 +128,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=111"></script>
+<script type="module" src="./client/main.js?v=112"></script>
 </body>
 </html>
