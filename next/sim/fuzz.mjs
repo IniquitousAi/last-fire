@@ -2,7 +2,8 @@
 // random actions (teleports, drops and rises, nodes, flares, shots, growing the fire, truck and ship, hurting, save and load, odd frame times) and after
 // every action every invariant below is checked. A broken invariant is printed with its seed and the action that broke it, and the exit code is 1.
 import * as G from '../core/game.js';
-const SEEDS = +(process.argv[2] || 40), STEPS = +(process.argv[3] || 400);
+const SEEDS = +(process.argv[2] || 40), STEPS = +(process.argv[3] || 400), HTML = process.argv[4];   // (a 4th argument writes the report as a page, for a screenshot)
+const fails = {};
 const RULES = {
   'every number on a player, the fire and every dark shape is finite': g => [...g.players, ...g.hollow].every(o => Number.isFinite(o.x) && Number.isFinite(o.z)) && Number.isFinite(g.fire.fuel) && Number.isFinite(g.fire.light),
   'health stays between -0 and 100': g => g.players.every(p => p.hp <= 100.0001 && Number.isFinite(p.hp)),
@@ -44,9 +45,11 @@ for (let seed = 1; seed <= SEEDS; seed++) {
   for (let i = 0; i < STEPS; i++) { const name = pick(names); try { ACT[name](); } catch (e) { broke++; console.log(`FAIL seed ${seed} step ${i}: action ${name} threw ${e.message}`); break; }
     if (g.earth) earth++;
     for (const p of ps) if (p.ember && r() < 0.3) { p.ember = false; p.hp = 100; }
-    for (const [rule, f] of Object.entries(RULES)) { checks++; let ok; try { ok = f(g, r, m); } catch (e) { ok = false; } if (!ok) { broke++; kinds[rule] = (kinds[rule] || 0) + 1; if (kinds[rule] <= 2) console.log(`FAIL seed ${seed} step ${i}: after ${name}: ${rule}`); break; } } }
+    for (const [rule, f] of Object.entries(RULES)) { checks++; let ok; try { ok = f(g, r, m); } catch (e) { ok = false; } if (!ok) { broke++; fails[rule] = (fails[rule] || 0) + 1; kinds[rule] = (kinds[rule] || 0) + 1; if (kinds[rule] <= 2) console.log(`FAIL seed ${seed} step ${i}: after ${name}: ${rule}`); break; } } }
   reach.earth += earth > 0; reach.nodes += g.nodes.length; reach.falls += g.stats.falls; reach.kills += g.stats.kills; reach.levels += g.fire.level; reach.hazard += g.stats.hazard || 0; reach.nights += g.night;
 }
 console.log('reached by the robots:', JSON.stringify(reach));
 console.log(`${SEEDS} games x ${STEPS} random actions, ${Object.keys(RULES).length} rules, ${checks} checks: ${broke ? broke + ' broken' : 'no rule broken'}`);
+if (HTML) { const fs = await import('node:fs'); const rows = Object.keys(RULES).map(r => `<div class="r"><b class="${fails[r] ? 'bad' : 'ok'}">${fails[r] ? fails[r] + ' BROKEN' : 'HELD'}</b><span>${r}</span></div>`).join('');
+  fs.writeFileSync(HTML, `<!doctype html><meta charset="utf-8"><title>fuzz</title><style>body{background:#05060b;color:#eef0f8;font:18px "Barlow Condensed",Arial Narrow,sans-serif;margin:32px;width:900px}h1{font-weight:500;letter-spacing:.16em;border-bottom:1px solid #4a4f63;padding-bottom:6px}.r{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:5px 0 5px 10px;border-left:1px solid #4a4f63}.ok{color:#8c92a8;font-weight:500}.bad{color:#ff3b5c}p{color:#b9bccb}</style><h1>ROBOTS THAT TRY TO BREAK EVERY RULE</h1><p>${SEEDS} games of ${STEPS} random actions each: ${checks} checks, ${broke ? broke + ' broken' : 'no rule broken'}. They reached: ${Object.entries(reach).map(([k, v]) => v + ' ' + k).join(', ')}.</p>${rows}`); }
 process.exit(broke ? 1 : 0);

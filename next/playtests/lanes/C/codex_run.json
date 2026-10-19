@@ -1,0 +1,76 @@
+{
+ "at": "2026-10-19T16:56:30.682Z",
+ "steps": [
+  {
+   "name": "menu: PLAY ALONE by the D-pad",
+   "ok": true
+  },
+  {
+   "name": "Start opens the pause menu",
+   "paused": true
+  },
+  {
+   "name": "D-pad finds CODEX",
+   "found": true
+  },
+  {
+   "name": "A opens the CODEX",
+   "open": true,
+   "rows": 178,
+   "sections": [
+    "THE RULES, AND WHY THEY ARE IN THE WORLD",
+    "WHY EACH THING STANDS WHERE IT DOES",
+    "WHAT EACH ERA TEACHES",
+    "HOW IT SHOULD FEEL, BESIDE THE NUMBER",
+    "HOW SURE A NUMBER IS"
+   ]
+  },
+  {
+   "name": "the right stick scrolled through every list",
+   "sections": [
+    "WHY EACH THING STANDS WHERE IT DOES",
+    "WHAT EACH ERA TEACHES",
+    "HOW IT SHOULD FEEL, BESIDE THE NUMBER"
+   ],
+   "shots": {
+    "WHY EACH THING STANDS WHERE IT DOES": "codex-2.png",
+    "WHAT EACH ERA TEACHES": "codex-3.png",
+    "HOW IT SHOULD FEEL, BESIDE THE NUMBER": "codex-4.png",
+    "HOW SURE (end of the list)": "codex-labels.png"
+   }
+  },
+  {
+   "name": "B goes back to the pause menu",
+   "back": true
+  },
+  {
+   "name": "friends joined by the pad (DEV)",
+   "devOk": true,
+   "crew": [
+    "you 5 m",
+    "friend 8 m",
+    "friend 6 m"
+   ]
+  },
+  {
+   "name": "hangout: friends beside the fire",
+   "players": 3
+  },
+  {
+   "name": "solo: alone at the dark edge at night",
+   "players": 1,
+   "light": 0
+  },
+  {
+   "name": "walking the boot-print path with the left stick",
+   "from_z": 4,
+   "to_z": 19.9,
+   "moved": 15.9
+  },
+  {
+   "name": "errors",
+   "errs": []
+  }
+ ],
+ "errs": []
+}

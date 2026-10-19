@@ -75,7 +75,9 @@ const TABLES = { KINDS: G.KINDS, NODE: G.NODE, PARTS: G.PARTS, CAR: G.CAR, CAMP,
   check('suspense: the dark chooses its gap a fixed 2.5 s before it pours', G.FLOOD_WARN === 2.5, G.FLOOD_WARN + ' s');
   const st = {}; let first = null; for (let t = 0; t < 40 && !first; t += 0.5) first = awareStep(st, { dt: 0.5, moved: 0, hp: 100, lookingAtFire: false, earth: false, lit: 1, phase: 'day' }, seeded(1)); check('existential dread: standing still long enough makes you notice yourself noticing', !!first, first ? first.kind : 'none');
   check('psychological payoff: all 7 hours of the ordinary day have a flipped twin', ORDINARY.every(([id]) => MIRROR.some(m => m.id === id)), ORDINARY.length + ' of ' + ORDINARY.length);
-  const used = fs.readdirSync(path.join(next, 'client')).filter(f => f.endsWith('.js')).some(f => /core\/lessons\.js/.test(read('client/' + f))); check('nothing on screen shows the lesson: no client file imports eras.js', !used, 'text-free'); }
+  const users = fs.readdirSync(path.join(next, 'client')).filter(f => f.endsWith('.js') && /core\/lessons\.js/.test(read('client/' + f))); check('the lesson is never shown in play: only the CODEX page (client/codex.js) imports lessons.js', users.join() === 'codex.js', users.join() || 'none');
+  const cx = read('client/codex.js'), ix = read('index.html'), mj = read('client/main.js'); check('the CODEX is in the pause menu: a key, a page, the four lists read from core, the pad scrolls and backs out', /id="openCodex"/.test(ix) && /id="codex"/.test(ix) && /codexHtml\(\)/.test(mj) && /REASONS/.test(cx) && /ERAS/.test(cx) && /FEEL/.test(cx) && /LABELS/.test(cx) && /ax\(3\)/.test(mj), 'index.html, main.js, codex.js');
+  const rf = read('client/rift.js'); check('the green patch ground is clean: rift.js multiplies the corruption by 1 - clean inside the patch', /clean = 1\.0 - smoothstep/.test(rf) && /WILDS\.green/.test(rf), 'client/rift.js'); }
 
 // ---- 40: the mirror realm
 { let ok = true; for (let c = 0; c < 1; c += 0.01) if (!mirrorDay(c)) ok = false; check('every moment of the day has a flipped activity', ok, 'clock 0 to 1');
