@@ -1,0 +1,78 @@
+{
+ "at": "2026-10-19T15:45:35.288Z",
+ "steps": [
+  {
+   "name": "hud share 1000x900 (day, camp)",
+   "pct": 3.11,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
+  },
+  {
+   "name": "hud share 1000x900 (night, camp)",
+   "pct": 3.09,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
+  },
+  {
+   "name": "hud share 1920x908 (day, camp)",
+   "pct": 1.61,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk off,fps,big,I"
+  },
+  {
+   "name": "hud share 1000x900 (carrying light: build keys shown)",
+   "pct": 5.07,
+   "seen": "cross,B,SMALL,SPAN,DIV,bk,fps,big,I"
+  },
+  {
+   "name": "fog density through the day (Moon)",
+   "0.3": 0.012,
+   "0.5": 0.012,
+   "0.57": 0.0131,
+   "0.6": 0.0163,
+   "0.7": 0.0174,
+   "0.99": 0.0134
+  },
+  {
+   "name": "camp people lines (no repeats)",
+   "heard": 4,
+   "distinct": 4,
+   "lines": [
+    "The Clerk: That's your form. The council says ninety-two. The board by the fire says something else. Go look.",
+    "A Council member: Survival today is 92%. Officially. We round with compassion.",
+    "A Council member: The real number upsets people. Upset people do not feed fires.",
+    "The Clerk: I don't make the quotas. I laminate them."
+   ]
+  },
+  {
+   "name": "awareness moment",
+   "after_s": 27.4,
+   "got": [
+    "aware:still",
+    "Nothing is happening to you. You are watching it not happen."
+   ]
+  },
+  {
+   "name": "morning after (lines said)",
+   "n": 2,
+   "lines": [
+    "2 marks on the ground from last night, 1 where someone fell.",
+    "1 relay out there went dark and stayed dark."
+   ]
+  },
+  {
+   "name": "mirror realm sign (wrist said)",
+   "lines": [
+    "Mirror hour (work): a shift at a desk; here a shift at the fire.",
+    "Mirror hour (home): dinner and a screen; here a screen of smiling signs while the dark presses in."
+   ]
+  },
+  {
+   "name": "far land spires drawn at 480 m out",
+   "spires": 48,
+   "fog": 0.0342
+  },
+  {
+   "name": "errors",
+   "errs": []
+  }
+ ],
+ "errs": []
+}

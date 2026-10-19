@@ -464,14 +464,26 @@
    "task": "The sky and far land get stranger the farther out you go",
    "where": "the ringed disc is the first piece",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/strange.js#Strange",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#far-land spires",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/earth-sky-far.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#far land spires",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -480,14 +492,26 @@
    "task": "Moments that make you notice how aware you are (lines, board footnotes)",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/awareness.js#awareStep",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#standing still 25 s makes you notice it",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/awareness.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#awareness moment",
+     "at": "2026-10-19"
+    }
    },
    "spine": "B"
   },
@@ -653,8 +677,14 @@
    "task": "Each era teaches one of these by play, never text",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/eras.js#ERAS",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#seven eras, seven different lessons",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -669,8 +699,14 @@
    "task": "Feel beats number: tune by feel when the two disagree",
    "where": "",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/feel.js#FEEL_LOG",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#where feel overruled a number",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -685,11 +721,23 @@
    "task": "The mirror realm: an ordinary day flipped where it is cool",
    "where": "proposed: commute into the dark, shifts at the fire, a school for the maze, smiling signs",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/mirror.js#MirrorSigns",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#the four flips he asked for",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/earth-sign-day.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#mirror realm sign",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -840,8 +888,14 @@
    "task": "Every mechanic has a lore reason and every lore line a mechanic",
    "where": "next talk",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/lore.js#REASONS",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#lore reason",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -872,8 +926,14 @@
    "task": "Feel checks beside every number",
    "where": "taste rule 80",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/feel.js#FEEL",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#feel check that the live value sits inside",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -1013,8 +1073,14 @@
    "task": "Knowledge labeled checked / reasoned / guess on the board and wrist",
    "where": "merge answers",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/knowledge.js#labelFor",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#labels: 0-2 trips guess",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
@@ -1042,14 +1108,26 @@
    "task": "Camp people never repeat a line while fresh ones remain",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/lines.js#pickFresh",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#lines never repeat while fresh",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/camp-people-line.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#camp people lines",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1074,11 +1152,23 @@
    "task": "HUD covers under 6% of the screen in play",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "index.html#HUD under 6%",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#HUD covers under 6%",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/hud-1000x900.png",
+     "at": "2026-10-19"
+    },
     "pad": null,
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#hud share",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1103,14 +1193,26 @@
    "task": "At least 3 visible consequences of last night the next day",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "core/immersion.js#consequences",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#at least 3 different consequences",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/morning-after-1.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#morning after",
+     "at": "2026-10-19"
+    }
    },
    "spine": "C"
   },
@@ -1141,14 +1243,26 @@
    "task": "Fog rolls in at dusk, rain on Earth, the edge moves",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
-    "seen": null,
+    "built": {
+     "proof": "client/edge.js#Edge",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#fog is 1 by day",
+     "at": "2026-10-19"
+    },
+    "seen": {
+     "proof": "playtests/lanes/C/earth-night-edge.png",
+     "at": "2026-10-19"
+    },
     "pad": {
      "proof": "n/a: nothing to press",
      "at": "2026-10-19"
     },
-    "played": null
+    "played": {
+     "proof": "playtests/lanes/C/immersion_run.json#fog density",
+     "at": "2026-10-19"
+    }
    },
    "spine": "A"
   },
@@ -1157,8 +1271,14 @@
    "task": "Every placed object has a reason",
    "where": "IMMERSION.md",
    "checks": {
-    "built": null,
-    "tested": null,
+    "built": {
+     "proof": "core/placed.js#PLACED",
+     "at": "2026-10-19"
+    },
+    "tested": {
+     "proof": "sim/immersion_test.mjs#placed models have a reason",
+     "at": "2026-10-19"
+    },
     "seen": null,
     "pad": {
      "proof": "n/a: nothing to press",
