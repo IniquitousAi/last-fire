@@ -6,9 +6,27 @@ import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 };
-// the night worker's pace: a calm patrol, 1.3 m/s (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m size, carries
-// its planted foot back 0.55 m in 0.40 s: 1.39 m/s of ground per clip second, so the clip plays at WALK / (1.39 x his scale)
-const WALK = 1.3, CLIP_WALK = 1.39;
+// the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
+// size, carries its planted foot back 0.55 m in 0.40 s: 1.39 m/s of ground per clip second, so the clip plays at pace / (1.39 x his scale)
+const PACE = [1.1, 1.45], CLIP_WALK = 1.39;
+// how people read as people and not bots (ambient-life practice, Red Dead 2 and the idle layering tools): nobody walks a metronome loop, stops have a
+// reason (a lamp, the gate, the wall), the eyes lead and the head and neck follow inside natural limits, the chest breathes, turns take a beat
+const FADE = 0.3, TURN = 7, LOOK = 5;   // (clip cross-fade in s; body turn rate, 95% of any turn in 0.43 s; head follow rate, 95% in 0.6 s)
+const _v = new THREE.Vector3(), _f = new THREE.Vector3(), _d = new THREE.Vector3(), _q = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _pi = new THREE.Quaternion(), _m = new THREE.Matrix4(), _b = new THREE.Box3();
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a)), ease = (k, dt) => 1 - Math.exp(-k * dt), clamp = (x, a, b) => Math.max(a, Math.min(b, x)), rnd = (a, b) => a + Math.random() * (b - a);
+function bend(bone, ry, yaw, pitch) {   // (turns one bone by a yaw and pitch in the world, measured from the body's facing ry, on top of whatever the clip posed)
+  _f.set(Math.sin(ry), 0, Math.cos(ry)); _d.set(Math.sin(ry + yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(ry + yaw) * Math.cos(pitch));
+  _q.setFromUnitVectors(_f, _d); bone.parent.getWorldQuaternion(_pq); _pi.copy(_pq).invert(); _q.multiply(_pq).premultiply(_pi); bone.quaternion.premultiply(_q);
+}
+function fade(P, to, t = FADE) { if (!to || P.cur === to) return; to.reset(); to.setEffectiveWeight(1); to.play(); if (P.cur) P.cur.crossFadeTo(to, t, false); P.cur = to; }
+// where the night worker stops (angles around the fire, in degrees; look = what he turns to). Kept in step with the yard below and PAD and STORE in core and main
+const POSTS = [{ a: 90, look: [0, 34, 1.6], hold: [5, 9], scan: true },   // (the gate: he watches the dark through it)
+  { a: -50, look: [11, -13, 2], hold: [3, 6] },   // (the lander on its pad)
+  { a: 34, look: [Math.cos(0.56) * 15, Math.sin(0.56) * 15, 0.9], hold: [3, 5], act: 1 },   // (the workshop bench: he checks something on it)
+  { a: -9, look: [15.8, -2.5, 1.2], hold: [3, 5], act: 1 },   // (the store behind the metal walls)
+  { a: 237, look: [Math.cos(4.14) * 10.5, Math.sin(4.14) * 10.5, 2.4], hold: [4, 7] },   // (the lamp over the sleepers)
+  { wall: true, hold: [3, 6], act: 0.5, scan: true },   // (any stretch of wall: tests it, looks out past it)
+  { fire: true, hold: [4, 8] }];   // (anywhere: stands looking at the fire a while)
 function paper(lines, w = 512, h = 360) {   // (a sheet of paper as a texture: lines are [text, size, color])
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
   g.fillStyle = '#d9dce6'; g.fillRect(0, 0, w, h); g.fillStyle = '#c3c7d4'; for (let y = 52; y < h; y += 34) g.fillRect(24, y, w - 48, 1);
@@ -41,17 +59,27 @@ export class Camp {
     this.btn.onclick = () => this.check(); addEventListener('keydown', e => { if (e.code === 'KeyC' && this.near) this.check(); });
     // camp people: each speaks from what really happened, one line at a time, never repeating while a fresh one is left (IMMERSION.md)
     this.people = []; this.heard = new Set();
-    const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75 }, { role: 'the Night worker', url: 'c/soldier.glb', x: 0, z: -17, anim: 'Idle_Gun', walk: 'Walk', h: 1.8 }, { role: 'a Council member', url: 'c/survivor.glb', x: -10.8, z: 7.2, anim: 'Idle', h: 1.7 }];
+    // (the soldier's Idle_Gun and Idle hold a rifle he does not carry: Idle_Neutral has his arms at rest; Interact reaches out to check a thing)
+    const PEOPLE = [{ role: 'the Clerk', url: 'c/survivor.glb', x: 3.2, z: -5.2, anim: 'SitIdle', h: 1.75, chain: [['Spine2', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Spine1', yawMax: 1.05 },
+      { role: 'the Night worker', url: 'c/soldier.glb', x: 0, z: -17, anim: 'Idle_Neutral', walk: 'Walk', act: 'Interact', h: 1.8, chain: [['Chest', 0.2], ['Neck', 0.3], ['Head', 0.5]], chest: 'Chest', yawMax: 1.2 },
+      { role: 'a Council member', url: 'c/survivor.glb', x: -10.8, z: 7.2, anim: 'Idle', h: 1.7 }];
     for (const P of PEOPLE) L.loadAsync('../assets/' + P.url).then(r => {
       r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), o = skClone(r.scene); o.scale.setScalar(P.h / b.getSize(new THREE.Vector3()).y);   /* (measured on the original: a copy of an animated model measures wrong) */ o.position.set(P.x, land(P.x, P.z), P.z); o.rotation.y = Math.atan2(-P.x, -P.z);
       o.traverse(m => { if (m.isMesh || m.isSkinnedMesh) { m.material = m.material.clone(); m.material.color.lerp(new THREE.Color(0x2a2e38), 0.55); m.castShadow = false; } });   /* (worn, muted clothes: grounded near) */
-      if (P.anim === 'SitIdle') put('kit/box-large.glb', P.x, P.z, 1.6, 0.4);   /* (something to sit on) */
       const lamp = new THREE.PointLight(0xcfe0ff, 5, 6, 1.5); lamp.position.set(P.x + 0.6, land(P.x, P.z) + 1.4, P.z + 0.4); scene.add(lamp);   // (each person keeps a small lantern: you see who is talking)
-      const mix = new THREE.AnimationMixer(o), clip = r.animations.find(a => a.name.endsWith('|' + P.anim) || a.name.endsWith(P.anim)); if (clip) mix.clipAction(clip).play();
-      const walk = P.walk && r.animations.find(a => a.name.endsWith('|' + P.walk)), acts = { idle: clip ? mix.clipAction(clip) : null, walk: walk ? mix.clipAction(walk) : null };
-      if (acts.walk) acts.walk.timeScale = WALK / (CLIP_WALK * o.scale.x);   /* (steps matched to the ground: no sliding feet) */
+      const mix = new THREE.AnimationMixer(o), find = n => n && r.animations.find(a => a.name.endsWith('|' + n)), clip = find(P.anim) || r.animations.find(a => a.name.endsWith(P.anim));
+      const walk = find(P.walk), act = find(P.act), acts = { idle: clip ? mix.clipAction(clip) : null, walk: walk ? mix.clipAction(walk) : null, act: act ? mix.clipAction(act) : null };
+      if (acts.idle) { acts.idle.play(); acts.idle.time = Math.random() * clip.duration; }   /* (each starts somewhere in its idle: no two people breathe in step) */
+      if (acts.act) { acts.act.setLoop(THREE.LoopOnce, 1); acts.act.clampWhenFinished = true; }
+      const bone = n => o.getObjectByName(n), chain = (P.chain || []).map(([n, w]) => [bone(n), w]).filter(c => c[0]), chest = P.chest && bone(P.chest);
+      const rest = [...chain.map(c => c[0]), chest].filter(Boolean).map(b => [b, b.quaternion.clone()]);   /* (bones a clip leaves alone, like the soldier's neck, go back to rest each frame so the look never adds up) */
+      if (P.anim === 'SitIdle') { const ry = o.rotation.y; put('kit/box-large.glb', P.x, P.z, 1.6, ry + Math.PI / 2).then(bx => {   /* (something to sit on: its 0.4 m depth runs along her facing, a crate bench) */
+        if (!bx) return; mix.update(0); o.updateMatrixWorld(true); const top = _b.setFromObject(bx).max.y, hips = bone('Hips').getWorldPosition(new THREE.Vector3()); let low = 1e9;
+        o.traverse(m => { if (!m.isSkinnedMesh) return; for (let i = 0, n = m.geometry.attributes.position.count; i < n; i++) { m.getVertexPosition(i, _v).applyMatrix4(m.matrixWorld); if (Math.hypot(_v.x - hips.x, _v.z - hips.z) < 0.12 && _v.y < low) low = _v.y; } });
+        if (low < 1e8) o.position.y += top - low; }); }   /* (her seat is the lowest skin under her hips, measured once in the clip's own pose and set on the box top: she sat 3 cm into it) */
       if (P.lamp === false) scene.remove(lamp); else if (P.walk) { scene.remove(lamp); }
-      scene.add(o); this.people.push({ ...P, lamp: P.walk ? null : lamp, o, mix, acts, moving: false, ang: Math.atan2(P.z, P.x), line: '', lineT: 0 }); }).catch(() => {});
+      scene.add(o); this.people.push({ ...P, lamp: P.walk ? null : lamp, o, mix, acts, chain, chest, rest, cur: acts.idle, head: bone('Head'), lyaw: 0, lpitch: 0, gYaw: 0, gPitch: 0, gT: 0, br: Math.random() * 6.3, clock: 0,
+        state: 'stop', a: Math.atan2(P.z, P.x), r: Math.hypot(P.x, P.z), goal: Math.atan2(P.z, P.x), dir: 1, pace: 1.3, hold: 0, actT: 0, post: null, last: [], yawT: o.rotation.y, line: '', lineT: 0 }); }).catch(() => {});
     this.sub = Object.assign(document.createElement('div'), { id: 'sub' }); Object.assign(this.sub.style, { position: 'fixed', left: '50%', bottom: '172px', transform: 'translateX(-50%)', maxWidth: 'min(680px, 90vw)', textAlign: 'center', fontSize: '21px', lineHeight: '1.3', textShadow: '0 1px 3px #000, 0 0 2px #000', pointerEvents: 'none' }); this.sub.hidden = true; document.getElementById('hud').append(this.sub);
     this.yard(L, land);
     // the wall of theories by the hut: every survivor's guess at what the dark is, with odds that what you find moves; none ever reads 'checked'
@@ -127,17 +155,15 @@ export class Camp {
   update(dt = 1 / 60) {   // (dt is the real frame time: a fixed 1/60 walked him 1.7 m/s at 82 fps and 3 m/s on a 144 Hz screen)
     const me = this.ctx.me(); if (!me) return; if (this.ctx.theories) this.drawTheories(this.ctx.theories); if (!this.bunkT || (this.bunkT -= dt) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
     this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
-    const cam = this.ctx.camera(), v = new THREE.Vector3();
+    const cam = this.ctx.camera();
     let talk = null, best = 1e9; const fx = -Math.sin(me.yaw), fz = -Math.cos(me.yaw);
     const g0 = this.ctx.g(), gone = new Set([...(g0.lost || []), ...(g0.out ? [g0.out.who] : [])]);
     for (const P of this.people) {
       P.o.visible = !gone.has(P.role); if (P.lamp) P.lamp.visible = P.o.visible; if (!P.o.visible) continue;   // (out on a trip, or lost: their place by the fire is empty)
+      for (const [b, q] of P.rest) b.quaternion.copy(q);
       P.mix.update(dt); const d = Math.hypot(me.x - P.o.position.x, me.z - P.o.position.z);
-      if (P.walk) {   // (the night worker walks the wall, and stops to talk when you come close)
-        const stop = d < 4.5; if (stop !== P.moving || !P.started) { P.started = true; const a = stop ? P.acts.idle : P.acts.walk, b = stop ? P.acts.walk : P.acts.idle; if (a) a.reset().fadeIn(0.4).play(); if (b) b.fadeOut(0.4); P.moving = stop; }
-        if (!stop) { P.ang += WALK / 17 * dt; const x = Math.cos(P.ang) * 17, z = Math.sin(P.ang) * 17; P.o.position.set(x, this.ctx.land(x, z), z); P.o.rotation.y = Math.atan2(-Math.sin(P.ang), Math.cos(P.ang)); }
-        else P.o.rotation.y = Math.atan2(me.x - P.o.position.x, me.z - P.o.position.z);
-      }
+      if (P.walk) this.patrol(P, dt, d, me);   // (the night worker walks the wall with reasons to stop, and stops to talk when you come close)
+      if (P.chain && P.chain.length) this.live(P, dt, d, cam);
       if (d < 4.5 && (P.lineT -= dt) <= 0) { const all = this.lines(P.role), fresh = all.filter(l => !this.heard.has(l)); P.line = (fresh.length ? fresh : all)[0]; this.heard.add(P.line); P.lineT = 9; }
       if (d >= 6) P.lineT = 0;
       const facing = ((P.o.position.x - me.x) * fx + (P.o.position.z - me.z) * fz) / Math.max(d, 0.01);
@@ -145,6 +171,78 @@ export class Camp {
     }
     const who = this.voice && this.voice.until > performance.now() ? this.voice : talk ? { role: talk.role, line: talk.line.replace(/[<>&]/g, '') } : null;   // (the guide's voice first, then whoever you face)
     this.sub.hidden = true; if (who && who.line !== this.lastHeard) { this.lastHeard = who.line; if (this.ctx.hear) this.ctx.hear(who.role[0].toUpperCase() + who.role.slice(1), who.line); }   // (what people say comes through your wrist: his UI rule)
+  }
+  // the night worker's round: walk the lane to a reason to stop, stand there a few seconds doing something, pick a new place (never the last two)
+  patrol(P, dt, d, me) {
+    const land = this.ctx.land, A = P.acts; if ((this.laneT = (this.laneT ?? 3) - dt) <= 0) { this.laneT = 30; this.scanLane(); }   /* (the lane is measured 3 s in, once the yard stands, then every 30 s as things are built) */
+    if (d < 4.5 && P.state !== 'talk') { P.state = 'talk'; fade(P, A.idle); }
+    if (P.state === 'talk') { P.yawT = Math.atan2(me.x - P.o.position.x, me.z - P.o.position.z); if (d >= 4.5) { P.state = 'stop'; P.hold = rnd(0.6, 1.4); P.post = null; } }   // (he watches you go a moment before he moves on)
+    else if (P.state === 'stop') {
+      if (P.actT > 0 && (P.actT -= dt) <= 0) fade(P, A.idle);
+      if ((P.hold -= dt) <= 0) { this.nextLeg(P); P.state = 'walk'; fade(P, A.walk); }
+    }
+    // moving: speed rides the walk clip's own blend weight, so he eases in and out over the cross-fade and the feet stay matched
+    const w = A.walk ? A.walk.getEffectiveWeight() : 0; if (w > 0.01) {
+      const rem = Math.abs(wrap(P.goal - P.a)) * P.r; let step = P.pace * w * dt; if (P.state === 'walk') step = Math.min(step, rem);
+      P.a += P.dir * step / P.r; P.r += (this.laneAt(P.a) - P.r) * ease(3, dt);
+      const x = Math.cos(P.a) * P.r, z = Math.sin(P.a) * P.r, dx = x - P.o.position.x, dz = z - P.o.position.z;
+      if (dx * dx + dz * dz > 1e-8 && P.state === 'walk') P.yawT = Math.atan2(dx, dz);
+      P.o.position.set(x, land(x, z) + this.liftAt(P.a), z);
+      if (P.state === 'walk' && rem - step < 0.22) { const S = P.post; P.state = 'stop'; P.hold = rnd(S.hold[0], S.hold[1]);   // (arrived: a short stop, with something to do)
+        if (A.act && S.act && Math.random() < S.act) { A.act.timeScale = rnd(0.85, 1); fade(P, A.act); P.actT = A.act.getClip().duration / A.act.timeScale - FADE; } else fade(P, A.idle);
+        A.idle.timeScale = rnd(0.85, 1.1); }
+    }
+    if (P.state === 'stop' && P.post) P.yawT = Math.atan2(P.post.lx - P.o.position.x, P.post.lz - P.o.position.z);
+    P.o.rotation.y += wrap(P.yawT - P.o.rotation.y) * ease(TURN, dt);   // (turns take a beat: no snapping round)
+  }
+  nextLeg(P) {
+    let S, goal = P.a; for (let k = 0; k < 8; k++) { const i = Math.floor(Math.random() * POSTS.length); if (P.last.includes(i)) continue; S = POSTS[i];
+      goal = S.a !== undefined ? S.a * Math.PI / 180 : P.a + (Math.random() < 0.75 ? P.dir : -P.dir) * rnd(0.6, 1.8); if (Math.abs(wrap(goal - P.a)) < 0.3) { S = null; continue; }
+      P.last = [i, ...P.last].slice(0, 2); break; }
+    if (!S) { S = POSTS[POSTS.length - 1]; goal = P.a + P.dir * rnd(0.6, 1.4); }
+    P.goal = wrap(goal); P.dir = Math.sign(wrap(goal - P.a)) || 1; P.pace = rnd(PACE[0], PACE[1]);
+    if (P.acts.walk) P.acts.walk.timeScale = P.pace / (CLIP_WALK * P.o.scale.x);   /* (steps matched to the ground at this leg's pace: no sliding feet) */
+    const lx = S.look ? S.look[0] : S.wall ? Math.cos(goal) * 34 : 0, lz = S.look ? S.look[1] : S.wall ? Math.sin(goal) * 34 : 0;
+    P.post = { hold: S.hold, act: S.act, scan: S.scan, lx, lz, ly: S.look ? S.look[2] : S.wall ? 1.5 : 0.7 };
+  }
+  // a person alive in place: the chest breathes, the eyes go somewhere (you, the fire, the job, the dark), the neck and head follow within a person's limits
+  live(P, dt, d, cam) {
+    const ry = P.o.rotation.y, land = this.ctx.land; P.clock += dt; P.br += dt * (P.walk ? 2 * Math.PI / 3.4 : 2 * Math.PI / 4.3);
+    if ((P.gT -= dt) <= 0) {   // (a new glance every few seconds: mostly ahead, sometimes off to one side)
+      P.gT = rnd(2, 6); const r = Math.random(); P.gYaw = r < 0.55 ? 0 : (Math.random() < 0.5 ? -1 : 1) * rnd(0.3, 0.75); P.gPitch = P.walk ? -0.1 : rnd(-0.12, 0.05);
+      P.glance = P.walk ? null : r < 0.5 ? 'fire' : r < 0.75 && this.people.some(Q => Q.walk && Q.o.visible && Q.o.position.distanceTo(P.o.position) < 14) ? 'worker' : null; }   // (seated: mostly the fire, the night worker as he passes, else off into the dark)
+    let tx = null, ty = 0, tz = 0;
+    if (d < 6 && cam) { tx = cam.position.x; ty = cam.position.y; tz = cam.position.z; }   // (you, when you are near)
+    else if (P.walk && P.state === 'stop' && P.post && !P.post.scan) { tx = P.post.lx; tz = P.post.lz; ty = land(tx, tz) + P.post.ly; }
+    else if (P.walk && P.state === 'stop' && P.post) { P.gYaw = Math.sin(P.clock * 0.55) * 0.6; P.gPitch = -0.03; }   // (scanning the dark, slowly side to side)
+    else if (P.glance === 'fire') { tx = 0; tz = 0; ty = land(0, 0) + 0.6; }
+    else if (P.glance === 'worker') { const Q = this.people.find(Q => Q.walk); tx = Q.o.position.x; tz = Q.o.position.z; ty = Q.o.position.y + 1.6; }
+    let yaw = P.gYaw, pitch = P.gPitch;
+    if (tx !== null) { P.head.getWorldPosition(_v); const dx = tx - _v.x, dz = tz - _v.z, y = wrap(Math.atan2(dx, dz) - ry);
+      if (Math.abs(y) < P.yawMax + 0.4) { yaw = y; pitch = Math.atan2(ty - _v.y, Math.hypot(dx, dz)); } }   // (past what a neck can do, he lets it go: nobody stares over their own shoulder)
+    yaw = clamp(yaw, -P.yawMax, P.yawMax); pitch = clamp(pitch, -0.35, 0.3); const k = ease(LOOK, dt); P.lyaw += (yaw - P.lyaw) * k; P.lpitch += (pitch - P.lpitch) * k;
+    if (P.chest) bend(P.chest, ry, 0, Math.sin(P.br) * (P.walk ? 0.015 : 0.022));   // (breath: the chest rises and settles, 14 breaths a minute seated)
+    for (const [b, w] of P.chain) bend(b, ry, P.lyaw * w, P.lpitch * w);
+  }
+  // the lane he walks: for each of 120 directions around the fire, the radius (11.5 to 20.3 m) nearest his last that clears every built thing by 0.45 m,
+  // and how high any low platform under it stands (the lander pad), measured from the scene's own boxes, then smoothed so he never zigzags
+  laneAt(a) { const L = this.lane; if (!L) return 17; const f = ((a / (2 * Math.PI)) * 120 % 120 + 120) % 120, i = Math.floor(f), t = f - i; return L.r[i] + (L.r[(i + 1) % 120] - L.r[i]) * t; }
+  liftAt(a) { const L = this.lane; if (!L) return 0; const i = Math.round(((a / (2 * Math.PI)) * 120 % 120 + 120) % 120) % 120; return L.lift[i]; }
+  scanLane() {
+    const land = this.ctx.land, obs = [], low = [], sz = _v;
+    this.scene.traverse(o => { if (!o.isMesh || o.isSkinnedMesh) return; if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+      const one = M => { _b.copy(o.geometry.boundingBox).applyMatrix4(M); _b.getSize(sz); const cx = (_b.min.x + _b.max.x) / 2, cz = (_b.min.z + _b.max.z) / 2, rc = Math.hypot(cx, cz);
+        if (rc < 8 || rc > 24 || sz.x > 12 || sz.z > 12) return; const g = land(cx, cz), h = _b.max.y - g; if (h < 0.06 || _b.min.y > g + 1.9) return;
+        (h <= 0.35 && sz.x > 1.5 && sz.z > 1.5 ? low : obs).push([_b.min.x, _b.min.z, _b.max.x, _b.max.z, h]); };
+      if (o.isInstancedMesh) for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, _m); _m.premultiply(o.matrixWorld); one(_m); } else one(o.matrixWorld); });
+    const N = 120, R0 = 11.5, NR = 36, free = new Uint8Array(N * NR), r = new Float32Array(N), lift = new Float32Array(N), M = 0.45;
+    for (let i = 0; i < N; i++) { const a = i / N * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);
+      for (let j = 0; j < NR; j++) { const x = c * (R0 + j * 0.25), z = s * (R0 + j * 0.25); free[i * NR + j] = obs.some(B => x > B[0] - M && x < B[2] + M && z > B[1] - M && z < B[3] + M) ? 0 : 1; } }
+    let prev = 18.4; for (let pass = 0; pass < 2; pass++) for (let i = 0; i < N; i++) { let best = prev, cost = 1e9;   // (twice round, so the first direction knows where the last one ended)
+      for (let j = 0; j < NR; j++) { if (!free[i * NR + j]) continue; const rr = R0 + j * 0.25, cc = Math.abs(rr - prev) + 0.35 * Math.abs(rr - 18.4); if (cc < cost) { cost = cc; best = rr; } } r[i] = prev = best; }
+    for (let i = 0; i < N; i++) { const s = (r[(i + N - 2) % N] + r[(i + N - 1) % N] + r[i] + r[(i + 1) % N] + r[(i + 2) % N]) / 5, j = Math.round((s - R0) / 0.25); if (free[i * NR + j]) r[i] = s; }
+    for (let i = 0; i < N; i++) { const a = i / N * 2 * Math.PI, x = Math.cos(a) * r[i], z = Math.sin(a) * r[i]; for (const B of low) if (x > B[0] && x < B[2] && z > B[1] && z < B[3]) lift[i] = Math.max(lift[i], B[4]); }
+    this.lane = { r, lift };
   }
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
   yard(L, land) {
@@ -162,7 +260,7 @@ export class Camp {
       this.scene.add(o); if (batch.has(url)) mine.push(o); return o; });
     const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
-    const poleG = new THREE.BoxGeometry(0.12, 3, 0.12), poleM = new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 }), bulbG = new THREE.BoxGeometry(0.26, 0.3, 0.26), bulbM = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xcfe0ff, emissiveIntensity: 1.4 });   /* (the three hanging lamps share one pole and one bulb) */
+    const poleG = new THREE.BoxGeometry(0.12, 3, 0.12), poleM = new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 }), bulbG = new THREE.BoxGeometry(0.26, 0.3, 0.26), bulbM = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xe0d8ff, emissiveIntensity: 1.4 });   /* (the three hanging lamps share one pole and one bulb) */
     const batch = new Set(['kit/fence-fortified.glb', 'kit/stone.glb', 'kit/barrel.glb', 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
     const fold = () => { const groups = new Map(); for (const o of mine) { this.scene.remove(o); o.updateMatrixWorld(true); o.traverse(q => { if (!q.isMesh) return; const k = q.geometry.uuid + '|' + q.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(q); }); }
       for (const list of groups.values()) { const f = list[0], im = new THREE.InstancedMesh(f.geometry, f.material, list.length); list.forEach((q, i) => im.setMatrixAt(i, q.matrixWorld)); im.castShadow = f.castShadow; im.receiveShadow = f.receiveShadow; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); this.scene.add(im); } };
@@ -174,7 +272,7 @@ export class Camp {
         const x = Math.cos(a) * R, z = Math.sin(a) * R; put('kit/fence-fortified.glb', x, z, SEG * 1.04, -a - Math.PI / 2 + along, 0.05); } });
     const gx = Math.cos(GATE) * R, gz = Math.sin(GATE) * R;
     for (const s of [-1, 1]) { const x = gx + s * 2.2, z = gz, post = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.4, 0.22), new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6, metalness: 0.3 })); post.position.set(x, land(x, z) + 1.7, z);
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0x7fd8ff, emissiveIntensity: 1.6 })); head.position.set(x, land(x, z) + 3.5, z); this.scene.add(post, head); }
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xd8ccff, emissiveIntensity: 1.6 })); head.position.set(x, land(x, z) + 3.5, z); this.scene.add(post, head); }   // (the gate heads glow white-violet: they read cyan, his rule is no cyan)
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
     [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {

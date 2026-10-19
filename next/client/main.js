@@ -1,33 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=126';
-import { Ambience } from './ambience.js?v=126';
-import { Camp, BOARD } from './camp.js?v=126';
-import { Guide } from './guide.js?v=126';
-import { buildSites } from './earthsite.js?v=126';
-import { Truck } from './truck.js?v=126';
-import { ShipView } from './shipview.js?v=126';
-import { Wrist } from './wrist.js?v=126';
-import { FireCore } from './firecore.js?v=126';
+import * as C from '../core/game.js?v=127';
+import { Ambience } from './ambience.js?v=127';
+import { Camp, BOARD } from './camp.js?v=127';
+import { Guide } from './guide.js?v=127';
+import { buildSites } from './earthsite.js?v=127';
+import { Truck } from './truck.js?v=127';
+import { ShipView } from './shipview.js?v=127';
+import { Wrist } from './wrist.js?v=127';
+import { FireCore } from './firecore.js?v=127';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=126';
-import { FriendVoice } from './friendvoice.js?v=126';
-import { crewFrom } from '../core/habits.js?v=126';
-import { HudLook } from './hudlook.js?v=126';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=126';
-import { sound, GUNS } from '../../src/combat.js?v=126';
-import { FX } from '../../src/fx.js?v=126';
+import { think as friendThink } from './friend.js?v=127';
+import { FriendVoice } from './friendvoice.js?v=127';
+import { crewFrom } from '../core/habits.js?v=127';
+import { HudLook } from './hudlook.js?v=127';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=127';
+import { sound, GUNS } from '../../src/combat.js?v=127';
+import { FX } from '../../src/fx.js?v=127';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 126;   // (this copy's version; ./version.json says the newest)
-const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
+const BUILD = 127;   // (this copy's version; ./version.json says the newest)
+const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
+const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
 
@@ -137,6 +138,13 @@ groundMat.onBeforeCompile = sh => {   // (light from the network lights the grou
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       float L = 0.0; for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; float d = length(vW.xz - q.xy) / q.z; L += q.w * (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - min(d, 1.0) * 0.4); /* edges in order: a reversed smoothstep is undefined on some cards */ }
       totalEmissiveRadiance += diffuseColor.rgb * vec3(0.7, 0.82, 1.25) * min(L, 1.4) * 0.8;
+      /* wet ground that doubles every light (LOOK.md change 3): coolant and condensation pool near the camp's lights; in a puddle each light lays a
+         streak toward your eye, the way a wet street doubles a neon sign. No reflection pass: one more loop over the same few lights */
+      float wet = smoothstep(0.44, 0.6, gn(vW * 0.21)) * smoothstep(0.04, 0.25, L), st = 0.0;
+      if (wet > 0.001) for (int i = 0; i < ${NODE_MAX}; i++) { vec4 q = uLights[i]; if (q.z <= 0.0) continue; vec2 cl = q.xy - cameraPosition.xz; float D = length(cl); if (D < 0.6) continue;
+        vec2 dir = cl / D, rp = vW.xz - cameraPosition.xz; float along = dot(rp, dir), lat = abs(rp.x * dir.y - rp.y * dir.x), w = 0.4 + along * 0.07;
+        st += q.w * smoothstep(0.0, D * 0.3, along) * (1.0 - smoothstep(D * 0.8, D * 1.03, along)) * exp(-(lat * lat) / (w * w)); }
+      totalEmissiveRadiance += vec3(0.85, 0.42, 1.0) * wet * min(st, 1.4) * 0.55 + vec3(0.06, 0.05, 0.1) * wet * min(L, 1.0);
       float far = smoothstep(55.0, 140.0, length(vW.xz - cameraPosition.xz)); float vein = smoothstep(0.82, 0.97, gn(vW * 0.09 + vec3(0.0, 0.0, 0.0))) * smoothstep(0.35, 0.8, gn(vW * 0.031));
       vec3 hue = mix(vec3(0.48, 0.30, 1.0), vec3(0.95, 0.3, 1.0), gn(vW * 0.013)); totalEmissiveRadiance += hue * vein * far * 0.55;   /* (the far dark glows in colors that should not exist) */
       totalEmissiveRadiance += vec3(0.75, 0.7, 1.0) * step(0.9965, gh(floor(vW * 5.0))) * (1.0 - far) * 0.9;   /* (rare mineral glints: the stars, underfoot) */`);
@@ -267,12 +275,12 @@ function prepGun(k) { const src = models[k]; if (!src) return; const inner = src
 const locked = () => document.pointerLockElement === renderer.domElement;
 let buildPick = null;
 addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); toggleTab(); return; } if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys[e.code] = true; if (mode !== 'play' || panel) return;
-  if (e.code === 'Space' && !e.repeat) jumpBuf = 0.15; if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
+  if (e.code === 'Space' && !e.repeat) jumpBuf = 0.15; if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat && SET.sprintToggle) sprintOn = !sprintOn; if (e.code === 'Digit1') switchGun('pistol'); if (e.code === 'Digit2') switchGun('ar'); if (e.code === 'Digit3') switchGun('shotgun'); if (e.code === 'KeyG') throwFlare(); if (e.code === 'KeyX') nextSeat(); if (e.code === 'Digit4') switchGun('lmg'); if (e.code === 'KeyR') reload(); if (e.code === 'KeyQ') pickBuild(buildPick === 'relay' ? null : 'relay'); if (e.code === 'KeyE') pickBuild(buildPick === 'lamp' ? null : 'lamp'); if (e.code === 'KeyF') act(); });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
-addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * SET.sens * (1 - ads * 0.35); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k)); });
-addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); });
+addEventListener('mousemove', e => { if (!locked()) return; const k = 0.0022 * SET.sens * (1 - ads * (1 - SET.adsSens)); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k * (SET.invertY ? -1 : 1))); });
+addEventListener('mousedown', e => { if (!locked()) return; mouse[e.button] = true; if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
 addEventListener('mouseup', e => mouse[e.button] = false);
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { if (mode === 'play' && !locked() && !panel) { panel = 'pause'; $('paused').hidden = false; drawPause(); } });
@@ -280,6 +288,13 @@ addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); co
 function drawPause() {
   $('room').innerHTML = net ? `<div class="code">ROOM <b>${net.code}</b></div><button class="key" id="copyInvite">COPY INVITE<small>(a link with the code in it: paste it in Discord)</small></button>${net.host ? `<button class="key" id="lockRoom">${net.locked ? 'UNLOCK THE ROOM' : 'LOCK THE ROOM'}<small>(${net.locked ? 'let new friends in again' : 'nobody new can join, even with the code'})</small></button>` : ''}` : ''; $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); }
 $('sSens').oninput = e => { SET.sens = +e.target.value; $('vSens').textContent = SET.sens.toFixed(2); save(); };
+$('sFov').oninput = e => { SET.fov = +e.target.value; $('vFov').textContent = SET.fov; save(); };
+$('sAds').oninput = e => { SET.adsSens = +e.target.value; $('vAds').textContent = Math.round(SET.adsSens * 100) + '%'; save(); };
+const OPTS = [['aimToggle', 'AIM', 'TOGGLE', 'HOLD'], ['sprintToggle', 'SPRINT', 'TOGGLE', 'HOLD'], ['invertY', 'LOOK', 'INVERTED', 'NORMAL'], ['autoReload', 'AUTO RELOAD', 'ON', 'OFF'], ['cross', 'CROSSHAIR', 'ON', 'OFF']];
+function drawOpts() { $('opts').innerHTML = OPTS.map(([k, n, on, off]) => `<button class="key" data-o="${k}">${n} <b>${SET[k] ? on : off}</b></button>`).join('') + '<button class="key" data-o="reset">RESET <b>ALL</b></button>'; $('cross').style.display = SET.cross ? '' : 'none';
+  $('sFov').value = SET.fov; $('vFov').textContent = SET.fov; $('sAds').value = SET.adsSens; $('vAds').textContent = Math.round(SET.adsSens * 100) + '%'; }
+$('opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.o === 'reset') { Object.assign(SET, DEFAULTS); sound.setVolume(SET.vol); $('sSens').value = SET.sens; $('vSens').textContent = SET.sens.toFixed(2); $('sVol').value = SET.vol; $('vVol').textContent = Math.round(SET.vol * 100); } else SET[b.dataset.o] = !SET[b.dataset.o]; aimOn = sprintOn = false; save(); drawOpts(); });
+drawOpts();
 $('sVol').oninput = e => { SET.vol = +e.target.value; sound.setVolume(SET.vol); $('vVol').textContent = Math.round(SET.vol * 100); save(); };
 $('resume').onclick = () => { panel = null; $('paused').hidden = true; lockMouse(); };
 $('leave').onclick = () => { saveNow(); location.href = location.pathname; };
@@ -290,13 +305,13 @@ $('room').addEventListener('click', e => { const b = e.target.closest('button');
 // ---------------------------------------------------------------- actions
 let lastFall = '', msgT = 0, duskSnap = null, god = false; const wrist = new Wrist(vcam); function say(t, s = 3) { wrist.say(t, s); }   // (messages come from the wrist screen, never as text on the glass: his UI rule)
 const look = () => new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(me.pitch, me.yaw, 0, 'YXZ'));
-function switchGun(k) { if (k === gunKey) return; gunKey = k; reloadT = 0; }
+function switchGun(k) { if (k === gunKey) return; gunKey = k; reloadT = 0; aimOn = false; }
 // practice (INNOVATION.md idea 8): each gun's reload gets faster the more you do it, on a curve that flattens (the power law of practice);
 // up to 35% faster, never reset, kept in this browser. A real skill curve, not a level.
 const practiced = k => (SET.practice && SET.practice[k]) || 0, reloadSpeed = k => 0.65 + 0.35 * Math.pow(1 + practiced(k) / 8, -0.5);
 function practice(k) { SET.practice = SET.practice || {}; const n = SET.practice[k] = practiced(k) + 1; save();
   if ([10, 25, 50, 100, 200, 400].includes(n)) say(`Your hands know the ${GUNS[k].name} now: reloads ${Math.round((1 - reloadSpeed(k)) * 100)}% faster than your first (${n} reloads).`, 5); }
-function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; reloadT = G.reload * reloadSpeed(gunKey); practice(gunKey); sound.magOut(); setTimeout(() => sound.magIn(), G.reload * reloadSpeed(gunKey) * 700); }
+function reload() { const G = GUNS[gunKey], a = ammo[gunKey]; if (reloadT > 0 || a.mag >= G.mag || a.res <= 0) return; aimOn = false; reloadT = G.reload * reloadSpeed(gunKey); practice(gunKey); sound.magOut(); setTimeout(() => sound.magIn(), G.reload * reloadSpeed(gunKey) * 700); }
 // a tracer's burn: the whole line it flew stays lit in the air for a third of a second, fading (the light that made the smoke solid)
 const BURN = 8, burnGeo = new THREE.BufferGeometry(), burnPos = new Float32Array(BURN * 6), burnCol = new Float32Array(BURN * 6), burnLife = new Float32Array(BURN); let burnI = 0;
 burnGeo.setAttribute('position', new THREE.BufferAttribute(burnPos, 3)); burnGeo.setAttribute('color', new THREE.BufferAttribute(burnCol, 3));
@@ -309,7 +324,7 @@ const mounted = () => g && g.car && C.seatOf(g, me.id) >= 2;
 function shoot() {
   const mount = mounted(), G = mount ? MOUNT : GUNS[gunKey], a = ammo[gunKey]; if (shotCd > 0 || (!mount && reloadT > 0) || me.ember) return;
   if (mount) { if (overheat) { if (!shoot.hot) { sound.click(); shoot.hot = true; } return; } shoot.hot = false; heat = Math.min(1, heat + 0.045); if (heat >= 1) { overheat = true; say('The mount is red hot. Let it cool.', 2); } }
-  else { if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; } a.mag--; }
+  else { if (a.mag <= 0) { sound.click(); reload(); shotCd = 0.3; return; } a.mag--; if (!a.mag && SET.autoReload) setTimeout(() => { if (!ammo[gunKey].mag) reload(); }, 250); }
   shotCd = 60 / G.rpm; sound.shot(mount ? 'lmg' : gunKey); kick = Math.min(1, kick + 0.5 + G.recoil * 6);
   const o = new THREE.Vector3(me.x, me.y + 1.62, me.z), sp = G.spread * (ads > 0.5 ? 0.3 : 1), ds = [], gm = held[gunKey]; let end = null;
   if (gm) { vcam.updateMatrixWorld(true); camera.updateMatrixWorld(true); }
@@ -377,13 +392,14 @@ function nextSeat() { if (C.seatOf(g, me.id) < 0) return; if (isHost()) { const 
 function throwFlare() { if (me.ember) return; const cost = C.flareCost(g, me); if (me.carried < cost) return say(`A flare costs ${cost} light${cost > C.FLARE.cost ? ' (more, while you are behind on dues)' : ''}. You carry ${Math.floor(me.carried)}.`, 3); const [x, z] = flareSpot(); sound.buy(); if (isHost()) C.throwFlare(g, me, x, z); else net.send({ t: 'build', k: 'flare', x: +x.toFixed(2), z: +z.toFixed(2) }); }
 
 // ---------------------------------------------------------------- moving: grounded but sharp (fast to start and stop, real weight on slopes)
+let aimOn = false, sprintOn = false;   /* (aim and sprint as toggles, when he picks that in the pause menu) */
 const vel = new THREE.Vector2(); let vy = 0, onGround = true, coyote = 0, jumpBuf = 0;   /* (GAMEDEV-TRICKS.md 22: a jump still works 0.15 s after a ledge, and a press 0.15 s before landing counts) */
 function move(dt) {
   if (me.ember) return; if (ship && ship.on) { vel.x = vel.y = 0; vy = 0; onGround = true; return; }   /* (flying: the ship moves you) */
   const seat = C.seatOf(g, me.id); if (seat >= 0 && g.car) {   // (in the truck: you ride; the driver's W/S and A/D are throttle and steering)
     me.drive = seat === 0 ? { th: (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), st: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) } : null;
     [me.x, me.z] = C.seatPos(g.car, seat); me.y = g.land(me.x, me.z) + 0.9; vel.x = vel.y = 0; vy = 0; onGround = true; return; }
-  const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), sprint = (keys.ShiftLeft || keys.ShiftRight) && f > 0 && ads < 0.5;
+  const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), sprint = (SET.sprintToggle ? sprintOn : (keys.ShiftLeft || keys.ShiftRight)) && f > 0 && ads < 0.5; if (f <= 0) sprintOn = false;
   const sinY = Math.sin(me.yaw), cosY = Math.cos(me.yaw); let wx = -sinY * f + cosY * s, wz = -cosY * f - sinY * s; const len = Math.hypot(wx, wz) || 1; wx /= len; wz /= len;
   const top = (sprint ? 7.4 : 4.6) * C.speedOf(me) * (1 - ads * 0.35) * (f || s ? 1 : 0), acc = onGround ? 14 : 3;   // (about a third of a second to full speed, less to stop)
   vel.x += (wx * top - vel.x) * Math.min(1, acc * dt); vel.y += (wz * top - vel.y) * Math.min(1, acc * dt);
@@ -429,7 +445,7 @@ function frame(now) {
   shotCd = Math.max(0, shotCd - dt); if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; const G = GUNS[gunKey], a = ammo[gunKey], n = Math.min(G.mag - a.mag, a.res); a.mag += n; a.res -= n; }
   heat = Math.max(0, heat - dt * 0.32); if (overheat && heat < 0.35) overheat = false;   /* (the mount cools about a third of its heat a second) */
   if (locked() && mouse[0] && !panel && !buildPick && (mounted() || GUNS[gunKey].auto || !shoot.held)) { shoot(); shoot.held = true; } if (!mouse[0]) shoot.held = false;
-  ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
+  if (me.ember || (ship && ship.on)) aimOn = false; ads += (((SET.aimToggle ? aimOn : mouse[2]) && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { runFriends(dt); C.step(g, dt); } else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
@@ -438,7 +454,7 @@ function frame(now) {
   drawHollow(dt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
-  camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = 78 - 22 * ads; camera.updateProjectionMatrix();
+  camera.position.set(me.x, me.y + 1.62, me.z); camera.rotation.set(me.pitch + kick * 0.035, me.yaw, 0, 'YXZ'); camera.fov = SET.fov - 22 * ads; camera.updateProjectionMatrix();
   const driving = g.car && C.seatOf(g, me.id) === 0;   // (the driver sees the truck from behind; the mouse swings the view around it)
   if (driving) { const c = g.car, cy = g.land(c.x, c.z), back = 8.5, up = 3.2 - Math.max(-0.6, Math.min(0.8, me.pitch)) * 3;
     camera.position.set(c.x + Math.sin(me.yaw) * back, cy + up, c.z + Math.cos(me.yaw) * back); camera.lookAt(c.x, cy + 1.6, c.z); }

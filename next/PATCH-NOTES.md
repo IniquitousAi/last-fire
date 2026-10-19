@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v127** Settings (aim toggle by default, sprint toggle, field of view, aim speed, invert look, auto reload, crosshair, reset); the camp people feel human (varied routes and pace, smooth turns, head follows you, the clerk breathes and glances); cyan lamp heads now white-violet; wet ground near lights. CHARACTERS.md for a later Tripo buy.
 - **v126** A film grade over the world only (violet shadows, orange and yellow turned to red or pink, grain, lens edge; LOOK.md change 1); ground light is small sparks, not orbs; masks breathe instead of shaking.
 - **v125** Behind you it moves, in front it strikes (robots, 32 seeds: every crew in the flow band, perfect crew 0.06 falls, inside the noise).
 - **v124** The breach shows before it pours: violet smoke and a red compass bracket 2.5 s before the flood comes through the weakest gap (robots: 146 of 146 warned, 93% on the weakest light). sim/breach.mjs.

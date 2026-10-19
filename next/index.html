@@ -26,6 +26,7 @@
   #name { width: 100%; margin-bottom: 10px; font: 500 22px "Barlow Condensed", sans-serif; letter-spacing: .12em; color: #fff; background: #0b0c14; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; outline: none; }
   .note { font-size: 15px; color: var(--meta); margin: 10px 0 0; } .note b { color: var(--neon); font-weight: 500; }
   #paused { background: radial-gradient(circle at 50% 50%, #00000060, #000000c0); } #paused .panel { width: min(420px, 100%); }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 14px; } .opts .key { margin: 0; font-size: 16px; padding: 8px 12px 6px; } .opts .key b { color: var(--neon); font-weight: 500; }
   label { display: block; margin: 0 0 14px; } label b { float: right; color: var(--neon); font-weight: 500; } label input { display: block; width: 100%; margin-top: 6px; accent-color: #ff4fd8; }
   /* the HUD */
   #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #0009; pointer-events: none; }
@@ -98,6 +99,9 @@
   <button class="key" id="resume">BACK TO THE DARK<small>(takes the mouse again)</small></button>
   <label>Mouse speed <b id="vSens"></b><input type="range" id="sSens" min="0.2" max="3" step="0.05"></label>
   <label>Volume <b id="vVol"></b><input type="range" id="sVol" min="0" max="1" step="0.05"></label>
+  <label>Field of view <b id="vFov"></b><input type="range" id="sFov" min="60" max="100" step="1"></label>
+  <label>Aim speed <b id="vAds"></b><input type="range" id="sAds" min="0.3" max="1" step="0.05"></label>
+  <div id="opts" class="opts"></div>
   <div id="room"></div>
   <button class="key" id="openDev">DEV<small>(restart the night, skip ahead, test things, then back to playing)</small></button>
   <button class="key" id="openList">CHECKLIST<small>(every idea you gave, and where it stands)</small></button>
@@ -127,6 +131,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=126"></script>
+<script type="module" src="./client/main.js?v=127"></script>
 </body>
 </html>
