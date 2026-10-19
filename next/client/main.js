@@ -1,30 +1,30 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=93';
-import { Ambience } from './ambience.js?v=93';
-import { Camp, BOARD } from './camp.js?v=93';
-import { Guide } from './guide.js?v=93';
-import { buildSites } from './earthsite.js?v=93';
-import { Truck } from './truck.js?v=93';
-import { Wrist } from './wrist.js?v=93';
-import { FireCore } from './firecore.js?v=93';
+import * as C from '../core/game.js?v=94';
+import { Ambience } from './ambience.js?v=94';
+import { Camp, BOARD } from './camp.js?v=94';
+import { Guide } from './guide.js?v=94';
+import { buildSites } from './earthsite.js?v=94';
+import { Truck } from './truck.js?v=94';
+import { Wrist } from './wrist.js?v=94';
+import { FireCore } from './firecore.js?v=94';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
-import { think as friendThink } from './friend.js?v=93';
-import { FriendVoice } from './friendvoice.js?v=93';
-import { crewFrom } from '../core/habits.js?v=93';
-import { HudLook } from './hudlook.js?v=93';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=93';
-import { sound, GUNS } from '../../src/combat.js?v=93';
-import { FX } from '../../src/fx.js?v=93';
+import { think as friendThink } from './friend.js?v=94';
+import { FriendVoice } from './friendvoice.js?v=94';
+import { crewFrom } from '../core/habits.js?v=94';
+import { HudLook } from './hudlook.js?v=94';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=94';
+import { sound, GUNS } from '../../src/combat.js?v=94';
+import { FX } from '../../src/fx.js?v=94';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 93;   // (this copy's version; ./version.json says the newest)
+const BUILD = 94;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -429,8 +429,12 @@ function learnedFriend() {   // (a teammate who plays like someone from your rec
 const cleanLines = a => (Array.isArray(a) ? a : []).map(l => String(l).replace(/[<>&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 70)).filter(l => l.length >= 2).slice(0, 12);
 $('myLines').value = (SET.myLines || []).join(String.fromCharCode(10)); $('myLines').addEventListener('change', () => { SET.myLines = cleanLines($('myLines').value.split(String.fromCharCode(10))); save(); if (g && me) shareLines(); });
 function shareLines() { if (isHost()) { (g.voice = g.voice || {})[SET.name] = SET.myLines || []; } else if (net) net.send({ t: 'lines', l: SET.myLines || [] }); }
-const fvoice = new FriendVoice((who, line) => wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who), p => ownLine(p));
-function ownLine(p) { const src = (p.style && p.style.name) || '', own = (g.voice || {})[src]; return own && own.length && Math.random() < 0.5 ? own[Math.floor(Math.random() * own.length)] : null; }   // (half the time, their own words)
+const fvoice = new FriendVoice((who, line) => wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who), (p, ev) => ownLine(p, ev));
+const MOMENTS = { kill: 'kill', dusk: 'dusk', hurt: 'hurt', bank: 'bank', fell: 'youFell' };   // (a line may start with a moment word and a colon: 'kill: that one had it coming')
+function ownLine(p, event) { const src = (p.style && p.style.name) || '', own = (g.voice || {})[src] || [];
+  const fit = own.map(l => { const m = l.match(/^(\w+):\s*(.+)$/); return m && MOMENTS[m[1].toLowerCase()] ? { at: MOMENTS[m[1].toLowerCase()], line: m[2] } : { at: null, line: l }; }).filter(x => !x.at || x.at === event);
+  const tagged = fit.filter(x => x.at); if (tagged.length && Math.random() < 0.8) return tagged[Math.floor(Math.random() * tagged.length)].line;   // (a line made for this moment wins most of the time)
+  const loose = fit.filter(x => !x.at); return loose.length && Math.random() < 0.5 ? loose[Math.floor(Math.random() * loose.length)].line : null; }
 function friendHeard(e) {   // (what a learned friend says, from what really happened)
   const bots = g.players.filter(p => p.bot && !p.ember); if (!bots.length) return; const by = id => bots.find(p => p.id === id);
   if (e[1] === 'kill' && by(e[3])) fvoice.speak(by(e[3]), 'kill'); else if (e[1] === 'bank' && by(e[2])) fvoice.speak(by(e[2]), 'bank');
