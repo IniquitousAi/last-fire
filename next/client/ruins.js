@@ -29,8 +29,7 @@ export function buildRuins(scene, land, towers, done) {
     });
     const made = [];
     for (const list of jobs) for (const j of list) { if (!j.mats.length) continue;
-      const mat = j.m.material.clone(); mat.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>
- diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))) * vec3(0.5, 0.54, 0.74);'); };   /* (the brick scan is orange and brown, off his palette: tinted cold and dark, the way the dark has eaten the old world) */
+      const mat = j.m.material.clone(); mat.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))) * vec3(0.5, 0.54, 0.74);'); };   /* (the brick scan is orange and brown, off his palette: tinted cold and dark, the way the dark has eaten the old world) */
       const im = new THREE.InstancedMesh(j.m.geometry, mat, j.mats.length); j.mats.forEach((m, i) => im.setMatrixAt(i, m)); im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); im.frustumCulled = false; scene.add(im); made.push(im); }
     if (done) done(made);
   }).catch(err => console.warn('ruins kit missing, keeping the box towers', err));
