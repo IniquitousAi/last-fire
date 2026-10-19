@@ -1,24 +1,25 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=46';
-import { Ambience } from './ambience.js?v=46';
-import { Camp, BOARD } from './camp.js?v=46';
-import { Guide } from './guide.js?v=46';
-import { buildSites } from './earthsite.js?v=46';
-import { Truck } from './truck.js?v=46';
-import { Wrist } from './wrist.js?v=46';
-import { think as friendThink } from './friend.js?v=46';
-import { crewFrom } from '../core/habits.js?v=46';
-import { HudLook } from './hudlook.js?v=46';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=46';
-import { sound, GUNS } from '../../src/combat.js?v=46';
-import { FX } from '../../src/fx.js?v=46';
+import * as C from '../core/game.js?v=47';
+import { Ambience } from './ambience.js?v=47';
+import { Camp, BOARD } from './camp.js?v=47';
+import { Guide } from './guide.js?v=47';
+import { buildSites } from './earthsite.js?v=47';
+import { Truck } from './truck.js?v=47';
+import { Wrist } from './wrist.js?v=47';
+import { think as friendThink } from './friend.js?v=47';
+import { FriendVoice } from './friendvoice.js?v=47';
+import { crewFrom } from '../core/habits.js?v=47';
+import { HudLook } from './hudlook.js?v=47';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=47';
+import { sound, GUNS } from '../../src/combat.js?v=47';
+import { FX } from '../../src/fx.js?v=47';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 46;   // (this copy's version; ./version.json says the newest)
+const BUILD = 47;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -334,7 +335,7 @@ function frame(now) {
   ads += ((mouse[2] && !buildPick && reloadT <= 0 ? 1 : 0) - ads) * Math.min(1, dt * 14);
   if (god) me.hp = 100; const hp0 = me.hp; if (isHost()) { runFriends(dt); C.step(g, dt); } else { g.t += dt; g.clock += dt / C.DAY; } if (me.hp < hp0) { $('hurt').style.opacity = Math.min(0.6, (hp0 - me.hp) / 25); setTimeout(() => $('hurt').style.opacity = 0, 160); sound.hurt(); }
   const evs = g.log.splice(0); if (net && net.host && evs.length) net.send({ t: 'ev', e: evs.slice(0, 20) });
-  for (const e of [...evs, ...inbox.splice(0)]) { if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
+  for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say('Everyone fell. The fire took you back; the light you carried is out there where you dropped it.', 6); }
   drawHollow(dt); drawBurns(dt); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(dt); sky.material.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = e ? 0.024 : 0.016; }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
@@ -362,7 +363,13 @@ function learnedFriend() {   // (a teammate who plays like someone from your rec
   const p = C.addPlayer(g, id, `${style.name}, learned`); p.bot = true; p.style = style; p.r = C.stream(g.seed, 'friend-' + id); const a = n * 2.4 + 1; p.homeX = g.fire.x + Math.cos(a) * Math.min(6, style.roam); p.homeZ = g.fire.z + Math.sin(a) * Math.min(6, style.roam);
   return pick ? `${style.name}, learned from ${(g.history || []).length} recorded nights, is at your fire.` : 'No nights recorded yet, so this one plays like a careful newcomer. After a few nights it plays like you.';
 }
-function runFriends(dt) { for (const p of g.players) if (p.bot && !p.ember) { const shot = friendThink(g, p, p.r, dt); if (shot) { const from = new THREE.Vector3(p.x, p.y + 1.5, p.z); sound.shot('pistol', from); fx.tracer(from, new THREE.Vector3(shot.x, shot.y, shot.z)); } } }
+const fvoice = new FriendVoice((who, line) => wrist.say(line, Math.min(8, 3 + line.length / 18), 'heard  ·  ' + who));
+function friendHeard(e) {   // (what a learned friend says, from what really happened)
+  const bots = g.players.filter(p => p.bot && !p.ember); if (!bots.length) return; const by = id => bots.find(p => p.id === id);
+  if (e[1] === 'kill' && by(e[3])) fvoice.speak(by(e[3]), 'kill'); else if (e[1] === 'bank' && by(e[2])) fvoice.speak(by(e[2]), 'bank');
+  else if (e[1] === 'dusk') fvoice.speak(bots[0], 'dusk'); else if (e[1] === 'fall' && e[2] === me.id) fvoice.speak(bots[0], 'youFell');
+}
+function runFriends(dt) { fvoice.update(g.players, dt); for (const p of g.players) if (p.bot && !p.ember && p.hp < (p.hp0 ?? 100) - 8) fvoice.speak(p, 'hurt'); for (const p of g.players) if (p.bot) p.hp0 = p.hp; for (const p of g.players) if (p.bot && !p.ember) { const shot = friendThink(g, p, p.r, dt); if (shot) { const from = new THREE.Vector3(p.x, p.y + 1.5, p.z); sound.shot('pistol', from); fx.tracer(from, new THREE.Vector3(shot.x, shot.y, shot.z)); } } }
 const DEV = [
   ['A LEARNED FRIEND JOINS', 'a teammate who plays like your recorded nights; keeps the camp', () => learnedFriend()],
   ['RESTART THE NIGHT', 'back to this dusk, as it was', () => { if (!duskSnap) return 'No dusk yet tonight. SKIP TO DUSK first.'; reloadWorld(JSON.parse(duskSnap)); return 'Back to dusk.'; }],
