@@ -1,13 +1,27 @@
-// The eras (his words, 2026-10-19): Earth starts primitive-modern (scavenge what is around you), then light, then the dark's own tech, and each
-// era teaches one thing by play and never by text. This file holds no on-screen words: only which lesson, which rule teaches it, and the
-// number that proves the rule really does teach it (sim/eras_test.mjs measures each). Nothing in client/ imports it.
-export const LESSONS = ['entropy', 'diminishing returns', 'scale', 'existential dread', 'logic', 'suspense', 'psychological payoff'];
+// Eras: the game grows deeper into the lore one era at a time. An era launches only when the robots AND real feedback say so, and real
+// feedback weighs more than the robots (LORE.md). Tech follows the era: scavenged first, then light, then the dark's own.
+// The numbers come from next/era_state.json (written by sim/eras.mjs from the real test files; feedback is Daniel's own verdicts, empty so far).
+export const WEIGHT = { sim: 0.3, feedback: 0.7 };   // (real feedback counts more than the robots: 70 to 30)
 export const ERAS = [
-  { id: 'scavenged', stuff: 'what the old world left: an assault rifle, a fire axe, a wreck to strip', teaches: 'entropy', rule: 'core/game.js#f.fuel', proof: 'the fire loses fuel every second and only banked light puts it back' },
-  { id: 'light', stuff: 'light you carry, bank and spend', teaches: 'diminishing returns', rule: 'core/camp.js#powerCurve', proof: 'each next 100 light spent on yourself buys less power than the last' },
-  { id: 'community', stuff: 'the walled camp, its dues and its board', teaches: 'logic', rule: 'core/camp.js#payDues', proof: 'standing is exactly paid minus owed, and prices follow it' },
-  { id: 'wilds', stuff: 'open Earth past the walls', teaches: 'scale', rule: 'core/immersion.js#strangeAt', proof: 'the sky and land get stranger the farther out, never the other way' },
-  { id: 'rift', stuff: 'the console inside the wall and its waves', teaches: 'suspense', rule: 'core/game.js#FLOOD_WARN', proof: 'the dark chooses its gap a fixed time before it pours through' },
-  { id: 'darktech', stuff: 'the dark learns the shapes you fear', teaches: 'existential dread', rule: 'core/awareness.js#awareStep', proof: 'standing still long enough makes you notice yourself noticing' },
-  { id: 'mirror', stuff: 'an ordinary day, flipped where it is cool', teaches: 'psychological payoff', rule: 'core/mirror.js#mirrorDay', proof: 'every hour of the ordinary day has a flipped twin you can walk into' },
+  { id: 1, name: 'Scavenged', tech: ['rifle', 'pistol', 'shotgun', 'fire axe', 'flare', 'lamp', 'relay', 'truck from parts'], need: null },
+  { id: 2, name: 'Light', tech: ['light rifle', 'beacon lamp', 'warm suit', 'light rail'], need: { score: 0.75, sim: 0.8, feedback: 0.6, votes: 3 } },
+  { id: 3, name: "The dark's own", tech: ['dark glass', 'shade cloak', 'the console'], need: { score: 0.85, sim: 0.9, feedback: 0.75, votes: 5 } },
 ];
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+// feedback: a list of verdicts from 0 (broken) to 1 (great); sim: the share of robot checks passing (0 to 1)
+export function score(sim, feedback) { return feedback.length ? WEIGHT.sim * sim + WEIGHT.feedback * mean(feedback) : null; }
+export function eraAt(sim, feedback) {
+  const fb = mean(feedback), sc = score(sim, feedback); let era = ERAS[0];
+  for (const E of ERAS.slice(1)) { const n = E.need; if (sc !== null && sc >= n.score && sim >= n.sim && fb >= n.feedback && feedback.length >= n.votes) era = E; else break; }
+  return era;
+}
+export function nextNeed(sim, feedback) {
+  const cur = eraAt(sim, feedback), nx = ERAS[ERAS.indexOf(cur) + 1]; if (!nx) return 'the last era is open';
+  const n = nx.need, fb = mean(feedback);
+  if (feedback.length < n.votes) return `needs ${n.votes - feedback.length} more verdicts from you`;
+  if (sim < n.sim) return `robots at ${Math.round(sim * 100)}%, need ${Math.round(n.sim * 100)}%`;
+  if (fb < n.feedback) return `your verdicts average ${Math.round(fb * 100)}%, need ${Math.round(n.feedback * 100)}%`;
+  return 'waiting on the total score';
+}
+export const techFor = era => ERAS.filter(E => E.id <= era.id).flatMap(E => E.tech);
+export const available = (era, tech) => techFor(era).includes(tech);

@@ -678,7 +678,7 @@
    "where": "",
    "checks": {
     "built": {
-     "proof": "core/eras.js#ERAS",
+     "proof": "core/lessons.js#ERAS",
      "at": "2026-10-19"
     },
     "tested": {
@@ -889,7 +889,7 @@
    "where": "next talk",
    "checks": {
     "built": {
-     "proof": "core/lore.js#REASONS",
+     "proof": "core/reasons.js#REASONS",
      "at": "2026-10-19"
     },
     "tested": {

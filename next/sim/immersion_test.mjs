@@ -7,8 +7,8 @@ import { CAMP } from '../core/camp.js';
 import { pickFresh } from '../core/lines.js';
 import { strangeAt, skyOf, fogAt, edgeOf, consequences, spiresNear, STRANGE } from '../core/immersion.js';
 import { awareStep, POOLS, AWARE } from '../core/awareness.js';
-import { ERAS, LESSONS } from '../core/eras.js';
-import { REASONS, LORE_LINES } from '../core/lore.js';
+import { ERAS, LESSONS } from '../core/lessons.js';
+import { REASONS, LORE_LINES } from '../core/reasons.js';
 import { FEEL, FEEL_VIA, FEEL_LOG } from '../core/feel.js';
 import { MIRROR, ORDINARY, mirrorDay, SIGNS, signLine } from '../core/mirror.js';
 import { labelFor, labeled, LABELS } from '../core/knowledge.js';
@@ -75,7 +75,7 @@ const TABLES = { KINDS: G.KINDS, NODE: G.NODE, PARTS: G.PARTS, CAR: G.CAR, CAMP,
   check('suspense: the dark chooses its gap a fixed 2.5 s before it pours', G.FLOOD_WARN === 2.5, G.FLOOD_WARN + ' s');
   const st = {}; let first = null; for (let t = 0; t < 40 && !first; t += 0.5) first = awareStep(st, { dt: 0.5, moved: 0, hp: 100, lookingAtFire: false, earth: false, lit: 1, phase: 'day' }, seeded(1)); check('existential dread: standing still long enough makes you notice yourself noticing', !!first, first ? first.kind : 'none');
   check('psychological payoff: all 7 hours of the ordinary day have a flipped twin', ORDINARY.every(([id]) => MIRROR.some(m => m.id === id)), ORDINARY.length + ' of ' + ORDINARY.length);
-  const used = fs.readdirSync(path.join(next, 'client')).filter(f => f.endsWith('.js')).some(f => /core\/eras\.js/.test(read('client/' + f))); check('nothing on screen shows the lesson: no client file imports eras.js', !used, 'text-free'); }
+  const used = fs.readdirSync(path.join(next, 'client')).filter(f => f.endsWith('.js')).some(f => /core\/lessons\.js/.test(read('client/' + f))); check('nothing on screen shows the lesson: no client file imports eras.js', !used, 'text-free'); }
 
 // ---- 40: the mirror realm
 { let ok = true; for (let c = 0; c < 1; c += 0.01) if (!mirrorDay(c)) ok = false; check('every moment of the day has a flipped activity', ok, 'clock 0 to 1');
