@@ -21,8 +21,9 @@ export class Immersion {
   update(dt, t) {
     const { g, me, camera, say } = this.ctx, earth = onEarth(me), land = (x, z) => g.land(x, z);
     if (!this.signs && earth) this.signs = new MirrorSigns(this.scene, land);   // (built the first time you stand on Earth: the signs belong there)
-    if (!this.details) { this.details = new Details(this.scene, land, BOARD); this.forest = new Forest(this.scene, land); }   // (small details in the camp, the Wilds' trees on Earth)
-    this.details.update(g); this.forest.update(me);
+    if (!this.details) { this.details = new Details(this.scene, land, BOARD); }
+    if (!this.forest && earth) { const t0 = performance.now(); this.forest = new Forest(this.scene, land); note('forest', `baked ${this.forest.stats.variants} variants, ${this.forest.stats.tris} triangles [${this.forest.stats.v.join('; ')}], ${(performance.now() - t0).toFixed(0)} ms`); }   // (grown once, the first time you stand on Earth)   // (small details in the camp, the Wilds' trees on Earth)
+    this.details.update(g); if (this.forest) this.forest.update(me);
     this.strange.update(camera, me, t, land);
     this.edge.mesh.visible = !me.ember; this.edge.update(t, edgeOf(g, earth), earth ? land(EARTH.x, EARTH.z) : land(g.fire.x, g.fire.z), earth ? 22 : 14);
     this.ctx.fog().density *= fogAt(g.clock, earth);   // (main.js set the base density this frame; dusk thickens it)

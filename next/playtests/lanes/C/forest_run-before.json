@@ -1,0 +1,21 @@
+{
+ "port": 8104,
+ "label": "before",
+ "fps": {
+  "outside the walls": 37,
+  "green patch": 31.8,
+  "hazard bog": 18.6,
+  "north road": 36.3
+ },
+ "at": "2026-10-19T16:33:51.888Z",
+ "forest": [],
+ "errs": [
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "console: THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,3",
+  "console: THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,3",
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "console: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ]
+}
