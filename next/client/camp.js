@@ -152,6 +152,11 @@ export class Camp {
       c.fillStyle = '#a3a6bb'; c.font = '400 22px "Barlow Condensed", "Arial Narrow", sans-serif'; c.fillText('(guess)', 712, y + 30); c.textAlign = 'left'; });
     this.ttex.needsUpdate = true;
   }
+  pushOut(px, pz, r = 0.35) {   /* (out of any solid camp piece, to its nearest side: boxes turned with their piece) */
+    for (const [x, z, hx, hz, cs, sn] of this.solids || []) { const dx = px - x, dz = pz - z; let a = dx * cs - dz * sn, b = dx * sn + dz * cs; const ex = hx + r - Math.abs(a), ez = hz + r - Math.abs(b);
+      if (ex <= 0 || ez <= 0) continue; if (ex < ez) a = Math.sign(a || 1) * (hx + r); else b = Math.sign(b || 1) * (hz + r); px = x + a * cs + b * sn; pz = z - a * sn + b * cs; }
+    return [px, pz];
+  }
   update(dt = 1 / 60) {   // (dt is the real frame time: a fixed 1/60 walked him 1.7 m/s at 82 fps and 3 m/s on a 144 Hz screen)
     const me = this.ctx.me(); if (!me) return; if (this.ctx.theories) this.drawTheories(this.ctx.theories); if (!this.bunkT || (this.bunkT -= dt) <= 0) { this.bunkT = 1; this.bunkLight(); } this.near = Math.hypot(me.x - BOARD.x, me.z - BOARD.z) < 4.5 && this.checkedNight !== this.ctx.g().night;
     this.btn.style.display = this.near ? 'block' : 'none'; this.draw();
@@ -250,13 +255,14 @@ export class Camp {
     // every piece is measured: its footprint centered on (x, z) (the fence and metal wall pivots sit 1.3 m off the piece), its base on the ground
     // (the bedroll's base is 5 cm under its pivot), and set on the lowest ground under its footprint so no corner floats on a slope.
     // lie = a loose thing (a stone): tipped to rest on the slope's own plane and bedded a tenth of its height in, not balanced level on a hill
+    this.solids = this.solids || [];
     const up = new THREE.Vector3(0, 1, 0), spin = new THREE.Quaternion();
     const put0 = (url, x, z, size, ry = 0, sink = 0, lie = false) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(), k = size / Math.max(m.s.x, m.s.z); o.scale.setScalar(k);
       const cs = Math.cos(ry), sn = Math.sin(ry), ox = (m.c.x * cs + m.c.z * sn) * k, oz = (-m.c.x * sn + m.c.z * cs) * k, hx = m.s.x * k / 2, hz = m.s.z * k / 2;
       if (lie) { const e = 0.5, n = new THREE.Vector3(land(x - e, z) - land(x + e, z), 2 * e, land(x, z - e) - land(x, z + e)).normalize();
         o.quaternion.setFromUnitVectors(up, n).multiply(spin.setFromAxisAngle(up, ry)); o.position.set(x - ox, land(x, z) - m.y0 * k - sink - 0.1 * m.s.y * k, z - oz); }
       else { let low = land(x, z); for (const [a, b] of [[hx, hz], [-hx, hz], [hx, -hz], [-hx, -hz]]) low = Math.min(low, land(x + a * cs + b * sn, z - a * sn + b * cs));
-        o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; }
+        o.position.set(x - ox, low - m.y0 * k - sink, z - oz); o.rotation.y = ry; if (m.s.y * k > 1) this.solids.push([x, z, hx, hz, cs, sn]); }   /* (anything taller than a meter is solid: the camera never walks inside a wall) */
       this.scene.add(o); if (batch.has(url)) mine.push(o); return o; });
     const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
