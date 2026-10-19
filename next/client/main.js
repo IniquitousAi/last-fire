@@ -1,37 +1,37 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=160';
-import { Ambience } from './ambience.js?v=160';
-import { Camp, BOARD } from './camp.js?v=160';
-import { Guide } from './guide.js?v=160';
-import { buildSites } from './earthsite.js?v=160';
-import { Truck } from './truck.js?v=160';
-import { ShipView } from './shipview.js?v=160';
-import { Crew } from './crew.js?v=160';
-import { Hands } from './hands.js?v=160';
-import { FpRig } from './fprig.js?v=160';
-import { farStep } from './farsound.js?v=160';
-import { Wrist } from './wrist.js?v=160';
-import { FireCore } from './firecore.js?v=160';
+import * as C from '../core/game.js?v=161';
+import { Ambience } from './ambience.js?v=161';
+import { Camp, BOARD } from './camp.js?v=161';
+import { Guide } from './guide.js?v=161';
+import { buildSites } from './earthsite.js?v=161';
+import { Truck } from './truck.js?v=161';
+import { ShipView } from './shipview.js?v=161';
+import { Crew } from './crew.js?v=161';
+import { Hands } from './hands.js?v=161';
+import { FpRig } from './fprig.js?v=161';
+import { farStep } from './farsound.js?v=161';
+import { Wrist } from './wrist.js?v=161';
+import { FireCore } from './firecore.js?v=161';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=160';
-import { FriendVoice } from './friendvoice.js?v=160';
-import { crewFrom } from '../core/habits.js?v=160';
-import { HudLook } from './hudlook.js?v=160';
-import { applyLook } from './looks.js?v=160';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=160';
-import { sound, GUNS } from '../../src/combat.js?v=160';
-import { FX } from '../../src/fx.js?v=160';
+import { think as friendThink } from './friend.js?v=161';
+import { FriendVoice } from './friendvoice.js?v=161';
+import { crewFrom } from '../core/habits.js?v=161';
+import { HudLook } from './hudlook.js?v=161';
+import { applyLook } from './looks.js?v=161';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=161';
+import { sound, GUNS } from '../../src/combat.js?v=161';
+import { FX } from '../../src/fx.js?v=161';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 160;   // (this copy's version; ./version.json says the newest)
+const BUILD = 161;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -60,7 +60,7 @@ const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uT: { valu
 composer.addPass(grade); composer.addPass(new OutputPass());
 const softDot = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();   // (round, soft points: embers and motes were square specks)
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
-scene.add(new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09));   // (barely any moonlight: the dark is dark, the light is yours)
+const hemi = new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09); scene.add(hemi); const FOG_NIGHT = new THREE.Color(0x04060c), FOG_EARTH_DAY = new THREE.Color(0x30333b);   // (barely any moonlight: the dark is dark, the light is yours)
 // the sky's logic, given to everything (his rule: the sky is the reference for pretty). Research: small bright accents read on large dark
 // fields, saturation shows in the dark (Hunt 2001), rim light separates a form from a dark background. So objects stay dark and get a thin
 // violet edge, taken from the sky's own violet, fading past 60 m; the ground gets rare mineral glints, stars underfoot.
@@ -76,9 +76,9 @@ THREE.ShaderChunk.emissivemap_fragment += `
 #endif`;
 function rimAll() { scene.traverse(o => { if (!o.isMesh || !o.material || o.material === groundMat) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.isMeshStandardMaterial && !m.userData.rim) { m.userData.rim = 1; m.defines = { ...(m.defines || {}), USE_RIM: '' }; m.needsUpdate = true; } }); }
 setInterval(() => { if (g) rimAll(); }, 2000);   // (new things get their edge within two seconds; a material is changed once)
-const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uEarth: { value: 0 }, uFog: { value: scene.fog.color } },
+const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uEarth: { value: 0 }, uDay: { value: 0 }, uFog: { value: scene.fog.color } },
   vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `varying vec3 vD; uniform float uT; uniform float uEarth; uniform vec3 uFog;
+  fragmentShader: `varying vec3 vD; uniform float uT; uniform float uEarth; uniform float uDay; uniform vec3 uFog;
     float h(vec3 p){ p = fract(p * 0.3183 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float n(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y), mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
     float fbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * n(p); p *= 2.03; a *= 0.5; } return s; }
@@ -98,6 +98,10 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), new THREE.Shad
       float nearS = step(0.988, nr) * (exp(-dot(nf, nf) * 1400.0) + 0.22 * exp(-abs(nf.x) * 110.0 - abs(nf.y) * 12.0) + 0.22 * exp(-abs(nf.y) * 110.0 - abs(nf.x) * 12.0));
       vec3 tint = mix(vec3(1.0, 0.94, 1.0), mix(vec3(0.72, 0.66, 1.0), vec3(1.0, 0.62, 0.86), step(0.5, h(mid + 2.0))), step(0.7, h(mid + 1.0)));
       col += (vec3(0.92, 0.9, 1.0) * stars + tint * midS * 1.6 + vec3(1.0, 0.95, 1.0) * nearS * 1.3) * sky;
+      if (uEarth > 0.5 && uDay > 0.0) {   /* Earth's day is overcast: a low dark-gray deck that breaks a little, the stars gone behind it (his picture: dark gray, fog mixed with dark) */
+        float cl = fbm(vec3(d.xz / max(d.y + 0.25, 0.08) * 0.9, uT * 0.01)), deck = mix(0.82, 1.18, smoothstep(0.3, 0.75, cl));
+        vec3 over = mix(vec3(0.2, 0.205, 0.235), vec3(0.34, 0.345, 0.385), smoothstep(-0.05, 0.7, d.y)) * deck;   /* (look 3 keeps true blacks: under about 0.15 the deck crushed to black) */
+        col = mix(col, over, uDay); }
       col = mix(uFog, col, smoothstep(-0.03, 0.24, d.y));   /* (the horizon is the fog's own color, so far ground and sky are one haze: no seam where the stars stop, his note 2026-10-19) */
       // Earth, seen from the Moon: blue where it is still itself, black where the dark has taken it, thin violet where the two meet (PLAN-SPACE.md)
       vec3 E = normalize(vec3(0.6, 0.22, -0.78)); float R = 0.15, a = acos(clamp(dot(d, E), -1.0, 1.0));
@@ -623,7 +627,8 @@ function frame(now) {
   for (const e of [...evs, ...inbox.splice(0)]) { friendHeard(e); if (e[1] === 'honor') say(`${e[2] === SET.name ? 'The camp raised a lamp in the yard with your name on it' : `The camp raised a lamp for ${e[2]}`}: ${e[3]} so far, one for every 300 light of credit.`, 6); if (e[1] === 'pool') say(`The camp's pool goes into the fire: ${e[2]} light, gathered while friends were away. Everyone shares it now.`, 6); if (e[1] === 'fall' && e[2] === me.id) { const t = (g.traces || []).filter(t => t.of === me.id).pop(); say(lastFall = `You fell to ${e[3] ? 'a ' + e[3] : 'the dark'}${t && Math.hypot(t.fx - t.x, t.fz - t.z) > 0.5 ? `, from the ${dirName(t.fx - t.x, t.fz - t.z)}` : ''}. Your last ten seconds are drawn in red where you fell.`, 6); } else if (e[1] !== 'allfell') lastFall = '';
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { growFire(); sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
-  drawHollow(wdt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(wdt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0; sky.material.uniforms.uEarth.value = e; scene.fog.density = (e ? 0.024 : 0.016) * (lookFx ? lookFx.fogK : 1); }
+  drawHollow(wdt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(wdt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0, c = g.clock, day = e ? (c < C.DUSK_AT ? 1 : c < C.NIGHT_AT ? 1 - (c - C.DUSK_AT) / (C.NIGHT_AT - C.DUSK_AT) : c < C.DAWN_AT ? 0 : (c - C.DAWN_AT) / (1 - C.DAWN_AT)) : 0;   /* (Earth has a real day and night, his ask 2026-10-19: overcast gray by day, the stars by night; the Moon has no air, so its sky stays black) */
+    sky.position.copy(camera.position); sky.material.uniforms.uEarth.value = e; sky.material.uniforms.uDay.value = day;   /* (the dome follows you: it sat at the Moon camp, so on Earth, 6 km away, there was no sky at all, only black) */ scene.fog.color.copy(FOG_NIGHT).lerp(FOG_EARTH_DAY, day); hemi.intensity = 0.09 + 0.9 * day; hemi.color.setHex(day > 0.5 ? 0x8890a8 : 0x5a6fb0); scene.fog.density = (e ? 0.024 : 0.016) * (lookFx ? lookFx.fogK : 1); }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
