@@ -27,14 +27,14 @@ function think(g, p, S, r, dt) {
 }
 export function trip(style, seed, n = 1) {
   const g = newGame(seed), S = STYLES[style], r = stream(seed, 'drop-' + style); g.clock = 0.3;
-  for (let i = 0; i < n; i++) { const p = addPlayer(g, i + 1, 'R' + i); p.x = PAD.x + i; p.z = PAD.z; drop(g, p); }
+  for (let i = 0; i < n; i++) { const p = addPlayer(g, i + 1, 'R' + i); p.x = PAD.x + i; p.z = PAD.z; drop(g, p, globalThis.__site); }
   let beats = 0, tense = 0; const dt = 0.1;
   for (let t = 0; t < EARTH.stay + 5 && g.earth; t += dt) {
     for (const p of g.players) think(g, p, S, r, dt); step(g, dt);
     if (Math.floor(t) !== Math.floor(t - dt)) { const down = g.players.filter(p => onEarth(p) && !p.ember); if (down.length) { beats++; if (down.some(p => p.hurtT > 0 || g.hollow.some(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 5))) tense++; } }
   }
   const back = g.players.filter(p => p.home).length, fell = g.log.filter(l => l[1] === 'allfell').length > 0;
-  return { back: back / n, light: g.players.reduce((s, p) => s + (p.brought || 0), 0) / n, tense: beats ? tense / beats : 0, fell };
+  globalThis.__lastGame = g; return { back: back / n, light: g.players.reduce((s, p) => s + (p.brought || 0), 0) / n, tense: beats ? tense / beats : 0, fell };
 }
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
 function measure(n = 1) {
@@ -43,7 +43,8 @@ function measure(n = 1) {
 }
 const miss = o => Math.max(0, 0.95 - o.perfect.back) + Math.max(0, 0.7 - o.careful.back) + Math.max(0, o.careful.back - 0.9) + Math.max(0, 0.4 - o.greedy.back) + Math.max(0, o.greedy.back - 0.7)
   + Object.values(o).reduce((a, x) => a + Math.max(0, 0.25 - x.tense) + Math.max(0, x.tense - 0.7), 0) + (o.greedy.light <= o.careful.light ? 0.3 : 0);
-if (process.argv.includes('--flare')) { console.log('no flares:  ', JSON.stringify(measure(1))); globalThis.__flare = true; console.log('with flares:', JSON.stringify(measure(1))); }
+if (process.argv.includes('--sites')) { for (const site of ['city', 'depot', 'reservoir']) { globalThis.__site = site; const rs = SEEDS.map(seed => { const r = trip('careful', seed, 1); const f = globalThis.__lastGame.sites[site] || { parts: 0, cells: 0 }; return f; }); const m = k => (rs.reduce((a, x) => a + x[k], 0) / rs.length).toFixed(1); console.log(site.padEnd(10), 'careful robot, 20 trips: parts found a trip', m('parts'), ' cells found a trip', m('cells')); } }
+else if (process.argv.includes('--flare')) { console.log('no flares:  ', JSON.stringify(measure(1))); globalThis.__flare = true; console.log('with flares:', JSON.stringify(measure(1))); }
 else if (process.argv.includes('--tune')) {
   const t0 = Date.now(), tried = [];
   for (const base of [6, 10, 14, 18, 24]) for (const perMinute of [4, 8, 14]) for (const every of [0.3, 0.6, 1.0]) {
