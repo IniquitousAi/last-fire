@@ -9,7 +9,7 @@ import { crewFrom, summarize, SECTORS, CAL } from '../core/habits.js';
 const PISTOL = { dmg: 40, head: 2.5, ap: 0.1, rate: 0.35 };
 const PERFECT = { name: 'perfect', roam: 12, greed: 8, bankAt: 12, aim: 0.95, together: 1, blind: -1 };
 
-function think(g, p, r, dt) {   // (one robot plays one person's habits: where they roam, when they bank, how they aim, the way they never look)
+export function think(g, p, r, dt) {   // (one robot plays one person's habits: where they roam, when they bank, how they aim, the way they never look)
   const S = p.style; if (p.ember) return; const f = g.fire;
   let tx = p.homeX, tz = p.homeZ; const ember = g.embers.find(e => !e.held && Math.hypot(e.x - p.x, e.z - p.z) < 40);
   if (p.carrying || p.carried >= S.bankAt) { tx = f.x; tz = f.z; } else if (ember) { tx = ember.x; tz = ember.z; }
