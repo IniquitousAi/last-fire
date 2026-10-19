@@ -1,19 +1,19 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=22';
-import { Ambience } from './ambience.js?v=22';
-import { Camp, BOARD } from './camp.js?v=22';
-import { Guide } from './guide.js?v=22';
-import { HudLook } from './hudlook.js?v=22';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=22';
-import { sound, GUNS } from '../../src/combat.js?v=22';
-import { FX } from '../../src/fx.js?v=22';
+import * as C from '../core/game.js?v=23';
+import { Ambience } from './ambience.js?v=23';
+import { Camp, BOARD } from './camp.js?v=23';
+import { Guide } from './guide.js?v=23';
+import { HudLook } from './hudlook.js?v=23';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=23';
+import { sound, GUNS } from '../../src/combat.js?v=23';
+import { FX } from '../../src/fx.js?v=23';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 22;   // (this copy's version; ./version.json says the newest)
+const BUILD = 23;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -121,8 +121,12 @@ function drawHollow(dt) {
       if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0x9fb6ff); q.material.emissiveIntensity = 0.5; } }); v = { o }; }
       else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; const o = skClone(src.scene); darken(o, eyes); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
         const mix = new THREE.AnimationMixer(o), A = n => { const c = src.animations.find(a => a.name.endsWith(n)); return c ? mix.clipAction(c) : null; }; v = { o, mix, fly: A('Fast_Flying'), idle: A('Flying_Idle'), hit: A('Punch'), death: A('Death') }; (v.fly || v.idle)?.play(); }
+      v.mats = []; v.o.traverse(q => { if (q.isMesh) { q.material.transparent = true; v.mats.push(q.material); } }); v.sol = 0; v.base = v.o.scale.x;
       scene.add(v.o); seen.set(k.id, v);
     }
+    { const want = C.solid(g, k) ? 1 : 0; v.sol += (want - v.sol) * Math.min(1, dt * 7);   // (out of the light it is smoke: faint, unsteady, shots pass through; in the light it commits to a shape)
+      for (const m of v.mats) { m.opacity = 0.16 + 0.84 * v.sol; m.depthWrite = v.sol > 0.9; }
+      const w = (1 - v.sol) * 0.1, t = performance.now() / 1000 + k.id; v.o.scale.set(v.base * (1 + w * Math.sin(t * 11)), v.base * (1 + w * Math.sin(t * 7.3)), v.base * (1 + w * Math.cos(t * 9.1))); }
     const tgt = k.y + (k.kind === 'shard' ? 2.6 : 0.2); v.o.position.set(k.x, tgt, k.z); v.o.rotation.y = k.yaw;   // (no bob: they hold their height; the animation does the moving)
     if (k.kind === 'shard') v.o.rotation.y += performance.now() / 900; if (v.mix) v.mix.update(dt * (k.kind === 'runner' ? 1.6 : 1));
   }

@@ -88,9 +88,11 @@ export function lightAt(g, x, z) {   // (0 in the dark, 1 at the heart of a ligh
 }
 
 // ---------------------------------------------------------------- shots: the first Hollow a ray passes through, and what the hit does
+export const SOLID_AT = 0.02;   // (the dark has no shape of its own: out of every light it is smoke, and shots pass through; light makes it commit to a shape you can kill. PLAN-SPACE.md)
+export const solid = (g, k) => lightAt(g, k.x, k.z) > (g.solidAt ?? SOLID_AT);   /* (g.solidAt: the simulator turns the rule off for its control) */
 export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
   let best = null, bt = max;
-  for (const k of g.hollow) for (const [hy, r, part, mult] of KINDS[k.kind].hits) {
+  for (const k of g.hollow) if (solid(g, k)) for (const [hy, r, part, mult] of KINDS[k.kind].hits) {
     const cx = k.x - ox, cy = k.y + hy - oy, cz = k.z - oz, t = cx * dx + cy * dy + cz * dz; if (t < 0 || t > bt) continue;
     if (cx * cx + cy * cy + cz * cz - t * t < r * r) { bt = t; best = { k, part, mult, t }; }
   }

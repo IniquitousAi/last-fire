@@ -8,7 +8,7 @@ const STEPS = [
   { id: 'board', goal: 'Check the real odds at the board', line: 'Stand at the board and click CHECK. It costs nothing. That is the only free thing here.' },
   { id: 'gate', goal: 'Walk to the gate', line: "Eighty-one. Nobody here says it out loud. The wall has one gate. That's where the dark comes in." },
   { id: 'fire', goal: 'Stand by the fire until dusk', line: 'Good. Now come back to the fire. Dusk is close. It always is.' },
-  { id: 'shoot', goal: 'Shoot one, then walk through its light', line: "They're coming. Shoot them. Each one bursts into light. Walk through it." },
+  { id: 'shoot', goal: 'Let one into the light, shoot it, walk through what it drops', line: "Out in the dark they're smoke. Bullets go through. Let them into the light, then they have to be something. Then shoot." },
   { id: 'bank', goal: 'Bring the light into the fire\'s circle', line: 'Light in your hands keeps nothing warm. Walk it into the fire\'s circle.' },
   { id: 'build', goal: 'Build a relay: Q, or click RELAY, where you look', line: 'The fire only reaches so far. A relay carries its light out. Put one down where you look.' },
   { id: 'dawn', goal: 'Hold the light until dawn', line: "Now hold it until morning. Nobody has ever been told how. You're not the first." },

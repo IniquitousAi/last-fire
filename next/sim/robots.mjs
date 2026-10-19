@@ -30,7 +30,7 @@ function think(g, p, S, r, dt) {   // (one robot: shoot the nearest Hollow it ca
 }
 // one game: a crew of n robots plays some nights against a tactic; returns what the night did to them
 export function play(tactic, styleName, seed, nights = 3, n = 2) {
-  const g = newGame(seed, tactic), S = STYLES[styleName], r = stream(seed, 'robot-' + styleName);
+  const g = newGame(seed, tactic), S = STYLES[styleName], r = stream(seed, 'robot-' + styleName); if (globalThis.__solidAt !== undefined) g.solidAt = globalThis.__solidAt;
   for (let i = 0; i < n; i++) { const p = addPlayer(g, i + 1, 'R' + i), a = i / n * Math.PI * 2; p.homeX = g.fire.x + Math.cos(a) * Math.min(6, S.roam); p.homeZ = g.fire.z + Math.sin(a) * Math.min(6, S.roam); if (S.together < 0.5) { p.homeX = g.fire.x + Math.cos(a) * S.roam * 0.8; p.homeZ = g.fire.z + Math.sin(a) * S.roam * 0.8; } }
   const dt = 0.1; g.clock = 0.5;
   while (g.night <= nights) { for (const p of g.players) think(g, p, S, r, dt); step(g, dt); if (g.t > 330 * nights) break; }
