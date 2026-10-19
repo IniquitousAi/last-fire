@@ -22,7 +22,7 @@ Status: **HAS** = Last Fire already does it. **SHIPPED** = added tonight. **QUEU
 7. **Bullet magnetism.** Shots bend a little toward a target near the crosshair; it is on the gun, not the enemy (The Astronauts, Destiny). **SHIPPED v112**: the first bullet or pellet within about 3 degrees of a solid enemy bends 65% of the way to its body (never the head).
 8. **Your sword is longer than it looks; theirs is shorter.** Shadow of Mordor stretches the player's hitbox and shrinks the enemy's. **QUEUED**: the dark's reach a little shorter than its claws look.
 9. **The last bullet hits harder.** System Shock: the last round in the mag hits 4 times harder. **QUEUED**: a last-round crack (with its own sound, so it is a feeling, not a secret).
-10. **Bad luck is quietly paid back.** XCOM gives a hidden bonus after misses in a row; RoboQuest raises a perk's odds each time it fails. **QUEUED** for wreck parts and Earth finds: a dry run is followed by a better one.
+10. **Bad luck is quietly paid back.** XCOM gives a hidden bonus after misses in a row; RoboQuest raises a perk's odds each time it fails. **SHIPPED v118**: after two trips in a row with no parts, the next has an extra wreck, closer in. Robots: city 22 to 16 trips, reservoir 33 to 19, worst runs 40 to 23; depot unchanged at 6.
 
 ## The game is a director, not a spawner
 11. **The Alien is never allowed to cheat**, but it is given a "menace gauge": when your stress has been high too long, it retreats into the vents so fear never turns to annoyance (Alien: Isolation). **HAS** a light version (the dawn), **QUEUED** properly as #12.

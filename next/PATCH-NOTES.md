@@ -2,6 +2,7 @@
 
 Newest first. Each version's full note is also in `version.json` at the time and in the git log.
 
+- **v118** Bad luck paid back: two dry trips, then an extra wreck closer in (robots: city 22 to 16 trips, reservoir 33 to 19, depot 6).
 - **v117** v115's palette swap undone everywhere (in game too). Earth 15% bigger; its blue rim breaks where the dark has taken it. A ?sky view for UI mockups.
 - **v116** Back to grim and heavy: dark matte keys, saturated pink only on key words (v115's lit outlines missed). Coyote time and a jump buffer (0.15 s each).
 - **v115** Neon accents: the Reactor's saturated hot pink #ff2a8d and electric violet #b026ff everywhere (97 color uses), 2 px outlines.
