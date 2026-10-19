@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 // --tune tries Earth's pressure settings and keeps the one closest to the pass lines (all of them reasoned, from the night's flow band):
 //   a perfect player solo comes back at least 95% of the time; a careful one 70 to 90%; a greedy one 40 to 70% (and brings the most light);
 //   tense (danger within 5 m) between 25% and 70% of the trip.
-import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK, fired, throwFlare, FLARE, loadOf, PARTS, MAX_LOAD } from '../core/game.js';
+import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK, fired, throwFlare, FLARE, loadOf, PARTS, MAX_LOAD, strip } from '../core/game.js';
 
 export const STYLES = {
   careful: { roam: 28, leaveAt: 35, full: 30, aim: 0.75 },
@@ -16,8 +16,9 @@ export function think(g, p, S, r, dt) {
   if (p.ember || !onEarth(p) || p.home) return;
   const goHome = g.earth.t < S.leaveAt + Math.hypot(p.x - EARTH.x, p.z - EARTH.z) / (4.4 * speedOf(p)) || p.carried >= S.full;
   let tx = EARTH.x, tz = EARTH.z;
-  if (!goHome) { const want = [...g.motes.filter(m => onEarth(m)), ...g.parts.filter(q => onEarth(q) && loadOf(p) + PARTS[q.kind].kg <= MAX_LOAD)];   // (light cells and truck parts alike: whatever is nearest and can be carried)
+  if (!goHome) { const want = [...g.motes.filter(m => onEarth(m)), ...g.parts.filter(q => onEarth(q) && loadOf(p) + PARTS[q.kind].kg <= MAX_LOAD), ...((g.earth && g.earth.wrecks) || []).filter(w => w.left > 0 && loadOf(p) + 60 <= MAX_LOAD)];   // (wrecks too: a robot strips what it can carry)   // (light cells and truck parts alike: whatever is nearest and can be carried)
     const m = want.filter(m => Math.hypot(m.x - EARTH.x, m.z - EARTH.z) < S.roam).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (m) { tx = m.x; tz = m.z; } }
+  if (g.earth && g.earth.wrecks && g.earth.wrecks.some(w => w.left > 0 && Math.hypot(p.x - w.x, p.z - w.z) < 3)) strip(g, p);
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); if (d > 0.3) { const sp = Math.min(d, 4.4 * speedOf(p) * dt); p.x += dx / d * sp; p.z += dz / d * sp; } p.y = heightAt(g.land, p.x, p.z);
   if (goHome && Math.hypot(p.x - EARTH.x, p.z - EARTH.z) < 3.5) { const brought = p.carried; if (rise(g, p)) { p.home = true; p.brought = brought; } return; }
   if (globalThis.__flare && (p.flareT = (p.flareT || 0) - dt) <= 0) { const near = g.hollow.filter(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 14); if (near.length >= 3 && p.carried >= FLARE.cost) { const a = Math.atan2(near[0].z - p.z, near[0].x - p.x); throwFlare(g, p, p.x + Math.cos(a) * 9, p.z + Math.sin(a) * 9); p.flareT = 6; } }   // (a robot throws a flare between itself and a pack of three)
