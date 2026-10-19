@@ -1,38 +1,39 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=162';
-import { Ambience } from './ambience.js?v=162';
-import { Camp, BOARD } from './camp.js?v=162';
-import { Guide } from './guide.js?v=162';
-import { buildSites } from './earthsite.js?v=162';
-import { Truck } from './truck.js?v=162';
-import { ShipView } from './shipview.js?v=162';
-import { Crew } from './crew.js?v=162';
-import { Hands } from './hands.js?v=162';
-import { FpRig } from './fprig.js?v=162';
-import { farStep } from './farsound.js?v=162';
-import { Wrist } from './wrist.js?v=162';
-import { FireCore } from './firecore.js?v=162';
+import * as C from '../core/game.js?v=163';
+import { Ambience } from './ambience.js?v=163';
+import { Camp, BOARD } from './camp.js?v=163';
+import { Guide } from './guide.js?v=163';
+import { buildSites } from './earthsite.js?v=163';
+import { Truck } from './truck.js?v=163';
+import { ShipView } from './shipview.js?v=163';
+import { Crew } from './crew.js?v=163';
+import { Hands } from './hands.js?v=163';
+import { FpRig } from './fprig.js?v=163';
+import { farStep } from './farsound.js?v=163';
+import { Wrist } from './wrist.js?v=163';
+import { FireCore } from './firecore.js?v=163';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=162';
-import { FriendVoice } from './friendvoice.js?v=162';
-import { crewFrom } from '../core/habits.js?v=162';
-import { HudLook } from './hudlook.js?v=162';
-import { Rain } from './rain.js?v=162';
-import { applyLook } from './looks.js?v=162';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=162';
-import { sound, GUNS } from '../../src/combat.js?v=162';
-import { FX } from '../../src/fx.js?v=162';
+import { think as friendThink } from './friend.js?v=163';
+import { FriendVoice } from './friendvoice.js?v=163';
+import { crewFrom } from '../core/habits.js?v=163';
+import { HudLook } from './hudlook.js?v=163';
+import { Rain } from './rain.js?v=163';
+import { VisorRain } from './visor.js?v=163';
+import { applyLook } from './looks.js?v=163';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=163';
+import { sound, GUNS } from '../../src/combat.js?v=163';
+import { FX } from '../../src/fx.js?v=163';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 162;   // (this copy's version; ./version.json says the newest)
+const BUILD = 163;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -58,7 +59,7 @@ const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uT: { valu
       c += (h(vUv * 917.0 + fract(uT) * 37.0) - 0.5) * 0.018 * (1.0 - smoothstep(0.0, 0.35, l));
       { float sl = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = mix(c, vec3(sl * 0.75, sl * 0.55, sl * 1.25), uS * 0.45); }   /* (slow time: the world drains toward violet, the edges split more) */
       c *= 1.0 - (0.18 + 0.22 * uS) * smoothstep(0.55, 1.15, r); gl_FragColor = vec4(max(c, 0.0), 1.0); }` });
-composer.addPass(grade); composer.addPass(new OutputPass());
+composer.addPass(grade); const visor = new ShaderPass(VisorRain); visor.uniforms.uRes.value.set(innerWidth, innerHeight); composer.addPass(visor); composer.addPass(new OutputPass());   // (rain on the visor, Earth only: world image only, never the HUD)
 const softDot = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();   // (round, soft points: embers and motes were square specks)
 scene.fog = new THREE.FogExp2(0x04060c, 0.016); scene.background = new THREE.Color(0x02030a);
 const rain = new Rain(scene); const hemi = new THREE.HemisphereLight(0x5a6fb0, 0x020306, 0.09); scene.add(hemi); const FOG_NIGHT = new THREE.Color(0x04060c), FOG_EARTH_DAY = new THREE.Color(0x30333b);   // (barely any moonlight: the dark is dark, the light is yours)
@@ -629,7 +630,7 @@ function frame(now) {
     if (e[1] === 'goes' || e[1] === 'returned' || e[1] === 'lost') { const who = String(e[2] || ''), Who = who[0] ? who[0].toUpperCase() + who.slice(1) : who;   // (the Clerk's paperwork on people who go out: dry, true, filed)
       say(e[1] === 'goes' ? `${Who} went out this morning. Form 7-B filed. Expected back tomorrow, per the form.` : e[1] === 'returned' ? `${Who} is back. The form was right, for once.` : `${Who} did not come back. Form 9-C, in triplicate. The council calls it a reassignment.`, 7); } if (e[2] === me.id && (e[1] === 'rise' || e[1] === 'stranded' || (e[1] === 'fall' && C.onEarth(me)))) settleStake(e[1] === 'rise'); if (e[1] === 'flood' && Number.isFinite(e[2])) { const x = Math.cos(e[2]), z = Math.sin(e[2]), h = ((Math.atan2(-x, -z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2), dir = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(h * 8) % 8]; say(`The dark is pooling to the ${dir}, where your light is thinnest. It will pour in there.`, 5); } if (e[1] === 'bank') { sound.drop(); say(`+${Math.floor(e[3])} light to the fire.`, 2); } if (e[1] === 'level') { growFire(); sound.roundEnd(); say(`The fire grows to level ${e[2]}. Tonight the dark will answer.`, 5); } if (e[1] === 'dusk' && isHost()) duskSnap = JSON.stringify(C.saveWorld(g)); if (e[1] === 'dusk') { sound.round(); say(e[3] ? 'It stirs. The fire\'s growth woke something.' : 'It stirs.', 4); } if (e[1] === 'broke') say(`A ${e[2]} was torn down. The light past it went dark.`, 4); if (e[1] === 'allfell') say(`${lastFall ? lastFall + ' ' : ''}Everyone fell. The fire took you back; the light you carried is out there where you dropped it.`, 7); }
   drawHollow(wdt); drawGrowRing(dt); drawBreach(dt); hitStop = Math.max(0, hitStop - dt); drawBurns(dt); drawTraces(); drawFlares(); drawNetwork(now / 1000); drawMotes(); drawMarks(); fx.update(wdt); sky.material.uniforms.uT.value = now / 1000; grade.uniforms.uT.value = now / 1000; { const e = C.onEarth(me) ? 1 : 0, c = g.clock, day = e ? (c < C.DUSK_AT ? 1 : c < C.NIGHT_AT ? 1 - (c - C.DUSK_AT) / (C.NIGHT_AT - C.DUSK_AT) : c < C.DAWN_AT ? 0 : (c - C.DAWN_AT) / (1 - C.DAWN_AT)) : 0;   /* (Earth has a real day and night, his ask 2026-10-19: overcast gray by day, the stars by night; the Moon has no air, so its sky stays black) */
-    sky.position.copy(camera.position); rain.update(now / 1000, camera, e ? 0.6 + 0.4 * Math.sin(now / 47000) : 0); sky.material.uniforms.uEarth.value = e; sky.material.uniforms.uDay.value = day;   /* (the dome follows you: it sat at the Moon camp, so on Earth, 6 km away, there was no sky at all, only black) */ scene.fog.color.copy(FOG_NIGHT).lerp(FOG_EARTH_DAY, day); hemi.intensity = 0.09 + 0.9 * day; hemi.color.setHex(day > 0.5 ? 0x8890a8 : 0x5a6fb0); scene.fog.density = (e ? 0.024 : 0.016) * (lookFx ? lookFx.fogK : 1); }
+    sky.position.copy(camera.position); { const r = e ? 0.6 + 0.4 * Math.sin(now / 47000) : 0; rain.update(now / 1000, camera, r); visor.uniforms.uT.value = now / 1000; visor.uniforms.uAmt.value += (r - visor.uniforms.uAmt.value) * Math.min(1, dt * 0.5); visor.uniforms.uWipe.value = Math.max(0, visor.uniforms.uWipe.value - dt * 0.35); } sky.material.uniforms.uEarth.value = e; sky.material.uniforms.uDay.value = day;   /* (the dome follows you: it sat at the Moon camp, so on Earth, 6 km away, there was no sky at all, only black) */ scene.fog.color.copy(FOG_NIGHT).lerp(FOG_EARTH_DAY, day); hemi.intensity = 0.09 + 0.9 * day; hemi.color.setHex(day > 0.5 ? 0x8890a8 : 0x5a6fb0); scene.fog.density = (e ? 0.024 : 0.016) * (lookFx ? lookFx.fogK : 1); }
   if (buildPick) { const s = buildSpot(); ghost.visible = true; ghost.position.set(s.x, g.land(s.x, s.z) + 0.05, s.z); } else ghost.visible = false;
   kick += -kick * Math.min(1, dt * 10); if ((hitT -= dt) <= 0) $('hit').className = '';
   coldHands(dt); updateShade(); scanCd = Math.max(0, scanCd - dt); me.crouch = crouch || slideT > 0;
