@@ -121,7 +121,7 @@ export class Camp {
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
   yard(L, land) {
     const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url).then(r => { r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()); return { scene: r.scene, s }; }).catch(() => null));
-    const put = (url, x, z, size, ry = 0, sink = 0) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(); o.scale.setScalar(size / Math.max(m.s.x, m.s.z)); o.position.set(x, land(x, z) - sink, z); o.rotation.y = ry; o.traverse(q => { if (q.isMesh) q.matrixAutoUpdate = true; }); this.scene.add(o); return o; });
+    const put = (url, x, z, size, ry = 0, sink = 0) => get(url).then(m => { if (!m) return null; const o = m.scene.clone(); o.scale.setScalar(size / Math.max(m.s.x, m.s.z)); o.position.set(x, land(x, z) - sink, z); o.rotation.y = ry;  this.scene.add(o); return o; });
     const face = (x, z) => Math.atan2(-x, -z);   // (turns a thing's front toward the fire)
     const R = 21, SEG = 2.7, n = Math.round(2 * Math.PI * R / SEG), GATE = Math.PI / 2;   // (the gate faces out past the hut's side)
     get('kit/fence-fortified.glb').then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;
@@ -132,7 +132,7 @@ export class Camp {
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0x7fd8ff, emissiveIntensity: 1.6 })); head.position.set(x, land(x, z) + 3.5, z); this.scene.add(post, head); }
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
-    [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent.glb', 3.0], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent.glb', 3.0], [170, 'kit/tent.glb', 3.0]].forEach(([deg, url, w]) => {
+    [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {
       const a = deg * Math.PI / 180, x = Math.cos(a) * 14, z = Math.sin(a) * 14; put(url, x, z, w, face(x, z));
       const bx = Math.cos(a) * 11.4, bz = Math.sin(a) * 11.4; put('kit/bedroll.glb', bx, bz, 1.9, face(bx, bz) + 0.2); });
     // the workshop: a bench, planks, barrels and a chest by the wall

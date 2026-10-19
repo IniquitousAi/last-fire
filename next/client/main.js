@@ -1,18 +1,19 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=19';
-import { Ambience } from './ambience.js?v=19';
-import { Camp, BOARD } from './camp.js?v=19';
-import { Guide } from './guide.js?v=19';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=19';
-import { sound, GUNS } from '../../src/combat.js?v=19';
-import { FX } from '../../src/fx.js?v=19';
+import * as C from '../core/game.js?v=20';
+import { Ambience } from './ambience.js?v=20';
+import { Camp, BOARD } from './camp.js?v=20';
+import { Guide } from './guide.js?v=20';
+import { HudLook, LOOKS } from './hudlook.js?v=20';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=20';
+import { sound, GUNS } from '../../src/combat.js?v=20';
+import { FX } from '../../src/fx.js?v=20';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 19;   // (this copy's version; ./version.json says the newest)
+const BUILD = 20;   // (this copy's version; ./version.json says the newest)
 const SET = Object.assign({ sens: 1, vol: 0.8, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
 sound.setVolume(SET.vol);
@@ -290,7 +291,7 @@ function frame(now) {
   for (const k in held) held[k].visible = false; const gm = held[gunKey];
   if (gm && !me.ember) { gm.visible = true; const u = gm.userData, a = ads * ads * (3 - 2 * ads), r = reloadT > 0 ? Math.sin(Math.PI * Math.min(1, 1 - reloadT / GUNS[gunKey].reload)) : 0;
     gm.position.set(0.15 * (1 - a), -0.15 + (-u.top - 0.006 + 0.15) * a - r * 0.1, (-0.16 - u.len * 0.42) * (1 - a) + (-0.3 - u.len * 0.5) * a + kick * 0.035 * (1 - a * 0.6)); gm.rotation.set(-r * 0.3 + kick * 0.05 * (1 - a * 0.7), 0.04 * (1 - a), r * 0.45); }
-  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (guide) guide.update(dt);
+  drawFriends(dt); sync(dt); if (camp) camp.update(dt); if (guide) guide.update(dt); hudLook.update(dt, me, g, C, () => { const am = ammo[gunKey]; return am.mag + '/' + am.res + gunKey + (reloadT > 0); });
   const free = !locked() && !panel; if (clickPlay.hidden === free) clickPlay.hidden = !free;
   amb.update(dt, camera, { x: g.fire.x, y: g.land(g.fire.x, g.fire.z), z: g.fire.z }, C.lightAt(g, me.x, me.z), g.fire.fuel > 0); embers(dt); farLights(dt);
   hud();
@@ -489,6 +490,9 @@ function drawWorlds() {
   $('worlds').innerHTML = list.map(w => `<button class="key" data-w="${w.id}">CONTINUE<small>(night ${w.night}, fire ${w.level}, ${w.nodes} lights built, saved ${ago(w.at)}: ${net === null ? 'alone, or HOST it below' : ''})</small></button>`).join('');
 }
 $('worlds').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; myName(); sound.wake(); pendingWorld = b.dataset.w; if ($('asHost').checked) { openRoom(); startWorld(pendingWorld); say(`Your crew's room ${crewCode()} is open.`, 6); } else startWorld(pendingWorld); });
+const hudLook = new HudLook(() => SET.look, v => { SET.look = v; save(); });   // (three HUD looks on the same numbers; he picks in the Tab menu)
+function drawLooks() { $('looks').innerHTML = LOOKS.map(([k, n, d]) => `<button class="bk${hudLook.name === k ? ' on' : ''}" data-l="${k}">${n}<small>(${d})</small></button>`).join(''); }
+$('looks').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; hudLook.apply(b.dataset.l); drawLooks(); }); drawLooks();
 let pendingWorld = null; drawWorlds(); setTimeout(() => { if (mode === 'menu') resume(); }, 50); setTimeout(flushQueue, 5000);
 $('solo').onclick = () => { myName(); sound.wake(); startWorld(null); };
 function crewCode() { if (!SET.crew) { SET.crew = roomCode(); save(); } return SET.crew; }   // (made once, kept forever in this browser: the link never changes)
