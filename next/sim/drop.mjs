@@ -3,7 +3,7 @@
 // --tune tries Earth's pressure settings and keeps the one closest to the pass lines (all of them reasoned, from the night's flow band):
 //   a perfect player solo comes back at least 95% of the time; a careful one 70 to 90%; a greedy one 40 to 70% (and brings the most light);
 //   tense (danger within 5 m) between 25% and 70% of the trip.
-import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK, fired } from '../core/game.js';
+import { newGame, addPlayer, step, hitRay, damage, heightAt, KINDS, stream, drop, rise, onEarth, speedOf, PAD, EARTH, EARTH_DARK, fired, throwFlare, FLARE } from '../core/game.js';
 
 const STYLES = {
   careful: { roam: 28, leaveAt: 35, full: 30, aim: 0.75 },
@@ -18,6 +18,7 @@ function think(g, p, S, r, dt) {
   if (!goHome) { const m = g.motes.filter(m => onEarth(m) && Math.hypot(m.x - EARTH.x, m.z - EARTH.z) < S.roam).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (m) { tx = m.x; tz = m.z; } }
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); if (d > 0.3) { const sp = Math.min(d, 4.4 * speedOf(p) * dt); p.x += dx / d * sp; p.z += dz / d * sp; } p.y = heightAt(g.land, p.x, p.z);
   if (goHome && Math.hypot(p.x - EARTH.x, p.z - EARTH.z) < 3.5) { const brought = p.carried; if (rise(g, p)) { p.home = true; p.brought = brought; } return; }
+  if (globalThis.__flare && (p.flareT = (p.flareT || 0) - dt) <= 0) { const near = g.hollow.filter(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 14); if (near.length >= 3 && p.carried >= FLARE.cost) { const a = Math.atan2(near[0].z - p.z, near[0].x - p.x); throwFlare(g, p, p.x + Math.cos(a) * 9, p.z + Math.sin(a) * 9); p.flareT = 6; } }   // (a robot throws a flare between itself and a pack of three)
   p.cd = (p.cd || 0) - dt; if (p.cd > 0) return;
   const k = g.hollow.filter(k => k.earth && Math.hypot(k.x - p.x, k.z - p.z) < 30).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0]; if (!k) return; p.yaw = Math.atan2(-(k.x - p.x), -(k.z - p.z));
   p.cd = PISTOL.rate; const dist = Math.hypot(k.x - p.x, k.z - p.z), hc = S.aim * Math.max(0.15, 1 - dist / 40), head = r() < hc * 0.35; if (r() > hc) return;
@@ -42,7 +43,8 @@ function measure(n = 1) {
 }
 const miss = o => Math.max(0, 0.95 - o.perfect.back) + Math.max(0, 0.7 - o.careful.back) + Math.max(0, o.careful.back - 0.9) + Math.max(0, 0.4 - o.greedy.back) + Math.max(0, o.greedy.back - 0.7)
   + Object.values(o).reduce((a, x) => a + Math.max(0, 0.25 - x.tense) + Math.max(0, x.tense - 0.7), 0) + (o.greedy.light <= o.careful.light ? 0.3 : 0);
-if (process.argv.includes('--tune')) {
+if (process.argv.includes('--flare')) { console.log('no flares:  ', JSON.stringify(measure(1))); globalThis.__flare = true; console.log('with flares:', JSON.stringify(measure(1))); }
+else if (process.argv.includes('--tune')) {
   const t0 = Date.now(), tried = [];
   for (const base of [6, 10, 14, 18, 24]) for (const perMinute of [4, 8, 14]) for (const every of [0.3, 0.6, 1.0]) {
     Object.assign(EARTH_DARK, { base, perMinute, every }); const o = measure(1); tried.push({ set: { base, perMinute, every }, o, miss: +miss(o).toFixed(3) }); }

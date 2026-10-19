@@ -147,6 +147,7 @@ export function lightAt(g, x, z, noGlow) {   // (noGlow: leave out the glow play
   for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r && 1 - d / r > L && !shadowed(n.x, n.z, x, z)) L = 1 - d / r; }
   if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8); }
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !shadowed(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
+  if (g.flares) for (const f of g.flares) { const d = Math.hypot(f.x - x, f.z - z); if (d < FLARE.r) L = Math.max(L, (1 - d / FLARE.r) * Math.min(1, f.t / 2)); }
   if (g.tracers) for (const t of g.tracers) { const vx = t.bx - t.ax, vz = t.bz - t.az, k = Math.max(0, Math.min(1, ((x - t.ax) * vx + (z - t.az) * vz) / (vx * vx + vz * vz))), d = Math.hypot(t.ax + vx * k - x, t.az + vz * k - z); if (d < TRACER.width) L = Math.max(L, 0.5 * t.t / TRACER.life); }
   if (g.car) { const c = g.car, dx = x - c.x, dz = z - c.z, ahead = -dx * Math.sin(c.yaw) - dz * Math.cos(c.yaw), side = Math.abs(dx * Math.cos(c.yaw) - dz * Math.sin(c.yaw));
     if (ahead > 0 && ahead < CAR.lamp && side < 1.2 + ahead * 0.45 && 0.8 * (1 - ahead / CAR.lamp) > L && !shadowed(c.x, c.z, x, z)) L = 0.8 * (1 - ahead / CAR.lamp);
@@ -159,6 +160,9 @@ export function lightAt(g, x, z, noGlow) {   // (noGlow: leave out the glow play
 // tracers are light (INNOVATION.md, idea 1): every fourth round burns a line through the air for a third of a second, and what it passes turns solid
 export const TRACER = { every: 4, life: 0.35, width: 1.8, len: 40 };
 export function fired(g, p, ox, oz, dx, dz) { p.shots = (p.shots || 0) + 1; if (p.shots % TRACER.every) return false; const L = Math.hypot(dx, dz) || 1; (g.tracers = g.tracers || []).push({ ax: ox, az: oz, bx: ox + dx / L * TRACER.len, bz: oz + dz / L * TRACER.len, t: TRACER.life }); return true; }
+// the decoy flare (queue 31, from the shielded-box test): a burning light you throw; it lights where it lands and pulls the hunt to it
+export const FLARE = { cost: 10, life: 12, r: 6.5, reach: 16, pull: 18, burn: 45 };
+export function throwFlare(g, p, x, z) { if (!p || p.ember || p.carried < FLARE.cost || Math.hypot(x - p.x, z - p.z) > FLARE.reach) return false; p.carried -= FLARE.cost; (g.flares = g.flares || []).push({ x, z, t: FLARE.life, earth: onEarth(p) }); g.log.push([+g.t.toFixed(2), 'flare', p.id]); return true; }
 export const SOLID_AT = 0.02;   // (the dark has no shape of its own: out of every light it is smoke, and shots pass through; light makes it commit to a shape you can kill. PLAN-SPACE.md)
 export const solid = (g, k) => lightAt(g, k.x, k.z) > (g.solidAt ?? SOLID_AT);   /* (g.solidAt: the simulator turns the rule off for its control) */
 export function hitRay(g, ox, oy, oz, dx, dy, dz, max = 80) {
@@ -186,7 +190,7 @@ function die(g, k, by) {   // (a Hollow bursts into motes of light where it fell
 
 // ---------------------------------------------------------------- one step of the world (the host runs this; robots and the daemon run it headless)
 export function step(g, dt) {
-  g.t += dt; const prev = g.clock; if (g.tracers && g.tracers.length) { for (const t of g.tracers) t.t -= dt; g.tracers = g.tracers.filter(t => t.t > 0); } g.clock += dt / DAY;
+  g.t += dt; const prev = g.clock; if (g.tracers && g.tracers.length) { for (const t of g.tracers) t.t -= dt; g.tracers = g.tracers.filter(t => t.t > 0); } if (g.flares && g.flares.length) { for (const f of g.flares) f.t -= dt; g.flares = g.flares.filter(f => f.t > 0); } g.clock += dt / DAY;
   if (g.clock >= 1) { g.clock -= 1; g.night++; g.log.push([+g.t.toFixed(2), 'dawn', g.night - 1]); campTrips(g); }
   if (prev < 0.97 && g.clock >= 0.97) { g.history.push(summarize(g.rec, g.night)); if (g.history.length > 30) g.history.shift(); g.rec = newRecord(); g.log.push([+g.t.toFixed(2), 'learned-night', g.night]); }   // (at the ebb, the night is written down)
   if (prev < DUSK_AT && g.clock >= DUSK_AT) { g.fire.woke = WAKES[Math.min(g.fire.level, WAKES.length - 1)]; g.log.push([+g.t.toFixed(2), 'dusk', g.night, g.fire.level]); }
@@ -355,8 +359,11 @@ function moveHollow(g, dt, ph) {
     for (const p of g.players) { if (p.ember || !!k.earth !== onEarth(p)) continue; let near = 0; for (const q of g.players) if (q !== p && !q.ember && Math.hypot(q.x - p.x, q.z - p.z) < 8) near++;
       const s = Math.hypot(p.x - k.x, p.z - k.z) / ((near === 0 ? T.isolate : 1) * (1 + Math.min(1, p.carried * 0.02) * (T.greed - 1))); if (s < best) { best = s; target = p; } }
     let node = null; if (g.nodes.length) { let nb = Infinity; for (const n of g.nodes) if (n.lit && n.hp > 0 && !!k.earth === onEarth(n)) { const s2 = Math.hypot(n.x - k.x, n.z - k.z) * (n.hp / NODE[n.kind].hp + 0.5) / T.fireBias; if (s2 < nb) { nb = s2; node = n; } } if (node && (!target || nb < best * 0.8)) target = null; }   // (a weak, lonely relay is a better prize than a person)
+    if (g.flares && g.flares.length && k.kind !== 'giant') { const fl = g.flares.filter(f => !!f.earth === !!k.earth && f.t > 1).sort((a, b) => Math.hypot(a.x - k.x, a.z - k.z) - Math.hypot(b.x - k.x, b.z - k.z))[0];
+      if (fl && Math.hypot(fl.x - k.x, fl.z - k.z) < FLARE.pull && (!target || Math.hypot(fl.x - k.x, fl.z - k.z) < best * 1.5)) { target = null; node = { x: fl.x, z: fl.z, hp: 1, kind: 'flare', flare: true };
+        const df = Math.hypot(fl.x - k.x, fl.z - k.z); if (df < FLARE.r) { k.hp -= dt * FLARE.burn * (1 - df / FLARE.r); if (k.hp <= 0 && !k.dead) { k.dead = true; die(g, k, 'light'); continue; } } } }   /* (it burns what it pulls in: a trap, not a gathering) */
     if (!target && !node) continue;
-    if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
+    if (!target) { tx = node.x; tz = node.z; const d0 = Math.hypot(tx - k.x, tz - k.z); if (d0 < 1.4) { if (node.flare) continue; if ((k.cd -= dt) <= 0) { node.hp -= K.bite * 2; k.cd = K.wait; if (node.hp <= 0) { mark(g, 'wreck', node.x, node.z); linkNetwork(g); g.log.push([+g.t.toFixed(2), 'broke', node.kind]); } } continue; } const sp = k.speed * dt; k.x += (tx - k.x) / d0 * sp; k.z += (tz - k.z) / d0 * sp; k.yaw = Math.atan2(tx - k.x, tz - k.z); k.y = heightAt(g.land, k.x, k.z); continue; }
     tx = target.x; tz = target.z;
     let dx = tx - k.x, dz = tz - k.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
     const ahead = lightAt(g, k.x + dx * 1.5, k.z + dz * 1.5), here = lightAt(g, k.x, k.z);
