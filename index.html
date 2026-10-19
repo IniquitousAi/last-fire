@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Last Fire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Orbitron:wght@400&display=swap">
+<style>
+  :root { --ink: #f1f2f8; --meta: #b8b4c8; --cyan: #39e6ff; --violet: #b9a8ff; --pink: #ff6fb1; --red: #ff5577; --green: #3dff9a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--ink); font: 400 14px/1.4 "JetBrains Mono", monospace; user-select: none; }
+  canvas { display: block; }
+  .panel { position: relative; background: #05060bee; border-radius: 12px; }
+  .panel::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; background: linear-gradient(90deg, #29e6ff, #8f7bff, #ff5fd2);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  #menu { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 60%, #1a0f14 0%, #000 70%); z-index: 10; }
+  #menu .panel { width: min(460px, calc(100vw - 32px)); padding: 30px 30px 26px; }
+  h1 { margin: 0 0 4px; font: 400 40px/1 Orbitron, sans-serif; letter-spacing: .08em; color: #fff; }
+  .tag { color: var(--meta); margin: 0 0 22px; }
+  .key { display: block; width: 100%; margin: 0 0 10px; padding: 12px 14px 10px; font: 400 16px/1.2 "JetBrains Mono", monospace; letter-spacing: .14em; color: #fff; background: #11121c; border: 1px solid #2a2c45; border-radius: 10px; cursor: pointer; text-align: left; transition: transform .12s, background .12s; }
+  .key small { display: block; font-size: 11px; letter-spacing: .02em; color: var(--meta); margin-top: 3px; }
+  .key:hover { background: #181a2c; transform: translateY(-1px); border-color: var(--cyan); } .key:active { transform: translateY(1px); }
+  .join { display: flex; gap: 10px; } .join input { width: 110px; font: 400 20px "JetBrains Mono", monospace; letter-spacing: .3em; text-transform: uppercase; color: #fff; background: #0b0c14; border: 1px solid #2a2c45; border-radius: 10px; padding: 0 12px; }
+  .join .key { margin: 0; flex: 1; }
+  #menuNote { min-height: 20px; color: var(--cyan); margin-top: 8px; }
+  .how { margin-top: 16px; color: var(--meta); font-size: 12px; line-height: 1.6; }
+  .how b { color: var(--violet); font-weight: 400; }
+  #hud[hidden], #menu[hidden], #loading[hidden], #paused[hidden] { display: none; }
+  #cross { position: fixed; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none; }
+  #cross::before, #cross::after { content: ''; position: absolute; background: #fff; opacity: .8; } #cross::before { left: 6px; top: 0; width: 2px; height: 14px; } #cross::after { top: 6px; left: 0; height: 2px; width: 14px; }
+  #mineBar { position: fixed; left: 50%; top: calc(50% + 16px); width: 60px; margin-left: -30px; height: 3px; background: #ffffff22; } #mine { height: 100%; background: var(--cyan); width: 0; }
+  .bars { position: fixed; left: 16px; bottom: 16px; width: 240px; padding: 12px 14px 14px; }
+  .bar { margin-top: 8px; } .bar:first-child { margin-top: 0; } .bar span { font-size: 11px; letter-spacing: .12em; color: var(--meta); } .bar div { height: 6px; background: #ffffff14; border-radius: 3px; margin-top: 4px; } .bar i { display: block; height: 100%; border-radius: 3px; }
+  #hp { background: var(--red); } #st { background: var(--cyan); } #hu { background: var(--violet); }
+  #slots { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 6px; }
+  .slot { position: relative; width: 74px; height: 62px; padding: 6px 8px; background: #05060bdd; border: 1px solid #2a2c45; border-radius: 10px; }
+  .slot b { font-weight: 400; font-size: 11px; color: var(--meta); } .slot span { display: block; font-size: 11px; margin-top: 6px; } .slot i { position: absolute; right: 8px; top: 6px; font-style: normal; font-size: 12px; color: var(--cyan); }
+  .slot.on { border-color: var(--cyan); background: #0c1626ee; }
+  #clock { position: fixed; right: 16px; top: 16px; padding: 10px 14px 12px; text-align: right; min-width: 210px; } #clock b { font: 400 18px Orbitron, sans-serif; color: #fff; margin-right: 8px; } #clock small { display: block; color: var(--meta); font-size: 11px; margin-top: 4px; letter-spacing: .06em; }
+  #clock.long small { color: var(--red); }
+  #count { position: fixed; right: 16px; top: 92px; color: var(--pink); font-size: 13px; text-align: right; }
+  #fire { position: fixed; left: 50%; top: 64%; transform: translateX(-50%); color: #bfe0ff; font-size: 12px; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+  #msg { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); font-size: 16px; color: #fff; text-shadow: 0 1px 3px #000; text-align: center; }
+  #mp { position: fixed; left: 16px; top: 16px; color: var(--cyan); font-size: 12px; text-shadow: 0 1px 2px #000; }
+  #fps { position: fixed; left: 16px; top: 34px; color: var(--meta); font-size: 11px; }
+  #hurt { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 50%, #b0002280 100%); opacity: 0; transition: opacity .15s; }
+  #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--meta); font-size: 14px; }
+  #paused { position: fixed; inset: 0; display: grid; place-items: center; background: #00000088; z-index: 5; } #paused .panel { padding: 22px 26px; width: min(380px, calc(100vw - 32px)); }
+</style>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+</head>
+<body>
+<div id="menu"><div class="panel">
+  <h1>LAST FIRE</h1>
+  <p class="tag">The dark comes every night. Fire keeps it out.</p>
+  <button class="key" id="solo">PLAY ALONE<small>(your own world)</small></button>
+  <button class="key" id="host">HOST A GAME<small>(you get a 4-letter code to send your friend)</small></button>
+  <div class="join"><input id="code" maxlength="4" placeholder="CODE" aria-label="Room code"><button class="key" id="join">JOIN<small>(type the host's code)</small></button></div>
+  <div id="menuNote"></div>
+  <div class="how"><b>Move</b> WASD, Shift to run, Space to jump. <b>Left click</b> mine or shoot, <b>right click</b> place a block or feed a fire.
+    <b>1 to 7</b> or the wheel pick what you hold. <b>C</b> crafts a campfire from 4 planks, <b>E</b> eats.<br>
+    <b>The Hollow</b> come at night. They cannot stand firelight, they take apart walls left in the dark, and a big fire calls them from far away.
+    Every 7th night is the Long Night.</div>
+</div></div>
+<div id="hud" hidden>
+  <div id="cross"></div><div id="mineBar"><div id="mine"></div></div>
+  <div class="bars panel"><div class="bar"><span>HEALTH</span><div><i id="hp"></i></div></div><div class="bar"><span>STAMINA</span><div><i id="st"></i></div></div><div class="bar"><span>FOOD</span><div><i id="hu"></i></div></div></div>
+  <div id="slots"></div>
+  <div id="clock" class="panel"></div>
+  <div id="count"></div><div id="fire"></div><div id="msg"></div><div id="mp"></div><div id="fps"></div><div id="hurt"></div>
+  <div id="loading">Building the world...</div>
+</div>
+<div id="paused" hidden><div class="panel"><p style="margin:0 0 14px">Paused.</p><button class="key" id="resume">BACK TO THE GAME<small>(click to take the mouse again)</small></button></div></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
