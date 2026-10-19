@@ -1,40 +1,40 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=165';
-import { Ambience } from './ambience.js?v=165';
-import { Camp, BOARD } from './camp.js?v=165';
-import { Guide } from './guide.js?v=165';
-import { buildSites } from './earthsite.js?v=165';
-import { Truck } from './truck.js?v=165';
-import { ShipView } from './shipview.js?v=165';
-import { Crew } from './crew.js?v=165';
-import { Hands } from './hands.js?v=165';
-import { FpRig } from './fprig.js?v=165';
-import { farStep } from './farsound.js?v=165';
-import { Wrist } from './wrist.js?v=165';
-import { FireCore } from './firecore.js?v=165';
+import * as C from '../core/game.js?v=166';
+import { Ambience } from './ambience.js?v=166';
+import { Camp, BOARD } from './camp.js?v=166';
+import { Guide } from './guide.js?v=166';
+import { buildSites } from './earthsite.js?v=166';
+import { Truck } from './truck.js?v=166';
+import { ShipView } from './shipview.js?v=166';
+import { Crew } from './crew.js?v=166';
+import { Hands } from './hands.js?v=166';
+import { FpRig } from './fprig.js?v=166';
+import { farStep } from './farsound.js?v=166';
+import { Wrist } from './wrist.js?v=166';
+import { FireCore } from './firecore.js?v=166';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=165';
-import { FriendVoice } from './friendvoice.js?v=165';
-import { crewFrom } from '../core/habits.js?v=165';
-import { HudLook } from './hudlook.js?v=165';
-import { Rain } from './rain.js?v=165';
-import { Immersion } from './immersion.js?v=165';
-import { VisorRain } from './visor.js?v=165';
-import { applyLook } from './looks.js?v=165';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=165';
-import { sound, GUNS } from '../../src/combat.js?v=165';
-import { FX } from '../../src/fx.js?v=165';
+import { think as friendThink } from './friend.js?v=166';
+import { FriendVoice } from './friendvoice.js?v=166';
+import { crewFrom } from '../core/habits.js?v=166';
+import { HudLook } from './hudlook.js?v=166';
+import { Rain } from './rain.js?v=166';
+import { Immersion } from './immersion.js?v=166';
+import { VisorRain } from './visor.js?v=166';
+import { applyLook } from './looks.js?v=166';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=166';
+import { sound, GUNS } from '../../src/combat.js?v=166';
+import { FX } from '../../src/fx.js?v=166';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 165;   // (this copy's version; ./version.json says the newest)
+const BUILD = 166;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };

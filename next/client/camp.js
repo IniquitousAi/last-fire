@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
-import { pickFresh } from '../core/lines.js?v=163';
+import { pickFresh } from '../core/lines.js?v=166';
 
 export const HUT = { x: -9, z: 9 }, BOARD = { x: 5, z: -4 };
 // the night worker's pace: a calm patrol, 1.1 to 1.45 m/s, new each leg (people stroll at 1.2 to 1.4). The soldier's Walk clip, at its own 1.82 m
