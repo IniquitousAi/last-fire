@@ -51,7 +51,7 @@ export class Guide {
     return null;
   }
   update(dt) {
-    if (this.i < 0) return; const away = this.ctx.me().z > 3000; this.box.hidden = away; if (away) { this.beam.visible = this.ring.visible = false; return; }   // (on Earth the guide waits: its steps are all at the camp)
+    if (this.i < 0) return; const ph0 = this.ctx.phase ? this.ctx.phase() : 'day', away = this.ctx.me().z > 3000 || ph0 === 'night'; this.box.hidden = away;   /* (at night the guide steps aside: the night is the lesson) */ if (away) { this.beam.visible = this.ring.visible = false; return; }   // (on Earth the guide waits: its steps are all at the camp)
     this.t += dt; const g = this.ctx.g(), me = this.ctx.me(), S = STEPS[this.i], ph = this.ctx.phase();
     const d = (p) => Math.hypot(me.x - p.x, me.z - p.z), next = () => (this.i + 1 < STEPS.length ? this.go(this.i + 1) : this.finish(false));
     if (S.id === 'desk' && (this.t > 7 || d(this.ctx.board()) < 6)) next();

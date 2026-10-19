@@ -187,7 +187,8 @@ export function lightAt(g, x, z, noGlow, noShadow) {   // (noShadow: the light a
   const sh = noShadow ? () => false : shadowed;   // (noGlow: leave out the glow players carry, for 'is this place lit')   // (0 in the dark, 1 at the heart of a light)
   let L = 0; const f = g.fire, rf = fireRadius(f), df = Math.hypot(f.x - x, f.z - z); if (df < rf && !sh(f.x, f.z, x, z)) L = 1 - df / rf;
   for (const n of g.nodes) if (n.lit && (f.fuel > 0 || onEarth(n))) { const r = NODE[n.kind].r, d = Math.hypot(n.x - x, n.z - z); if (d < r && 1 - d / r > L && !sh(n.x, n.z, x, z)) L = 1 - d / r; }
-  if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8); }
+  if (!noGlow) for (const p of g.players) { const r = glowOf(g, p), d = Math.hypot(p.x - x, p.z - z); if (r > 0 && d < r) L = Math.max(L, (1 - d / r) * 0.8);
+    if (p.torch && !p.ember && d < TORCH.r && d > 0.01) { const along = ((x - p.x) * -Math.sin(p.yaw) + (z - p.z) * -Math.cos(p.yaw)) / d; if (along > TORCH.cos && TORCH.s * (1 - d / TORCH.r) > L && !sh(p.x, p.z, x, z)) L = TORCH.s * (1 - d / TORCH.r); } }   /* (a flashlight beam is light: what it touches commits to a shape) */
   if (g.earth) { const d = Math.hypot(EARTH.x - x, EARTH.z - z); if (d < EARTH.light && 1 - d / EARTH.light > L && !sh(EARTH.x, EARTH.z, x, z)) L = 1 - d / EARTH.light; }
   if (g.flares) for (const f of g.flares) { const d = Math.hypot(f.x - x, f.z - z); if (d < FLARE.r) L = Math.max(L, (1 - d / FLARE.r) * Math.min(1, f.t / 2)); }
   if (g.tracers) for (const t of g.tracers) { const vx = t.bx - t.ax, vz = t.bz - t.az, k = Math.max(0, Math.min(1, ((x - t.ax) * vx + (z - t.az) * vz) / (vx * vx + vz * vz))), d = Math.hypot(t.ax + vx * k - x, t.az + vz * k - z); if (d < TRACER.width) L = Math.max(L, 0.5 * t.t / TRACER.life); }
@@ -212,7 +213,9 @@ export const SENSE = { far: 30, near: 10 /* ours */, alert: 6, noise: { pistol: 
 export const SLAM = { max: 110, min: 50, r0: 1.9, r1: 3.2 };
 export function slam(g, p, x, z) { let n = 0; for (const k of g.hollow) { if (k.dead || !solid(g, k)) continue; const d = Math.hypot(k.x - x, k.z - z); if (d > SLAM.r1) continue;
   damage(g, k, 1, d <= SLAM.r0 ? SLAM.max : SLAM.max + (SLAM.min - SLAM.max) * (d - SLAM.r0) / (SLAM.r1 - SLAM.r0), 0.5, p.id); n++; } return n; }
-export function sees(g, k, p) { const range = SENSE.near + (SENSE.far - SENSE.near) * Math.min(1, lightAt(g, p.x, p.z)); return Math.hypot(p.x - k.x, p.z - k.z) < range; }
+// the flashlight (his ask, 2026-10-19: the dark stays hard to see unless you bring light): a cone 20 m long and about 30 degrees wide (ours)
+export const TORCH = { r: 20, cos: Math.cos(0.26), s: 0.9 };
+export function sees(g, k, p) { const range = p.torch ? SENSE.far : SENSE.near + (SENSE.far - SENSE.near) * Math.min(1, lightAt(g, p.x, p.z));   /* (a lit flashlight gives you away from as far as they can see) */ return Math.hypot(p.x - k.x, p.z - k.z) < range; }
 export function fired(g, p, ox, oz, dx, dz, gun) { (g.noises = g.noises || []).push({ x: ox, z: oz, earth: onEarth(p), r: (SENSE.noise[gun] || 60) * SENSE.scale * (p.crouch ? SENSE.crouch : 1), t: SENSE.life }); p.shots = (p.shots || 0) + 1; if (p.shots % TRACER.every) return false; const L = Math.hypot(dx, dz) || 1; (g.tracers = g.tracers || []).push({ ax: ox, az: oz, bx: ox + dx / L * TRACER.len, bz: oz + dz / L * TRACER.len, t: TRACER.life }); return true; }
 // the decoy flare (queue 31, from the shielded-box test): a burning light you throw; it lights where it lands and pulls the hunt to it
 export const FLARE = { cost: 10, life: 12, r: 6.5, reach: 16, pull: 18, burn: 45 };

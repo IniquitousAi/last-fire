@@ -1,34 +1,34 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=138';
-import { Ambience } from './ambience.js?v=138';
-import { Camp, BOARD } from './camp.js?v=138';
-import { Guide } from './guide.js?v=138';
-import { buildSites } from './earthsite.js?v=138';
-import { Truck } from './truck.js?v=138';
-import { ShipView } from './shipview.js?v=138';
-import { Crew } from './crew.js?v=138';
-import { Hands } from './hands.js?v=138';
-import { Wrist } from './wrist.js?v=138';
-import { FireCore } from './firecore.js?v=138';
+import * as C from '../core/game.js?v=139';
+import { Ambience } from './ambience.js?v=139';
+import { Camp, BOARD } from './camp.js?v=139';
+import { Guide } from './guide.js?v=139';
+import { buildSites } from './earthsite.js?v=139';
+import { Truck } from './truck.js?v=139';
+import { ShipView } from './shipview.js?v=139';
+import { Crew } from './crew.js?v=139';
+import { Hands } from './hands.js?v=139';
+import { Wrist } from './wrist.js?v=139';
+import { FireCore } from './firecore.js?v=139';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=138';
-import { FriendVoice } from './friendvoice.js?v=138';
-import { crewFrom } from '../core/habits.js?v=138';
-import { HudLook } from './hudlook.js?v=138';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=138';
-import { sound, GUNS } from '../../src/combat.js?v=138';
-import { FX } from '../../src/fx.js?v=138';
+import { think as friendThink } from './friend.js?v=139';
+import { FriendVoice } from './friendvoice.js?v=139';
+import { crewFrom } from '../core/habits.js?v=139';
+import { HudLook } from './hudlook.js?v=139';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=139';
+import { sound, GUNS } from '../../src/combat.js?v=139';
+import { FX } from '../../src/fx.js?v=139';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
 
 const $ = id => document.getElementById(id);
-const BUILD = 138;   // (this copy's version; ./version.json says the newest)
+const BUILD = 139;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -204,7 +204,7 @@ function drawHollow(dt) {
   for (const k of g.hollow) {
     alive.add(k.id); let v = seen.get(k.id);
     if (!v) {
-      if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(0x9fb6ff); q.material.emissiveIntensity = 0.5; } }); v = { o }; }
+      if (k.kind === 'shard') { const src = models.shard; if (!src) continue; const o = src.scene.clone(); const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()); o.scale.setScalar(1.3 / Math.max(s.x, s.y, s.z)); o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.map = null; q.material.color.setHex(0x120c1e); q.material.emissive = new THREE.Color(0x8a5cff); q.material.emissiveIntensity = 0.3;   /* (violet: it read as a cyan orb in the sky, his banned color, 2026-10-19) */ } }); v = { o }; }
       else { const [mk, size, eyes] = LOOK[k.kind], src = models[mk]; if (!src) continue; if (!src.box) { src.scene.updateMatrixWorld(true); src.box = new THREE.Box3().setFromObject(src.scene); }   /* (measured on the original: a copy of an animated model measures wrong, the camp people's old bug) */
         const o = skClone(src.scene); darken(o, eyes, k.kind); const b = src.box, s = b.getSize(new THREE.Vector3()); o.scale.setScalar(size * 1.6 / s.y);
         if (k.kind === 'runner' && mk !== 'mutant') { const sc = size * 1.6 / s.y; o.scale.set(sc * 1.35, sc * 0.75, sc * 1.6); }   // (the runner: low and long, built to close distance)
@@ -463,6 +463,10 @@ const MW = { adsT: { pistol: 0.15, ar: 0.25, shotgun: 0.3, lmg: 0.45 }, toFire: 
 // the air at 120 in (3 m) up or more: 150 in/s more downward each 0.05 s, then a ring of damage (core SLAM)
 const IN = 0.0254, EXO = { push: 150 * IN, pushes: 4, dodge: 400 * IN, hop: 150 * IN, steer: 250 * IN, dodges: 2, window: 2.5, gap: 0.2, slamH: 120 * IN, slamV: 150 * IN };
 let exo = { left: 0, pt: 0, used: false, n: 0, reset: 0, cd: 0, burst: 0, slam: false, st: 0 };
+// the flashlight: V turns it on and off. A real spot light on your view, and in the rules a beam of light (core TORCH)
+const torch = new THREE.SpotLight(0xe8ebff, 0, 22, 0.3, 0.45, 1.6); torch.position.set(0.15, -0.1, 0); torch.target.position.set(0, -0.05, -1); camera.add(torch, torch.target); if (!camera.parent) scene.add(camera); let torchSaid = false;
+addEventListener('keydown', e => { if (e.code !== 'KeyV' || e.repeat || mode !== 'play' || !me || panel) return; me.torch = !me.torch; torch.intensity = me.torch ? 40 : 0; sound.click && sound.click();
+  if (me.torch && !torchSaid) { torchSaid = true; say('Flashlight on. What it touches, you can shoot. They can see it too.', 4); } });
 let tac = 0, tacLeft = 1, lastShift = -9, crouch = false, slideT = 0, slideDir = [0, 0], readyT = 0, eyeH = 1.62, jumps = 0, groundT = 0, mvSprint = false;
 addEventListener('keydown', e => { if (e.repeat || mode !== 'play' || !me || panel || me.ember) return;
   if (e.code === 'Space' && !onGround && coyote <= 0 && !exo.used && !exo.slam) { exo.used = true; exo.left = EXO.pushes; exo.pt = 0; kick = Math.min(1, kick + 0.25); }   /* (the boost jump) */
@@ -677,7 +681,7 @@ function onNet(m, from) {
       if (![m.x, m.y, m.z, m.yaw, m.pi].every(fin)) return; const dt = Math.max(0.02, (performance.now() - (p.inT || 0)) / 1000); p.inT = performance.now();
       if (g.ship && g.ship.pilot === p.id) { const S = g.ship; if (Array.isArray(m.sh) && m.sh.length === 9 && m.sh.every(fin) && Math.hypot(m.sh[0] - S.x, m.sh[2] - S.z) <= C.SHIP.top * dt * 1.5 + 4) { const [x, y, z, yaw, roll, pitch, vx, vz, vy] = m.sh; Object.assign(S, { x, y, z, yaw, roll, pitch, vx, vz, vy }); C.shipBounds(S); } p.x = S.x; p.z = S.z; p.y = S.y; p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); return; }   /* (the pilot flies their own copy; the host only accepts moves the ship could really make) */
       if (C.seatOf(g, p.id) >= 0) { p.drive = fin(m.th) && fin(m.st) ? { th: Math.max(-1, Math.min(1, m.th)), st: Math.max(-1, Math.min(1, m.st)) } : null; p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); return; }   /* (riding: the truck moves them; only their keys count) */
-      if (!p.ember && Math.hypot(m.x - p.x, m.z - p.z) < Math.max(1.5, 11 * dt)) { p.x = m.x; p.z = m.z; p.y = m.y; } else if (!p.ember) p.tp = (p.tp || 0) + 1;   /* (too far, too fast: snap them back to the last good spot, so a lag spike can never strand anyone) */ p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); p.gun = GUNS[m.g] ? m.g : 'pistol'; const nm = String(m.n || '').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Friend'; if (p.name !== nm) { p.name = nm; if (!p.kept && g.keep[nm] > 0) { p.carried += g.keep[nm]; p.kept = true; } } return;
+      if (!p.ember && Math.hypot(m.x - p.x, m.z - p.z) < Math.max(1.5, 11 * dt)) { p.x = m.x; p.z = m.z; p.y = m.y; } else if (!p.ember) p.tp = (p.tp || 0) + 1;   /* (too far, too fast: snap them back to the last good spot, so a lag spike can never strand anyone) */ p.yaw = m.yaw; p.pitch = Math.max(-1.6, Math.min(1.6, m.pi)); p.gun = GUNS[m.g] ? m.g : 'pistol'; p.torch = m.tl === 1; const nm = String(m.n || '').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'Friend'; if (p.name !== nm) { p.name = nm; if (!p.kept && g.keep[nm] > 0) { p.carried += g.keep[nm]; p.kept = true; } } return;
     }
     if (m.t === 'shot') {   // (the host traces it in its own world with the gun's own damage, no faster than the gun fires)
       const G = GUNS[m.g]; if (!G || p.ember || !Array.isArray(m.o) || !Array.isArray(m.d) || ![...m.o, ...m.d].every(fin) || Math.hypot(m.o[0] - p.x, m.o[2] - p.z) > 3 || !bucket(p, 'shots', G.rpm / 60 + 1, 4)) return;
@@ -706,7 +710,7 @@ function heardShot(m) { const o = new THREE.Vector3(m.x, m.y, m.z); sound.shot(m
 let sendT = 0, stateT = 0, sentMarks = -1;
 function sync(dt) {
   if (!net || !net.live) return; sendT += dt; stateT += dt;
-  if (!net.host && sendT >= 1 / 15) { sendT = 0; net.send({ t: 'in', x: +me.x.toFixed(2), y: +me.y.toFixed(2), z: +me.z.toFixed(2), yaw: +me.yaw.toFixed(3), pi: +me.pitch.toFixed(2), g: gunKey, n: SET.name, ...(me.drive ? { th: me.drive.th, st: me.drive.st } : {}), ...(ship && ship.on ? { sh: ship.sent() } : {}) }); }
+  if (!net.host && sendT >= 1 / 15) { sendT = 0; net.send({ t: 'in', x: +me.x.toFixed(2), y: +me.y.toFixed(2), z: +me.z.toFixed(2), yaw: +me.yaw.toFixed(3), pi: +me.pitch.toFixed(2), g: gunKey, tl: me.torch ? 1 : 0, n: SET.name, ...(me.drive ? { th: me.drive.th, st: me.drive.st } : {}), ...(ship && ship.on ? { sh: ship.sent() } : {}) }); }
   if (net.host) me.gun = gunKey;
   if (net.host && stateT >= 1 / 12) { stateT = 0; net.send({ t: 's', c: +g.clock.toFixed(5), n: g.night,
     f: [g.fire.level, Math.floor(g.fire.light), Math.round(g.fire.fuel)],
