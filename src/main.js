@@ -191,12 +191,15 @@ function move(dt) {
   if (f || s) { me.stamina = Math.max(0, me.stamina - (sprint ? (fleet ? 7 : 14) : 0) * dt); } if (!sprint) me.stamina = Math.min(100, me.stamina + 9 * dt);
   const free = (x, y, z) => !world.solid(x - 0.3, y, z - 0.3) && !world.solid(x + 0.3, y, z - 0.3) && !world.solid(x - 0.3, y, z + 0.3) && !world.solid(x + 0.3, y, z + 0.3);
   const fits = (x, y, z) => free(x, y + 0.05, z) && free(x, y + 0.9, z) && free(x, y + 1.75, z);
-  if (fits(me.x + vx, me.y, me.z)) me.x += vx; else if (me.onGround && fits(me.x + vx, me.y + 1.05, me.z) && keys.KeyW) { me.y += 1.05; }
-  if (fits(me.x, me.y, me.z + vz)) me.z += vz;
+  // (his 'nobody can move', 2026-10-18: a step up worked only sideways, so W walked into every one-block rise as a wall; now every way steps up)
+  const stepTo = (nx, nz) => { if (fits(nx, me.y, nz)) { me.x = nx; me.z = nz; return; } if (me.onGround && fits(nx, me.y + 1.02, nz) && fits(me.x, me.y + 1.02, me.z)) { me.x = nx; me.z = nz; me.y = Math.floor(me.y + 1.02); } };
+  stepTo(me.x + vx, me.z); stepTo(me.x, me.z + vz);
   if (keys.Space && me.onGround && !me.down) { me.vy = 7.6; me.onGround = false; }
+  // feet: the ground is solid just under the soles (not 0.05 above them, which made standing read as falling every other frame)
   me.vy -= 24 * dt; const ny = me.y + me.vy * dt;
-  if (me.vy < 0 && !fits(me.x, ny, me.z)) { me.y = Math.floor(ny) + 1; if (me.vy < -14) hurt(me, (-me.vy - 14) * 4); me.vy = 0; me.onGround = true; }
-  else if (me.vy > 0 && !fits(me.x, ny, me.z)) me.vy = 0; else { me.y = ny; me.onGround = false; }
+  if (me.vy <= 0 && !free(me.x, ny - 0.001, me.z)) { if (me.vy < -14) hurt(me, (-me.vy - 14) * 4); me.y = Math.floor(ny - 0.001) + 1; me.vy = 0; me.onGround = true; }
+  else if (me.vy > 0 && !free(me.x, ny + 1.8, me.z)) me.vy = 0;
+  else { me.y = ny; me.onGround = false; }
   me.x = Math.max(1, Math.min(SIZE - 1, me.x)); me.z = Math.max(1, Math.min(SIZE - 1, me.z));
   me.hunger = Math.max(0, me.hunger - dt * 0.18); if (me.hunger <= 0) hurt(me, dt * 2);
   else if (me.hunger > 60 && me.hp < 100) me.hp = Math.min(100, me.hp + dt * 0.8);
@@ -257,7 +260,8 @@ function frame(now) {
   if (pending > 0 && !world.ready) { $('loading').textContent = `Building the world: ${100 - Math.round(pending)} chunks left`; } else if (!world.ready) { world.ready = true; $('loading').hidden = true; respawnAtStart(); }
   if (!world.ready) { renderer.render(scene, camera); return; }
   const L = sky(dt);
-  if (document.pointerLockElement) { move(dt); if (mouseDown[0]) { if (gunIn(SLOTS[slot])) shoot(); else mine(dt); } }
+  move(dt);   // (keys move you even when the browser has not given the game the mouse: his 'nobody can move', 2026-10-18)
+  if (document.pointerLockElement && mouseDown[0]) { if (gunIn(SLOTS[slot])) shoot(); else mine(dt); }
   if (reloadT > 0 && (reloadT -= dt) <= 0) { reloadT = 0; finishReload(); }
   ads += ((mouseDown[2] && gunIn(SLOTS[slot]) && reloadT <= 0 && !me.down ? 1 : 0) - ads) * Math.min(1, dt * 14);   // (aiming down the sights: right mouse)
   camera.fov = 72 - 20 * ads; camera.updateProjectionMatrix();
