@@ -8,3 +8,5 @@ assets/food/*                                                 Kenney Food Kit (k
 
 assets/c/wraith.glb, clawed.glb, shard.glb, soldier.glb      Quaternius (quaternius.com), via poly.pizza, CC0 (models TX8r9WBXpe, Iip30bDHmu, 39uv7ux42v, Btfn3G5Xv4)
 assets/c/survivor.glb                                         Quaternius (quaternius.com), via poly.pizza, CC0 (model 9kF7eTDbhO)
+
+vendor/ez-tree/: ez-tree 1.1.0 by Daniel Greenheck (dgreenheck), MIT license (vendor/ez-tree/LICENSE), procedural trees for three.js; npm @dgreenheck/ez-tree via jsdelivr, added 2026-10-19 at Daniel's yes.
