@@ -251,7 +251,7 @@ export class Camp {
   }
   // the yard: a fortified wall with one gate, tents and bedrolls, a workshop, a store, stones in the dark outside (grounded near; CC0 Kenney kit)
   yard(L, land) {
-    const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url).then(r => { r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); return { scene: r.scene, s, c, y0: b.min.y }; }).catch(() => null));
+    const cache = {}, get = url => cache[url] || (cache[url] = L.loadAsync('../assets/' + url.split('#')[0]).then(r => { const part = url.split('#')[1]; if (part) { const n = r.scene.getObjectByName(part).clone(); n.position.set(0, 0, 0); r = { scene: new THREE.Group().add(n) }; } r.scene.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(r.scene), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); return { scene: r.scene, s, c, y0: b.min.y }; }).catch(() => null));
     // every piece is measured: its footprint centered on (x, z) (the fence and metal wall pivots sit 1.3 m off the piece), its base on the ground
     // (the bedroll's base is 5 cm under its pivot), and set on the lowest ground under its footprint so no corner floats on a slope.
     // lie = a loose thing (a stone): tipped to rest on the slope's own plane and bedded a tenth of its height in, not balanced level on a hill
@@ -267,18 +267,21 @@ export class Camp {
     const put = (...a) => { const p = put0(...a); pend.push(p); return p; };
     /* (draw-call pass: pieces that repeat with one geometry and material (fence, stones, barrels, boxes, metal walls) are folded into one InstancedMesh per sub-mesh once all are placed; each instance matrix is that sub-mesh's own world matrix, so every position, tip, spin and grounding above is kept exactly) */
     const poleG = new THREE.BoxGeometry(0.12, 3, 0.12), poleM = new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6 }), bulbG = new THREE.BoxGeometry(0.26, 0.3, 0.26), bulbM = new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xe0d8ff, emissiveIntensity: 0.55 });   /* (was 1.4: up close it blew out to a white blob in his eyes, 2026-10-19) */   /* (the three hanging lamps share one pole and one bulb) */
-    const batch = new Set(['kit/fence-fortified.glb', 'kit/stone.glb', 'kit/barrel.glb', 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
+    const FEN = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_double', POST = 'ph/modular_chainlink_fence/modular_chainlink_fence_1k.gltf#modular_chainlink_fence_post', BAR = 'ph/Barrel_01/Barrel_01_1k.gltf', CRATE = 'ph/old_military_crate/old_military_crate_1k.gltf', PH = n => `ph/${n}/${n}_1k.gltf`;   // (Poly Haven photo scans, CC0: the Kenney toy kit and the code boxes looked like a placeholder up close, his eyes 2026-10-19)
+    const batch = new Set([FEN, POST, 'kit/stone.glb', BAR, CRATE, 'kit/box-large.glb', 'kit/structure-metal-wall.glb']), mine = [], pend = [];
     const fold = () => { const groups = new Map(); for (const o of mine) { this.scene.remove(o); o.updateMatrixWorld(true); o.traverse(q => { if (!q.isMesh) return; const k = q.geometry.uuid + '|' + q.material.uuid; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(q); }); }
       for (const list of groups.values()) { const f = list[0], im = new THREE.InstancedMesh(f.geometry, f.material, list.length); list.forEach((q, i) => im.setMatrixAt(i, q.matrixWorld)); im.castShadow = f.castShadow; im.receiveShadow = f.receiveShadow; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); this.scene.add(im); } };
     const face = (x, z) => Math.atan2(-x, -z);
     const cloth = o => o && o.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.map = null; q.material.color.setHex(0x505a70); q.material.roughness = 0.95; } });   // (the repainted canvas was near black: tents read as bare frames at night, so they get one plain cloth color)   // (turns a thing's front toward the fire)
-    const R = 21, SEG = 2.7, n = Math.round(2 * Math.PI * R / SEG), GATE = Math.PI / 2;   // (the gate faces out past the hut's side)
-    const fenceP = get('kit/fence-fortified.glb').then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;
+    const R = 21, SEG = 1.95, n = Math.round(2 * Math.PI * R / SEG), GATE = Math.PI / 2;   // (the gate faces out past the hut's side)
+    const fenceP = get(FEN).then(m => { if (!m) return; const along = m.s.x >= m.s.z ? 0 : Math.PI / 2;   // (a real chain-link panel, 1.9 m by 2.4 m, at its own size, with a post at every joint)
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, gap = Math.abs(Math.atan2(Math.sin(a - GATE), Math.cos(a - GATE))); if (gap < 0.12) continue;
-        const x = Math.cos(a) * R, z = Math.sin(a) * R; put('kit/fence-fortified.glb', x, z, SEG * 1.04, -a - Math.PI / 2 + along, 0.05); } });
+        const x = Math.cos(a) * R, z = Math.sin(a) * R; put(FEN, x, z, SEG, -a - Math.PI / 2 + along, 0.02);
+        const b = (i + 0.5) / n * Math.PI * 2; if (Math.abs(Math.atan2(Math.sin(b - GATE), Math.cos(b - GATE))) > 0.12 - 0.5 / n * Math.PI * 2) put(POST, Math.cos(b) * R, Math.sin(b) * R, 0.15, 0, 0.02); } });
     const gx = Math.cos(GATE) * R, gz = Math.sin(GATE) * R;
     for (const s of [-1, 1]) { const x = gx + s * 2.2, z = gz, post = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.4, 0.22), new THREE.MeshStandardMaterial({ color: 0x23262f, roughness: 0.6, metalness: 0.3 })); post.position.set(x, land(x, z) + 1.7, z);
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0x0b0d14, emissive: 0xd8ccff, emissiveIntensity: 1.6 })); head.position.set(x, land(x, z) + 3.5, z); this.scene.add(post, head); }   // (the gate heads glow white-violet: they read cyan, his rule is no cyan)
+      this.scene.add(post); get(PH('security_light')).then(m => { if (!m) return; const o = m.scene.clone(), k = 0.5 / Math.max(m.s.x, m.s.z); o.scale.setScalar(k); o.position.set(x, land(x, z) + 3.4 - m.y0 * k, z); o.rotation.y = face(x, z); this.scene.add(o); }); }
+    for (const s of [-1, 1]) put(PH('concrete_road_barrier'), gx + s * 3.6, gz + 1.6, 1.6, Math.PI / 2 + s * 0.15);   // (barriers flank the gate outside)   // (the gate heads glow white-violet: they read cyan, his rule is no cyan)
     put('kit/signpost.glb', gx + 3.4, gz + 2.2, 1.0, Math.PI);
     // where people sleep: tents in an arc on the far side of the fire, a bedroll at each door
     [[200, 'kit/tent-canvas.glb', 3.8], [228, 'kit/tent-canvas.glb', 3.4], [256, 'kit/tent-canvas.glb', 3.8], [284, 'kit/tent-canvas.glb', 3.4], [170, 'kit/tent-canvas.glb', 3.4]].forEach(([deg, url, w]) => {
@@ -290,17 +293,23 @@ export class Camp {
     const W = (deg, r) => { const a = deg * Math.PI / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
     { const [x, z] = W(32, 15); put('kit/workbench.glb', x, z, 2.4, face(x, z)); }
     { const [x, z] = W(40, 17); put('kit/planks.glb', x, z, 2.0, 0.4); }
-    for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put('kit/barrel.glb', x, z, 0.75, deg); }
+    for (const [deg, r] of [[20, 17.6], [24, 18.2], [17, 18.6]]) { const [x, z] = W(deg, r); put(BAR, x, z, 0.62, deg).then(o => o && o.traverse(q => { if (q.isMesh && !q.material.userData.steel) { q.material = q.material.clone(); q.material.color.setHex(0x5a6070); q.material.userData.steel = 1; } })); }   // (the scan is fire-red; red means danger here, so the paint is weathered steel)
     { const [x, z] = W(47, 16.5); put('kit/chest.glb', x, z, 1.1, face(x, z)); }
-    { const [x, z] = W(55, 17.2); put('kit/box-large.glb', x, z, 1.2, 0.3); put('kit/box-large.glb', x + 0.4, z + 1.1, 1.0, 1.1); }
+    { const [x, z] = W(55, 17.2); put(CRATE, x, z, 1.7, 0.3); }
     // the store: metal walls by the wall, the camp's stock behind them
     { const [x, z] = W(-15, 17.5); put('kit/structure-metal-wall.glb', x, z, 3.4, face(x, z)); }
     { const [x, z] = W(-3, 17.8); put('kit/structure-metal-wall.glb', x, z, 3.4, face(x, z)); }
-    { const [x, z] = W(-9, 19.2); put('kit/box-large.glb', x, z, 1.3, 0.2); }
+    { const [x, z] = W(-9, 19.2); put(CRATE, x, z, 1.7, 0.2); }
+    { const [x, z] = W(-21, 18.6); put(PH('worn_metal_rack'), x, z, 0.95, face(x, z)); }
+    { const [x, z] = W(4, 18.4); put(PH('portable_generator'), x, z, 0.85, face(x, z) + 0.4); }
+    { const [x, z] = W(84, 18.8); put(PH('utility_box_01'), x, z, 0.55, face(x, z)); }
+    // the workshop's leftovers and the tents' stove: the camp is lived in
+    for (const [deg, r, n, sz] of [[28, 16.2, 'metal_jerrycan', 0.36], [29, 16.5, 'metal_jerrycan', 0.36], [44, 18.4, 'propane_tank', 0.36], [60, 18.6, 'old_tyre', 0.62], [62, 18.9, 'old_tyre', 0.62], [-28, 18.2, 'propane_tank', 0.36]]) { const [x, z] = W(deg, r); put(PH(n), x, z, sz, deg); }
+    { const [x, z] = W(237, 9.4); put(PH('barrel_stove'), x, z, 0.6, 0); }
     // three hanging lamps: the tents, the workshop, the store (each lit corner reads as a place, not a floor)
     for (const [deg, r] of [[237, 10.5], [36, 13], [-9, 14]]) { const [x, z] = W(deg, r), y = land(x, z), l = new THREE.PointLight(0xcfe0ff, 9, 13, 1.4); l.position.set(x, y + 2.8, z);
       const pole = new THREE.Mesh(poleG, poleM); pole.position.set(x, y + 1.5, z);
-      const bulb = new THREE.Mesh(bulbG, bulbM); bulb.position.set(x, y + 3.05, z); this.scene.add(l); mine.push(pole, bulb); }
+      this.scene.add(l); mine.push(pole); put(PH('security_light'), x, z, 0.42, deg * Math.PI / 180, -2.92); }
     // outside: stones and rubble in the dark, so the land is somewhere and not a floor
     let q = 7; const rnd = () => (q = (q * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = 24 + rnd() * 50, x = Math.cos(a) * r, z = Math.sin(a) * r; put('kit/stone.glb', x, z, 0.5 + rnd() * rnd() * 2.6, rnd() * 6.3, 0, true); }
