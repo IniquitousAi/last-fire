@@ -110,5 +110,6 @@ Extracted: the camp is a living economy of dues, chores and optional jobs; soft 
 | 10 | Can a player choose to use the dark? | CANON: "everything has a choice, but yes its obvious Dark (Chaos) always wins, nobody wants to admit it because of ego". |
 | 11 | Who is the villain, iniquitous by nature, if the dark does not care? | Ego itself: no single villain; the worst harm comes from people who cannot admit the truth (that chaos wins). |
 | 12 | Where does ego show up in play? | The leaders hide the odds: when the numbers are bad they soften them to keep face; the truth is only on the board if someone goes and checks (ties to 8: whoever cares enough to check). |
+| 13 | You prove the leaders lied. What happens? | Nobody cares: people prefer the lie. You are right, alone, and a little less welcome at dinner. (Hyper-awareness itself, played straight.) |
 
 His point while answering (about the dev paradox): "the more I play a non-polished game, the more I don't like it. But I have to build it non-polished as a dev. So it's a paradox." The way out (Era 1's own answer): robots play the rough dev copy; his copy only moves forward when the checks pass; build thin complete slices (one whole night, polished end to end), never wide rough layers.
