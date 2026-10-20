@@ -18,3 +18,4 @@
 - v181 serves B: Played from your own PC, updates show up in 5 seconds
 - v182 serves C: Friends: no more sudden 180 turns (bad mouse jumps ignored); friends hold their rifle; a friend's feedback now reaches the host; one-click feedback choices in the Tab menu
 - v183 serves C: Aiming down sights stays aimed while you shoot (each shot used to snap the M4 to the hip)
+- v184 serves C: Getting out of the spaceship sets it down instead of leaving it hanging in the sky

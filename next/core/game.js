@@ -87,7 +87,7 @@ export const SHIP_PARK = { x: 0, z: 34 };
 export function shipOf(g) { if (!g.ship) g.ship = makeShip(SHIP_PARK.x, g.land(SHIP_PARK.x, SHIP_PARK.z) + SHIP.hover - 0.05, SHIP_PARK.z, 0); return g.ship; }
 export function useShip(g, p) {
   const s = shipOf(g); if (!p || p.ember) return null;
-  if (s.pilot === p.id) { s.pilot = null; const a = s.yaw + Math.PI / 2; p.x = s.x + Math.sin(a) * 4; p.z = s.z + Math.cos(a) * 4; p.y = g.land(p.x, p.z); s.vx = s.vz = 0; p.tp = (p.tp || 0) + 1; return 'out'; }
+  if (s.pilot === p.id) { s.pilot = null; const a = s.yaw + Math.PI / 2; p.x = s.x + Math.sin(a) * 4; p.z = s.z + Math.cos(a) * 4; p.y = g.land(p.x, p.z); s.vx = s.vz = s.vy = 0; s.ht = SHIP.hover; s.y = g.land(s.x, s.z) + SHIP.hover; s.pitch = s.roll = 0; p.tp = (p.tp || 0) + 1; return 'out'; }   /* (it settles at its rest height: left mid-air, nobody flew it and it hung in the sky, his friends' playtest 2026-10-20) */
   if (s.pilot || onEarth(p) || Math.hypot(p.x - s.x, p.z - s.z) > 6) return null; s.pilot = p.id; return 'in';
 }
 export function shipBounds(s) {   // (the camp wall bumps it off, and the Moon's edge holds it for now: Earth is a trip, not a flight, until the drop is flown)
