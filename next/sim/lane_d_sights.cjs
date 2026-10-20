@@ -31,6 +31,13 @@ const PORT = process.env.PORT || 8092, W = 1000, H = 900;
     say(Math.abs(mx) <= 2 && Math.abs(my) <= 2, k + ' reticle center within 2 px of screen center', `off x ${mx.toFixed(2)} y ${my.toFixed(2)} px over ${pts.length} frames`);
     say(rx <= 1 && ry <= 1, k + ' reticle steady over 2 s aimed', `range x ${rx.toFixed(2)} y ${ry.toFixed(2)} px`);
   }
+  {   // (his report 2026-10-20: "shooting makes your aim down sights go to hip fire": every shot snapped the aimed M4 to the hip)
+    await p.evaluate(() => { __lf.gun('ar'); __lf.aim(true); }); await p.waitForTimeout(2200);
+    const pts = []; let miss = 0;
+    for (let i = 0; i < 8; i++) { await p.evaluate(() => { __lf.refill(); __lf.fire(); }); await p.waitForTimeout(60); const c = await centroid(); if (c) pts.push(c); else miss++; }
+    const far = pts.length ? Math.max(...pts.map(q => Math.hypot(q.x, q.y))) : Infinity;
+    say(miss === 0 && far <= 14, 'M4 stays aimed while firing (reticle on screen center every shot)', `${8 - miss} of 8 shots kept the sight, farthest ${far.toFixed(1)} px off`);
+  }
   say(!errs.length, 'no errors in the page', errs.join(' | ') || 'none');
   console.log(fails ? fails + ' FAILED' : 'all sight checks pass'); await b.close(); process.exit(fails ? 1 : 0);
 })().catch(e => { console.log('FAIL ' + e.message); process.exit(1); });

@@ -4,10 +4,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
 import { clone as skClone } from '../../vendor/jsm/utils/SkeletonUtils.js';
-import { pickFresh } from '../core/lines.js?v=182';
-import * as LO from '../core/lore.js?v=182';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
-import * as JOB from '../core/jobs.js?v=182';
-import { stream } from '../core/game.js?v=182';
+import { pickFresh } from '../core/lines.js?v=183';
+import * as LO from '../core/lore.js?v=183';   // (the lore rules: the honest number, the softened board, jobs; tested by sim/lore_test.mjs)
+import * as JOB from '../core/jobs.js?v=183';
+import { stream } from '../core/game.js?v=183';
 
 /* (the palette guard, A2 look pass 2026-10-19: no orange, gold, rust, brown or olive may reach the screen from a scanned asset. Every loaded material's diffuse is checked in the shader: a hue from red-orange through yellow to green with real color in it is pulled to a cold blue-gray steel at the same brightness. Blues, violets and grays pass untouched; lamps and signs are emissive and are not touched.) */
 const GUARD_GLSL = `#include <map_fragment>

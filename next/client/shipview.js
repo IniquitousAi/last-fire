@@ -3,9 +3,9 @@
 // The model: assets/ship.glb when it exists (made by TRELLIS.2 from a concept), else the ship modeled in code (shipmodel.js).
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { SHIP, flyShip } from '../core/ship.js?v=182';
-import { shipBounds } from '../core/game.js?v=182';
-import { buildShip } from './shipmodel.js?v=182';
+import { SHIP, flyShip } from '../core/ship.js?v=183';
+import { shipBounds } from '../core/game.js?v=183';
+import { buildShip } from './shipmodel.js?v=183';
 
 export class ShipView {
   constructor(scene, land) {
