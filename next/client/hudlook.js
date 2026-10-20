@@ -54,7 +54,7 @@ export class HudLook {
     this.breach = document.createElement('i'); this.breach.className = 'breach'; this.compass.append(this.breach);   // (where the flood is about to pour: a red bracket on the compass, from the moment the dark picks the gap)
     this.pings = Array.from({ length: 8 }, () => { const d = document.createElement('i'); d.className = 'ping'; this.compass.append(d); return d; });   // (the visor's motion sense: the dark within 30 m, as red marks at their bearing)
     hud.append(this.visor, this.compass);
-    addEventListener('mousemove', e => { if (document.pointerLockElement) { this.vx += e.movementX; this.vy += e.movementY; } });
+    addEventListener('mousemove', e => { if (document.pointerLockElement && Math.abs(e.movementX) <= 400 && Math.abs(e.movementY) <= 400) { this.vx += e.movementX; this.vy += e.movementY; } });
     this.apply(get() || 'visor');
   }
   apply(name) { this.name = name; document.body.classList.remove(...LOOKS.map(l => 'look-' + l[0])); document.body.classList.add('look-' + name); this.set(name); }

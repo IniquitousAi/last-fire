@@ -1,47 +1,47 @@
 // Last Fire (the new foundation), piece 1: drawing, sound and input around the rules in core/game.js.
 // The rules run here as host; nothing in this file decides what happens, only what you see, hear and send in.
 import * as THREE from 'three';
-import * as C from '../core/game.js?v=181';
-import { Ambience } from './ambience.js?v=181';
-import { Camp, BOARD } from './camp.js?v=181';
-import { Guide } from './guide.js?v=181';
-import { buildSites } from './earthsite.js?v=181';
-import { RiftView, riftGround } from './rift.js?v=181';
-import { FogBank } from './fogbank.js?v=181';
-import { Truck } from './truck.js?v=181';
-import { ShipView } from './shipview.js?v=181';
-import { Crew } from './crew.js?v=181';
-import { Hands } from './hands.js?v=181';
-import { FpRig } from './fprig.js?v=181';
-import { farStep } from './farsound.js?v=181';
-import { OpticsView } from './optics.js?v=181';
-import { Wrist } from './wrist.js?v=181';
-import { FireCore } from './firecore.js?v=181';
-import { startEars } from './ears.js?v=181';
+import * as C from '../core/game.js?v=182';
+import { Ambience } from './ambience.js?v=182';
+import { Camp, BOARD } from './camp.js?v=182';
+import { Guide } from './guide.js?v=182';
+import { buildSites } from './earthsite.js?v=182';
+import { RiftView, riftGround } from './rift.js?v=182';
+import { FogBank } from './fogbank.js?v=182';
+import { Truck } from './truck.js?v=182';
+import { ShipView } from './shipview.js?v=182';
+import { Crew } from './crew.js?v=182';
+import { Hands } from './hands.js?v=182';
+import { FpRig } from './fprig.js?v=182';
+import { farStep } from './farsound.js?v=182';
+import { OpticsView } from './optics.js?v=182';
+import { Wrist } from './wrist.js?v=182';
+import { FireCore } from './firecore.js?v=182';
+import { startEars } from './ears.js?v=182';
 import { EffectComposer } from '../../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../../vendor/jsm/postprocessing/ShaderPass.js';
-import { think as friendThink } from './friend.js?v=181';
-import { FriendVoice } from './friendvoice.js?v=181';
-import { crewFrom } from '../core/habits.js?v=181';
-import { HudLook } from './hudlook.js?v=181';
-import { UI } from './uikit.js?v=181';
-import { Rain } from './rain.js?v=181';
-import { Immersion } from './immersion.js?v=181';
-import { codexHtml } from './codex.js?v=181';
-import { VisorRain } from './visor.js?v=181';
-import { applyLook } from './looks.js?v=181';
-import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=181';
-import { sound, GUNS } from '../../src/combat.js?v=181';
-import { FX } from '../../src/fx.js?v=181';
+import { think as friendThink } from './friend.js?v=182';
+import { FriendVoice } from './friendvoice.js?v=182';
+import { crewFrom } from '../core/habits.js?v=182';
+import { HudLook } from './hudlook.js?v=182';
+import { UI } from './uikit.js?v=182';
+import { Rain } from './rain.js?v=182';
+import { Immersion } from './immersion.js?v=182';
+import { codexHtml } from './codex.js?v=182';
+import { VisorRain } from './visor.js?v=182';
+import { applyLook } from './looks.js?v=182';
+import { Net, roomCode, cleanCode, CODE_LEN, MAX_PLAYERS } from './net.js?v=182';
+import { sound, GUNS } from '../../src/combat.js?v=182';
+import { FX } from '../../src/fx.js?v=182';
 import { GLTFLoader } from '../../vendor/jsm/loaders/GLTFLoader.js';
-import { Creatures } from './creatures.js?v=181';
-import { Impact, smokeHit } from './impact.js?v=181';
+import { Creatures } from './creatures.js?v=182';
+import { Impact, smokeHit } from './impact.js?v=182';
 
 const $ = id => document.getElementById(id);
-const BUILD = 181;   // (this copy's version; ./version.json says the newest)
+const BUILD = 182;   // (this copy's version; ./version.json says the newest)
 const DEFAULTS = { sens: 1, vol: 0.8, fov: 78, adsSens: 0.65, aimToggle: true, sprintToggle: false, invertY: false, autoReload: true, cross: true, moveEras: false };   // (his quality of life ask, 2026-10-19: aim is a toggle by default, and every one of these is a click in the pause menu)
 const SET = Object.assign({ ...DEFAULTS, name: '' }, (() => { try { return JSON.parse(localStorage.getItem('lastfire2') || '{}'); } catch (e) { return {}; } })());
 const save = () => { try { localStorage.setItem('lastfire2', JSON.stringify(SET)); } catch (e) {} };
@@ -361,7 +361,10 @@ addEventListener('keydown', e => { if (e.code === 'Tab' && mode === 'play' && e.
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { if (document.pointerLockElement) document.exitPointerLock(); for (const k in keys) keys[k] = false; mouse.fill(false); });
 renderer.domElement.addEventListener('click', () => { amb.start(); if (mode === 'play' && !panel && !locked()) lockMouse(); });
-addEventListener('mousemove', e => { if (!locked() || !me) return; const k = 0.0022 * SET.sens * (1 - ads * (1 - SET.adsSens)); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k * (SET.invertY ? -1 : 1))); });
+let lockAt = 0; document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement) lockAt = performance.now(); });
+addEventListener('mousemove', e => { if (!locked() || !me) return;
+  if (Math.abs(e.movementX) > 400 || Math.abs(e.movementY) > 400 || performance.now() - lockAt < 120) return;   /* (Chrome's bogus jumps: one event worth ~1,400 px flipped his friend 180 with no input, 2026-10-20; a real flick sends under ~150 px an event) */
+  const k = 0.0022 * SET.sens * (1 - ads * (1 - SET.adsSens)); me.yaw -= e.movementX * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - e.movementY * k * (SET.invertY ? -1 : 1))); });
 addEventListener('mousedown', e => { if (padOn && mode === 'play') { padOn = false; mouse[0] = false; if (!document.pointerLockElement && !panel) renderer.domElement.requestPointerLock(); }   /* (any mouse press takes play back from the pad at once: before, an idle pad kept the fire button and holding left click did nothing; found by the basics gate) */
   if (!locked()) return; mouse[e.button] = true; if (e.button === 1) scan(); if (e.button === 3) sandy(); if (e.button === 0 && buildPick) { tryBuild(); mouse[0] = false; } if (e.button === 2 && buildPick) pickBuild(null); else if (e.button === 2 && SET.aimToggle) aimOn = !aimOn; });
 addEventListener('mouseup', e => mouse[e.button] = false);
@@ -789,13 +792,20 @@ async function postFeedback(item) { const r = await fetch(FB_URL, { method: 'POS
 function queued() { try { return JSON.parse(localStorage.getItem(FB_Q) || '[]'); } catch (e) { return []; } }
 async function flushQueue() { const q = queued(); if (!q.length) return; const left = []; for (const it of q) { try { await postFeedback(it); } catch (e) { left.push(it); } } try { localStorage.setItem(FB_Q, JSON.stringify(left)); } catch (e) {} if (left.length < q.length) say(`${q.length - left.length} saved note${q.length - left.length > 1 ? 's' : ''} reached Claude.`, 3); }
 setInterval(flushQueue, 60000);
-$('fbSend').onclick = async () => {
-  const text = $('fbText').value.trim(); if (!text) { $('fbNote').textContent = 'Say or type something first.'; return; } stopMic();
-  const item = { text, name: SET.name, version: 'next-' + BUILD, shot: snapshot(), ctx: { night: g ? g.night : 0, phase: g ? C.phase(g.clock) : '', fire: g ? g.fire.level : 0, x: me ? Math.round(me.x) : 0, z: me ? Math.round(me.z) : 0, hollow: g ? g.hollow.length : 0, players: g ? g.players.length : 0, fps: $('fps').textContent, host: isHost(), room: net ? net.code : '' } };
-  $('fbText').value = ''; closeTab();
+function fbItem(text, extra = {}) { return { text, name: SET.name, version: 'next-' + BUILD, shot: snapshot(), ...extra, ctx: { night: g ? g.night : 0, phase: g ? C.phase(g.clock) : '', fire: g ? g.fire.level : 0, x: me ? Math.round(me.x) : 0, z: me ? Math.round(me.z) : 0, hollow: g ? g.hollow.length : 0, players: g ? g.players.length : 0, fps: $('fps').textContent, host: isHost(), room: net ? net.code : '' } }; }
+async function deliver(item) {   // (a friend's note rides the game link to the host, whose PC has Vigil; before, it waited forever in the friend's browser, 2026-10-20)
+  if (net && !net.host && net.live) { net.send({ t: 'fb', item }); say('Sent to the host. Keep playing.', 3); return; }
   try { await postFeedback(item); say('Sent to Claude. Keep playing.', 3); }
   catch (e) { const q = queued(); q.push({ ...item, shot: null }); try { localStorage.setItem(FB_Q, JSON.stringify(q.slice(-30))); } catch (er) {} say('Saved. It reaches Claude as soon as Vigil is running on your PC.', 4); }
+}
+$('fbSend').onclick = async () => {
+  const text = $('fbText').value.trim(); if (!text) { $('fbNote').textContent = 'Say or type something first.'; return; } stopMic();
+  const item = fbItem(text); $('fbText').value = ''; closeTab(); await deliver(item);
 };
+$('fbQuick').addEventListener('click', async e => {   // (one click, the Cyberpunk feedback choices: no typing needed)
+  const b = e.target.closest('button'); if (!b) return; const choice = b.firstChild.textContent.trim();
+  const item = fbItem(choice, { choice, category: b.dataset.c }); stopMic(); closeTab(); await deliver(item);
+});
 // ---------------------------------------------------------------- updates: a pop-up when a newer version is out; yes puts you right back where you were
 let updSeen = 0;
 async function checkUpdate() { try { const v = await (await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })).json(); if (v && v.v > BUILD && v.v !== updSeen) { updSeen = v.v; $('updNote').textContent = String(v.notes || ''); $('upd').hidden = false; } } catch (e) {} }
@@ -839,6 +849,14 @@ function onNet(m, from) {
       const dirs = (Array.isArray(m.ds) ? m.ds : [m.d]).slice(0, G.pellets || 1).filter(d => Array.isArray(d) && d.length === 3 && d.every(fin));
       dirs.forEach((d, n) => { const L = Math.hypot(d[0], d[1], d[2]); if (L < 0.5) return; if (n === 0) C.fired(g, p, m.o[0], m.o[2], d[0] / L, d[2] / L, m.g); const rc = G.charge ? Math.max(0, Math.min(1, fin(m.c) ? m.c : 0)) : 1, hs = G.charge && rc >= 0.75 ? C.hitAll(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 120) : [C.hitRay(g, m.o[0], m.o[1], m.o[2], d[0] / L, d[1] / L, d[2] / L, 80)].filter(Boolean);   /* (a friend's rail: the same charge rule, its number clamped) */
         for (const h of hs) { const r = C.damage(g, h.k, h.part, G.dmg * (0.5 + 0.5 * rc) * (h.mult > 1 ? G.head : 1), G.ap, p.id); net.sendTo(from, { t: 'hit', r: { kill: !!r.kill, shell: !!r.shell, broke: !!r.broke, head: h.mult > 1 } }); } }); return;
+    }
+    if (m.t === 'fb') {   // (a friend's feedback, passed on to Vigil on this PC: checked and size-capped, at most one every 10 s)
+      const it = m.item; if (!it || typeof it.text !== 'string' || !bucket(p, 'fbs', 0.1, 3)) return;
+      const shot = typeof it.shot === 'string' && it.shot.startsWith('data:image/jpeg') && it.shot.length < 300000 ? it.shot : null;
+      const item = { text: it.text.slice(0, 2000), name: p.name, friend: true, version: String(it.version || '').slice(0, 20), shot,
+                     choice: typeof it.choice === 'string' ? it.choice.slice(0, 60) : undefined, category: typeof it.category === 'string' ? it.category.slice(0, 30) : undefined,
+                     ctx: it.ctx && typeof it.ctx === 'object' ? Object.fromEntries(Object.entries(it.ctx).slice(0, 14).map(([k, v]) => [String(k).slice(0, 12), typeof v === 'number' || typeof v === 'boolean' ? v : String(v).slice(0, 40)])) : {} };
+      deliver(item); return;
     }
     if (m.t === 'lines') { if (!bucket(p, 'lines', 0.2, 2)) return; (g.voice = g.voice || {})[p.name] = cleanLines(m.l); return; }
     if (m.t === 'build') { if (!bucket(p, 'builds', 1, 3)) return; if (m.k === 'slam') C.slam(g, p, p.x, p.z); else if (m.k === 'grow') C.grow(g, p); else if (m.k === 'ship') C.useShip(g, p); else if (m.k === 'rift') C.touchConsole(g, p); else if (m.k === 'drop') C.drop(g, p, C.SITES[m.s] ? m.s : 'city'); else if (m.k === 'rise') C.rise(g, p); else if (m.k === 'fit') C.fit(g, p); else if (m.k === 'car') C.useCar(g, p); else if (m.k === 'strip') C.strip(g, p); else if (m.k === 'seat') C.nextSeat(g, p); else if (m.k === 'flare' && fin(m.x) && fin(m.z)) C.throwFlare(g, p, m.x, m.z); else if (C.OPTIC[m.k] || m.k === 'turn') buildOptic(p, m.k, m.x, m.z); else build(p, m.k, m.x, m.z); return; }
@@ -942,7 +960,7 @@ const dirName = (dx, dz) => ['north', 'north-east', 'east', 'south-east', 'south
 const emberMat = new THREE.MeshBasicMaterial({ color: 0xbfe0ff }), emberGeo = new THREE.OctahedronGeometry(0.25), emberViews = new Map();
 let crew = null; const crewList = [];   // (friends drawn as the crew suit: crew.js, the free soldier made into his black nanite suit, 2026-10-19)
 function drawFriends(dt) {
-  const live = new Set(), f = Math.min(1, dt * 12); crewList.length = 0; if (!crew && models.soldier) crew = new Crew(scene, models.soldier, { gun: models.ar });
+  const live = new Set(), f = Math.min(1, dt * 12); crewList.length = 0; if (!crew && models.soldier && (models.ar || performance.now() > 10000)) { crew = new Crew(scene, models.soldier, { gun: models.ar }); if (TEST) window.__crew = crew; }   /* (waits for the rifle: built before it loaded, every friend stood empty-handed all game, his friends' playtest 2026-10-20) */
   if (!isHost()) for (const k of g.hollow) if (k.tx !== undefined) { k.x += (k.tx - k.x) * f; k.y += (k.ty - k.y) * f; k.z += (k.tz - k.z) * f; let d = k.tyaw - k.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); k.yaw += d * f; }
   for (const p of g.players) {
     if (p === me) continue; live.add(p.id); let v = friendViews.get(p.id);

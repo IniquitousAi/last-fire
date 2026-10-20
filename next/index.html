@@ -138,6 +138,14 @@
   <details style="margin:0 0 14px"><summary style="cursor:pointer;color:var(--meta);letter-spacing:.12em;font-size:14px">YOUR WORDS (lines your learned copy may say)</summary>
     <textarea id="myLines" rows="4" maxlength="600" placeholder="One short line per row, in your own words. Start a line with kill:, dusk:, hurt:, bank: or fell: to say it at that moment. Only what you type here is ever used." style="width:100%;margin-top:6px;font:400 17px 'Barlow Condensed';color:#fff;background:#0b0c14;border:1px solid var(--line);padding:8px 10px;outline:none;resize:vertical"></textarea></details>
   <div id="fbForm">
+    <div id="fbQuick" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px">
+      <button class="key" data-c="Fun" style="margin:0">Boring here<small>(one click, sent with a picture)</small></button>
+      <button class="key" data-c="Bugs" style="margin:0">Lag or stutter<small>(one click, sent with a picture)</small></button>
+      <button class="key" data-c="Controls and feel" style="margin:0">Aim feels off<small>(one click, sent with a picture)</small></button>
+      <button class="key" data-c="Difficulty" style="margin:0">Too hard, unfair<small>(one click, sent with a picture)</small></button>
+      <button class="key" data-c="Story and world" style="margin:0">No idea what to do<small>(one click, sent with a picture)</small></button>
+      <button class="key" data-c="Fun" style="margin:0">Loved this, more<small>(one click, sent with a picture)</small></button>
+    </div>
     <button class="key" id="fbMic">TALK<small id="fbMicNote">(click, say what's wrong or what you want, click again to stop)</small></button>
     <textarea id="fbText" rows="5" placeholder="Or type it here. Anything: a bug, a feeling, an idea." style="width:100%;font:400 18px 'Barlow Condensed';color:#fff;background:#0b0c14;border:1px solid var(--line);border-radius:9px;padding:10px 12px;outline:none;resize:vertical"></textarea>
     <button class="key" id="fbSend" style="margin-top:10px">SEND TO CLAUDE<small>(with a picture of this moment; you're straight back in the game)</small></button>
@@ -148,6 +156,6 @@
   <b style="font:500 20px 'Barlow Condensed';letter-spacing:.12em;color:var(--neon)">UPDATE READY</b><p id="updNote" class="note" style="margin:4px 0 10px"></p>
   <div style="display:flex;gap:8px"><button class="key" id="updYes" style="margin:0">UPDATE NOW<small>(you're right back here)</small></button><button class="key" id="updNo" style="margin:0;width:auto">LATER</button></div>
 </div></div>
-<script type="module" src="./client/main.js?v=181"></script>
+<script type="module" src="./client/main.js?v=182"></script>
 </body>
 </html>

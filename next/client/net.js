@@ -6,7 +6,7 @@
 const PREFIX = 'lastfire-n1-';   // (the new game's rooms: never mixed with the old game's)
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // (no I or O: nothing to misread)
 export const CODE_LEN = 6, MAX_PLAYERS = 4;
-const KINDS = new Set(['hello', 'in', 's', 'ev', 'shot', 'bang', 'hit', 'build', 'bye']);
+const KINDS = new Set(['hello', 'in', 's', 'ev', 'shot', 'bang', 'hit', 'build', 'bye', 'lines', 'fb']);   // (lines: a friend's own words, sent but refused until 2026-10-20; fb: a friend's feedback for the host to pass on)
 const MAX_BYTES = 400000;   // (the host's opening message carries the world's edits; nothing else comes near this)
 
 export function roomCode() { const r = new Uint32Array(CODE_LEN); crypto.getRandomValues(r); return Array.from(r, v => LETTERS[v % LETTERS.length]).join(''); }

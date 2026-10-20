@@ -16,3 +16,4 @@
 - v179 serves B: Talk while you play: on your PC the game listens (MIC in the corner) and your words reach Claude
 - v180 serves B: The mic now reaches your PC (the game's safety list was blocking it)
 - v181 serves B: Played from your own PC, updates show up in 5 seconds
+- v182 serves C: Friends: no more sudden 180 turns (bad mouse jumps ignored); friends hold their rifle; a friend's feedback now reaches the host; one-click feedback choices in the Tab menu

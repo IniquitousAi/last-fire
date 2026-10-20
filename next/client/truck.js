@@ -1,8 +1,8 @@
 // Parts lying out on Earth, and the truck at the bay in camp, drawn as it is really fitted. The model is made in code (truckmodel.js):
 // each part a few smooth surfaces you can read from far away, so you know what you found, and the whole truck five draw calls.
 import * as THREE from 'three';
-import { BAY, PARTS } from '../core/game.js?v=181';
-import { buildTruck, buildPart, buildRoofLamp } from './truckmodel.js?v=181';
+import { BAY, PARTS } from '../core/game.js?v=182';
+import { buildTruck, buildPart, buildRoofLamp } from './truckmodel.js?v=182';
 
 const FULL = Object.fromEntries(Object.entries(PARTS).map(([k, v]) => [k, v.n])), WRECK = { frame: 1, axle: 1, wheel: 1, cab: 1 };   // (a wreck: what is left after the scavengers)
 export class Truck {
