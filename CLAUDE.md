@@ -1,5 +1,7 @@
 # Last Fire: rules for Claude (the game's own home, his pick 2026-10-19)
 
+**One rule file (CHIEF 8:58pm, 2026-10-20):** Daniel's rules live in `C:/Users/danie/Desktop/projects/vibe-lab/CLAUDE.md`; read it first. This file adds only this project's own rules.
+
 **Top rule, weighs most (Daniel, 2026-10-19, "put a lot of weight on" it): the game must feel like him.** "I want this game to feel like me a lot. I think eventually I'll be able to clone myself in a digital space. At the very least, it'll repeat my same jokes over and over again and make me laugh." Check every choice against him first (his taste rules and the Twin, his words, his jokes, the Atlas); a great feature that is not him loses to one that is.
 
 
